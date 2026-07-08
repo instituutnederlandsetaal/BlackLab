@@ -1,12 +1,19 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NavigableSet;
 
+import org.apache.lucene.index.LeafReaderContext;
+
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
  * Finds hits using the forward index, by matching an NFA from anchor points.
@@ -17,7 +24,7 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
     private ForwardIndexDocument currentFiDoc;
 
     /** What start pos is the anchor at? */
-    private int anchorStart = -1;
+    private int keywordStart = -1;
 
     /**
      * Are we already at the first match in a new document, before
@@ -26,51 +33,51 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
      */
     private boolean atFirstInCurrentDoc = false;
 
-    /**
-     * If true, match from the start of the anchor hit. Otherwise, match from the
-     * end.
-     */
-    private final boolean startOfAnchor;
+    /** The NFA used to find collocates after the keyword. */
+    private final NfaState nfaForward;
 
-    /** The NFA to use to find matches in the forward index. */
-    private final NfaState nfa;
-
-    /** The direction to match in (-1 / DIR_TO_LEFT = backward, 1 / DIR_TO_RIGHT = forward). */
-    private final int direction;
+    /** The NFA used to find collocates before the keyword. */
+    private final NfaState nfaBackward;
 
     /** minimum gap between keyword and collocate */
-    final int gapMin;
-
-    /** maximum gap between keyword and collocate */
-    final int gapMax;
+    final SpanQueryCollocations.CollocationContext collocationContext;
 
     /** Maps from term strings to term indices for each annotation. */
     private final ForwardIndexAccessorLeafReader fiAccessor;
 
+    /** Used to store list of collocates found. */
+    record Span(int start, int end) implements Comparable<Span> {
+        @Override
+        public int compareTo(Span other) {
+            int cmp = Integer.compare(this.start, other.start);
+            if (cmp != 0) return cmp;
+            return Integer.compare(this.end, other.end);
+        }
+    }
+
     /** Iterator over NFA-matched endpoints */
-    private Iterator<Integer> matchEndPointIt;
+    private Iterator<Span> collocateIterator;
 
     /** Current NFA-matched endpoint */
-    private int currentMatchEndPoint = -1;
+    private Span currentCollocate = null;
 
-    public SpansCollocations(BLSpans anchorSpans, boolean startOfAnchor, NfaState nfa, int direction,
-            int gapMin, int gapMax, ForwardIndexAccessorLeafReader fiAccessor, SpanGuarantees guarantees) {
+    public SpansCollocations(BLSpans anchorSpans, SpanGuarantees guarantees,
+            SpanQueryCollocations.CollocationContext collocationContext, LeafReaderContext lrc,
+            ForwardIndexAccessor fiAccessor, NfaTwoWay nfa) {
         super(anchorSpans, guarantees);
-        this.startOfAnchor = startOfAnchor;
-        this.nfa = nfa;
-        this.direction = direction;
-        this.gapMin = gapMin;
-        this.gapMax = gapMax;
-        this.fiAccessor = fiAccessor;
+        this.collocationContext = collocationContext;
+        this.fiAccessor = fiAccessor.getForwardIndexAccessorLeafReader(lrc);
+        this.nfaForward = nfa.getNfa().getStartingState().forSegment(lrc);
+        this.nfaBackward = nfa.getNfaReverse().getStartingState().forSegment(lrc);
     }
 
     @Override
     public int startPosition() {
         if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
-        if (anchorStart == NO_MORE_POSITIONS || anchorStart < 0)
-            return anchorStart;
-        return direction < 0 ? Math.min(currentMatchEndPoint + 1, anchorStart) : anchorStart;
+        if (keywordStart == NO_MORE_POSITIONS || keywordStart < 0)
+            return keywordStart;
+        return currentCollocate.start;
     }
 
     @Override
@@ -80,7 +87,7 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
         int endPos = in.endPosition();
         if (endPos == NO_MORE_POSITIONS || endPos < 0)
             return endPos;
-        return direction > 0 ? Math.max(currentMatchEndPoint, in.endPosition()) : in.endPosition();
+        return currentCollocate.end;
     }
 
     @Override
@@ -99,20 +106,20 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
         if (atFirstInCurrentDoc) {
             // We're already at the first match in the doc. Return it.
             atFirstInCurrentDoc = false;
-            return anchorStart;
+            return keywordStart;
         }
 
         // Are we done yet?
-        if (anchorStart == NO_MORE_POSITIONS)
+        if (keywordStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
-        if (matchEndPointIt.hasNext()) {
-            currentMatchEndPoint = matchEndPointIt.next();
+        if (collocateIterator.hasNext()) {
+            currentCollocate = collocateIterator.next();
             return startPosition();
         }
 
         // Find first matching anchor span from here
-        anchorStart = in.nextStartPosition();
+        keywordStart = in.nextStartPosition();
         return synchronizePos();
     }
 
@@ -129,10 +136,10 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
         }
 
         // Are we done yet?
-        if (anchorStart == NO_MORE_POSITIONS)
+        if (keywordStart == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
-        anchorStart = in.advanceStartPosition(target);
+        keywordStart = in.advanceStartPosition(target);
 
         // Find first matching anchor span from here
         return synchronizePos();
@@ -143,54 +150,61 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
         assert positionedInDoc();
         // Are there search results in this document?
         atFirstInCurrentDoc = false;
-        matchEndPointIt = null;
+        collocateIterator = null;
         if (in.startPosition() != NO_MORE_POSITIONS) {
-            anchorStart = in.nextStartPosition();
+            keywordStart = in.nextStartPosition();
         }
-        anchorStart = synchronizePos();
-        if (anchorStart == NO_MORE_POSITIONS)
+        keywordStart = synchronizePos();
+        if (keywordStart == NO_MORE_POSITIONS)
             return false;
         atFirstInCurrentDoc = true;
         return true;
     }
 
     /**
-     * Find a anchor span that has an NFA match, starting from the current anchor
-     * span.
+     * Find a keyword that has collocate(s), starting from the current keyword.
      *
-     * @return start position if found, NO_MORE_POSITIONS if no such anchor spans
-     *         exists (i.e. we're done)
+     * @return start position of first collocate found, or NO_MORE_POSITIONS if no
+     *         more collocates exist (i.e. we're done)
      */
     private int synchronizePos() throws IOException {
         if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != docID())
             currentFiDoc = fiAccessor.getForwardIndexDoc(docID());
 
         // Find the next "valid" anchor spans, if there is one.
-        while (anchorStart != NO_MORE_POSITIONS) {
-
-            // We're at the first unchecked anchor spans. Does our NFA match?
-            int anchorPos = startOfAnchor ? anchorStart : in.endPosition();
-            if (direction < 0)
-                anchorPos--;
-            // OPT: sometimes anchorPos may be the same as the previous one. We could check for
-            //      this to avoid re-running the NFA. This is likely fairly rare though.
-            NavigableSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
-            if (!setMatchEndpoints.isEmpty()) {
-                if (direction == 1)
-                    matchEndPointIt = setMatchEndpoints.iterator();
-                else
-                    matchEndPointIt = setMatchEndpoints.descendingSet().iterator();
-                currentMatchEndPoint = matchEndPointIt.next();
+        while (keywordStart != NO_MORE_POSITIONS) {
+            List<Span> collocatesFound = new ArrayList<>();
+            findCollocates(SpanQueryFiSeq.DIR_BACKWARD, collocationContext.before(), collocatesFound);
+            Collections.sort(collocatesFound); // collocates before search backwards so may be out of order
+            findCollocates(SpanQueryFiSeq.DIR_FORWARD, collocationContext.after(), collocatesFound);
+            if (!collocatesFound.isEmpty()) {
+                collocateIterator = collocatesFound.iterator();
+                currentCollocate = collocateIterator.next();
                 return startPosition();
             }
 
             // Didn't match filter; go to the next position.
-            anchorStart = in.nextStartPosition();
-            if (anchorStart == NO_MORE_POSITIONS)
-                return NO_MORE_POSITIONS;
-
+            keywordStart = in.nextStartPosition();
         }
-        return anchorStart;
+        return keywordStart;
+    }
+
+    private void findCollocates(int direction, SequenceGap gap, List<Span> collocatesFound) {
+        boolean isForward = direction == SpanQueryFiSeq.DIR_FORWARD;
+        int startFromPos = isForward ?
+                in.endPosition() + gap.min() + 1 :
+                keywordStart - gap.max() - 1;
+        int endAtPos = isForward ?
+                in.endPosition() + gap.max() + 1 :
+                keywordStart - gap.min() - 1;
+        NfaState nfa = isForward ? nfaForward : nfaBackward;
+
+        for (int collocateStart = startFromPos; collocateStart != endAtPos; collocateStart += direction) {
+            NavigableSet<Integer> collocateEnds = nfa.findMatches(currentFiDoc, collocateStart, direction);
+            for (Integer collocateEnd: collocateEnds) {
+                collocatesFound.add(isForward ? new Span(collocateStart, collocateEnd) : new Span(collocateEnd, collocateStart));
+            }
+        }
     }
 
     @Override
@@ -202,8 +216,7 @@ class SpansCollocations extends BLFilterDocsSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "SpansCollocations(" + in + ", " + (startOfAnchor ? "START" : "END") + ", " + nfa + ", "
-                + (direction == 1 ? "FORWARD" : "BACKWARD") + ", gapMin=" + gapMin + ", gapMax=" + gapMax + ")";
+        return "SpansCollocations(" + in + ", " + nfaForward + ", " + collocationContext + ")";
     }
 
 }

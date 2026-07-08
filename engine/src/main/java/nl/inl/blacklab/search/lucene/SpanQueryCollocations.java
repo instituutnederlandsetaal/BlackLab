@@ -12,8 +12,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
@@ -21,67 +19,44 @@ import nl.inl.blacklab.search.fimatch.NfaTwoWay;
  */
 public class SpanQueryCollocations extends BLSpanQueryAbstract {
 
-    public static SpanGuarantees createGuarantees(SpanGuarantees clause, SpanGuarantees nfaQuery, int direction, boolean startOfAnchor) {
+    public static SpanGuarantees createGuarantees(SpanGuarantees nfaQuery) {
         return new SpanGuaranteesAdapter() {
             @Override
             public boolean hitsAllSameLength() {
-                return clause.hitsAllSameLength() && nfaQuery.hitsAllSameLength();
+                return nfaQuery.hitsAllSameLength();
             }
 
             @Override
             public int hitsLengthMin() {
-                if (startOfAnchor && direction == SpanQueryFiSeq.DIR_BACKWARD ||
-                        !startOfAnchor && direction == SpanQueryFiSeq.DIR_FORWARD) {
-                    // Non-overlapping; add the two values
-                    return clause.hitsLengthMin() + nfaQuery.hitsLengthMin();
-                }
-                // Overlapping; use the largest value
-                return Math.max(clause.hitsLengthMin(), nfaQuery.hitsLengthMin());
+                return nfaQuery.hitsLengthMin();
             }
 
             @Override
             public int hitsLengthMax() {
-                if (startOfAnchor && direction == SpanQueryFiSeq.DIR_BACKWARD ||
-                        !startOfAnchor && direction == SpanQueryFiSeq.DIR_FORWARD) {
-                    // Non-overlapping; add the two values
-                    return clause.hitsLengthMax() + nfaQuery.hitsLengthMax();
-                }
-                // Overlapping; use the largest value
-                return Math.min(clause.hitsLengthMax(), nfaQuery.hitsLengthMax());
+                return nfaQuery.hitsLengthMax();
             }
 
             @Override
             public boolean hitsStartPointSorted() {
-                if (direction == SpanQueryFiSeq.DIR_FORWARD)
-                    return clause.hitsStartPointSorted();
-                return clause.hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
+                return false;
             }
 
             @Override
             public boolean hitsEndPointSorted() {
-                if (direction == SpanQueryFiSeq.DIR_BACKWARD)
-                    return clause.hitsEndPointSorted();
-                return clause.hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
+                return false;
             }
 
             @Override
             public boolean hitsHaveUniqueStart() {
-                if (direction == SpanQueryFiSeq.DIR_FORWARD)
-                    return clause.hitsHaveUniqueStart();
-                return clause.hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
+                return false; // same collocate may be found near different keywords
             }
 
             @Override
             public boolean hitsHaveUniqueEnd() {
-                if (direction == SpanQueryFiSeq.DIR_BACKWARD)
-                    return clause.hitsHaveUniqueEnd();
-                return clause.hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
+                return false; // same collocate may be found near different keywords
             }
         };
     }
-
-    /** if true, use the starts of anchor hits; if false, use the ends */
-    final boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
     final NfaTwoWay nfa;
@@ -89,14 +64,10 @@ public class SpanQueryCollocations extends BLSpanQueryAbstract {
     /** the query that generated the NFA, so we can still use its guarantee methods for optimization */
     private final BLSpanQuery nfaQuery;
 
-    /** the direction to match in (DIR_FORWARD / DIR_BACKWARD) */
-    final int direction;
+    public record CollocationContext(SequenceGap before, SequenceGap after) {}
 
-    /** minimum gap between keyword and collocate */
-    final int gapMin;
-
-    /** maximum gap between keyword and collocate */
-    final int gapMax;
+    /** minimum gap when collocate before keyword */
+    final CollocationContext collocationContext;
 
     /** maps between term strings and term indices for each annotation */
     final ForwardIndexAccessor fiAccessor;
@@ -104,33 +75,28 @@ public class SpanQueryCollocations extends BLSpanQueryAbstract {
     /**
      *
      * @param keyword hits to use as keywords to find collocates
-     * @param startOfAnchor if true, use the starts of keyword hits; if false, use the ends
      * @param nfa the NFA to use for finding collocates
      * @param nfaQuery the query that generated the NFA, so we can still use its
      *            guarantee methods for optimization
-     * @param direction the direction to match in (DIR_FORWARD / DIR_BACKWARD)
-     * @param gapMin minimum gap between keyword and collocate
-     * @param gapMax maximum gap between keyword and collocate
+     * @param collocationContext the context for collocations, including gaps before and after the keyword
      * @param fiAccessor maps between term strings and term indices for each annotation
      */
-    public SpanQueryCollocations(BLSpanQuery keyword, boolean startOfAnchor, NfaTwoWay nfa, BLSpanQuery nfaQuery,
-            int direction, int gapMin, int gapMax, ForwardIndexAccessor fiAccessor) {
+    public SpanQueryCollocations(BLSpanQuery keyword, NfaTwoWay nfa, BLSpanQuery nfaQuery,
+            CollocationContext collocationContext,
+            ForwardIndexAccessor fiAccessor) {
         super(keyword);
-        this.startOfAnchor = startOfAnchor;
         this.nfa = nfa;
         this.nfaQuery = nfaQuery;
-        this.direction = direction;
-        this.gapMin = gapMin;
-        this.gapMax = gapMax;
+        this.collocationContext = collocationContext;
         this.fiAccessor = fiAccessor;
-        this.guarantees = createGuarantees(keyword.guarantees(), nfaQuery.guarantees(), direction, startOfAnchor);
+        this.guarantees = createGuarantees(nfaQuery.guarantees());
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
         if (rewritten != clauses.get(0)) {
-            return new SpanQueryCollocations(rewritten, startOfAnchor, nfa, nfaQuery, direction, gapMin, gapMax, fiAccessor);
+            return new SpanQueryCollocations(rewritten, nfa, nfaQuery, collocationContext, fiAccessor);
         }
         return this;
     }
@@ -171,19 +137,17 @@ public class SpanQueryCollocations extends BLSpanQueryAbstract {
         }
 
         @Override
-        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-            BLSpans anchorSpans = anchorWeight.getSpans(context, requiredPostings);
+        public BLSpans getSpans(final LeafReaderContext lrc, Postings requiredPostings) throws IOException {
+            BLSpans anchorSpans = anchorWeight.getSpans(lrc, requiredPostings);
             if (anchorSpans == null)
                 return null;
-            ForwardIndexAccessorLeafReader fiLeafReader = fiAccessor.getForwardIndexAccessorLeafReader(context);
-            NfaState startingState = nfa.getNfa().getStartingState().forSegment(context);
-            return new SpansCollocations(anchorSpans, startOfAnchor, startingState, direction, gapMin, gapMax, fiLeafReader, guarantees);
+            return new SpansCollocations(anchorSpans, guarantees, collocationContext, lrc, fiAccessor, nfa);
         }
     }
 
     @Override
     public String toString(String field) {
-        return "COLLOCATIONS(" + clausesToString(field) + ", " + nfa.getNfa() + ", " + direction + ", " + gapMin + ", " + gapMax + ")";
+        return "COLLOCATIONS(" + clausesToString(field) + ", " + nfa.getNfa() + ", " + collocationContext + ")";
     }
 
     @Override
@@ -206,10 +170,6 @@ public class SpanQueryCollocations extends BLSpanQueryAbstract {
         return clauses.get(0).forwardMatchingCost() + nfaQuery.forwardMatchingCost();
     }
 
-    public int getDirection() {
-        return direction;
-    }
-
     public ForwardIndexAccessor getFiAccessor() {
         return fiAccessor;
     }
@@ -221,12 +181,11 @@ public class SpanQueryCollocations extends BLSpanQueryAbstract {
         if (!super.equals(o))
             return false;
         SpanQueryCollocations that = (SpanQueryCollocations) o;
-        return startOfAnchor == that.startOfAnchor && direction == that.direction &&
-                gapMin == that.gapMin && gapMax == that.gapMax && Objects.equals(nfaQuery, that.nfaQuery);
+        return Objects.equals(nfaQuery, that.nfaQuery) && Objects.equals(collocationContext, that.collocationContext);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), startOfAnchor, nfaQuery, direction, gapMin, gapMax);
+        return Objects.hash(super.hashCode(), nfaQuery, collocationContext);
     }
 }

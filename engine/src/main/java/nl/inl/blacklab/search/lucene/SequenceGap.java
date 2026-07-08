@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 /**
- * Allowable gap size between parts of a sequence.
+ * Allowable gap size (in tokens) between e.g. parts of a sequence.
  */
 public record SequenceGap(int min, int max) {
 
