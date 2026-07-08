@@ -11,7 +11,7 @@ import nl.inl.blacklab.searches.SearchCache;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, null, index.cache());
+        return create(index, index.mainAnnotatedField(), index.cache());
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
@@ -36,7 +36,7 @@ public final class QueryInfo {
     private QueryInfo(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
         super();
         this.index = index;
-        this.field = field == null ? index.mainAnnotatedField() : field;
+        this.field = field;
         this.cacheToUse = cacheToUse;
     }
 
