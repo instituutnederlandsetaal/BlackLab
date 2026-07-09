@@ -90,8 +90,8 @@
         <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
         <connection>scm:git:git://github.com/instituutnederlandsetaal/BlackLab.git</connection>
         <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <issueManagement>
         <url>https://github.com/instituutnederlandsetaal/BlackLab/issues</url>
