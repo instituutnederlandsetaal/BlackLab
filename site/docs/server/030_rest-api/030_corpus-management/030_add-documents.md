@@ -10,7 +10,9 @@ _(will fail if you are not logged in or not authorized)_
 
 Files uploaded may be regular files or `.zip` or `.tar.gz` archives.
 
-The document format is always the index' default format set during creation. 
+The document format is always the index' default format set during creation.
+
+If a `pidField` has been configured, and the document's PID already exists, it will be updated automatically.
 
 | Parameter    | Description                                                                                                                              |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------|
