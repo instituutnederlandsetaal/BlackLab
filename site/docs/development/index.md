@@ -25,7 +25,7 @@ BlackLab is in the Maven Central Repository, so you should be able to simply add
 <dependency>
     <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab</artifactId>
-    <version>3.0.1</version>
+    <version>4.1.1</version>
 </dependency>
 ```
 

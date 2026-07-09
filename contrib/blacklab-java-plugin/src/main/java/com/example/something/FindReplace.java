@@ -19,6 +19,15 @@ import nl.inl.util.fileprocessor.FileReference;
  * Takes two parameters:
  * - find (regex to find, required)
  * - replace (string to replace it with, optional defaults to "dog")
+ *
+ * To use, add this section to your .blf.yaml file:
+ *
+ * ```yaml
+ * converters:
+ *   - id: FindReplace   # use the class name, not the jar name!
+ *     find: cat         # specify parameter(s)
+ *     replace: fish
+ * ```
  */
 public class FindReplace extends FileConverter {
 

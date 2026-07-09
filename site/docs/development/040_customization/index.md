@@ -27,9 +27,11 @@ Note that BlackLab already provides many implementations of these plugin types; 
 
 ## Creating a plugin
 
-There's two ways to implement a plugin: via a script or a `.jar` file. The simplest option is a script written in [Groovy](https://groovy-lang.org/) (a JVM language very similar to Java). This is just a text file that doesn't need to be compiled.
+There's two ways to implement a plugin: via a script or a `.jar` file.
 
-The other option is a `.jar` file containing one or more Java classes. This is a bit more complex, but allows you to use any JVM language (Java, Kotlin, Scala, etc.), use third-party libraries, etc.
+The simplest option is a script written in [Groovy](https://groovy-lang.org/) (a JVM language very similar to Java). This is just a text file that doesn't need to be compiled. To get type checking and autocompletion while developing, have a look at [blacklab-groovy-plugin](@github:/contrib/blacklab-groovy-plugin) for a template project you can import into e.g. IntelliJ.
+
+The other option is a `.jar` file containing one or more Java classes. This is a bit more complex, but allows you to use any JVM language (Java, Kotlin, Scala, etc.), use third-party libraries, etc. See the [ProcessingInstruction](#processinginstruction) example below or see [blacklab-java-plugin](@github:/contrib/blacklab-java-plugin) for a working Maven template project.
 
 
 ## Installing/configuring a plugin
@@ -346,7 +348,7 @@ java nl.inl.blacklab.tools.IndexTool doctask ./my-index-dir printPid "prefix=Doc
 
 ### ProcessingInstruction
 
-As explained, a `.jar` plugin gives you the most flexibility, but are also a bit more complex. Read on for Groovy examples.
+As explained, a `.jar` plugin gives you the most flexibility, but are also a bit more complex.
 
 For a `.jar` plugin, you need to do the following:
 
@@ -356,6 +358,8 @@ For a `.jar` plugin, you need to do the following:
     - Add a text file to the `.jar` under `/META-INF/services/` with the name `nl.inl.blacklab.plugins.FileConverter` (or the correct type for your plugin). It should contain a single line with your class's fully-qualified class name (or multiple lines if your .jar contains multiple plugins).
 - Place the `.jar` in `$BLACKLAB_CONFIG_DIR/plugins/`
 - Optionally create a YAML config file and/or a subdirectory, both with the same name as your plugin (see above)
+
+See [blacklab-java-plugin](@github:/contrib/blacklab-java-plugin) for a complete Maven template project.
 
 Let's create a `ProcessingInstruction` plugin that reverses a string. `ProcessingInstructionReverse.java` could look like this:
 
