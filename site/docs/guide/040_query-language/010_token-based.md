@@ -402,7 +402,7 @@ If rewriting your query to avoid these constraints is not an option, you might b
 
 ### Constraint functions
 
-You can also use a few special functions in capture constraints. For example, ensure that words occur in the right order:
+You can also use functions in capture constraints. For example, ensure that words occur in the right order:
 
 ```
 (<s> containing A:"cat") containing B:"fluffy" :: start(B) < start(A)
@@ -553,6 +553,78 @@ union("one", "two", "three")  # same as union(list("one", "two", "three"))
 ```
 
 
+### start: get start of capture
+
+Within constraints, use `start(A)` to get the starting token position of capture `A`.
+
+If `A` captured the first token of the document, `start(A)` would return `0`.
+
+
+### end: get end of capture
+
+Within constraints, use `end(A)` to get the ending token position of capture `A`. Note that this is always the first token position AFTER the capture.
+
+The first token in a document has token position 0, so if `A` captured the first two words of the document, `end(A)` would return `2` (the third token). 
+
+
+### gap: determine gap between captures
+
+To determine the gap between two captures:
+
+```
+gap(A, B, directional=false)
+```
+
+If `A` and `B` overlap or are contiguous, this will return 0.
+
+Otherwise, if the optional argument `directional` is `false` (the default) it will determine the gap between A and B as a non-negative number. (To be precise, it calculates either `end(B) - start(A)` or `end(A) - start(B)`, whichever is positive)
+
+If `directional` is set to `true`, the gap will be negative if `A` comes after `B`.
+
+
+### in_range: test if numbers are within a range
+
+Checks if a number falls within a range (inclusive).
+
+To check if capture `A` starts in the first 100 tokens in the document:
+
+```
+in_range(start(A), 0, 100)
+```
+
+This would be equivalent to `start(A) >= 0 & start(A) <= 100` (arithmetic operators are not yet supported, however).
+
+
+### abs: absolute value of a number
+
+Calculates the absolute value of a number:
+
+```
+abs(-5)   # result 5
+```
+
+### diff: difference between two numbers
+
+Calculates the difference between two numbers:
+
+```
+diff(5, 3)   # result 2
+```
+
+We will likely add support for arithmetic operators in the future, obviating the need for this function.
+
+
+### sum: sum of two numbers
+
+Calculates the sum of two numbers:
+
+```
+sum(5, 3)   # result 8
+```
+
+We will likely add support for arithmetic operators in the future, obviating the need for this function.
+
+
 ### str: interpret as string
 
 <!-- @include: ../../_from_v5.md -->
@@ -570,6 +642,7 @@ list("cat", "dog")
 ```
 
 which will create a list of token queries.
+
 
 ### symbol: interpret as a symbol
 

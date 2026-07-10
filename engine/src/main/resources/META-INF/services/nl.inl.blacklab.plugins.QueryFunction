@@ -1,6 +1,10 @@
+nl.inl.blacklab.search.extensions.QueryFunctionAbs
+nl.inl.blacklab.search.extensions.QueryFunctionDiff
 nl.inl.blacklab.search.extensions.QueryFunctionEnd
 nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan
 nl.inl.blacklab.search.extensions.QueryFunctionFuzzy
+nl.inl.blacklab.search.extensions.QueryFunctionGap
+nl.inl.blacklab.search.extensions.QueryFunctionInRange
 nl.inl.blacklab.search.extensions.QueryFunctionLen
 nl.inl.blacklab.search.extensions.QueryFunctionList
 nl.inl.blacklab.search.extensions.QueryFunctionMeet
@@ -8,5 +12,6 @@ nl.inl.blacklab.search.extensions.QueryFunctionMeetWithin
 nl.inl.blacklab.search.extensions.QueryFunctionQuery
 nl.inl.blacklab.search.extensions.QueryFunctionStart
 nl.inl.blacklab.search.extensions.QueryFunctionStr
+nl.inl.blacklab.search.extensions.QueryFunctionSum
 nl.inl.blacklab.search.extensions.QueryFunctionSymbol
 nl.inl.blacklab.search.extensions.QueryFunctionUnion

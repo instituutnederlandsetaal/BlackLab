@@ -44,9 +44,13 @@ import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSplit;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionStrip;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.extensions.QueryFunctionAbs;
+import nl.inl.blacklab.search.extensions.QueryFunctionDiff;
 import nl.inl.blacklab.search.extensions.QueryFunctionEnd;
 import nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan;
 import nl.inl.blacklab.search.extensions.QueryFunctionFuzzy;
+import nl.inl.blacklab.search.extensions.QueryFunctionGap;
+import nl.inl.blacklab.search.extensions.QueryFunctionInRange;
 import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.extensions.QueryFunctionLen;
 import nl.inl.blacklab.search.extensions.QueryFunctionList;
@@ -55,6 +59,7 @@ import nl.inl.blacklab.search.extensions.QueryFunctionMeetWithin;
 import nl.inl.blacklab.search.extensions.QueryFunctionQuery;
 import nl.inl.blacklab.search.extensions.QueryFunctionStart;
 import nl.inl.blacklab.search.extensions.QueryFunctionStr;
+import nl.inl.blacklab.search.extensions.QueryFunctionSum;
 import nl.inl.blacklab.search.extensions.QueryFunctionSymbol;
 import nl.inl.blacklab.search.extensions.QueryFunctionUnion;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorerDice;
@@ -143,15 +148,20 @@ public class PluginManager {
                 ProcessingInstructionIfEmpty.class,
 
                 // QueryFunction
+                QueryFunctionAbs.class,
                 QueryFunctionUnion.class,
                 QueryFunctionStr.class,
+                QueryFunctionDiff.class,
                 QueryFunctionFixedSpan.class,
+                QueryFunctionGap.class,
+                QueryFunctionInRange.class,
                 QueryFunctionLambda.class,
                 QueryFunctionEnd.class,
                 QueryFunctionList.class,
                 QueryFunctionSymbol.class,
                 QueryFunctionFuzzy.class,
                 QueryFunctionStart.class,
+                QueryFunctionSum.class,
                 QueryFunctionMeet.class,
                 QueryFunctionMeetWithin.class,
                 QueryFunctionQuery.class,
