@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -129,5 +130,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         this.factory = factory;
         assert values == null;
         ensureValuesCreated();
+    }
+
+    @Override
+    public int compareTo(@NonNull Field field) {
+        if (field instanceof MetadataFieldImpl)
+            return name().compareTo(field.name());
+        return getClass().getName().compareTo(field.getClass().getName());
     }
 }

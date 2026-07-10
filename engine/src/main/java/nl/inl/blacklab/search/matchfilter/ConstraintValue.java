@@ -73,6 +73,10 @@ public abstract class ConstraintValue implements Comparable<ConstraintValue>, Te
             return ra; // no conversion needed
         if (targetType == ExprType.STRING)
             return ra.asString();
+        if (targetType == ExprType.INTEGER && ra instanceof ConstraintValueMatchInfo cvmi) {
+            // MatchInfo to integer: use the start position
+            return ConstraintValue.get(cvmi.matchInfo.getSpanStart());
+        }
         throw new InvalidQuery("Cannot convert ConstraintValue of type " + ra.getType() + " to " + targetType);
     }
 

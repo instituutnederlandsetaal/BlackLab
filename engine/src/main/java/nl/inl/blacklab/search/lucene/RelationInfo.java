@@ -79,6 +79,13 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return RelationUtil.typeFromFullType(getFullRelationType());
     }
 
+    public MatchInfo sourceMatchInfo() {
+        return SpanInfo.create(sourceStart, sourceEnd, getField());
+    }
+
+    public MatchInfo targetMatchInfo() {
+        return SpanInfo.create(targetStart, targetEnd, getTargetField());
+    }
 
     /**
      * Different spans we can return for a relation

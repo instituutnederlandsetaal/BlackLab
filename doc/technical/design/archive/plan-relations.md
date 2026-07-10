@@ -258,6 +258,8 @@ This will return the same relation matches, but with the span start and end set 
 
 **NOTE:** for `rspan`, there is a special extra spanMode `"all"`, that will return a span covering the sources and targets of _all_ relations matched.
 
+**NOTE2:** `rspan()` may also be used on captures in constraints, e.g. `_ R:-nsubj-> _ :: rspan(R, "target") > rspan(R, "source")` to find `nsubj` relations where the target occurs after the source.
+
 ### rmatch: match clauses (AND) and ensure unique relations
 
 We can match a tree fragment of a tree (a parent and some of its children) using `rmatch`:

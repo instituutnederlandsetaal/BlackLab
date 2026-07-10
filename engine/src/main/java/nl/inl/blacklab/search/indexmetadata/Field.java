@@ -1,9 +1,11 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import org.jspecify.annotations.NonNull;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Shared base interface between metadata and annotated fields */
-public interface Field {
+public interface Field extends Comparable<Field> {
 
     /** Get this field's name
      * @return this field's name */
@@ -30,4 +32,7 @@ public interface Field {
     CustomProps custom();
 
     BlackLabIndex index();
+
+    @Override
+    int compareTo(@NonNull Field field);
 }

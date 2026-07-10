@@ -5,11 +5,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.NonNull;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 
 public class MockAnnotatedField implements AnnotatedField {
@@ -132,5 +135,12 @@ public class MockAnnotatedField implements AnnotatedField {
     @Override
     public RelationsStats getRelationsStats(long limitValues) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int compareTo(@NonNull Field field) {
+        if (field instanceof MockAnnotatedField)
+            return name().compareTo(field.name());
+        return getClass().getName().compareTo(field.getClass().getName());
     }
 }

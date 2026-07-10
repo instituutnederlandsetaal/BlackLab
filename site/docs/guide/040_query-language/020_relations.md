@@ -213,6 +213,23 @@ For now, you might be able to work around this limitation using a hybrid between
 
 Most users won't need this, but they might come in handy in some cases.
 
+### Capturing the relation explicitly
+
+BlackLab automatically captures relations in your query. For a query like `_ -nsubj-> _`, the response will contain a capture named `nsubj` with the relation details.
+
+You may want to explicitly specify a capture name in your query, for example if there's multiple `nsubj` relations in your query, or if you're using a regular expression for the query type. This is possible:
+
+```
+_ R:-nsubj-> _
+```
+
+will capture the relation under the name `R` instead. You can refer to this capture from a constraint if you want, e.g.:
+
+```
+# Find relations until the first 100 tokens in the document
+_ R:-nsubj-> _ :: start(R) < 100
+```
+
 ### Controlling the resulting span
 
 As shown in the previous section, relation expressions return the source of the matching relation by default. But what if you want a different part of the relation?
@@ -242,6 +259,18 @@ rspan(_ -nsubj-> (_ -amod-> _) ; -obj-> _, "all")
 ```
 
 Because this is pretty useful when searching relations, there's an easy way to apply this `rspan` operation: just add a parameter `adjusthits=true` to your BlackLab Server URL. Note that if your query already starts with a call to `rspan`, `adjusthits=true` won't do anything.
+
+::: tip rspan() in constraints
+
+`rspan()` may also be used on captures in constraints, e.g.:
+
+```
+_ R:-nsubj-> _ :: rspan(R, "target") > rspan(R, "source")
+```
+
+to find `nsubj` relations where the target occurs after the source.
+
+:::
 
 ### Capturing all relations in a sentence
 

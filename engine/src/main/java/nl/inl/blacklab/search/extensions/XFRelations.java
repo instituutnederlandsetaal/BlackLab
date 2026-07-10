@@ -9,6 +9,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PEnum;
 import nl.inl.blacklab.plugins.param.PList;
+import nl.inl.blacklab.plugins.param.PMatchInfo;
+import nl.inl.blacklab.plugins.param.PMultiple;
 import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -17,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsWithinSpan;
@@ -24,6 +27,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
+import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
@@ -142,15 +146,33 @@ public class XFRelations implements ExtensionFunctionClass {
          * spans of the active relation, or the full relation span, or to a span
          * covering all matched relations.
          */
-        QueryExtensions.register(FUNC_RSPAN, List.of(PQuery.required("query"),
+        PMultiple queryOrMatchInfo = PMultiple.required("subject",
+                List.of(PQuery.required("query"), PMatchInfo.required("matchInfo")));
+        QueryExtensions.register(FUNC_RSPAN, List.of(queryOrMatchInfo,
                         PEnum.of("spanMode", RelationInfo.SpanMode.class)),
                 Arrays.asList(null, "full"),
                 (queryInfo, context, args) -> {
                     if (args.size() < 2)
                         throw new IllegalArgumentException("rspan() requires a query and a span mode as arguments");
-                    BLSpanQuery relations = (BLSpanQuery) args.get(0);
+                    Object subject = args.get(0);
                     RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String) args.get(1));
-                    return new SpanQueryRelationSpanAdjust(relations, null, mode, null);
+                    if (subject instanceof BLSpanQuery relations) {
+                        return new SpanQueryRelationSpanAdjust(relations, null, mode, null);
+                    } else if (subject instanceof MatchInfo mi) {
+                        if (mi instanceof RelationInfo ri) {
+                            if (mode == RelationInfo.SpanMode.SOURCE)
+                                return ConstraintValue.get(ri.sourceMatchInfo());
+                            else if (mode == RelationInfo.SpanMode.TARGET)
+                                return ConstraintValue.get(ri.targetMatchInfo());
+                            else if (mode == RelationInfo.SpanMode.FULL_SPAN)
+                                return ConstraintValue.get(ri);
+                            else
+                                throw new IllegalArgumentException("Invalid span mode for rspan(matchInfo, mode): " + mode);
+                        }
+                        throw new IllegalArgumentException("rspan(matchInfo, mode) should get a relation, got " + mi.getClass().getSimpleName());
+                    } else {
+                        throw new IllegalArgumentException("rspan(query|matchInfo, mode) called with argument type " + subject.getClass().getSimpleName());
+                    }
                 });
 
         /*

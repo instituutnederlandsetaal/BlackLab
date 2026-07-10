@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -283,6 +284,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             results = results.withLimit(limitValues);
         }
         return results;
+    }
+
+    @Override
+    public int compareTo(@NonNull Field field) {
+        if (field instanceof AnnotatedFieldImpl)
+            return name().compareTo(field.name());
+        return getClass().getName().compareTo(field.getClass().getName());
     }
 
 }

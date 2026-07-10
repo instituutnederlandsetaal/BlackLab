@@ -59,6 +59,9 @@ public enum ExprType {
         if (type1 == STRING && (type2 == INTEGER || type2 == BOOLEAN)
                 || (type1 == INTEGER || type2 == BOOLEAN) && type2 == STRING)
             return STRING;
+        // Matchinfo can be widened to integer (will simply take the start position)
+        if (type1 == MATCH_INFO && type2 == INTEGER || type1 == INTEGER && type2 == MATCH_INFO)
+            return INTEGER;
         return null; // incompatible
     }
 
