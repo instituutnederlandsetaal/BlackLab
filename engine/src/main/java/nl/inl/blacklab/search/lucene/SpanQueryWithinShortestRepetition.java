@@ -66,7 +66,7 @@ public class SpanQueryWithinShortestRepetition extends BLSpanQueryAbstract {
         this(producer, filterUnit, new SpanQueryRelations(queryInfo, relationField,
                 XFRelations.REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE, Collections.emptyMap(),
                 SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN,
-                "", null), captureRelsAs, adjustLeading, adjustTrailing);
+                "", false, null), captureRelsAs, adjustLeading, adjustTrailing);
     }
 
     /**

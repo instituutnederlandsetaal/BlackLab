@@ -142,7 +142,17 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     private RelationInfo.SpanMode spanMode;
 
+    public boolean isImplicitCapture() {
+        return implicitCapture;
+    }
+
+    public String getCaptureAs() {
+        return captureAs;
+    }
+
     private String captureAs;
+
+    private boolean implicitCapture;
 
     private AnnotatedField targetField;
 
@@ -150,7 +160,7 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     public SpanQueryRelations(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
-            AnnotatedField targetField) {
+            boolean implicitCapture, AnnotatedField targetField) {
         super(queryInfo);
         this.relationsStrategy = queryInfo.index().getRelationsStrategy();
         if (relationField == null)
@@ -164,19 +174,19 @@ public class SpanQueryRelations extends BLSpanQuery {
 
         BLSpanQuery clause = relationsStrategy.getRelationsQuery(queryInfo, relationField, relationTypeRegex, attributes);
         //BLSpanQuery clause = getRelationsQuery(queryInfo, relationFieldName, relationTypeRegex, attributes);
-        init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
+        init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs, AnnotatedField targetField) {
+            String captureAs, boolean implicitCapture, AnnotatedField targetField) {
         super(queryInfo);
         this.relationsStrategy = queryInfo.index().getRelationsStrategy();
-        init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
+        init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
 
     private void init(AnnotationSensitivity relationField, String relationType, Map<String, String> attributes, BLSpanQuery clause, Direction direction,
-            RelationInfo.SpanMode spanMode, String captureAs, AnnotatedField targetField) {
+            RelationInfo.SpanMode spanMode, String captureAs, boolean implicitCapture, AnnotatedField targetField) {
         this.relationField = relationField;
         baseField = relationField.annotation().field();
         this.relationType = relationType;
@@ -185,6 +195,7 @@ public class SpanQueryRelations extends BLSpanQuery {
         this.direction = direction;
         this.spanMode = spanMode;
         this.captureAs = captureAs == null ? "" : captureAs;
+        this.implicitCapture = implicitCapture;
         this.guarantees = createGuarantees(clause.guarantees(), direction, spanMode);
         this.targetField = targetField;
     }
@@ -193,7 +204,7 @@ public class SpanQueryRelations extends BLSpanQuery {
         if (this.spanMode == mode)
             return this;
         return new SpanQueryRelations(queryInfo, relationField, relationType, attributes, clause, direction, mode,
-                captureAs, targetField);
+                captureAs, implicitCapture, targetField);
     }
 
     @Override
@@ -202,7 +213,7 @@ public class SpanQueryRelations extends BLSpanQuery {
         if (rewritten == clause)
             return this;
         return new SpanQueryRelations(queryInfo, relationField, relationType, attributes, rewritten, direction,
-                spanMode, captureAs, targetField);
+                spanMode, captureAs, implicitCapture, targetField);
     }
 
     @Override
@@ -287,14 +298,23 @@ public class SpanQueryRelations extends BLSpanQuery {
         return Objects.equals(clause, that.clause) && Objects.equals(relationType, that.relationType)
                 && Objects.equals(attributes, that.attributes) && Objects.equals(baseField,
                 that.baseField) && Objects.equals(relationField, that.relationField)
-                && direction == that.direction && spanMode == that.spanMode && Objects.equals(captureAs,
-                that.captureAs) && Objects.equals(targetField, that.targetField);
+                && direction == that.direction && spanMode == that.spanMode &&
+                Objects.equals(explicitCapture(), that.explicitCapture()) &&
+                Objects.equals(targetField, that.targetField);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(clause, relationType, attributes, baseField, relationField, direction, spanMode,
-                captureAs, targetField);
+                explicitCapture(), targetField);
+    }
+
+    /**
+     * Get the capture name if explicitly specified, or an empty string if implicit or not set.
+     * @return the explicit capture string or an empty string
+     */
+    private String explicitCapture() {
+        return implicitCapture ? "" : captureAs;
     }
 
     /**

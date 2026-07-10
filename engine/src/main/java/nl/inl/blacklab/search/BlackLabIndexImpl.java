@@ -188,7 +188,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     @Override
     public BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
         RelationInfo.SpanMode spanMode = switch (adjust) {
             case LEADING_EDGE -> RelationInfo.SpanMode.SOURCE;
@@ -198,7 +198,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
         return new SpanQueryRelations(queryInfo, luceneField,
                 RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
-                attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
+                attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, implicitCapture, null);
     }
 
     @Override

@@ -264,10 +264,9 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteTags() {
-        assertRewriteResult("<s/> containing 'a' 'b'",
-                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
-        assertRewriteResult("<s> []* 'a' 'b' []* </s>",
-                "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
+        String rewrContaining = "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)";
+        assertRewriteResult("<s/> containing 'a' 'b'", rewrContaining);
+        assertRewriteResult("<s> []* 'a' 'b' []* </s>", rewrContaining);
         assertRewriteResult("<s> 'a' 'b' []* </s>",
                 "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing_at_start)");
         assertRewriteResult("<s> []* 'a' 'b' </s>",
@@ -302,6 +301,27 @@ public class TestQueryRewrite {
         assertRewriteResult("[lemma='.*']", "ANYTOKEN(1, 1)");
         assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
         assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
+    }
+
+    @Test
+    public void testSimplifyTrivialPositionFilter() {
+        assertRewriteResult("<s/> within <s/>", "TAGS(s, cap:s)");
+        assertRewriteResult("<s/> containing <s/>", "TAGS(s, cap:s)");
+    }
+
+    @Test
+    public void testSimplifyNestedPositionFilter() {
+        String rewrittenWithin = "POSFILTER(TERM(contents%word@i:de), TAGS(s, cap:s), within)";
+        assertRewriteResult("('de' within <s/>) within <s/>", rewrittenWithin);
+        assertRewriteResult("('de' within <s/>) containing 'de'", rewrittenWithin);
+        assertRewriteResult("'de' within (<s/> containing 'de')", rewrittenWithin);
+        assertRewriteResult("'de' within ('de' within <s/>)", rewrittenWithin);
+
+        String rewrittenContaining = "POSFILTER(TAGS(s, cap:s), TERM(contents%word@i:de), containing)";
+        assertRewriteResult("(<s/> containing 'de') within <s/>", rewrittenContaining);
+        assertRewriteResult("(<s/> containing 'de') containing 'de'", rewrittenContaining);
+        assertRewriteResult("<s/> containing ('de' within <s/>)", rewrittenContaining);
+        assertRewriteResult("<s/> containing (<s/> containing 'de')", rewrittenContaining);
     }
 
 }

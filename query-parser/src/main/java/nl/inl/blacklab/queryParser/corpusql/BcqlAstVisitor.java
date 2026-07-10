@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
@@ -205,10 +205,10 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
             result = switch (op) {
                 case "overlap" -> new TextPatternOverlapping(result, clause2, op);
                 case "within", "containing" -> {
-                    SpanQueryPositionFilter.Operation operator = op.equals("within") ?
-                            SpanQueryPositionFilter.Operation.WITHIN :
-                            SpanQueryPositionFilter.Operation.CONTAINING;
-                    yield new TextPatternPositionFilter(result, clause2, operator);
+                    SpanFilter operator = op.equals("within") ?
+                            SpanFilter.WITHIN :
+                            SpanFilter.CONTAINING;
+                    yield new TextPatternPositionFilter(result, clause2, operator, false);
                 }
                 default -> throw new IllegalArgumentException("Invalid containingWithin operator: " + op);
             };

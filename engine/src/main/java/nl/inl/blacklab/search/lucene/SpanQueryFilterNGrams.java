@@ -69,7 +69,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     }
 
     /** How to expand the hits */
-    final SpanQueryPositionFilter.Operation op;
+    final SpanFilter op;
 
     /** Minimum number of tokens to expand */
     final int min;
@@ -83,7 +83,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     /** How to adjust right n-gram border relative to the filter clause */
     private final int rightAdjust;
 
-    public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
+    public SpanQueryFilterNGrams(BLSpanQuery clause, SpanFilter op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause);
         this.op = op;
         this.min = min;

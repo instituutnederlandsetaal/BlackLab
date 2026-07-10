@@ -320,7 +320,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
                         : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
                 result = new SpanQueryPositionFilter(result, excludeResult,
-                        SpanQueryPositionFilter.Operation.MATCHES, true).rewrite(reader);
+                        SpanFilter.MATCHES, true).rewrite(reader);
             }
         }
         if (mustFilterOnHitLength) {

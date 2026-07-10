@@ -50,7 +50,7 @@ public class XFRelations implements ExtensionFunctionClass {
     private static final String DEFAULT_RCAP_NAME = "captured_rels";
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
-            BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs,
+            BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
             RelationInfo.SpanMode spanMode, AnnotatedField targetField) {
         // Do we need to match a target, or don't we care?
         AnnotationSensitivity field = context.withRelationAnnotation()
@@ -60,7 +60,7 @@ public class XFRelations implements ExtensionFunctionClass {
         if (matchTarget != null) {
             // Ensure relation matches given target, then adjust to the requested span mode
             BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, null,
-                    direction, RelationInfo.SpanMode.TARGET, captureAs, targetField);
+                    direction, RelationInfo.SpanMode.TARGET, captureAs, implicitCapture, targetField);
             BLSpanQuery relAndTarget = new SpanQueryAnd(List.of(rel, matchTarget));
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
@@ -71,7 +71,7 @@ public class XFRelations implements ExtensionFunctionClass {
         } else {
             // No target to match; we can just return the relation matches with the correct span mode right away
             return new SpanQueryRelations(queryInfo, field, relationType, null,
-                    direction, spanMode, captureAs, targetField);
+                    direction, spanMode, captureAs, implicitCapture, targetField);
         }
     }
 
@@ -107,10 +107,13 @@ public class XFRelations implements ExtensionFunctionClass {
                     relationType = RelationUtil.optPrependDefaultClass(relationType, context);
 
                     // Auto-determine capture name if none was given
-                    if (StringUtils.isEmpty(captureAs))
+                    boolean implicitCapture = false;
+                    if (StringUtils.isEmpty(captureAs)) {
                         captureAs = determineCaptureAs(context, relationType, false);
+                        implicitCapture = true;
+                    }
 
-                    return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, spanMode,
+                    return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, implicitCapture, spanMode,
                             null);
                 });
 

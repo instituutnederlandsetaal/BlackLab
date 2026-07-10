@@ -5,6 +5,7 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
 
@@ -24,30 +25,18 @@ public class TextPatternPositionFilter extends TextPattern {
     private final TextPattern filter;
 
     /** Operation to use for filtering (e.g. within/containing/...) */
-    private final SpanQueryPositionFilter.Operation operation;
+    private final SpanFilter operation;
 
     /** Whether to invert the filter operation */
     private final boolean invert;
 
-    /** How to adjust the leading edge of the producer hits while matching */
-    private final int adjustLeading;
-
-    /** How to adjust the trailing edge of the producer hits while matching */
-    private final int adjustTrailing;
-
-    public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation operation) {
-        this(producer, filter, operation, false, 0, 0);
-    }
-
-    public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation operation,
-            boolean invert, int adjustLeading, int adjustTrailing) {
+    public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanFilter operation,
+            boolean invert) {
         super(TP_PRECEDENCE);
         this.producer = producer;
         this.filter = filter;
         this.operation = operation;
         this.invert = invert;
-        this.adjustLeading = adjustLeading;
-        this.adjustTrailing = adjustTrailing;
     }
 
     @Override
@@ -55,7 +44,7 @@ public class TextPatternPositionFilter extends TextPattern {
         EvalResult result = filter.evaluate(context);
         if (result instanceof BLSpanQuery filterQuery) {
             return new SpanQueryPositionFilter(producer.toQuery(context), filterQuery,
-                    operation, invert, adjustLeading, adjustTrailing);
+                    operation, invert);
         } else if (result instanceof ConstraintValueList cvl) {
             // Apply multiple filters in sequence
             // Example: A containing list(B, C) -> (A containing B) containing C
@@ -63,7 +52,7 @@ public class TextPatternPositionFilter extends TextPattern {
             for (Object item: cvl.getValue()) {
                 if (item instanceof BLSpanQuery filterQuery) {
                     resultQuery = new SpanQueryPositionFilter(resultQuery, filterQuery,
-                            operation, invert, adjustLeading, adjustTrailing);
+                            operation, invert);
                 } else {
                     throw new InvalidQuery("Non-query filter parameter to position filter " + operation + ": " + item);
                 }
@@ -82,22 +71,20 @@ public class TextPatternPositionFilter extends TextPattern {
         if (o == null || getClass() != o.getClass())
             return false;
         TextPatternPositionFilter that = (TextPatternPositionFilter) o;
-        return invert == that.invert && adjustLeading == that.adjustLeading && adjustTrailing == that.adjustTrailing
+        return invert == that.invert
                 && Objects.equals(producer, that.producer) && Objects.equals(filter, that.filter)
                 && operation == that.operation;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(producer, filter, operation, invert, adjustLeading, adjustTrailing);
+        return Objects.hash(producer, filter, operation, invert);
     }
 
     @Override
     public String toString() {
-        String adj = (adjustLeading != 0 || adjustTrailing != 0 ?
-                ", " + adjustLeading + ", " + adjustTrailing : "");
         return "POSFILTER(" + producer + ", " + filter + ", " +
-                (invert ? "NOT" : "") + operation + adj + ")";
+                (invert ? "NOT" : "") + operation + ")";
     }
 
     /**
@@ -109,11 +96,9 @@ public class TextPatternPositionFilter extends TextPattern {
      * @return true if this is a "within tag" operation and the tag name matches
      */
     public boolean isWithinTag(String tagName) {
-        if (operation != SpanQueryPositionFilter.Operation.WITHIN)
+        if (operation != SpanFilter.WITHIN)
             return false;
-        boolean isCorrectTag = filter instanceof TextPatternTags &&
-                ((TextPatternTags)filter).getElementNameRegex().equals(tagName);
-        return isCorrectTag && adjustLeading == 0 && adjustTrailing == 0;
+        return filter instanceof TextPatternTags tpt && tpt.getElementNameRegex().equals(tagName);
     }
 
     public TextPattern getProducer() {
@@ -124,20 +109,12 @@ public class TextPatternPositionFilter extends TextPattern {
         return filter;
     }
 
-    public SpanQueryPositionFilter.Operation getOperation() {
+    public SpanFilter getOperation() {
         return operation;
     }
 
     public boolean isInvert() {
         return invert;
-    }
-
-    public int getAdjustLeading() {
-        return adjustLeading;
-    }
-
-    public int getAdjustTrailing() {
-        return adjustTrailing;
     }
 
     @Override

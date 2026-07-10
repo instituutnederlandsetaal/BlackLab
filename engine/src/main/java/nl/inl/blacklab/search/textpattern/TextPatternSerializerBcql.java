@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
@@ -156,14 +156,13 @@ public class TextPatternSerializerBcql {
             if (insideTokenBrackets)
                 throw new UnsupportedOperationException("Cannot serialize TextPatternPositionFilter inside brackets to CQL");
             TextPatternPositionFilter tp = (TextPatternPositionFilter) pattern;
-            boolean supportedOp = tp.getOperation() == SpanQueryPositionFilter.Operation.WITHIN ||
-                    tp.getOperation() == SpanQueryPositionFilter.Operation.CONTAINING;
-            if (tp.getAdjustLeading() != 0 || tp.getAdjustTrailing() != 0 || tp.isInvert() || !supportedOp)
+            boolean supportedOp = tp.getOperation() == SpanFilter.WITHIN ||
+                    tp.getOperation() == SpanFilter.CONTAINING;
+            if (tp.isInvert() || !supportedOp)
                 throw new IllegalArgumentException(
-                        "Cannot serialize to CorpusQL: posfilter with adjustLeading " + tp.getAdjustLeading() +
-                                ", adjustTrailing " + tp.getAdjustTrailing() + ", invert " + tp.isInvert() +
+                        "Cannot serialize to CorpusQL: posfilter with invert " + tp.isInvert() +
                                 ", operation " + tp.getOperation() +
-                                " (only supports unadjusted, uninverted within/containing))");
+                                " (only supports uninverted within/containing))");
             infix(b, insideTokenBrackets, " " + tp.getOperation() + " ",
                     List.of(tp.getProducer(), tp.getFilter()), tp.getPrecedence());
         });

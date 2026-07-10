@@ -246,18 +246,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             clauses.add(startTagIndex, producer);
         } else {
             BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
-            SpanQueryPositionFilter.Operation op;
+            SpanFilter op;
             if (startAny) {
                 if (endAny) {
-                    op = SpanQueryPositionFilter.Operation.CONTAINING;
+                    op = SpanFilter.CONTAINING;
                 } else {
-                    op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
+                    op = SpanFilter.CONTAINING_AT_END;
                 }
             } else {
                 if (endAny) {
-                    op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
+                    op = SpanFilter.CONTAINING_AT_START;
                 } else {
-                    op = SpanQueryPositionFilter.Operation.MATCHES;
+                    op = SpanFilter.MATCHES;
                 }
             }
             clauses.add(startTagIndex, new SpanQueryPositionFilter(producer, filter, op, false));

@@ -126,7 +126,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(queryInfo, 1, 1, base.getRealField()), min, max);
             container = container.rewrite(reader);
             return new SpanQueryPositionFilter(container, baseRewritten.inverted(),
-                    SpanQueryPositionFilter.Operation.CONTAINING, true);
+                    SpanFilter.CONTAINING, true);
         } else if (baseRewritten instanceof SpanQueryRepetition tp) {
             if (max == MAX_UNLIMITED && tp.max == MAX_UNLIMITED) {
                 if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {

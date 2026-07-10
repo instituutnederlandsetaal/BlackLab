@@ -2,7 +2,6 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
 
@@ -190,7 +189,10 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     }
 
     /**
-     * Rewrite a TextPattern, adding a requirement for a capture to match a pattern.
+     * Rewrite a TextPattern, adding a requirement for a capture to match an additional clause.
+     *
+     * Used for viewing a single group if we haven't stored the group's hits.
+     * We use this to construct a query that produces the hits in the group.
      */
     private static class TextPatternRewriterRefineWithCapture extends TextPatternRewriterBase {
 

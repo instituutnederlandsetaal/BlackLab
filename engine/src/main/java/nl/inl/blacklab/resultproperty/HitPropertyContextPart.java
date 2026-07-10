@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -83,7 +83,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             if (contextPart.fromHitEnd()) {
                 // From hit end backwards (confined to hit)
                 tp = new TextPatternPositionFilter(original.pattern(),
-                        propTextPattern, SpanQueryPositionFilter.Operation.CONTAINING_AT_END);
+                        propTextPattern, SpanFilter.CONTAINING_AT_END, false);
             } else {
                 // From hit start backwards (using lookbehind)
                 TextPatternLook lookbehind = new TextPatternLook(propTextPattern, true, false);
@@ -98,7 +98,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             } else {
                 // From hit start forwards (confined to hit)
                 tp = new TextPatternPositionFilter(original.pattern(),
-                        propTextPattern, SpanQueryPositionFilter.Operation.CONTAINING_AT_START);
+                        propTextPattern, SpanFilter.CONTAINING_AT_START, false);
             }
         }
         return original.withPattern(tp);

@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryAdjustHits;
 import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
@@ -131,18 +132,18 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Filter producer hits by filter query using the specified operation (optionally inverted)
-        List<String> posFilterOps = Arrays.asList(SpanQueryPositionFilter.Operation.values()).stream()
+        List<String> posFilterOps = Arrays.asList(SpanFilter.values()).stream()
                 .map(v -> v.toString()).toList();
         QueryExtensions.register("_posfilter", List.of(
                 PQuery.required("producer"),
                 PQuery.required("filter"),
-                PEnum.of("operation", SpanQueryPositionFilter.Operation.class, true),
+                PEnum.of("operation", SpanFilter.class, true),
                 PBoolean.required("inverted")),
                 Arrays.asList(null, null, "matches", false),
                 (queryInfo, context, args) -> {
                     BLSpanQuery producer = (BLSpanQuery) args.get(0);
                     BLSpanQuery filter = (BLSpanQuery) args.get(1);
-                    SpanQueryPositionFilter.Operation operation = SpanQueryPositionFilter.Operation.fromStringValue((String) args.get(2));
+                    SpanFilter operation = SpanFilter.fromStringValue((String) args.get(2));
                     boolean inverted = (boolean) args.get(3);
                     return new SpanQueryPositionFilter(producer, filter, operation, inverted);
                 });

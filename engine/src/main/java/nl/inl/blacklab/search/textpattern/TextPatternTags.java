@@ -88,15 +88,17 @@ public class TextPatternTags extends TextPattern {
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
         String captureAsOrAuto = captureAs;
+        boolean implicitCapture = false;
         if (StringUtils.isEmpty(captureAsOrAuto)) {
             String name = elementNameRegex.isEmpty() ? "span" : StringUtil.sanitizeCaptureName(elementNameRegex);
             name = name.replaceAll("[^\\p{L}]", "");
             captureAsOrAuto = context.ensureUniqueCapture(name);
+            implicitCapture = true; // remember this so later optimizations can ignore the capture when comparing clauses
         }
 
         // Return the proper SpanQuery depending on index version
         return context.index().tagQuery(context.queryInfo(), context.luceneFieldRef(),
-                optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto);
+                optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto, implicitCapture);
     }
 
     @Override

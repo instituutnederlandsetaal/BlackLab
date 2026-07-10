@@ -36,7 +36,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     private int srcEnd = -1;
 
     /** How to expand the hits */
-    private final SpanQueryPositionFilter.Operation op;
+    private final SpanFilter op;
 
     /** Minimum number of tokens to expand */
     private final int min;
@@ -68,10 +68,10 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     private boolean atFirstInCurrentDoc;
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
-            SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
+            SpanFilter op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause, SpanQueryFilterNGrams.createGuarantees(clause.guarantees(), min, max));
-        if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
-                && op != SpanQueryPositionFilter.Operation.MATCHES) {
+        if (op != SpanFilter.CONTAINING_AT_END && op != SpanFilter.ENDS_AT
+                && op != SpanFilter.MATCHES) {
             // We need to know document length to properly do expansion to the right
             // OPT: cache this in BlackLabIndex..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);

@@ -86,7 +86,7 @@ public interface BlackLabIndex extends AutoCloseable {
     }
 
     BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs);
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
 
     /** Get our index type (always integrated now). */
     IndexType getType();

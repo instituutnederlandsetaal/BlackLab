@@ -18,7 +18,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 2, 3 });
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
-                SpanQueryPositionFilter.Operation.CONTAINING, 2, 3, 0, 0);
+                SpanFilter.CONTAINING, 2, 3, 0, 0);
         spans.setTest(true); // for test, all documents are 5 long
 
         Spans exp = new MockSpans(
@@ -36,7 +36,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 2, 3 });
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
-                SpanQueryPositionFilter.Operation.CONTAINING_AT_END, 2, 3, 0, 0);
+                SpanFilter.CONTAINING_AT_END, 2, 3, 0, 0);
         spans.setTest(true); // for test, all documents are 5 long
 
         Spans exp = new MockSpans(
@@ -54,7 +54,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 2, 3 });
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
-                SpanQueryPositionFilter.Operation.CONTAINING_AT_START, 2, 3, 0, 0);
+                SpanFilter.CONTAINING_AT_START, 2, 3, 0, 0);
         spans.setTest(true); // for test, all documents have the same length
 
         Spans exp = new MockSpans(
@@ -72,7 +72,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 5, 5 });
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
-                SpanQueryPositionFilter.Operation.WITHIN, 2, 3, 0, 0);
+                SpanFilter.WITHIN, 2, 3, 0, 0);
         spans.setTest(true); // for test, all documents are 5 long
 
         Spans exp = new MockSpans(
@@ -90,7 +90,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 2, 4, 4, 6 });
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
-                SpanQueryPositionFilter.Operation.MATCHES, 2, 3, 0, 0);
+                SpanFilter.MATCHES, 2, 3, 0, 0);
         spans.setTest(true); // for test, all documents are 5 long
 
         Spans exp = new MockSpans(

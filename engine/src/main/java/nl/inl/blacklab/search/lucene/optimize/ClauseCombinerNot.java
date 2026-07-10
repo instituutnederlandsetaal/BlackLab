@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene.optimize;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
@@ -43,7 +44,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
             int myLen = right.guarantees().hitsLengthMin();
             container = new SpanQueryExpansion(right, Direction.LEFT, 1, 1);
-            posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
+            posf = new SpanQueryPositionFilter(container, left.inverted(), SpanFilter.CONTAINING, true);
             posf.adjustTrailing(-myLen);
             return posf;
         case CONST_NOT:
@@ -52,7 +53,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             int prevLen = left.guarantees().hitsLengthMin();
             container = new SpanQueryExpansion(left, Direction.RIGHT, 1, 1);
             posf = new SpanQueryPositionFilter(container, right.inverted(),
-                    SpanQueryPositionFilter.Operation.CONTAINING, true);
+                    SpanFilter.CONTAINING, true);
             posf.adjustLeading(prevLen);
             return posf;
         default:

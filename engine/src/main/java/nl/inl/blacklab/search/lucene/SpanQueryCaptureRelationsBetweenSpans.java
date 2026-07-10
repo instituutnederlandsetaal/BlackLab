@@ -59,7 +59,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             // Once we find a relation matching the current source span, we'll check if target matches as well.
             SpanQueryRelations relations = new SpanQueryRelations(queryInfo, relationField, relationType,
                     Collections.emptyMap(), SpanQueryRelations.Direction.BOTH_DIRECTIONS,
-                    RelationInfo.SpanMode.SOURCE, "", null);
+                    RelationInfo.SpanMode.SOURCE, "", false, null);
             return relations;
         }
 

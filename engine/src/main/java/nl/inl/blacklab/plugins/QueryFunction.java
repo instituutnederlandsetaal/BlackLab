@@ -114,7 +114,8 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
                     // Special case: any span (usually meaning "don't care")
                     defVal = context.index()
                             .tagQuery(context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(),
-                                    RelationUtil.ANY_TYPE_REGEX, null, TextPatternTags.Adjust.FULL_TAG, null);
+                                    RelationUtil.ANY_TYPE_REGEX, null,
+                                    TextPatternTags.Adjust.FULL_TAG, null, false);
                 }
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value

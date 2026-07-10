@@ -12,6 +12,7 @@ import nl.inl.blacklab.plugins.param.PInteger;
 import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryAdjustHits;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
@@ -71,9 +72,9 @@ public class QueryFunctionMeetWithin extends QueryFunction {
             // e.g. meet_within("tree", "leaf", <s/>) =>
             // "tree" within (<s/> containing "leaf")
             SpanQueryPositionFilter where = new SpanQueryPositionFilter(withinClause, nearClause,
-                    SpanQueryPositionFilter.Operation.CONTAINING, negate);
+                    SpanFilter.CONTAINING, negate);
             return new SpanQueryPositionFilter(findClause, where,
-                    SpanQueryPositionFilter.Operation.WITHIN, false);
+                    SpanFilter.WITHIN, false);
         }
 
         BLSpanQuery result;
@@ -205,8 +206,7 @@ public class QueryFunctionMeetWithin extends QueryFunction {
     private static BLSpanQuery optWrapWithin(BLSpanQuery clause, BLSpanQuery optWithin) {
         // Optionally apply within clause
         return optWithin == null ? clause :
-                new SpanQueryPositionFilter(clause, optWithin,
-                    SpanQueryPositionFilter.Operation.WITHIN, false);
+                new SpanQueryPositionFilter(clause, optWithin, SpanFilter.WITHIN, false);
     }
 
 }

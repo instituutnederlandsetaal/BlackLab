@@ -75,8 +75,11 @@ public class RelationTarget extends TextPattern {
 
         // Auto-determine capture name if none was given
         String captureName = captureAs;
-        if (StringUtils.isEmpty(captureName))
+        boolean implicitCapture = false;
+        if (StringUtils.isEmpty(captureName)) {
             captureName = XFRelations.determineCaptureAs(context, relationType, opInfo.isAlignment());
+            implicitCapture = true;
+        }
 
         BLSpanQuery translated = XFRelations.createRelationQuery(
                 context.queryInfo(),
@@ -85,6 +88,7 @@ public class RelationTarget extends TextPattern {
                 targetNoDefVal.toQuery(targetContext),
                 opInfo.getDirection(),
                 captureName,
+                implicitCapture,
                 spanMode,
                 targetContext.field()
         );

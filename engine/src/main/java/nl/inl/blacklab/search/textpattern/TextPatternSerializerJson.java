@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
@@ -189,9 +189,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_PRODUCER, tp.getProducer(),
                     KEY_FILTER, tp.getFilter(),
                     KEY_OPERATION, tp.getOperation().toString(),
-                    KEY_INVERT, nullIf(tp.isInvert(), false),
-                    KEY_ADJUST_LEADING, nullIf(tp.getAdjustLeading(), 0),
-                    KEY_ADJUST_TRAILING, nullIf(tp.getAdjustTrailing(), 0));
+                    KEY_INVERT, nullIf(tp.isInvert(), false));
         });
 
         // Overlapping
@@ -395,10 +393,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             return new TextPatternPositionFilter(
                     (TextPattern) args.get(KEY_PRODUCER),
                     (TextPattern) args.get(KEY_FILTER),
-                    SpanQueryPositionFilter.Operation.fromStringValue((String)args.get(KEY_OPERATION)),
-                    (boolean) args.getOrDefault(KEY_INVERT, false),
-                    (int) args.getOrDefault(KEY_ADJUST_LEADING, 0),
-                    (int) args.getOrDefault(KEY_ADJUST_TRAILING, 0));
+                    SpanFilter.fromStringValue((String)args.get(KEY_OPERATION)),
+                    (boolean) args.getOrDefault(KEY_INVERT, false));
         case NT_OVERLAPPING: {
             List<TextPattern> clauses = (List<TextPattern>)args.get(KEY_CLAUSES);
             return new TextPatternOverlapping(

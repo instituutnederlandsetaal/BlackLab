@@ -30,7 +30,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     }
 
     /** Filter operation to apply */
-    final SpanQueryPositionFilter.Operation operation;
+    final SpanFilter operation;
 
     /** Return producer spans that DON'T match the filter instead? */
     final boolean invert;
@@ -50,7 +50,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
      *            (containing, within, startsat, endsat)
      * @param invert produce hits that don't match filter instead?
      */
-    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation operation,
+    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanFilter operation,
             boolean invert) {
         this(producer, filter, operation, invert, 0, 0);
     }
@@ -74,7 +74,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
      * @param adjustTrailing how to adjust the trailing edge of the producer hits while
      *            matching
      */
-    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanQueryPositionFilter.Operation operation,
+    public SpanQueryPositionFilter(BLSpanQuery producer, BLSpanQuery filter, SpanFilter operation,
             boolean invert, int adjustLeading, int adjustTrailing) {
         super(producer, filter);
         this.operation = operation;
@@ -84,13 +84,96 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         this.guarantees = createGuarantees(producer.guarantees());
     }
 
+    /** Which of these "identical" clauses should we keep?
+     *
+     * This exists because implicit captures may be optimized away, but we want to select the one without the
+     * tie-breaking number attached (s, not s2)
+     */
+    static BLSpanQuery chooseBetweenEqual(BLSpanQuery a, BLSpanQuery b) {
+        if (a instanceof SpanQueryRelations r && b instanceof SpanQueryRelations s && r.isImplicitCapture()) {
+            // Identical clauses with implicit (auto-generated) captures, e.g. <s/> captured as s and s2.
+            // Select the one with the shortest capture name so we keep the s capture, not the s2 one.
+            // Relevant for e.g. (X within <s/>) within </s> optimization.
+            return r.getCaptureAs().length() < s.getCaptureAs().length() ? r : s;
+        }
+        return a;
+    }
+
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        BLSpanQuery producer = clauses.get(0).rewrite(reader);
-        BLSpanQuery filter = clauses.get(1).rewrite(reader);
+        BLSpanQuery producer = getProducer().rewrite(reader);
+        BLSpanQuery filter = getFilter().rewrite(reader);
 
-        if (!invert && operation != SpanQueryPositionFilter.Operation.STARTS_AT
-                && operation != SpanQueryPositionFilter.Operation.ENDS_AT &&
+        if (producer.equals(filter)) {
+            // Identical clauses; trivial case
+            if (invert) {
+                // e.g. <s/> not within <s/>
+                return new SpanQueryNoHits(queryInfo, luceneFieldName);
+            }
+            // e.g. <s/> within <s/> --> <s/>
+            // (this works for all operations)
+            return chooseBetweenEqual(producer, filter);
+        }
+
+        // Can we simplify a trivial nested position filter?
+        // (same results, much better performance)
+        switch (operation) {
+            case WITHIN -> {
+                if (producer instanceof SpanQueryPositionFilter pf && !pf.invert) {
+                    if (pf.operation == SpanFilter.CONTAINING && pf.getProducer().equals(filter)) {
+                        // (L containing S) within L --> L containing S
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getProducer(), filter);
+                        return newProducer == pf.getProducer() ? pf :
+                                new SpanQueryPositionFilter(newProducer, pf.getFilter(), SpanFilter.CONTAINING, false);
+                    } else if (pf.operation == SpanFilter.WITHIN && pf.getFilter().equals(filter)) {
+                        // (S within L) within L --> S within L
+                        BLSpanQuery newFilter = chooseBetweenEqual(pf.getFilter(), filter);
+                        return newFilter == pf.getFilter() ? pf :
+                                new SpanQueryPositionFilter(pf.getProducer(), newFilter, SpanFilter.WITHIN, false);
+                    }
+                } else if (filter instanceof SpanQueryPositionFilter pf && !pf.invert) {
+                    if (pf.operation == SpanFilter.CONTAINING && pf.getFilter().equals(producer)) {
+                        // S within (L containing S) --> S within L
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getFilter(), producer);
+                        return new SpanQueryPositionFilter(newProducer, pf.getProducer(), SpanFilter.WITHIN, false);
+                    } else if (pf.operation == SpanFilter.WITHIN && pf.getProducer().equals(producer)) {
+                        // S within (S within L) --> S within L
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getProducer(), producer);
+                        return newProducer == pf.getProducer() ? pf :
+                                new SpanQueryPositionFilter(newProducer, pf.getFilter(), SpanFilter.WITHIN, false);
+                    }
+                }
+            }
+            case CONTAINING -> {
+                if (producer instanceof SpanQueryPositionFilter pf && !pf.invert) {
+                    if (pf.operation == SpanFilter.CONTAINING && pf.getFilter().equals(filter)) {
+                        // (L containing S) containing S --> L containing S
+                        BLSpanQuery newFilter = chooseBetweenEqual(pf.getFilter(), filter);
+                        return newFilter == pf.getFilter() ? pf :
+                                new SpanQueryPositionFilter(pf.getProducer(), newFilter, SpanFilter.CONTAINING, false);
+                    } else if (pf.operation == SpanFilter.WITHIN && pf.getProducer().equals(filter)) {
+                        // (S within L) containing S => S within L
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getProducer(), filter);
+                        return newProducer == pf.getProducer() ? pf :
+                                new SpanQueryPositionFilter(newProducer, pf.getFilter(), SpanFilter.WITHIN, false);
+                    }
+                } else if (filter instanceof SpanQueryPositionFilter pf && !pf.invert) {
+                    if (pf.operation == SpanFilter.CONTAINING && pf.getProducer().equals(producer)) {
+                        // L containing (L containing S) --> L containing S
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getProducer(), producer);
+                        return newProducer == pf.getProducer() ? pf :
+                                new SpanQueryPositionFilter(newProducer, pf.getFilter(), SpanFilter.CONTAINING, false);
+                    } else if (pf.operation == SpanFilter.WITHIN && pf.getFilter().equals(producer)) {
+                        // L containing (S within L) --> L containing S
+                        BLSpanQuery newProducer = chooseBetweenEqual(pf.getFilter(), producer);
+                        return new SpanQueryPositionFilter(newProducer, pf.getProducer(), SpanFilter.CONTAINING, false);
+                    }
+                }
+            }
+        }
+
+        if (!invert && operation != SpanFilter.STARTS_AT
+                && operation != SpanFilter.ENDS_AT &&
                 producer instanceof SpanQueryAnyToken tp) {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
@@ -99,12 +182,21 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         }
 
         if (producer != clauses.get(0) || filter != clauses.get(1)) {
+            // One of the clauses was rewritten, so we need to create a new SpanQueryPositionFilter.
             SpanQueryPositionFilter result = new SpanQueryPositionFilter(producer, filter, operation, invert);
             result.adjustLeading = adjustLeading;
             result.adjustTrailing = adjustTrailing;
             return result;
         }
         return this;
+    }
+
+    public BLSpanQuery getProducer() {
+        return clauses.get(0);
+    }
+
+    public BLSpanQuery getFilter() {
+        return clauses.get(1);
     }
 
     @Override
@@ -149,48 +241,6 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 return invert ? spansProd : null;
             }
             return new SpansPositionFilter(spansProd, spansFilter, operation, invert, adjustLeading, adjustTrailing);
-        }
-    }
-
-    /** The different positional operations */
-    public enum Operation {
-
-        /** Producer hit contains filter hit */
-        CONTAINING,
-
-        /** Producer hit contains filter hit, at its end */
-        CONTAINING_AT_START,
-
-        /** Producer hit contains filter hit, at its start */
-        CONTAINING_AT_END,
-
-        /** Producer hit contained in filter hit */
-        WITHIN,
-
-        /** Producer hit starts at filter hit */
-        STARTS_AT,
-
-        /** Producer hit ends at filter hit */
-        ENDS_AT,
-
-        /** Producer hit exactly matches filter hit */
-        MATCHES,
-
-        /** Producer hit overlaps filter hit (i.e. they share at least one token) */
-        HAS_OVERLAP;
-
-        public static Operation fromStringValue(String s) {
-            for (Operation op : values()) {
-                if (op.name().equalsIgnoreCase(s)) {
-                    return op;
-                }
-            }
-            throw new IllegalArgumentException("Unknown operation: " + s);
-        }
-
-        @Override
-        public String toString() {
-            return name().toLowerCase();
         }
     }
 

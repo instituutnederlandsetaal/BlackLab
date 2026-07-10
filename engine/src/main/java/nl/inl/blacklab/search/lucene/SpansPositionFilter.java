@@ -8,8 +8,6 @@ import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
-
 /**
  * Finds hits from a set that contain one or more hits from the second set, or
  * finds hits from a set that are contained by hit(s) from the second set.
@@ -28,7 +26,7 @@ class SpansPositionFilter extends BLSpans {
     private int filterIndex = -1;
 
     /** What filter operation to use */
-    private final Operation op;
+    private final SpanFilter op;
 
     /** How to adjust the leading edge of the producer hits while matching */
     private final int adjustLeading;
@@ -84,7 +82,7 @@ class SpansPositionFilter extends BLSpans {
      * @param adjustTrailing how to adjust the right edge of the producer hits while
      *            matching
      */
-    public SpansPositionFilter(BLSpans producer, BLSpans filter, Operation op, boolean invert,
+    public SpansPositionFilter(BLSpans producer, BLSpans filter, SpanFilter op, boolean invert,
             int adjustLeading, int adjustTrailing) {
         super(SpanQueryPositionFilter.createGuarantees(producer.guarantees()));
         this.producer = BLSpans.ensureSorted(producer);
@@ -324,7 +322,7 @@ class SpansPositionFilter extends BLSpans {
             // We're at the first unchecked producer spans. Does it match our filter?
             boolean invertedMatch = invert; // if looking for non-matches, keep track if there have been any matches.
             int min = 0, max = filter.bucketSize() - 1;
-            if (op == Operation.CONTAINING || op == Operation.CONTAINING_AT_START || op == Operation.CONTAINING_AT_END) {
+            if (op == SpanFilter.CONTAINING || op == SpanFilter.CONTAINING_AT_START || op == SpanFilter.CONTAINING_AT_END) {
                 // (these three operations adjust min/max in the same way, so to avoid duplication we'll do it here)
                 // Looking for producer hits with a filter hit inside;
                 // First find a range of filter hits that could match the producer hit, then we'll check them below.

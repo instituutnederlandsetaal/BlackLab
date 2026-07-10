@@ -60,7 +60,7 @@ public class Output {
     private PrintWriter err = new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true);
 
     /** Show extra information about query being processed? */
-    private boolean verbose = false;
+    private boolean verbose = true;
 
     /**
      * Was a commands file specified (using -f)?

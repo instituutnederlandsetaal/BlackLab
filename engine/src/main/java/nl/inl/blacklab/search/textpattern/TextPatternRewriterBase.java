@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/** Base class for TextPattern rewrite operations, i.e. optimization passes. */
 public abstract class TextPatternRewriterBase implements TextPatternVisitor<TextPattern> {
     @Override
     public TextPattern visitAnd(TextPatternAnd tp) {
@@ -105,7 +106,7 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
         TextPattern rewrittenProducer = tp.getProducer().accept(this);
         TextPattern rewrittenFilter = tp.getFilter().accept(this);
         if (!rewrittenProducer.equals(tp.getProducer()) || !rewrittenFilter.equals(tp.getFilter())) {
-            return new TextPatternPositionFilter(rewrittenProducer, rewrittenFilter, tp.getOperation());
+            return new TextPatternPositionFilter(rewrittenProducer, rewrittenFilter, tp.getOperation(), tp.isInvert());
         }
         return tp;
     }

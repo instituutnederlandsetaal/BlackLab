@@ -107,15 +107,6 @@ public abstract class TextPattern implements TextPatternStruct {
         TextPattern filterUnit = new TextPatternTags(tagNameRegex, null,
                 TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
         return new TextPatternWithinTagContext(pattern, filterUnit, captureRelsAs);
-
-
-//        TextPattern tags = new TextPatternTags(tagNameRegex, null,
-//                TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
-//        // Also capture any relations that are in the tag
-//        TextPatternValue tpCaptureRelsAs = TextPatternValue.fromObject(captureRelsAs);
-//        tags = new TextPatternFunctionCall(XFRelations.FUNC_RCAPTURE, List.of(tags, tpCaptureRelsAs));
-//        return new TextPatternPositionFilter(pattern, tags,
-//                SpanQueryPositionFilter.Operation.WITHIN);
     }
 
     /**
