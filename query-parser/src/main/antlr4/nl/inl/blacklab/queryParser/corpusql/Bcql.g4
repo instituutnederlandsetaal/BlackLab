@@ -91,7 +91,7 @@ constrainedQuery: containingWithinQuery ('::' constraint)*;
 
 // Optional within/containing/overlap
 containingWithinQuery:
-    relationQuery (containingWithinOperator containingWithinQuery)?;
+    relationQuery (NOT? containingWithinOperator containingWithinQuery)?;
 
 containingWithinOperator: WITHIN | CONTAINING | OVERLAP;
 
@@ -129,7 +129,7 @@ sequencePartNoCapture:
         '(' LOOKAHEAD_OP? constrainedQuery ')'
     ) repetitionAmount* |
 
-    '!' sequencePartNoCapture;
+    NOT sequencePartNoCapture;
 
 // A tag, e.g. <word>, <lemma="run">, </sentence>, etc.
 tag:
@@ -170,7 +170,7 @@ comparisonOperator: '=' | '!=' | '>=' | '<=' | '>' | '<';
 // A function call, property selection (e.g. A.lemma), negation or simple constraint value
 constraintValue:
     simpleConstraintValue ( '(' commaSeparatedParamListConstraint ')' | '.' propertyName )? |
-    '!' constraintValue;
+    NOT constraintValue;
 
 commaSeparatedParamListConstraint:
     constraintValue ( ',' constraintValue )*;

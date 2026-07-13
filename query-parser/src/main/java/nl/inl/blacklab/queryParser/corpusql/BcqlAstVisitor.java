@@ -200,6 +200,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
     public TextPattern visitContainingWithinQuery(BcqlParser.ContainingWithinQueryContext ctx) {
         TextPattern result = visit(ctx.relationQuery());
         if (ctx.containingWithinQuery() != null) {
+            boolean invert = ctx.NOT() != null;
             String op = ctx.containingWithinOperator().getText();
             TextPattern clause2 = visit(ctx.containingWithinQuery());
             result = switch (op) {
@@ -208,7 +209,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
                     SpanFilter operator = op.equals("within") ?
                             SpanFilter.WITHIN :
                             SpanFilter.CONTAINING;
-                    yield new TextPatternPositionFilter(result, clause2, operator, false);
+                    yield new TextPatternPositionFilter(result, clause2, operator, invert);
                 }
                 default -> throw new IllegalArgumentException("Invalid containingWithin operator: " + op);
             };

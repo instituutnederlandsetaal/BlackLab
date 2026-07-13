@@ -298,6 +298,22 @@ The above query will just match the word _baker_ as part of a person's name. But
 <person/> containing 'baker'
 ```
 
+If you want to find _baker_ wherever it is not part of a person's name, use:
+
+```
+"baker" !within <person/>
+```
+
+::: tip overlap operator
+
+In addition to `within` and `containing`, a third related operator is `overlap`, which finds the overlaps between two queries. This operator is mainly useful to combine within requirements where you're not sure which is contained within which. For example, your documents may contain both `<author/>` and `<subject/>` fragments, and either may contain the other one. If you want to search within parts written by author Smith talking about dogs, you could use:
+
+```
+"paw" within (<author name="Smith"/> overlap <subject name="dog"/>)
+```
+
+:::
+
 ::: tip Using a regular expression for the span name
 You can match multiple span types (e.g. both `<person/>` and `<location/>`) using a regular expression:
 
