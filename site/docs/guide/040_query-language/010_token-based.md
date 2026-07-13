@@ -282,7 +282,7 @@ or sentences ending in _that_:
 "that" </s>
 ```
 
-(Note that this assumes the period at the end of the sentence is not indexed as a separate token - if it is, you would use `"that" '.' </s>` instead)
+(Note that this assumes the period at the end of the sentence is not indexed as a separate token - if it is, you would use `"that" "." </s>` instead)
 
 ### Words inside a span
 

@@ -1,7 +1,5 @@
 # Functions
 
-<!-- @include: ../../_from_v5.md -->
-
 BCQL supports a number of useful functions. Some functions produce queries as output, which you can use as part of a larger query; others produce values that you can pass to other functions.
 
 Some of these functions exist in some form in other dialects of Corpus Query Language.
@@ -10,7 +8,7 @@ Functions to do with relations search are described [there](./relations.html).
 
 ## Query functions
 
-Most functions are used in constraints (after `::`), but some can be used in the regular query part (before `::`).
+The following functions can be used in the regular query part (before `::`) to determine or change the hits to find.
 
 ### cspan: adjust to capture
 
@@ -119,7 +117,7 @@ The function is provided for those familiar with it from other corpus query lang
 
 
 
-## Constraints on captures
+## Constraint functions
 
 These are used in constraints (after `::`), to operate on parts captured by the query. 
 
@@ -129,13 +127,11 @@ Within constraints, use `start(A)` to get the starting token position of capture
 
 If `A` captured the first token of the document, `start(A)` would return `0`.
 
-
 ### end: end of capture
 
 Within constraints, use `end(A)` to get the ending token position of capture `A`. Note that this is always the first token position AFTER the capture.
 
 The first token in a document has token position 0, so if `A` captured the first two words of the document, `end(A)` would return `2` (the third token).
-
 
 ### gap: gap between captures
 
@@ -156,8 +152,6 @@ If `directional` is set to `true`, the gap will be negative if `A` comes after `
 
 ## Working with types
 
-<!-- @include: ../../_from_v5.md -->
-
 BCQL supports several basic types such as string, integer, boolean and list. These functions create or convert to specific types.
 
 ### abs: absolute value
@@ -169,6 +163,19 @@ Calculates the absolute value of a number:
 ```
 abs(-5)   # result 5
 ```
+
+### in_range: test if numbers are within a range
+
+Checks if a number falls within a range (inclusive).
+
+To check if capture `A` starts in the first 100 tokens in the document:
+
+```
+in_range(start(A), 0, 100)
+```
+
+This would be equivalent to `start(A) >= 0 & start(A) <= 100`. Using `in_range` can be convenient if the expression is longer, to avoid having to repeat it.
+
 
 ### list: list of values
 

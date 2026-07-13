@@ -7,14 +7,15 @@ most tightly". See the examples below.
 
 Inside token brackets `[ ]`, constraints and tag attribute expressions:
 
-| Operator          | Description                            | Associativity |
-|-------------------|----------------------------------------|---------------|
+| Operator          | Description                            | Associativity     |
+|-------------------|----------------------------------------|-------------------|
 | `!`               | logical not                            | right-associative |
-| `( )`             | function call                          | left-associative |
-| `.`               | (constraint only) annotation selector  | left-associative |
-| `=` `!=`          | equals/not equals                      | left-associative |
-| `<` `<=` `>` `>=` | (constraint-only) comparison operators | left-associative |
-| `&` `\|` `->`     | logical and/or/implication             | left-associative |
+| `( )`             | function call                          | left-associative  |
+| `.`               | (constraint only) annotation selector  | left-associative  |
+| `+` `-`           | addition/subtraction                   | left-associative  |
+| `=` `!=`          | equals/not equals                      | left-associative  |
+| `<` `<=` `>` `>=` | (constraint-only) comparison operators | left-associative  |
+| `&` `\|` `->`     | logical and/or/implication             | left-associative  |
 
 At the sequence level (i.e. outside token brackets):
 
@@ -66,11 +67,8 @@ BlackLab currently supports (arguably) most of the important features of Corpus 
 * Operators `|`, `&` and parentheses can be used to build complex sequence queries. Example: `"happy" "dog" | "sad" "cat"`
 * Querying with tag positions using e.g. `<s>` (start of sentence), `</s>` (end of sentence), `<s/>` (whole sentence) or `<s> ... </s>` (equivalent to `<s/> containing ...`). Example: `<s> "The" `. XML attribute values may be used as well, e.g. `<ne type="PERS"/>` ("named entities that are persons").
 * Using `within` and `containing` operators to find hits inside another set of hits. Example: `"you" "are" within <s/>`
-* Using an anchor to capture a token position. Example: `"big" A:[]`. Captured matches can be used in capture
-  constraints (see next item) or processed separately later (using the Java interface; capture information is not yet returned by BlackLab Server). Note that BlackLab can actually capture entire groups of tokens as well, similarly to regular expression engines.
+* Using an anchor to capture part of the match. Example: `"big" A:[]`. Captures can be used in constraints (see next item) or processed separately later.
 * Capture constraints, such as requiring two captures to contain the same word. Example: `"big" A:[] "or" "small" B:[] :: A.word = B.word`
-
-See below for features not in this list that may be added soon, and let us know if you want a particular feature to be added.
 
 ### Differences from CWB ###
 
@@ -89,14 +87,3 @@ For now, here's what you should know:
 * backreferences to anchors only work in capture constraints, so this doesn't work: `A:[] [] [word = A.word]`. Instead, use something like: `A:[] [] B:[] :: A.word = B.word`.
 * Instead of CWBs `intersection`, `union` and `difference` operators, BlackLab supports the `&`, `|` and `!` operators at the top-level of the query, e.g. `("double" [] & [] "trouble")` to match the intersection of these queries, i.e. 'double trouble' and `("happy" "dog" | "sad" "cat")` to match the union of 'happy dog' and 'sad cat'. Difference can be achieved by combining `!` and `&`, e.g. `("happy" [] & !([] "dog"))` to match 'happy' followed by anything except 'dog' (although this is better expressed as `"happy" [word != "dog"]`).
 * Integer ranges are supported: `[pos="verb" & pos_confidence=in[50,100]]` or `<verse number=in[1,10]/>` (ranges are always inclusive)
-
-### (Currently) unsupported ###
-
-Some CWB features that are not (yet) supported in BlackLab:
-
-* `lbound`, `rbound` functions to get the edge of a region. You can use `<s>` to get all starts-of-sentences or `</s>` to get all ends-of-sentences, however.
-* `distance`, `distabs` functions and `match`, `matchend` anchor points (sometimes used in capture constraints).
-* using an XML element name to mean 'token is contained within', like `[(pos = "N") & !np]` meaning "noun NOT inside in an `<np/>` tag".
-* a number of less well-known features.
-
-If people ask about missing features, we're happy to work with them to see if it could be added.
