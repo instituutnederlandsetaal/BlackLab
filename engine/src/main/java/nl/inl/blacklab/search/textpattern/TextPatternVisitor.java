@@ -11,6 +11,8 @@ public interface TextPatternVisitor<T> {
 
     T visitCompare(TextPatternCompare textPatternCompare);
 
+    T visitAdditiveOp(TextPatternAdditiveOp textPatternAdditiveOp);
+
     T visitConstrained(TextPatternConstrained textPatternConstrained);
 
     T visitDefaultValue(TextPatternDefaultValue textPatternDefaultValue);

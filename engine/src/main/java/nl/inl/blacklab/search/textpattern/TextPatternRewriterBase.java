@@ -34,6 +34,16 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
     }
 
     @Override
+    public TextPattern visitAdditiveOp(TextPatternAdditiveOp tp) {
+        TextPattern rewrittenLeft = tp.getLeftClause().accept(this);
+        TextPattern rewrittenRight = tp.getRightClause().accept(this);
+        if (!rewrittenLeft.equals(tp.getLeftClause()) || !rewrittenRight.equals(tp.getRightClause())) {
+            return new TextPatternAdditiveOp(rewrittenLeft, rewrittenRight, tp.getOperator());
+        }
+        return tp;
+    }
+
+    @Override
     public TextPattern visitConstrained(TextPatternConstrained tp) {
         TextPattern rewrittenClause = tp.getClause().accept(this);
         TextPattern rewrittenConstraint = tp.getConstraint().accept(this);

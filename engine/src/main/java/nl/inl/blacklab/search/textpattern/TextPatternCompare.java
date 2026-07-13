@@ -25,7 +25,7 @@ import nl.inl.util.RangeRegex;
 import nl.inl.util.StringUtil;
 
 /**
- * A TextPattern matching a word.
+ * A TextPattern comparing two values.
  */
 public class TextPatternCompare extends TextPattern {
 

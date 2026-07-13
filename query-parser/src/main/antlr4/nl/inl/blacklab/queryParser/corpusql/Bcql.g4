@@ -71,6 +71,7 @@ NOT             : '!';
 COLON           : ':';
 STAR            : '*';
 PLUS            : '+';
+MINUS           : '-';
 QUESTION        : '?';
 COMMA           : ',';
 SEMICOLON       : ';';
@@ -163,9 +164,20 @@ repetitionAmount: '*' | '+' | '?' | '{' INTEGER (',' INTEGER?)? '}';
 constraint: simpleConstraint (booleanOperator simpleConstraint)*;
 
 // Constraint value(s) optionally combined with comparison operators (=, !=, >, <, >=, <=)
-simpleConstraint: constraintValue (comparisonOperator constraintValue)*;
+simpleConstraint: arithmeticConstraint (comparisonOperator arithmeticConstraint)*;
 
-comparisonOperator: '=' | '!=' | '>=' | '<=' | '>' | '<';
+comparisonOperator:
+    EQUALS |
+    NOT_EQUALS |
+    GREATER_THAN |
+    LESS_THAN |
+    GREATER_THAN_OR_EQUAL |
+    LESS_THAN_OR_EQUAL;
+
+// Constraint value(s) optionally combined with arithmetic operators (+, -)
+arithmeticConstraint: constraintValue (arithmeticOperator constraintValue)*;
+
+arithmeticOperator: PLUS | MINUS;
 
 // A function call, property selection (e.g. A.lemma), negation or simple constraint value
 constraintValue:
@@ -181,6 +193,7 @@ simpleConstraintValue:
     INTEGER |
     inIntegerRange |
     captureLabel |
+    MINUS constraint |
     '(' constraint ')';
 
 quotedString: QUOTED_STRING | SINGLE_QUOTED_STRING;

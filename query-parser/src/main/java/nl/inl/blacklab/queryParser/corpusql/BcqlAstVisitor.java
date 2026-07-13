@@ -13,9 +13,11 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
+import nl.inl.blacklab.search.matchfilter.MatchFilterAdditiveOp;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAdditiveOp;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
@@ -120,7 +122,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
 
     @Override
     public TextPattern visitSimpleConstraint(BcqlParser.SimpleConstraintContext ctx) {
-        List<BcqlParser.ConstraintValueContext> cvs = ctx.constraintValue();
+        List<BcqlParser.ArithmeticConstraintContext> cvs = ctx.arithmeticConstraint();
         TextPattern result = visit(cvs.get(0));
         if (cvs.size() != ctx.comparisonOperator().size() + 1)
             throw new IllegalArgumentException("Number of constraint values must be one more than number of comparison operators");
@@ -128,6 +130,20 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
             String op = ctx.comparisonOperator(i - 1).getText();
             TextPattern clause2 = visit(cvs.get(i));
             result = new TextPatternCompare(result, clause2, MatchFilterCompare.Operator.fromSymbol(op));
+        }
+        return result;
+    }
+
+    @Override
+    public TextPattern visitArithmeticConstraint(BcqlParser.ArithmeticConstraintContext ctx) {
+        List<BcqlParser.ConstraintValueContext> cvs = ctx.constraintValue();
+        TextPattern result = visit(cvs.get(0));
+        if (cvs.size() != ctx.arithmeticOperator().size() + 1)
+            throw new IllegalArgumentException("Number of constraint values must be one more than number of comparison operators");
+        for (int i = 1; i < cvs.size(); i++) {
+            String op = ctx.arithmeticOperator(i - 1).getText();
+            TextPattern clause2 = visit(cvs.get(i));
+            result = new TextPatternAdditiveOp(result, clause2, MatchFilterAdditiveOp.Operator.fromSymbol(op));
         }
         return result;
     }
@@ -181,7 +197,12 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
             return visit(ctx.inIntegerRange());
         } else if (ctx.captureLabel() != null) {
             return visit(ctx.captureLabel());
+        } else if (ctx.MINUS() != null) {
+            // Unary minus
+            return new TextPatternAdditiveOp(null, visit(ctx.constraint()),
+                    MatchFilterAdditiveOp.Operator.MINUS);
         } else if (ctx.constraint() != null) {
+            // Parentheses
             return visit(ctx.constraint());
         } else {
             throw new IllegalArgumentException("Unexpected token type: " + ctx.getStart().getType());

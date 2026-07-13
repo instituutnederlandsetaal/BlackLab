@@ -135,6 +135,9 @@ public abstract class TextPattern implements TextPatternStruct {
             ConstraintValue val = tpv.getValue();
             if (!(val instanceof ConstraintValueSymbol)) // causes problems with e.g. :: len(A) = 4
                 strValue = val.asString().getValue();
+        } else if (arg instanceof TextPatternAdditiveOp tadd) {
+            // Try to evaluate expression directly (so e.g. --3 works)
+            strValue = tadd.rewriteToConstant().toString();
         } else if (arg instanceof TextPatternRegex tpr) {
             // Interpret as regular string, not as a query
             // kind of a hack, but should work
