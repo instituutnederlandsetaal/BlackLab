@@ -1,4 +1,4 @@
-package nl.inl.blacklab.queryparser;
+package nl.inl.blacklab.queryParser;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
