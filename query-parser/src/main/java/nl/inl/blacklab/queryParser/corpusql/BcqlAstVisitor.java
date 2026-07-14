@@ -369,7 +369,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
     @Override
     public TextPattern visitSequencePartNoCapture(BcqlParser.SequencePartNoCaptureContext ctx) {
         if (ctx.NOT() != null)
-            return new TextPatternNot(visit(ctx.sequencePartNoCapture()));
+            return new TextPatternNot(visit(ctx.captureQuery()));
         TextPattern result;
         if (ctx.tag() != null) {
             result = visit(ctx.tag());

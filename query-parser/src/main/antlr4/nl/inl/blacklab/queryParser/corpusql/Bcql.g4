@@ -130,7 +130,7 @@ sequencePartNoCapture:
         '(' LOOKAHEAD_OP? constrainedQuery ')'
     ) repetitionAmount* |
 
-    NOT sequencePartNoCapture;
+    NOT captureQuery;
 
 // A tag, e.g. <word>, <lemma="run">, </sentence>, etc.
 tag:

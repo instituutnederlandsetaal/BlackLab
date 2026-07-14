@@ -787,4 +787,9 @@ public class TestSearches {
         assertMatches(List.of(), "meet_within('find'+, 'That'+, <s/>, 1, 3)");
     }
 
+    @Test
+    public void testCaptureBindsStrongerThanNot() throws InvalidQuery {
+        assertMatches(List.of("The [quick] brown"), "!A:[word != 'quick']");
+    }
+
 }
