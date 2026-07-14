@@ -67,7 +67,10 @@ public class ResultListPlugins {
             List<PluginInfo> pluginInfos = new ArrayList<>();
             for (Plugin plugin : plugins) {
                 if (plugin.getId() == null)
-                    continue; // skip plugins without an id (shouldn't happen normally)
+                    // A plugin ID is normally set during registration (via its class simple name if not otherwise
+                    // provided). A null ID could only occur if a plugin was registered without any ID, class name,
+                    // or alternate name matching. This is defensive programming against such edge cases.
+                    continue;
                 List<PluginParamInfo> paramInfos = new ArrayList<>();
                 PluginDescriptor descriptor = plugin.descriptor();
                 for (Map.Entry<String, PluginParam> entry : descriptor.getParams().entrySet()) {
@@ -83,8 +86,12 @@ public class ResultListPlugins {
 
     /**
      * Derive a human-readable type name for a plugin parameter.
-     * Uses the simple class name of the parameter implementation, stripping the leading "P".
-     * For example, {@code PString} becomes {@code "string"}, {@code PInteger} becomes {@code "integer"}.
+     * <p>
+     * All built-in parameter types follow the convention of being named with a leading "P" followed by
+     * an uppercase letter (e.g., {@code PString}, {@code PInteger}, {@code PFloat}, {@code PBoolean}).
+     * This method strips the leading "P" and lowercases the first letter to produce a clean type name
+     * (e.g., {@code "string"}, {@code "integer"}, {@code "float"}, {@code "boolean"}).
+     * If a parameter class does not follow this convention, the full simple class name is returned as-is.
      */
     private static String paramTypeName(PluginParam param) {
         String simpleName = param.getClass().getSimpleName();
