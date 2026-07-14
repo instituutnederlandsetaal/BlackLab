@@ -115,7 +115,8 @@ public class PluginsOfType<T extends Plugin> {
             if (pluginClass.isInstance(plugin)) {
                 try {
                     data.initializePlugin();
-                    result.add(pluginClass.cast(plugin));
+                    if (!result.contains(plugin))
+                        result.add(pluginClass.cast(plugin));
                 } catch (PluginException e) {
                     // exception already cached in plugindata, no need to throw.
                     logger.error("Plugin {} failed to initialize: {}", plugin.getId(), e.getMessage());

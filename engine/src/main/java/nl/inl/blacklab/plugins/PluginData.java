@@ -47,7 +47,7 @@ class PluginData<T extends Plugin> {
         File configFile = findConfigFile();
         if (configFile == null) {
             logger.debug("No config file found for plugin " + plugin.getId() + "; look in main BlackLab config file.");
-            this.config = configs.get(plugin, altId);
+            this.config = configs == null ? Map.of() : configs.get(plugin, altId);
         } else {
             logger.debug("Loading config for plugin " + plugin.getId() + " from " + configFile);
             try {
