@@ -1880,6 +1880,33 @@ public class ResponseStreamer {
                 .endMap();
     }
 
+    public void pluginsResponse(ResultListPlugins result) {
+        ds.startMap();
+        ds.startEntry("plugins").startMap();
+        for (Map.Entry<String, List<ResultListPlugins.PluginInfo>> typeEntry : result.getPluginsByType().entrySet()) {
+            ds.startEntry(typeEntry.getKey()).startList();
+            for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
+                ds.startItem("plugin").startMap();
+                ds.entry("id", pluginInfo.getId());
+                if (!pluginInfo.getParams().isEmpty()) {
+                    ds.startEntry("params").startList();
+                    for (ResultListPlugins.PluginParamInfo param : pluginInfo.getParams()) {
+                        ds.startItem("param").startMap();
+                        ds.entry("name", param.getName())
+                                .entry("type", param.getType())
+                                .entry("required", param.isRequired());
+                        ds.endMap().endItem();
+                    }
+                    ds.endList().endEntry();
+                }
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
+        ds.endMap().endEntry();
+        ds.endMap();
+    }
+
     public void cacheInfo(SearchCache blackLabCache, boolean includeDebugInfo) {
         ds.startMap()
                 .startEntry("cacheStatus");

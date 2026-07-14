@@ -41,6 +41,8 @@ public enum WebserviceOperation {
     WRITE_INPUT_FORMAT("write-input-format", HttpMethod.POST, BlsPath.INPUT_FORMATS),
     DELETE_INPUT_FORMAT("delete-input-format", HttpMethod.DELETE, BlsPath.INPUT_FORMATS),
 
+    LIST_PLUGINS("list-plugins", BlsPath.PLUGINS),
+
     ADD_TO_CORPUS("add-to-corpus", HttpMethod.POST, BlsPath.EMPTY),
     DELETE_DOCUMENT("delete-document", HttpMethod.DELETE, BlsPath.DOCS),
 

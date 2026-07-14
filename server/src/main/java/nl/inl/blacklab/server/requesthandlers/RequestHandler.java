@@ -53,6 +53,7 @@ public abstract class RequestHandler {
     private static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
     private static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
     private static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
+    private static final String ENDPOINT_PLUGINS          = BlsPath.PLUGINS.path();
     private static final String ENDPOINT_SCHEMA           = BlsPath.SCHEMA.path();
     private static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
 
@@ -60,6 +61,7 @@ public abstract class RequestHandler {
             ENDPOINT_CACHE_CLEAR,
             ENDPOINT_CACHE_INFO,
             ENDPOINT_INPUT_FORMATS,
+            ENDPOINT_PLUGINS,
             ENDPOINT_SCHEMA,
             ENDPOINT_SHARED_WITH_ME
     );
@@ -277,6 +279,11 @@ public abstract class RequestHandler {
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
+                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_PLUGINS)) {
+                    if (resourceOrPathGiven) {
+                        return errorObj.unknownOperation(indexName);
+                    }
+                    requestHandler = new RequestHandlerListPlugins(userRequest);
                 } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");

@@ -50,6 +50,10 @@ public final class PluginDescriptor {
         return params.isEmpty();
     }
 
+    public Map<String, PluginParam> getParams() {
+        return Map.copyOf(params);
+    }
+
     public PluginParams validate(Map<String, ?> rawInput) {
         if (!frozen)
             throw new PluginException("Cannot validate parameters, plugin descriptor is not frozen");

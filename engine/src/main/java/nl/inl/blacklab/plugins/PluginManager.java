@@ -344,4 +344,10 @@ public class PluginManager {
         return tPluginsOfType;
     }
 
+    /** Get all registered plugin types. */
+    public static List<Class<? extends Plugin>> getPluginTypes() {
+        ensureInitialized();
+        return List.copyOf(pluginTypes);
+    }
+
 }
