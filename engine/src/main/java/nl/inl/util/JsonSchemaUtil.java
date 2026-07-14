@@ -5,6 +5,7 @@ import java.lang.reflect.Type;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.victools.jsonschema.generator.Option;
 import com.github.victools.jsonschema.generator.OptionPreset;
 import com.github.victools.jsonschema.generator.SchemaGenerator;
 import com.github.victools.jsonschema.generator.SchemaGeneratorConfigBuilder;
@@ -25,6 +26,7 @@ public class JsonSchemaUtil {
             ObjectMapper mapper = new ObjectMapper();
             SchemaGeneratorConfigBuilder configBuilder =
                     new SchemaGeneratorConfigBuilder(mapper, SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+            configBuilder.with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
             configBuilder.with(new JacksonModule()); // honor Jackson annotations
             SchemaGenerator generator = new SchemaGenerator(configBuilder.build());
             JsonNode schema = generator.generateSchema(targetType);
