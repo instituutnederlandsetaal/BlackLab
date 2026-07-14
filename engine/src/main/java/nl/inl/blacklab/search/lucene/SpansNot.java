@@ -112,7 +112,7 @@ class SpansNot extends BLSpans {
             boolean currentDocIsDeletedDoc;
             do {
                 currentDoc++;
-                currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
+                currentDocIsDeletedDoc = liveDocs != null && currentDoc < maxDoc && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
                 throw new IllegalStateException("currentDoc > maxDoc!!");
