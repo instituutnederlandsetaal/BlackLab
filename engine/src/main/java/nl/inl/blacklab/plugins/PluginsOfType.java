@@ -4,6 +4,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -173,7 +174,7 @@ public class PluginsOfType<T extends Plugin> {
     void initializePlugins() {
         Collection<PluginData<T>> pluginDatas;
         synchronized (pluginsById) {
-            pluginDatas = pluginsById.values();
+            pluginDatas = new HashSet<>(pluginsById.values());
         }
         pluginDatas.forEach(pluginData -> {
             try {

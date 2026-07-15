@@ -2,7 +2,6 @@ package nl.inl.blacklab.plugins;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -223,13 +222,12 @@ public class PluginManager {
         boolean delayInitialization = pluginConfig.isDelayInitialization();
 
         // First load all plugins, so we have the full list of plugins available.
-        try (URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader())) {
-            for (Class<? extends Plugin> pluginClass: pluginTypes) {
-                pluginsByType.put(pluginClass, new PluginsOfType<>(pluginClass, pluginConfig, cl));
-            }
-        } catch (IOException e) {
-            logger.error("Error closing plugin classloader: " + e.getMessage(), e);
+        // Note that we do not close the class loader, so the plugin can instantiate other classes!
+        URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
+        for (Class<? extends Plugin> pluginClass: pluginTypes) {
+            pluginsByType.put(pluginClass, new PluginsOfType<>(pluginClass, pluginConfig, cl));
         }
+
         findGroovyScripts(pluginConfig);
 
         // Some plugins take a LONG time to init, if we block, we block the loading of the config

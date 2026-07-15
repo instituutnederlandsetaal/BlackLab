@@ -90,14 +90,13 @@ class PluginData<T extends Plugin> {
                 plugin.initialize();
                 plugin.descriptor().freeze();
                 logger.debug("Initialized plugin " + plugin.getId());
+                initialized = true;
             } catch (PluginException e) {
                 initializationException = e;
                 throw e;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 initializationException = new PluginException("Error during initialization.", e);
                 throw initializationException;
-            } finally {
-                initialized = true;
             }
         }
     }
