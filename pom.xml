@@ -38,9 +38,6 @@
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
-
-        <!-- Some FileConverters used at INT -->
-        <module>convert-and-tag</module>
     </modules>
 
     <properties>

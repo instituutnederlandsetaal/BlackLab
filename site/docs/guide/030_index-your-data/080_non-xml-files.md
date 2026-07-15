@@ -169,31 +169,4 @@ linkedDocuments:
 
 ## Indexing other files
 
-For some types of files it is possible to automatically convert them to another file type that can be indexed.   
-Support for this feature works through `FileConverter` [plugins](/development/customization/).
-
-Add the following lines to your configuration file to convert your files before indexing them according to the rest of the configuration.
-
-```yaml
-convertPlugin: OpenConvert
-tagPlugin: DutchTagger
-```
-
-This setup will convert `doc, docx, txt, epub, html, alto, rtf and odt` into `tei`.
-
-
-This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab-server.yaml` will enable the plugins to do their work.
-
-```yaml
-plugins:
-  OpenConvert:
-    jarPath: /path/to/OpenConvert-0.2.0.jar
-  DutchTagger:
-    jarPath: /path/to//DutchTagger-0.2.0.jar
-    vectorFile: /path/to/duthtagger/data/vectors.bin
-    modelFile: /path/to/dutchtagger/model
-    lexiconFile: /path/to/dutchtagger/lexicon.tab
-```
-
-Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](/development/customization/) page for more information on how write your own plugin.
-
+It is possible to convert files (e.g. `pdf`, `epub` or `docx`) by writing a  custom `FileConverter` [plugin](/development/customization/).

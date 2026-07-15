@@ -480,19 +480,12 @@ plugins:
         - my-new-plugin
         - another-great-plugin
 
-    # # Individual plugin configurations
     plugins:
-
-        # Conversion plugin
-        OpenConvert:
-            jarPath: "/home/jan/projects/openconvert_en_tagger/OpenConvertMaven/target/OpenConvert-0.2.0.jar"
-
-        # Tagging plugin
-        DutchTagger:
-            jarPath: "/home/jan/projects/openconvert_en_tagger/DutchTagger/target/DutchTagger-0.2.0.jar"
-            vectorFile:  "/home/jan/projects/openconvert_en_tagger/tagger-data/sonar.vectors.bin"
-            modelFile:   "/home/jan/projects/openconvert_en_tagger/tagger-data/withMoreVectorrs"
-            lexiconFile: "/home/jan/projects/openconvert_en_tagger/tagger-data/spelling.tab"
+        my-new-plugin:
+            # Configuration for my-new-plugin
+            # (but prefer placing this in e.g.
+            #  $BLACKLAB_CONFIG_DIR/plugins/my-new-plugin.yaml instead)
+            dataFile: some-data-file.tsv
 ```
 
 (place in `blacklab.yaml` to apply to e.g. IndexTool; see [Configuring other tools](#configuring-other-tools))

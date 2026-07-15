@@ -383,7 +383,7 @@ public class ConfigInputFormat {
         }
 
         if (processor != null)
-            messages.warning("encountered 'processor' key (this is ignored by BlackLab v5+)");
+            messages.warning("encountered 'processor' key (this is ignored by BlackLab v5+, it only supports the Saxon processor)");
         if (!linkedDocuments.isEmpty())
             messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata)");
         if (!indexFieldAs.isEmpty())
