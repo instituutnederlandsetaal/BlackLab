@@ -6,6 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.DocTaskType;
+import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.plugins.Plugin;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.PluginsOfType;
@@ -43,16 +46,22 @@ public class ResultListPlugins {
      */
     public static class PluginInfo {
         private final String id;
-        private final List<PluginParamInfo> params;
 
-        PluginInfo(String id, List<PluginParamInfo> params) {
+        private final String localId;
+
+        private final Map<String, PluginParamInfo> params;
+
+        PluginInfo(String id, String localId, Map<String, PluginParamInfo> params) {
             this.id = id;
+            this.localId = localId;
             this.params = params;
         }
 
         public String getId() { return id; }
 
-        public List<PluginParamInfo> getParams() { return params; }
+        public String getLocalId() { return localId; }
+
+        public Map<String, PluginParamInfo> getParams() { return params; }
     }
 
     /** Plugins grouped by type name. */
@@ -61,6 +70,11 @@ public class ResultListPlugins {
     ResultListPlugins() {
         pluginsByType = new LinkedHashMap<>();
         for (Class<? extends Plugin> pluginType : PluginManager.getPluginTypes()) {
+            if (pluginType == AuthMethodProvider.class || pluginType == InputFormatType.class ||
+                pluginType == DocTaskType.class) {
+                // Don't return these in BLS response; clients cannot use them.
+                continue;
+            }
             @SuppressWarnings("unchecked")
             PluginsOfType<Plugin> manager = (PluginsOfType<Plugin>) PluginManager.type(pluginType);
             Collection<Plugin> plugins = manager.getAll();
@@ -71,14 +85,14 @@ public class ResultListPlugins {
                     // provided). A null ID could only occur if a plugin was registered without any ID, class name,
                     // or alternate name matching. This is defensive programming against such edge cases.
                     continue;
-                List<PluginParamInfo> paramInfos = new ArrayList<>();
+                Map<String, PluginParamInfo> paramInfos = new LinkedHashMap<>();
                 PluginDescriptor descriptor = plugin.descriptor();
                 for (Map.Entry<String, PluginParam> entry : descriptor.getParams().entrySet()) {
                     PluginParam param = entry.getValue();
                     String typeName = paramTypeName(param);
-                    paramInfos.add(new PluginParamInfo(param.name(), typeName, param.isRequired()));
+                    paramInfos.put(param.name(), new PluginParamInfo(param.name(), typeName, param.isRequired()));
                 }
-                pluginInfos.add(new PluginInfo(plugin.getId(), paramInfos));
+                pluginInfos.add(new PluginInfo(plugin.getId(), plugin.localId(), paramInfos));
             }
             pluginsByType.put(pluginType.getSimpleName(), pluginInfos);
         }

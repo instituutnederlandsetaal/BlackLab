@@ -48,4 +48,9 @@ public abstract class ProcessingInstruction extends Plugin {
 
     public abstract ProcessingStep get(PluginParams param);
 
+    @Override
+    public String localId() {
+        return super.localId().replaceAll("^ProcessingInstruction", "").toLowerCase();
+    }
+
 }

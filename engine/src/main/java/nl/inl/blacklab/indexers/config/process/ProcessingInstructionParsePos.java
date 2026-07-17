@@ -20,7 +20,7 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
     private PluginParam parField;
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "parsePos";
     }
 

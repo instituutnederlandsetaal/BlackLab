@@ -34,7 +34,7 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
     private PluginParam parAutofill;
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "concatDate";
     }
 

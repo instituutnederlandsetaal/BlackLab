@@ -285,3 +285,4 @@ The major differences between API `v4` and `v5` are:
 ### Notes
 
 - `versionInfo` gives information about when the corpus was created/updated, as well as what version of BlackLab it was created with.
+- Now includes relations info as well. For the format, see [here](relations).

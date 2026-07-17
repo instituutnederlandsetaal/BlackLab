@@ -12,7 +12,7 @@ import nl.inl.util.fileprocessor.FileReference;
 public class IndexSourceTypeFile extends IndexSourceType {
 
     @Override
-    public String getId() {
+    public String localId() {
         return "file";
     }
 

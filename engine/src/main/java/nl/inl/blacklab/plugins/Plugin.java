@@ -79,6 +79,27 @@ public abstract class Plugin {
     }
 
     /**
+     * Local (short) id for this plugin.
+     *
+     * E.g. local id for QueryFunctionConcat would be "concat".
+     * This is the id we can use to refer to the plugin if we
+     * know the type of plugin, for example in a BCQL query.
+     * If we ask for a QueryFunction "concat", we can resolve
+     * this correctly and not accidentally return a
+     * ProcessingInstruction "concat".
+     *
+     * By default, returns the id, but the plugin type base class
+     * (e.g. QueryFunction) should do something more intelligent, e.g.
+     * try to derive a short id from the id. Plugin implementations can
+     * always override the method to ensure the correct local id.
+     *
+     * @return the local (short) id for this plugin
+     */
+    public String localId() {
+        return getId();
+    }
+
+    /**
      * Set the short ID of this plugin. Can only be set once.
      *
      * This is used to set a Groovy script's ID to the script name.

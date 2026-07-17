@@ -286,23 +286,23 @@ public class PluginManager {
      */
     static void loadAllGroovyScripts() {
         ensureInitialized();
-        ArrayList<String> ids = new ArrayList<>(unloadedGroovyScripts.keySet());
-        for (String id: ids) {
-            getUnloaded(id);
+        ArrayList<String> scriptNames = new ArrayList<>(unloadedGroovyScripts.keySet());
+        for (String scriptName: scriptNames) {
+            getUnloaded(scriptName);
         }
     }
 
     /**
      * See if there's a groovy script with this name we can load.
      *
-     * @param id  plugin id (groovy script name)
+     * @param scriptName  groovy script name
      * @param <T> plugin type
      */
-    static synchronized <T extends Plugin> void getUnloaded(String id) {
+    static synchronized <T extends Plugin> void getUnloaded(String scriptName) {
         ensureInitialized();
         UnloadedGroovyPlugin unloaded;
         synchronized (unloadedGroovyScripts) {
-            unloaded = unloadedGroovyScripts.remove(id);
+            unloaded = unloadedGroovyScripts.remove(scriptName);
         }
         if (unloaded == null)
             return;
@@ -311,12 +311,12 @@ public class PluginManager {
             Object result = shell.evaluate(FileUtils.readFileToString(unloaded.scriptFile, StandardCharsets.UTF_8));
             if (result instanceof Plugin plugin) {
                 if (plugin.getId() == null) {
-                    plugin.setId(id);
-                } else if (!plugin.getId().equals(id)) {
+                    plugin.setId(scriptName);
+                } else if (!plugin.getId().equals(scriptName)) {
                     throw new PluginException("Groovy plugin overrides getId(): script file is " + unloaded.scriptFile +
                             ", getId() returns " + plugin.getId());
                 }
-                register(plugin, unloaded.pluginConfig, id);
+                register(plugin, unloaded.pluginConfig, scriptName);
             } else {
                 logger.warn("Groovy script " + unloaded.scriptFile + " does not evaluate to a Plugin instance; ignoring.");
             }

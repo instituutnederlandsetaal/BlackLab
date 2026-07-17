@@ -64,7 +64,6 @@ public class PluginsOfType<T extends Plugin> {
                 plugin = it.next();
                 if (plugin.getId() == null)
                     plugin.setId(plugin.getClass().getSimpleName());
-                //logger.info("Loading plugin {}", plugin);
                 register(plugin, pluginConfig, null);
             } catch (ServiceConfigurationError e) {
                 logger.error("Plugin failed to load: " + e.getMessage(), e);
@@ -96,6 +95,8 @@ public class PluginsOfType<T extends Plugin> {
             add(id, data);
         if (!StringUtils.isEmpty(alternateId) && !alternateId.equals(id))
             add(alternateId, data); // e.g. groovy script name without extension
+        if (!plugin.localId().equals(id)) // localId is e.g. function name, so "abs" for QueryFunctionAbs
+            add(plugin.localId(), data);
         if (!plugin.getClass().isAnonymousClass()) {
             if (!plugin.getClass().getName().contains("$")) // skip e.g. "Script1$1"
                 add(plugin.getClass().getName(), data);

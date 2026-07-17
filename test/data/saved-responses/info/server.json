@@ -24,6 +24,252 @@
       "timeModified": "VALUE_REMOVED"
     }
   },
+  "plugins": {
+    "FileConverter": [
+    ],
+    "HitGroupScorerType": [
+      {
+        "id": "HitGroupScorerDice",
+        "localId": "coll-dice"
+      },
+      {
+        "id": "HitGroupScorerSalience",
+        "localId": "coll-salience"
+      },
+      {
+        "id": "HitGroupScorerSize",
+        "localId": "coll-groupsize"
+      }
+    ],
+    "IndexSourceType": [
+    ],
+    "ProcessingInstruction": [
+      {
+        "id": "ProcessingInstructionAppend",
+        "localId": "append",
+        "params": {
+          "field": {
+            "required": false,
+            "type": "string"
+          },
+          "prefix": {
+            "required": false,
+            "type": "string"
+          },
+          "separator": {
+            "required": false,
+            "type": "string"
+          },
+          "value": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionConcatDate",
+        "localId": "concatDate",
+        "params": {
+          "autofill": {
+            "required": false,
+            "type": "enum"
+          },
+          "dayField": {
+            "required": true,
+            "type": "string"
+          },
+          "monthField": {
+            "required": true,
+            "type": "string"
+          },
+          "yearField": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionIdentity",
+        "localId": "identity"
+      },
+      {
+        "id": "ProcessingInstructionIfEmpty",
+        "localId": "ifEmpty",
+        "params": {
+          "field": {
+            "required": false,
+            "type": "string"
+          },
+          "separator": {
+            "required": false,
+            "type": "string"
+          },
+          "value": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionMapValues",
+        "localId": "map",
+        "params": {
+          "table": {
+            "required": true,
+            "type": "stringStringMap"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionMultiple",
+        "localId": "stmt-block"
+      },
+      {
+        "id": "ProcessingInstructionParsePos",
+        "localId": "parsePos",
+        "params": {
+          "field": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionReplace",
+        "localId": "replace",
+        "params": {
+          "find": {
+            "required": true,
+            "type": "string"
+          },
+          "flags": {
+            "required": false,
+            "type": "string"
+          },
+          "keep": {
+            "required": false,
+            "type": "enum"
+          },
+          "replace": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionSort",
+        "localId": "sort"
+      },
+      {
+        "id": "ProcessingInstructionSplit",
+        "localId": "split",
+        "params": {
+          "flags": {
+            "required": false,
+            "type": "string"
+          },
+          "keep": {
+            "required": false,
+            "type": "string"
+          },
+          "separator": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionStrip",
+        "localId": "strip",
+        "params": {
+          "chars": {
+            "required": false,
+            "type": "string"
+          }
+        }
+      },
+      {
+        "id": "ProcessingInstructionUnique",
+        "localId": "unique"
+      }
+    ],
+    "QueryFunction": [
+      {
+        "id": "QueryFunctionAbs",
+        "localId": "abs"
+      },
+      {
+        "id": "QueryFunctionEnd",
+        "localId": "end"
+      },
+      {
+        "id": "QueryFunctionFixedSpan",
+        "localId": "_fixed"
+      },
+      {
+        "id": "QueryFunctionFuzzy",
+        "localId": "_fuzzy"
+      },
+      {
+        "id": "QueryFunctionGap",
+        "localId": "gap"
+      },
+      {
+        "id": "QueryFunctionInRange",
+        "localId": "in_range"
+      },
+      {
+        "id": "QueryFunctionLen",
+        "localId": "len"
+      },
+      {
+        "id": "QueryFunctionList",
+        "localId": "list"
+      },
+      {
+        "id": "QueryFunctionMeet",
+        "localId": "meet"
+      },
+      {
+        "id": "QueryFunctionMeetWithin",
+        "localId": "meet_within"
+      },
+      {
+        "id": "QueryFunctionQuery",
+        "localId": "query"
+      },
+      {
+        "id": "QueryFunctionStart",
+        "localId": "start"
+      },
+      {
+        "id": "QueryFunctionStr",
+        "localId": "str"
+      },
+      {
+        "id": "QueryFunctionSymbol",
+        "localId": "symbol"
+      },
+      {
+        "id": "QueryFunctionUnion",
+        "localId": "union"
+      }
+    ],
+    "QueryParserProvider": [
+      {
+        "id": "BcqlParserProvider",
+        "localId": "corpusql"
+      },
+      {
+        "id": "ContextQLParserProvider",
+        "localId": "contextql"
+      },
+      {
+        "id": "JsonParserProvider",
+        "localId": "json-bql"
+      }
+    ]
+  },
   "user": {
     "canCreateIndex": false,
     "debugMode": false,

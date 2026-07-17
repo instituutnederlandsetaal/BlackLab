@@ -13,7 +13,7 @@ import nl.inl.blacklab.plugins.param.PluginParams;
 public class ProcessingInstructionUnique extends ProcessingInstruction {
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "unique";
     }
 

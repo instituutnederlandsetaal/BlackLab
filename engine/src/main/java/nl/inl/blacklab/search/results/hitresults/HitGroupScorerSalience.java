@@ -11,7 +11,7 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
     public static final String TYPE_ID = "coll-salience";
 
     @Override
-    public String getId() {
+    public String localId() {
         return TYPE_ID;
     }
 

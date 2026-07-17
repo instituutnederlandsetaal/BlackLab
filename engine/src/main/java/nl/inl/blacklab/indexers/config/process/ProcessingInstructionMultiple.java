@@ -15,7 +15,7 @@ import nl.inl.blacklab.plugins.param.PluginParams;
 public class ProcessingInstructionMultiple extends ProcessingInstruction {
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "stmt-block"; // (not actually used in config files)
     }
 

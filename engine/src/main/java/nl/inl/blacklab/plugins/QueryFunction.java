@@ -60,7 +60,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     }
 
     @Override
-    public String getId() {
+    public String localId() {
         return name;
     }
 

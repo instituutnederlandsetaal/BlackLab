@@ -24,7 +24,7 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
     private PluginParam parKeep;
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "split";
     }
 

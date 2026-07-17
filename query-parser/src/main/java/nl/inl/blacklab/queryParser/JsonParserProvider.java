@@ -14,7 +14,7 @@ import nl.inl.util.Json;
 public class JsonParserProvider extends QueryParserProvider {
 
     @Override
-    public String getId() {
+    public String localId() {
         return "json-bql";
     }
 

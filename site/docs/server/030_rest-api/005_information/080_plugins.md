@@ -24,13 +24,16 @@ An overview of available (web-safe) plugins.
     ],
     "HitGroupScorerType": [
       {
-        "id": "coll-salience"
+        "id": "HitGroupScorerSalience",
+        "localId": "coll-salience"
       },
       {
-        "id": "coll-groupsize"
+        "id": "HitGroupScorerGroupSize",
+        "localId": "coll-groupsize"
       },
       {
-        "id": "coll-dice"
+        "id": "HitGroupScorerDice",
+        "localId": "coll-dice"
       }
     ],
     "IndexSourceType": [
@@ -43,60 +46,78 @@ An overview of available (web-safe) plugins.
     ],
     "QueryFunction": [
       {
-        "id": "gap"
+        "id": "QueryFunctionGap",
+        "localId": "gap"
       },
       {
-        "id": "symbol"
+        "id": "QueryFunctionSymbol",
+        "localId": "symbol"
       },
       {
-        "id": "_fuzzy"
+        "id": "QueryFunctionFuzzy",
+        "localId": "_fuzzy"
       },
       {
-        "id": "len"
+        "id": "QueryFunctionLen",
+        "localId": "len"
       },
       {
-        "id": "meet_within"
+        "id": "QueryFunctionMeetWithin",
+        "localId": "meet_within"
       },
       {
-        "id": "in_range"
+        "id": "QueryFunctionInRange",
+        "localId": "in_range"
       },
       {
-        "id": "str"
+        "id": "QueryFunctionStr",
+        "localId": "str"
       },
       {
-        "id": "abs"
+        "id": "QueryFunctionAbs",
+        "localId": "abs"
       },
       {
-        "id": "end"
+        "id": "QueryFunctionEnd",
+        "localId": "end"
       },
       {
-        "id": "query"
+        "id": "QueryFunctionQuery",
+        "localId": "query"
       },
       {
-        "id": "_fixed"
+        "id": "QueryFunctionFixed",
+        "localId": "_fixed"
       },
       {
-        "id": "meet"
+        "id": "QueryFunctionMeet",
+        "localId": "meet"
       },
       {
-        "id": "union"
+        "id": "QueryFunctionUnion",
+        "localId": "union"
       },
       {
-        "id": "start"
+        "id": "QueryFunctionStart",
+        "localId": "start"
       },
       {
-        "id": "list"
+        "id": "QueryFunctionList",
+        "localId": "list"
       }
     ],
     "QueryParserProvider": [
       {
-        "id": "json-bql"
+        "id": "JsonParserProvider",
+        "localId": "json-bql"
       },
       {
-        "id": "corpusql"
+        "id": "BcqlParserProvider",
+        "localId": "corpusql"
       },
       {
-        "id": "contextql"
+        "id": "ContextqlParserProvider",
+        "localId": "contextql"
       }
     ],
     "AuthMethodProvider": [

@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.BlackLab;
 public class ProcessingInstructionSort extends ProcessingInstruction {
 
     @Override
-    public synchronized String getId() {
+    public synchronized String localId() {
         return "sort";
     }
 

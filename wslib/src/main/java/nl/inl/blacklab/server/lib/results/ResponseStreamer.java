@@ -1233,7 +1233,7 @@ public class ResponseStreamer {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
                 if (hitsGrouped.getReqGroup().groupScorer() != HitGroupScorer.NONE) {
                     ds.startEntry("scorer").startMap();
-                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getId());
+                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().localId());
                     ds.endMap().endEntry();
                 }
 
@@ -1455,7 +1455,8 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
-            plugins(result.getPlugins());
+            if (isNewApi)
+                plugins(result.getPlugins());
         }
         ds.endMap();
     }
@@ -1894,16 +1895,18 @@ public class ResponseStreamer {
             for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
                 ds.startItem("plugin").startMap();
                 ds.entry("id", pluginInfo.getId());
+                ds.entry("localId", pluginInfo.getLocalId());
                 if (!pluginInfo.getParams().isEmpty()) {
-                    ds.startEntry("params").startList();
-                    for (ResultListPlugins.PluginParamInfo param : pluginInfo.getParams()) {
-                        ds.startItem("param").startMap();
-                        ds.entry("name", param.getName())
-                                .entry("type", param.getType())
-                                .entry("required", param.isRequired());
+                    ds.startEntry("params").startMap();
+                    for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParams().values()) {
+                        ds.startEntry(param.getName()).startMap();
+                        {
+                            ds.entry("type", param.getType());
+                            ds.entry("required", param.isRequired());
+                        }
                         ds.endMap().endItem();
                     }
-                    ds.endList().endEntry();
+                    ds.endMap().endEntry();
                 }
                 ds.endMap().endItem();
             }

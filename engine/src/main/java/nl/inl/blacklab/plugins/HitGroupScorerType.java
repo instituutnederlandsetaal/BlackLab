@@ -56,7 +56,7 @@ public abstract class HitGroupScorerType extends Plugin {
      * @return collocate scorer
      */
     public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
-        throw new PluginException("HitGroupScorerType " + getId() + " does not support collocation scoring");
+        throw new PluginException("HitGroupScorerType " + localId() + " does not support collocation scoring");
     }
 
 }

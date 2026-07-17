@@ -85,3 +85,4 @@ The major differences between API `v4` and `v5` are:
 
 - API `v4` includes both `corpora` and `indices`. API `v5` only has `corpora`, which doesn't include custom properties like `displayName` and `description` unless you specify `custom=true`.
 - API `v5` has a `count` object with `tokens` and `documents`, while API `v4` has `tokenCount` and no document count.
+- API `v5` includes `plugins` information as well. For the format, see [here](plugins). 
