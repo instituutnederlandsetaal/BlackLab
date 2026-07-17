@@ -1455,6 +1455,7 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
+            plugins(result.getPlugins());
         }
         ds.endMap();
     }
@@ -1882,6 +1883,11 @@ public class ResponseStreamer {
 
     public void pluginsResponse(ResultListPlugins result) {
         ds.startMap();
+        plugins(result);
+        ds.endMap();
+    }
+
+    public void plugins(ResultListPlugins result) {
         ds.startEntry("plugins").startMap();
         for (Map.Entry<String, List<ResultListPlugins.PluginInfo>> typeEntry : result.getPluginsByType().entrySet()) {
             ds.startEntry(typeEntry.getKey()).startList();
@@ -1904,7 +1910,6 @@ public class ResponseStreamer {
             ds.endList().endEntry();
         }
         ds.endMap().endEntry();
-        ds.endMap();
     }
 
     public void cacheInfo(SearchCache blackLabCache, boolean includeDebugInfo) {
