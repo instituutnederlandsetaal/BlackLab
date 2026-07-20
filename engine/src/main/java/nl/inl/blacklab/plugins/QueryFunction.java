@@ -15,6 +15,7 @@ import nl.inl.blacklab.plugins.param.PList;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
@@ -30,7 +31,10 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     /** Default value for a query parameter that means "any span" (<code><'.*' //></code>) */
     public static final String VALUE_ANY_SPAN = "_ANY_SPAN_";
 
-    /** Function name */
+    /** Function name
+     * <p>
+     * (this is the plugin's localId; id must be globally unique so cannot just be e.g. "abs"
+     *  or name collision would be likely) */
     private final String name;
 
     /** Parameter types */
@@ -57,6 +61,12 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         this.argTypes = argTypes;
         this.defaultValues = defaultValues == null ? Collections.emptyList() : defaultValues;
         this.relationsFunction = relationsFunction;
+    }
+
+    @Override
+    public String getId() {
+        String id = super.getId();
+        return id == null ? (this instanceof QueryFunctionLambda ? name : getClass().getSimpleName()) : id;
     }
 
     @Override

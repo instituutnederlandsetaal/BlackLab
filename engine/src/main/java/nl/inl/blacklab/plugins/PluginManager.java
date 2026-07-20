@@ -316,7 +316,7 @@ public class PluginManager {
                     throw new PluginException("Groovy plugin overrides getId(): script file is " + unloaded.scriptFile +
                             ", getId() returns " + plugin.getId());
                 }
-                register(plugin, unloaded.pluginConfig, scriptName);
+                register(plugin, unloaded.pluginConfig, scriptName, true);
             } else {
                 logger.warn("Groovy script " + unloaded.scriptFile + " does not evaluate to a Plugin instance; ignoring.");
             }
@@ -325,11 +325,11 @@ public class PluginManager {
         }
     }
 
-    private static void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName) {
+    private static void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName, boolean registerClassName) {
         ensureInitialized();
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             if (pluginClass.isInstance(plugin)) {
-                type(pluginClass).register(pluginClass.cast(plugin), pluginConfig, scriptFileName);
+                type(pluginClass).register(pluginClass.cast(plugin), pluginConfig, scriptFileName, registerClassName);
             }
         }
     }

@@ -253,6 +253,74 @@
       {
         "id": "QueryFunctionUnion",
         "localId": "union"
+      },
+      {
+        "id": "_adjust",
+        "localId": "_adjust"
+      },
+      {
+        "id": "_edge",
+        "localId": "_edge"
+      },
+      {
+        "id": "_fimatch",
+        "localId": "_fimatch"
+      },
+      {
+        "id": "_FI1",
+        "localId": "_FI1"
+      },
+      {
+        "id": "_FI2",
+        "localId": "_FI2"
+      },
+      {
+        "id": "_ident",
+        "localId": "_ident"
+      },
+      {
+        "id": "_indoc",
+        "localId": "_indoc"
+      },
+      {
+        "id": "_lenfilter",
+        "localId": "_lenfilter"
+      },
+      {
+        "id": "_posfilter",
+        "localId": "_posfilter"
+      },
+      {
+        "id": "rel",
+        "localId": "rel"
+      },
+      {
+        "id": "rspan",
+        "localId": "rspan"
+      },
+      {
+        "id": "cspan",
+        "localId": "cspan"
+      },
+      {
+        "id": "rfield",
+        "localId": "rfield"
+      },
+      {
+        "id": "rcapture",
+        "localId": "rcapture"
+      },
+      {
+        "id": "punctBefore",
+        "localId": "punctBefore"
+      },
+      {
+        "id": "punctAfter",
+        "localId": "punctAfter"
+      },
+      {
+        "id": "with-spans",
+        "localId": "with-spans"
       }
     ],
     "QueryParserProvider": [

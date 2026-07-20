@@ -64,7 +64,7 @@ public class PluginsOfType<T extends Plugin> {
                 plugin = it.next();
                 if (plugin.getId() == null)
                     plugin.setId(plugin.getClass().getSimpleName());
-                register(plugin, pluginConfig, null);
+                register(plugin, pluginConfig, null, true);
             } catch (ServiceConfigurationError e) {
                 logger.error("Plugin failed to load: " + e.getMessage(), e);
             } catch (Exception e) {
@@ -75,7 +75,7 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
-    void register(Plugin plugin, BLConfigPlugins configs, String alternateId) {
+    void register(Plugin plugin, BLConfigPlugins configs, String alternateId, boolean registerClassName) {
         String id = plugin.getId();
         if (id != null && !PLUGIN_ID_PATTERN.matcher(id).matches()) {
             logger.warn("Plugin id " + id + " (class " + plugin.getClass().getName() +
@@ -97,12 +97,17 @@ public class PluginsOfType<T extends Plugin> {
             add(alternateId, data); // e.g. groovy script name without extension
         if (!plugin.localId().equals(id)) // localId is e.g. function name, so "abs" for QueryFunctionAbs
             add(plugin.localId(), data);
-        if (!plugin.getClass().isAnonymousClass()) {
+        if (registerClassName && !plugin.getClass().isAnonymousClass()) {
             if (!plugin.getClass().getName().contains("$")) // skip e.g. "Script1$1"
                 add(plugin.getClass().getName(), data);
             if (!plugin.getClass().getSimpleName().matches("\\d+")) // skip e.g. "1"
                 add(plugin.getClass().getSimpleName(), data);
         }
+    }
+
+    public void add(String id, Plugin plugin) {
+        PluginData<T> data = new PluginData<>((T) plugin, null, null);
+        add(id, data);
     }
 
     private void add(String id, PluginData<T> data) {

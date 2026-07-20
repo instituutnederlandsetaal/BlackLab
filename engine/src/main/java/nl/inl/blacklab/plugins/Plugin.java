@@ -37,7 +37,7 @@ public abstract class Plugin {
         this.pluginDir = pluginDir;
     }
 
-    private PluginDescriptor descriptor = new PluginDescriptor();
+    private final PluginDescriptor descriptor = new PluginDescriptor();
 
     public PluginParam addParam(PluginParam spec) {
         return descriptor.addParam(spec);
