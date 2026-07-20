@@ -45,21 +45,17 @@ public class ResultListPlugins {
      * Describes a single plugin instance.
      */
     public static class PluginInfo {
-        private final String id;
 
-        private final String localId;
+        private final String name;
 
         private final Map<String, PluginParamInfo> params;
 
-        PluginInfo(String id, String localId, Map<String, PluginParamInfo> params) {
-            this.id = id;
-            this.localId = localId;
+        PluginInfo(String name, Map<String, PluginParamInfo> params) {
+            this.name = name;
             this.params = params;
         }
 
-        public String getId() { return id; }
-
-        public String getLocalId() { return localId; }
+        public String getName() { return name; }
 
         public Map<String, PluginParamInfo> getParams() { return params; }
     }
@@ -92,7 +88,7 @@ public class ResultListPlugins {
                     String typeName = paramTypeName(param);
                     paramInfos.put(param.name(), new PluginParamInfo(param.name(), typeName, param.isRequired()));
                 }
-                pluginInfos.add(new PluginInfo(plugin.getId(), plugin.localId(), paramInfos));
+                pluginInfos.add(new PluginInfo(plugin.getName(), paramInfos));
             }
             pluginsByType.put(pluginType.getSimpleName(), pluginInfos);
         }

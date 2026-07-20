@@ -95,8 +95,8 @@ public class PluginsOfType<T extends Plugin> {
             add(id, data);
         if (!StringUtils.isEmpty(alternateId) && !alternateId.equals(id))
             add(alternateId, data); // e.g. groovy script name without extension
-        if (!plugin.localId().equals(id)) // localId is e.g. function name, so "abs" for QueryFunctionAbs
-            add(plugin.localId(), data);
+        if (!plugin.getName().equals(id)) // e.g. function name, so "abs" for QueryFunctionAbs (unique for this plugin type)
+            add(plugin.getName(), data);
         if (registerClassName && !plugin.getClass().isAnonymousClass()) {
             if (!plugin.getClass().getName().contains("$")) // skip e.g. "Script1$1"
                 add(plugin.getClass().getName(), data);

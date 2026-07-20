@@ -27,7 +27,7 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
     private PluginParam parKeep;
 
     @Override
-    public synchronized String localId() {
+    public synchronized String getName() {
         return "replace";
     }
 

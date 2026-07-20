@@ -33,8 +33,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
 
     /** Function name
      * <p>
-     * (this is the plugin's localId; id must be globally unique so cannot just be e.g. "abs"
-     *  or name collision would be likely) */
+     * Must be unique among QueryFunction plugins. The id, on the other hand, must be unique among all plugins. */
     private final String name;
 
     /** Parameter types */
@@ -70,7 +69,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     }
 
     @Override
-    public String localId() {
+    public String getName() {
         return name;
     }
 
@@ -195,10 +194,6 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
 
     public boolean isRelationsFunction() {
         return relationsFunction;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

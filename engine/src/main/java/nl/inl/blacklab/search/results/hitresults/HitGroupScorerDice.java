@@ -11,7 +11,7 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     public static final String TYPE_ID = "coll-dice";
 
     @Override
-    public String localId() {
+    public String getName() {
         return TYPE_ID;
     }
 

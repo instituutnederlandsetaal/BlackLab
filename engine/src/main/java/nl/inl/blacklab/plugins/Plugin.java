@@ -60,10 +60,13 @@ public abstract class Plugin {
     }
 
     /**
-     * Return the short id for this plugin.
+     * Return the unique id for this plugin.
+     * <p>
+     * No two plugins in the same instance may have the same id.
      * <p>
      * The id can be used to refer to the plugin in configuration files.
-     * You can also use the class name.
+     * You can also use the [full qualified] class name. If no explicit id is set,
+     * the simple class name will be used.
      * <p>
      * Note that we ignore this method for scripted plugins (e.g. Groovy) because
      * they're often returned as anonymous classes, so the default doesn't make sense.
@@ -72,30 +75,34 @@ public abstract class Plugin {
      * Plugins can also be retrieved by their fully qualified class name and their
      * simple class name (if applicable, and in that order, after id has been checked).
      *
-     * @return the short id for this plugin, or null if it has none
+     * @return the unique id for this plugin, or null if it has none
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Local (short) id for this plugin.
-     *
+     * Name for this plugin.
+     * <p>
+     * The plugin name should be unique among plugins of the same type,
+     * but there may be plugins of different types with the same name,
+     * e.g. a processing instruction and a query function with the same
+     * name. These must still have different ids, though.
+     * <p>
      * E.g. local id for QueryFunctionConcat would be "concat".
      * This is the id we can use to refer to the plugin if we
      * know the type of plugin, for example in a BCQL query.
      * If we ask for a QueryFunction "concat", we can resolve
      * this correctly and not accidentally return a
      * ProcessingInstruction "concat".
+     * <p>
+     * By default, returns the id, but either the plugin type base class
+     * (e.g. QueryFunction) or the plugin implementation could override this
+     * method to return an appropriate name.
      *
-     * By default, returns the id, but the plugin type base class
-     * (e.g. QueryFunction) should do something more intelligent, e.g.
-     * try to derive a short id from the id. Plugin implementations can
-     * always override the method to ensure the correct local id.
-     *
-     * @return the local (short) id for this plugin
+     * @return the plugin name
      */
-    public String localId() {
+    public String getName() {
         return getId();
     }
 

@@ -31,7 +31,7 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
     private PluginParam parValue;
 
     @Override
-    public synchronized String localId() {
+    public synchronized String getName() {
         return "append";
     }
 

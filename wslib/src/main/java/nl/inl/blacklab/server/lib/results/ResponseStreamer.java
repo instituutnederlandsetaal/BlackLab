@@ -1233,7 +1233,7 @@ public class ResponseStreamer {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
                 if (hitsGrouped.getReqGroup().groupScorer() != HitGroupScorer.NONE) {
                     ds.startEntry("scorer").startMap();
-                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().localId());
+                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getName());
                     ds.endMap().endEntry();
                 }
 
@@ -1894,8 +1894,7 @@ public class ResponseStreamer {
             ds.startEntry(typeEntry.getKey()).startList();
             for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
                 ds.startItem("plugin").startMap();
-                ds.entry("id", pluginInfo.getId());
-                ds.entry("localId", pluginInfo.getLocalId());
+                ds.entry("name", pluginInfo.getName());
                 if (!pluginInfo.getParams().isEmpty()) {
                     ds.startEntry("params").startMap();
                     for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParams().values()) {

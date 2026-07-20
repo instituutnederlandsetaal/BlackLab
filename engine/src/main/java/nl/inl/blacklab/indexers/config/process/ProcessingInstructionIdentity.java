@@ -13,7 +13,7 @@ import nl.inl.blacklab.plugins.param.PluginParams;
 public class ProcessingInstructionIdentity extends ProcessingInstruction {
 
     @Override
-    public synchronized String localId() {
+    public synchronized String getName() {
         return "identity";
     }
 

@@ -29,24 +29,20 @@
     ],
     "HitGroupScorerType": [
       {
-        "id": "HitGroupScorerDice",
-        "localId": "coll-dice"
+        "name": "coll-dice"
       },
       {
-        "id": "HitGroupScorerSalience",
-        "localId": "coll-salience"
+        "name": "coll-salience"
       },
       {
-        "id": "HitGroupScorerSize",
-        "localId": "coll-groupsize"
+        "name": "coll-groupsize"
       }
     ],
     "IndexSourceType": [
     ],
     "ProcessingInstruction": [
       {
-        "id": "ProcessingInstructionAppend",
-        "localId": "append",
+        "name": "append",
         "params": {
           "field": {
             "required": false,
@@ -67,8 +63,7 @@
         }
       },
       {
-        "id": "ProcessingInstructionConcatDate",
-        "localId": "concatDate",
+        "name": "concatDate",
         "params": {
           "autofill": {
             "required": false,
@@ -89,12 +84,10 @@
         }
       },
       {
-        "id": "ProcessingInstructionIdentity",
-        "localId": "identity"
+        "name": "identity"
       },
       {
-        "id": "ProcessingInstructionIfEmpty",
-        "localId": "ifEmpty",
+        "name": "ifEmpty",
         "params": {
           "field": {
             "required": false,
@@ -111,8 +104,7 @@
         }
       },
       {
-        "id": "ProcessingInstructionMapValues",
-        "localId": "map",
+        "name": "map",
         "params": {
           "table": {
             "required": true,
@@ -121,12 +113,10 @@
         }
       },
       {
-        "id": "ProcessingInstructionMultiple",
-        "localId": "stmt-block"
+        "name": "stmt-block"
       },
       {
-        "id": "ProcessingInstructionParsePos",
-        "localId": "parsePos",
+        "name": "parsePos",
         "params": {
           "field": {
             "required": false,
@@ -135,8 +125,7 @@
         }
       },
       {
-        "id": "ProcessingInstructionReplace",
-        "localId": "replace",
+        "name": "replace",
         "params": {
           "find": {
             "required": true,
@@ -157,12 +146,10 @@
         }
       },
       {
-        "id": "ProcessingInstructionSort",
-        "localId": "sort"
+        "name": "sort"
       },
       {
-        "id": "ProcessingInstructionSplit",
-        "localId": "split",
+        "name": "split",
         "params": {
           "flags": {
             "required": false,
@@ -179,8 +166,7 @@
         }
       },
       {
-        "id": "ProcessingInstructionStrip",
-        "localId": "strip",
+        "name": "strip",
         "params": {
           "chars": {
             "required": false,
@@ -189,152 +175,116 @@
         }
       },
       {
-        "id": "ProcessingInstructionUnique",
-        "localId": "unique"
+        "name": "unique"
       }
     ],
     "QueryFunction": [
       {
-        "id": "QueryFunctionAbs",
-        "localId": "abs"
+        "name": "abs"
       },
       {
-        "id": "QueryFunctionEnd",
-        "localId": "end"
+        "name": "end"
       },
       {
-        "id": "QueryFunctionFixedSpan",
-        "localId": "_fixed"
+        "name": "_fixed"
       },
       {
-        "id": "QueryFunctionFuzzy",
-        "localId": "_fuzzy"
+        "name": "_fuzzy"
       },
       {
-        "id": "QueryFunctionGap",
-        "localId": "gap"
+        "name": "gap"
       },
       {
-        "id": "QueryFunctionInRange",
-        "localId": "in_range"
+        "name": "in_range"
       },
       {
-        "id": "QueryFunctionLen",
-        "localId": "len"
+        "name": "len"
       },
       {
-        "id": "QueryFunctionList",
-        "localId": "list"
+        "name": "list"
       },
       {
-        "id": "QueryFunctionMeet",
-        "localId": "meet"
+        "name": "meet"
       },
       {
-        "id": "QueryFunctionMeetWithin",
-        "localId": "meet_within"
+        "name": "meet_within"
       },
       {
-        "id": "QueryFunctionQuery",
-        "localId": "query"
+        "name": "query"
       },
       {
-        "id": "QueryFunctionStart",
-        "localId": "start"
+        "name": "start"
       },
       {
-        "id": "QueryFunctionStr",
-        "localId": "str"
+        "name": "str"
       },
       {
-        "id": "QueryFunctionSymbol",
-        "localId": "symbol"
+        "name": "symbol"
       },
       {
-        "id": "QueryFunctionUnion",
-        "localId": "union"
+        "name": "union"
       },
       {
-        "id": "_adjust",
-        "localId": "_adjust"
+        "name": "_adjust"
       },
       {
-        "id": "_edge",
-        "localId": "_edge"
+        "name": "_edge"
       },
       {
-        "id": "_fimatch",
-        "localId": "_fimatch"
+        "name": "_fimatch"
       },
       {
-        "id": "_FI1",
-        "localId": "_FI1"
+        "name": "_FI1"
       },
       {
-        "id": "_FI2",
-        "localId": "_FI2"
+        "name": "_FI2"
       },
       {
-        "id": "_ident",
-        "localId": "_ident"
+        "name": "_ident"
       },
       {
-        "id": "_indoc",
-        "localId": "_indoc"
+        "name": "_indoc"
       },
       {
-        "id": "_lenfilter",
-        "localId": "_lenfilter"
+        "name": "_lenfilter"
       },
       {
-        "id": "_posfilter",
-        "localId": "_posfilter"
+        "name": "_posfilter"
       },
       {
-        "id": "rel",
-        "localId": "rel"
+        "name": "rel"
       },
       {
-        "id": "rspan",
-        "localId": "rspan"
+        "name": "rspan"
       },
       {
-        "id": "cspan",
-        "localId": "cspan"
+        "name": "cspan"
       },
       {
-        "id": "rfield",
-        "localId": "rfield"
+        "name": "rfield"
       },
       {
-        "id": "rcapture",
-        "localId": "rcapture"
+        "name": "rcapture"
       },
       {
-        "id": "punctBefore",
-        "localId": "punctBefore"
+        "name": "punctBefore"
       },
       {
-        "id": "punctAfter",
-        "localId": "punctAfter"
+        "name": "punctAfter"
       },
       {
-        "id": "with-spans",
-        "localId": "with-spans"
+        "name": "with-spans"
       }
     ],
     "QueryParserProvider": [
       {
-        "id": "BcqlParserProvider",
-        "localId": "corpusql"
+        "name": "corpusql"
       },
       {
-        "id": "ContextQLParserProvider",
-        "localId": "contextql"
+        "name": "contextql"
       },
       {
-        "id": "JsonParserProvider",
-        "localId": "json-bql"
+        "name": "json-bql"
       }
     ]
   },

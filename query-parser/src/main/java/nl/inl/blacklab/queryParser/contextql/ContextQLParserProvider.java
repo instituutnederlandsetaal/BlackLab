@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public class ContextQLParserProvider extends QueryParserProvider {
 
     @Override
-    public String localId() {
+    public String getName() {
         return "contextql";
     }
 

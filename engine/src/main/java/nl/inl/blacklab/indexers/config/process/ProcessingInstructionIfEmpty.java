@@ -29,7 +29,7 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
     private PluginParam parSeparator;
 
     @Override
-    public synchronized String localId() {
+    public synchronized String getName() {
         return "ifEmpty"; // "default" as well (old name)
     }
 
