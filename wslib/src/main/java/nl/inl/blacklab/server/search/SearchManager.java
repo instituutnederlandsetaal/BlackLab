@@ -58,6 +58,8 @@ public class SearchManager {
         // (such as plugins)
         BlackLab.setConfig(config.getBLConfig(), forceApplyGlobalConfig);
 
+        BlsMain.setUpBlsPlugins();
+
         // Create BlackLab instance with the desired number of search threads
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
         blackLab = BlackLab.createEngine(maxThreadsPerSearch);

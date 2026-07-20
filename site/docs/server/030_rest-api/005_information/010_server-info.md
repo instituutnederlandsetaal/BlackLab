@@ -1,6 +1,6 @@
 # Server information
 
-List available corpora and general information about the server environment, such as BlackLab version and whether a user is logged-in.
+List available corpora and general information about the server environment, such as BlackLab version, available corpora and plugins and whether a user is logged-in.
 
 **URL**
 - `/blacklab-server/`
@@ -52,6 +52,8 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
 
 === API `v5`
 
+(some parts of the response are omitted for brevity)
+
 ```jsonc
 {
   "apiVersion": "5.0",
@@ -73,6 +75,61 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
     "loggedIn": false,
     "canCreateIndex": false,
     "debugMode": false
+  },
+  "plugins": {
+    "FileConverter": {
+    },
+    "DocTaskType": {
+    },
+    "HitGroupScorerType": {
+      "coll-dice": {
+        "params": []
+      },
+      "coll-groupsize": {
+        "params": []
+      },
+      "coll-salience": {
+        "params": []
+      }
+    },
+    "IndexSourceType": {
+    },
+    "ProcessingInstruction": [
+      // ...
+    ],
+    "QueryFunction": [
+      "gap": {
+        "params": [
+          {
+            "name": "first",
+            "type": "matchInfo",
+            "required": true
+          },
+          {
+            "name": "second",
+            "type": "matchInfo",
+            "required": true
+          },
+          {
+            "name": "directional",
+            "type": "boolean",
+            "required": false
+          }
+        ]
+      },
+      // ...
+    ],
+    "QueryParserProvider": [
+      "corpusql": {
+        "params": []
+      },
+      "contextql": {
+        "params": []
+      },
+      "json-bql": {
+        "params": []
+      }
+    ]
   }
 }
 ```
@@ -85,4 +142,3 @@ The major differences between API `v4` and `v5` are:
 
 - API `v4` includes both `corpora` and `indices`. API `v5` only has `corpora`, which doesn't include custom properties like `displayName` and `description` unless you specify `custom=true`.
 - API `v5` has a `count` object with `tokens` and `documents`, while API `v4` has `tokenCount` and no document count.
-- API `v5` includes `plugins` information as well. For the format, see [here](plugins). 

@@ -279,11 +279,6 @@ public abstract class RequestHandler {
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
-                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_PLUGINS)) {
-                    if (resourceOrPathGiven) {
-                        return errorObj.unknownOperation(indexName);
-                    }
-                    requestHandler = new RequestHandlerListPlugins(userRequest);
                 } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");

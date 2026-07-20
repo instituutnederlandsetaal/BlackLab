@@ -29,7 +29,6 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 
 /**
@@ -122,22 +121,21 @@ public class XFRelations implements ExtensionFunctionClass {
                 });
 
         // rmatch: Perform an AND operation with the additional requirement that clauses match unique relations.
-        QueryExtensions.register(new QueryFunction("rmatch", List.of(
-                PList.optional("queries", PList.Validator.ALL_QUERIES)),
-                List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM), false) {
-            @Override
-            protected TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
-                if (parameters.isEmpty())
-                    throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
-                List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {
-                    if (o instanceof BLSpanQuery p)
-                        return p;
-                    throw new InvalidQuery("Non-query parameter to rmatch(): " + o);
-                }).toList();
-                return TextPatternRelationMatch.createRelMatchQuery(context, tps);
+        QueryExtensions.register(
+            "rmatch",
+            List.of(PList.optional("queries", PList.Validator.ALL_QUERIES)),
+            List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM),
+            (QueryInfo queryInfo, QueryExecutionContext context, List<Object> parameters) -> {
+                    if (parameters.isEmpty())
+                        throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
+                    List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {
+                        if (o instanceof BLSpanQuery p)
+                            return p;
+                        throw new InvalidQuery("Non-query parameter to rmatch(): " + o);
+                    }).toList();
+                    return TextPatternRelationMatch.createRelMatchQuery(context, tps);
             }
-
-        });
+        );
 
         /*
          * rspan: change span mode of a query with an active relation.

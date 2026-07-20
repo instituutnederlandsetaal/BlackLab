@@ -23,7 +23,6 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -84,9 +83,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         this.core = core;
 
         BLSConfig config = getConfig(core);
-
-        // Before the plugin system is initialized, add our plugin type to it
-        BlsMain.setUpBlsPlugins();
 
         // Instantiate our search manager from the config
         config.setIsSolr(true);

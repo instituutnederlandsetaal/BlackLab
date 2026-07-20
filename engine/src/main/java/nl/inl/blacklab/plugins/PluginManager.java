@@ -169,7 +169,6 @@ public class PluginManager {
                 QueryFunctionSymbol.class,
                 QueryFunctionUnion.class
         ));
-        QueryExtensions.registerAll(); // register e.g. rspan(), debug functions, etc.
     }
 
     public static synchronized void addWebSafePlugins(List<Class<? extends Plugin>> pluginClasses) {
@@ -195,8 +194,8 @@ public class PluginManager {
     }
 
     public static synchronized void addPluginType(Class<? extends Plugin> pluginType) {
-        pluginTypes.add(pluginType);
         URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
+        pluginTypes.add(pluginType);
         pluginsByType.put(pluginType, new PluginsOfType<>(pluginType, BlackLab.config().getPlugins(), cl));
     }
 
@@ -225,6 +224,8 @@ public class PluginManager {
             pluginsByType.put(pluginClass, new PluginsOfType<>(pluginClass, pluginConfig, cl));
         }
 
+        QueryExtensions.registerAll(); // register e.g. rspan(), debug functions, etc.
+
         findGroovyScripts(pluginConfig);
 
         // Some plugins take a LONG time to init, if we block, we block the loading of the config
@@ -244,6 +245,7 @@ public class PluginManager {
     }
 
     private static URLClassLoader getPluginsDirClassLoader(ClassLoader parent) {
+        ensureInitialized();
         List<URL> urlList = new ArrayList<>();
         FilenameFilter filenameFilter = (dir, name) -> name.toLowerCase().endsWith(".jar");
         File[] files = pluginsDir.listFiles(filenameFilter);

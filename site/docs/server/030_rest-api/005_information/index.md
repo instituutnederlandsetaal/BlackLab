@@ -8,4 +8,3 @@ Endpoints that provide information about the server and corpora.
 * [Field information](field-info) : `GET /blacklab-server/<corpus-name>/fields/<fieldname>`<br>Information about a (metadata or annotated) field in the corpus, such as a list of values. Also includes spans/relations.
 * [Span and relation types](relations): `GET /blacklab-server/<corpus-name>/relations`<br>What span and relation types occur in the corpus? (now also available on corpus and field info pages)
 * [Schemas](schemas) : `GET /blacklab-server/<corpus-name>/schemas`<br>JSON schemas for (file) formats related to BlackLab.
-* [Plugins](plugins) : `GET /blacklab-server/plugins/`<br>Information about available (web-safe) plugins.

@@ -42,18 +42,6 @@
       }
     },
     "IndexSourceType": {
-      "archive": {
-        "params": [
-        ]
-      },
-      "file": {
-        "params": [
-        ]
-      },
-      "test": {
-        "params": [
-        ]
-      }
     },
     "ProcessingInstruction": {
       "append": {
