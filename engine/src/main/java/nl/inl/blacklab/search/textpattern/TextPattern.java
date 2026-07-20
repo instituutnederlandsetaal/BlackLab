@@ -33,6 +33,11 @@ public abstract class TextPattern implements TextPatternStruct {
 
     /** Value meaning "no maximum" (actually just the largest integer) */
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
+    public static final String REGEX_PREFIX_INSENSITIVE = "i";
+    public static final String REGEX_PREFIX_SENSITIVE = "s";
+    public static final String REGEX_PREFIX_SENSITIVE_ALT = "-i";
+    public static final String REGEX_PREFIX_CASE_SENSITIVE = "c";
+    public static final String REGEX_PREFIX_DIACRITICS_SENSITIVE = "d";
 
     public static TextPattern regex(String value, String annotation, MatchSensitivity sensitivity) {
         return new TextPatternRegex(value, annotation, sensitivity);
@@ -78,12 +83,13 @@ public abstract class TextPattern implements TextPatternStruct {
         String regexSensitivityPrefix = "";
         if (sensitivity != defaultSensitivity) {
             // We need a regex prefix to indicate that we want a different sensitivity than the default for the index.
-            if (sensitivity == MatchSensitivity.INSENSITIVE)
-                regexSensitivityPrefix = "(?i)";
-            else if (sensitivity == MatchSensitivity.SENSITIVE)
-                regexSensitivityPrefix = "(?-i)";
-            else
-                throw new UnsupportedOperationException("Unsupported sensitivity: " + sensitivity);
+            regexSensitivityPrefix = "(?" + switch (sensitivity) {
+                case INSENSITIVE -> REGEX_PREFIX_INSENSITIVE;
+                case SENSITIVE -> REGEX_PREFIX_SENSITIVE_ALT;
+                case CASE_INSENSITIVE -> REGEX_PREFIX_DIACRITICS_SENSITIVE;
+                case DIACRITICS_INSENSITIVE -> REGEX_PREFIX_CASE_SENSITIVE;
+                default -> throw new UnsupportedOperationException("Unsupported sensitivity: " + sensitivity);
+            } + ")";
         }
         return regexSensitivityPrefix;
     }

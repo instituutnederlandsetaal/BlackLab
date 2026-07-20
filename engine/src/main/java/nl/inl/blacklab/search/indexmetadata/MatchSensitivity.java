@@ -47,6 +47,10 @@ public enum MatchSensitivity {
             return SENSITIVE;
         if (value.equalsIgnoreCase("insensitive"))
             return INSENSITIVE;
+        if (value.equalsIgnoreCase("case_insensitive"))
+            return CASE_INSENSITIVE;
+        if (value.equalsIgnoreCase("diacritics_insensitive"))
+            return DIACRITICS_INSENSITIVE;
         return fromLuceneFieldSuffix(value);
     }
 

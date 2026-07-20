@@ -59,7 +59,7 @@ For those who already know CQL/CQP from another corpus search engine such as IMS
 BlackLab currently supports (arguably) most of the important features of Corpus Query Language:
 
 * Matching on token annotations, using regular expressions and `=`, `!=`, `!`. Example: `[word="bank"]` (or just `"bank"`)
-* Case/accent sensitive matching. Note that, unlike in CWB, case-INsensitive matching is the default. To explicitly match case-/accent-insensitively, use `"(?i)..."`. Example: `"(?-i)Mr\." "(?-i)Banks"`
+* Case/accent sensitive matching. Note that, unlike in CWB, case-INsensitive matching is the default. To explicitly match case-/accent-insensitively, use `"(?s)..."` or `"(?i)..."`. To only match diacritics-sensitively, use `"(?d)..."`. To only match case-sensitively, use `(?c)..."`. Example: `"(?d)señora" "(?s)Banks" "(?c)née" "(?i)Smith"`
 * Combining criteria using `&`, `|` and `!`. Parentheses can also be used for grouping. Example: `[lemma="bank" & pos="V"]`
 * Matchall pattern `[]` matches any token. Example: `"a" [] "day"`
 * Regular expression operators `+`, `*`, `?`, `{n}`, `{n,m}` at the token level. Example: `[pos="ADJ"]+`

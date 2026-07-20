@@ -40,7 +40,7 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: .
-      sensitivity: sensitive_insensitive
+      sensitivity: all
       process:
         - action: split
           separator: "\\|"

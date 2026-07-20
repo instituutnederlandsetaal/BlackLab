@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.lucene.index.Term;
@@ -52,8 +53,8 @@ public class TextPatternCompare extends TextPattern {
     /**
      * Rewrite to TextPatternTerm if value only contains letters and numbers.
      *
-     * Also looks at (?i), (?-i), (?c) at the start of the pattern and converts that
-     * into an appropriate TextPatternSensitive() wrapper.
+     * Also looks at (?i), (?-i), (?c), etc. at the start of the pattern and converts
+     * that into an appropriate TextPatternSensitive() wrapper.
      *
      * In all other cases, we keep TextPatternRegex because Lucene's regex, wildcard
      * and prefix queries all work in the same basic way (are converted into
@@ -62,19 +63,19 @@ public class TextPatternCompare extends TextPattern {
      * @return the TextPattern
      */
     public static TextPattern rewriteToSimplerTextPattern(String annotation, MatchSensitivity sensitivity, String value) {
-        // Do we want to force an (in)sensitive search?
-        boolean forceSensitive = false;
-        boolean forceInsensitive = false;
-        String newValue = value;
-        if (newValue.startsWith("(?-i)")) {
-            forceSensitive = true;
-            newValue = newValue.substring(5);
-        } else if (newValue.startsWith("(?c)")) {
-            forceSensitive = true;
-            newValue = newValue.substring(4);
-        } else if (newValue.startsWith("(?i)")) {
-            forceInsensitive = true;
-            newValue = newValue.substring(4);
+        // See if a sensitivity prefix was provided
+        MatchSensitivity forceSensitivity = null;
+        Pattern sensitivityPrefix = Pattern.compile("\\(\\?(s|-?i|c|d)\\)");
+        Matcher matcher = sensitivityPrefix.matcher(value);
+        if (matcher.find()) {
+            forceSensitivity = switch (matcher.group(1)) {
+                case TextPattern.REGEX_PREFIX_SENSITIVE, TextPattern.REGEX_PREFIX_SENSITIVE_ALT -> MatchSensitivity.SENSITIVE;
+                case TextPattern.REGEX_PREFIX_INSENSITIVE -> MatchSensitivity.INSENSITIVE;
+                case TextPattern.REGEX_PREFIX_DIACRITICS_SENSITIVE -> MatchSensitivity.CASE_INSENSITIVE;
+                case TextPattern.REGEX_PREFIX_CASE_SENSITIVE -> MatchSensitivity.DIACRITICS_INSENSITIVE;
+                default -> null;
+            };
+            value = value.substring(matcher.group(1).length() + 3);
         }
 
         // Is it "any token"?
@@ -86,26 +87,23 @@ public class TextPatternCompare extends TextPattern {
         // surrounded by ^ and $, turn it into a TermQuery, which might be a little
         // faster than doing it via RegexpQuery (which has to build an Automaton).
         TextPatternTerm result = null;
-        if (onlyLettersAndDigits.matcher(newValue).matches()) {
+                if (onlyLettersAndDigits.matcher(value).matches()) {
             // No regex characters, so we can turn it into a term query
-            result = new TextPatternTerm(newValue, annotation, sensitivity);
+            result = new TextPatternTerm(value, annotation, sensitivity);
         }
         if (result == null) {
             // Not a term query. Did we strip off a sensitivity flag above?
-            if (!forceSensitive && !forceInsensitive) {
+            if (forceSensitivity == null) {
                 // Nope. Nothing to rewrite.
                 return null;
             }
             // Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
-            result = new TextPatternRegex(newValue, annotation, sensitivity);
+            result = new TextPatternRegex(value, annotation, sensitivity);
         }
 
-        if (forceSensitive) {
-            // Pattern started with (?-i) or (?c) to force it to be sensitive
-            result = result.withAnnotationAndSensitivity(null, MatchSensitivity.SENSITIVE);
-        } else if (forceInsensitive) {
-            // Pattern started with (?i) to force it to be insensitive
-            result = result.withAnnotationAndSensitivity(null, MatchSensitivity.INSENSITIVE);
+        if (forceSensitivity != null && forceSensitivity != sensitivity) {
+            // Pattern started with e.g. (?-i) or (?c) to force another sensitivity
+            result = result.withAnnotationAndSensitivity(null, forceSensitivity);
         }
 
         return result;

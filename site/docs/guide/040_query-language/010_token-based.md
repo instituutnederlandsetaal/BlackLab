@@ -91,11 +91,23 @@ To match any token, use the match-all pattern, which is just a pair of empty squ
 
 BlackLab defaults to (case and diacritics) _insensitive_ search. That is, it ignores differences in upper- and lowercase, as well as diacritical marks (accented characters). So searching for `"panama"` will also find _Panama_.
 
-To match a pattern sensitively, prefix it with `(?-i)`:
+To match a pattern sensitively, prefix it with `(?s)` or `(?-i)`:
 
 ```
-"(?-i)Panama"
+"(?s)Panama"
 ```
+
+Note that this requires the annotation to be indexed with the correct `sensitivity` setting (in your `.blf.yaml` file; values `sensitive`, `sensitive_insensitive` and `all` will enable sensitive search).
+
+If the annotation was indexed with `sensitivity: all`, you can even search only case-sensitively (but diacritics-insensitively) or vice versa:
+
+```
+"(?c)Panama"    # case-sensitive only: will find "Panamá" but not "panamá"
+"(?d)panamá"    # diacritics-sensitive only: will find "Panamá" but not "Panama"
+```
+
+Unfortunately, these regex flags can only be used at the start of a regular expression. So you cannot do e.g. `"(?i)Black(?-i)Lab"` to match `Black` insensitively but `Lab` sensitively.
+
 
 ## Sequences
 

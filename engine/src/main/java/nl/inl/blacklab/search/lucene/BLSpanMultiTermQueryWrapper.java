@@ -24,6 +24,8 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
+import org.apache.lucene.queries.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.search.AutomatonQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
@@ -34,8 +36,6 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.queries.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.queries.spans.SpanQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -217,7 +217,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
      * @return number of word characters in the pattern
      */
     public static int countRegexWordCharacters(String pattern) {
-        String trimmed = pattern.replaceAll("(^\\^(\\(\\?-?[ic]\\))?)|(\\$$)", ""); // trim off ^, $ and (?-i), etc.
+        String trimmed = pattern.replaceAll("(^\\^(\\(\\?-?[iscd]\\))?)|(\\$$)", ""); // trim off ^, $ and (?-i), etc.
         // only retain word characters
         return trimmed.replaceAll("\\W", "").length();
         //trimmed.replaceAll("^(\\w*)(\\W(|.*\\W))(\\w*)$", "$1$4"); // only retain prefix and suffix

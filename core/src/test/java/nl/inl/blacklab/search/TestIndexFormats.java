@@ -194,7 +194,7 @@ public class TestIndexFormats {
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());
-        Assert.assertEquals(AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE, field.mainAnnotation().sensitivitySetting());
+        Assert.assertEquals(AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE, field.mainAnnotation().sensitivitySetting());
         Assert.assertEquals(MatchSensitivity.SENSITIVE, field.mainAnnotation().offsetsSensitivity().sensitivity());
     }
 

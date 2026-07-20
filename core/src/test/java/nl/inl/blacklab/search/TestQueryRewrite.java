@@ -108,9 +108,11 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteSensitive() {
-        assertNoRewrite("[word = '(?-i)Bla']", "TERM(contents%word@s:Bla)");
-
-        assertNoRewrite("[word = '(?c)Bla']", "TERM(contents%word@s:Bla)");
+        assertNoRewrite("[word = '(?i)Blá']", "TERM(contents%word@i:bla)");
+        assertNoRewrite("[word = '(?-i)Blá']", "TERM(contents%word@s:Blá)");
+        assertNoRewrite("[word = '(?s)Blá']", "TERM(contents%word@s:Blá)");
+        assertNoRewrite("[word = '(?c)Blá']", "TERM(contents%word@di:Bla)");
+        assertNoRewrite("[word = '(?d)Blá']", "TERM(contents%word@ci:blá)");
     }
 
     @Test
