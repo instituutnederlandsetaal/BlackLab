@@ -25,268 +25,698 @@
     }
   },
   "plugins": {
-    "FileConverter": [
-    ],
-    "HitGroupScorerType": [
-      {
-        "name": "coll-dice"
+    "FileConverter": {
+    },
+    "HitGroupScorerType": {
+      "coll-dice": {
+        "params": [
+        ]
       },
-      {
-        "name": "coll-salience"
+      "coll-groupsize": {
+        "params": [
+        ]
       },
-      {
-        "name": "coll-groupsize"
+      "coll-salience": {
+        "params": [
+        ]
       }
-    ],
-    "IndexSourceType": [
-    ],
-    "ProcessingInstruction": [
-      {
-        "name": "append",
-        "params": {
-          "field": {
+    },
+    "IndexSourceType": {
+      "archive": {
+        "params": [
+        ]
+      },
+      "file": {
+        "params": [
+        ]
+      },
+      "test": {
+        "params": [
+        ]
+      }
+    },
+    "ProcessingInstruction": {
+      "append": {
+        "params": [
+          {
+            "name": "field",
             "required": false,
             "type": "string"
           },
-          "prefix": {
+          {
+            "name": "prefix",
             "required": false,
             "type": "string"
           },
-          "separator": {
+          {
+            "name": "separator",
             "required": false,
             "type": "string"
           },
-          "value": {
+          {
+            "name": "value",
             "required": false,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "concatDate",
-        "params": {
-          "autofill": {
+      "concatDate": {
+        "params": [
+          {
+            "name": "autofill",
             "required": false,
             "type": "enum"
           },
-          "dayField": {
+          {
+            "name": "dayField",
             "required": true,
             "type": "string"
           },
-          "monthField": {
+          {
+            "name": "monthField",
             "required": true,
             "type": "string"
           },
-          "yearField": {
+          {
+            "name": "yearField",
             "required": true,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "identity"
+      "identity": {
+        "params": [
+        ]
       },
-      {
-        "name": "ifEmpty",
-        "params": {
-          "field": {
+      "ifEmpty": {
+        "params": [
+          {
+            "name": "field",
             "required": false,
             "type": "string"
           },
-          "separator": {
+          {
+            "name": "separator",
             "required": false,
             "type": "string"
           },
-          "value": {
+          {
+            "name": "value",
             "required": false,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "map",
-        "params": {
-          "table": {
+      "map": {
+        "params": [
+          {
+            "name": "table",
             "required": true,
             "type": "stringStringMap"
           }
-        }
+        ]
       },
-      {
-        "name": "stmt-block"
-      },
-      {
-        "name": "parsePos",
-        "params": {
-          "field": {
+      "parsePos": {
+        "params": [
+          {
+            "name": "field",
             "required": false,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "replace",
-        "params": {
-          "find": {
+      "replace": {
+        "params": [
+          {
+            "name": "find",
             "required": true,
             "type": "string"
           },
-          "flags": {
+          {
+            "name": "flags",
             "required": false,
             "type": "string"
           },
-          "keep": {
+          {
+            "name": "keep",
             "required": false,
             "type": "enum"
           },
-          "replace": {
+          {
+            "name": "replace",
             "required": true,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "sort"
+      "sort": {
+        "params": [
+        ]
       },
-      {
-        "name": "split",
-        "params": {
-          "flags": {
+      "split": {
+        "params": [
+          {
+            "name": "flags",
             "required": false,
             "type": "string"
           },
-          "keep": {
+          {
+            "name": "keep",
             "required": false,
             "type": "string"
           },
-          "separator": {
+          {
+            "name": "separator",
             "required": false,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "strip",
-        "params": {
-          "chars": {
+      "stmt-block": {
+        "params": [
+        ]
+      },
+      "strip": {
+        "params": [
+          {
+            "name": "chars",
             "required": false,
             "type": "string"
           }
-        }
+        ]
       },
-      {
-        "name": "unique"
+      "unique": {
+        "params": [
+        ]
       }
-    ],
-    "QueryFunction": [
-      {
-        "name": "abs"
+    },
+    "QueryFunction": {
+      "_FI1": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "query"
+          }
+        ]
       },
-      {
-        "name": "end"
+      "_FI2": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "query"
+          }
+        ]
       },
-      {
-        "name": "_fixed"
+      "_adjust": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "before",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "after",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "_fuzzy"
+      "_edge": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "whichEdge",
+            "required": false,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "gap"
+      "_fimatch": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "fiClause",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "in_range"
+      "_fixed": {
+        "params": [
+          {
+            "name": "start",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "end",
+            "required": true,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "len"
+      "_fuzzy": {
+        "params": [
+          {
+            "name": "find",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "maxEdits",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "prefixLength",
+            "required": true,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "list"
+      "_ident": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          }
+        ]
       },
-      {
-        "name": "meet"
+      "_indoc": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "docId",
+            "required": true,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "meet_within"
+      "_lenfilter": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "minLength",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "maxLength",
+            "required": true,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "query"
+      "_posfilter": {
+        "params": [
+          {
+            "name": "producer",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "filter",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "operation",
+            "required": true,
+            "type": "enum"
+          },
+          {
+            "name": "inverted",
+            "required": true,
+            "type": "boolean"
+          }
+        ]
       },
-      {
-        "name": "start"
+      "abs": {
+        "params": [
+          {
+            "name": "number",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "str"
+      "cspan": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "captureName",
+            "required": true,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "symbol"
+      "end": {
+        "params": [
+          {
+            "name": "matchInfo",
+            "required": true,
+            "type": "matchInfo"
+          }
+        ]
       },
-      {
-        "name": "union"
+      "gap": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "matchInfo"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "matchInfo"
+          },
+          {
+            "name": "directional",
+            "required": false,
+            "type": "boolean"
+          }
+        ]
       },
-      {
-        "name": "_adjust"
+      "in_range": {
+        "params": [
+          {
+            "name": "number",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "min",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "max",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "_edge"
+      "len": {
+        "params": [
+          {
+            "name": "value",
+            "required": true,
+            "type": "any"
+          }
+        ]
       },
-      {
-        "name": "_fimatch"
+      "list": {
+        "params": [
+          {
+            "name": "list",
+            "required": true,
+            "type": "list"
+          }
+        ]
       },
-      {
-        "name": "_FI1"
+      "meet": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "rangeStart",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "rangeEnd",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "_FI2"
+      "meet_within": {
+        "params": [
+          {
+            "name": "first",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "second",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "within",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "rangeStart",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "rangeEnd",
+            "required": false,
+            "type": "integer"
+          }
+        ]
       },
-      {
-        "name": "_ident"
+      "punctAfter": {
+        "params": [
+          {
+            "name": "regex",
+            "required": false,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "_indoc"
+      "punctBefore": {
+        "params": [
+          {
+            "name": "regex",
+            "required": false,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "_lenfilter"
+      "query": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          }
+        ]
       },
-      {
-        "name": "_posfilter"
+      "rcapture": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "captureAs",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "relationType",
+            "required": false,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "rel"
+      "rel": {
+        "params": [
+          {
+            "name": "relType",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "spanMode",
+            "required": false,
+            "type": "enum"
+          },
+          {
+            "name": "captureAs",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "direction",
+            "required": false,
+            "type": "enum"
+          }
+        ]
       },
-      {
-        "name": "rspan"
+      "rfield": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "fieldOrVersion",
+            "required": true,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "cspan"
+      "rmatch": {
+        "params": [
+          {
+            "name": "queries",
+            "required": false,
+            "type": "list"
+          }
+        ]
       },
-      {
-        "name": "rfield"
+      "rspan": {
+        "params": [
+          {
+            "name": "subject",
+            "options": [
+              "query",
+              "matchInfo"
+            ],
+            "required": true,
+            "type": "choice"
+          },
+          {
+            "name": "spanMode",
+            "required": false,
+            "type": "enum"
+          }
+        ]
       },
-      {
-        "name": "rcapture"
+      "start": {
+        "params": [
+          {
+            "name": "matchInfo",
+            "required": true,
+            "type": "matchInfo"
+          }
+        ]
       },
-      {
-        "name": "punctBefore"
+      "str": {
+        "params": [
+          {
+            "name": "value",
+            "required": true,
+            "type": "any"
+          }
+        ]
       },
-      {
-        "name": "punctAfter"
+      "symbol": {
+        "params": [
+          {
+            "name": "name",
+            "required": true,
+            "type": "string"
+          }
+        ]
       },
-      {
-        "name": "with-spans"
+      "union": {
+        "params": [
+          {
+            "name": "clauses",
+            "required": true,
+            "type": "list"
+          }
+        ]
+      },
+      "with-spans": {
+        "params": [
+          {
+            "name": "query",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "spans",
+            "required": true,
+            "type": "query"
+          },
+          {
+            "name": "captureAs",
+            "required": false,
+            "type": "string"
+          }
+        ]
       }
-    ],
-    "QueryParserProvider": [
-      {
-        "name": "corpusql"
+    },
+    "QueryParserProvider": {
+      "contextql": {
+        "params": [
+        ]
       },
-      {
-        "name": "contextql"
+      "corpusql": {
+        "params": [
+        ]
       },
-      {
-        "name": "json-bql"
+      "json-bql": {
+        "params": [
+        ]
       }
-    ]
+    }
   },
   "user": {
     "canCreateIndex": false,

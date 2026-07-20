@@ -73,6 +73,10 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         return name;
     }
 
+    public List<PluginParam> getParameters() {
+        return argTypes;
+    }
+
     public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
         // Make sure argument are interpreted as the correct type
         // (the parser interprets all values as queries, so we sometimes need to convert them back...)

@@ -1891,27 +1891,33 @@ public class ResponseStreamer {
     public void plugins(ResultListPlugins result) {
         ds.startEntry("plugins").startMap();
         for (Map.Entry<String, List<ResultListPlugins.PluginInfo>> typeEntry : result.getPluginsByType().entrySet()) {
-            ds.startEntry(typeEntry.getKey()).startList();
+            ds.startEntry(typeEntry.getKey()).startMap();
             for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
-                ds.startItem("plugin").startMap();
-                ds.entry("name", pluginInfo.getName());
-                if (!pluginInfo.getParams().isEmpty()) {
-                    ds.startEntry("params").startMap();
-                    for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParams().values()) {
-                        ds.startEntry(param.getName()).startMap();
+                ds.startEntry(pluginInfo.getName()).startMap();
+                {
+                    ds.startEntry("params").startList();
+                    for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParamsMap().values()) {
+                        ds.startItem(param.getName()).startMap();
                         {
-                            ds.entry("type", param.getType());
-                            ds.entry("required", param.isRequired());
+                            paramInfo(param);
                         }
                         ds.endMap().endItem();
                     }
-                    ds.endMap().endEntry();
+                    ds.endList().endEntry();
                 }
                 ds.endMap().endItem();
             }
-            ds.endList().endEntry();
+            ds.endMap().endEntry();
         }
         ds.endMap().endEntry();
+    }
+
+    private void paramInfo(ResultListPlugins.PluginParamInfo param) {
+        ds.entry("name", param.getName());
+        ds.entry("type", param.getType());
+        if (!param.getOptions().isEmpty())
+            ds.entry("options",  param.getOptions());
+        ds.entry("required", param.isRequired());
     }
 
     public void cacheInfo(SearchCache blackLabCache, boolean includeDebugInfo) {

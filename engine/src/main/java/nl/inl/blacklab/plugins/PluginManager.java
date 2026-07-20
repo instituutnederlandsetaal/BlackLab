@@ -43,6 +43,7 @@ import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSplit;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionStrip;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.extensions.QueryFunctionAbs;
 import nl.inl.blacklab.search.extensions.QueryFunctionEnd;
 import nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan;
@@ -109,6 +110,12 @@ public class PluginManager {
 
     private static final Set<Class<? extends Plugin>> safePluginClasses = new HashSet<>();
 
+    /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
+    record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
+
+    /** Groovy plugin scripts we've found but not loaded yet. We don't yet know their plugin type. */
+    private static final Map<String, UnloadedGroovyPlugin> unloadedGroovyScripts = new LinkedHashMap<>();
+
     static {
         addWebSafePlugins(List.of(
                 // FileConverter
@@ -162,6 +169,7 @@ public class PluginManager {
                 QueryFunctionSymbol.class,
                 QueryFunctionUnion.class
         ));
+        QueryExtensions.registerAll(); // register e.g. rspan(), debug functions, etc.
     }
 
     public static synchronized void addWebSafePlugins(List<Class<? extends Plugin>> pluginClasses) {
@@ -172,17 +180,6 @@ public class PluginManager {
         ensureInitialized();
         return safePluginClasses.contains(plugin.getClass());
     }
-
-    private static synchronized void ensureInitialized() {
-        if (!isInitialized)
-            initialize(BlackLab.config().getPlugins(), BlackLab.configDir());
-    }
-
-    /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
-    record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
-
-    /** Groovy plugin scripts we've found but not loaded yet. We don't yet know their plugin type. */
-    private static final Map<String, UnloadedGroovyPlugin> unloadedGroovyScripts = new LinkedHashMap<>();
 
     // Nothing to do; initialization happens when the blacklab config is loaded.
     // The blacklab Config is automatically loaded when the first BlackLabIndex is
@@ -198,23 +195,23 @@ public class PluginManager {
     }
 
     public static synchronized void addPluginType(Class<? extends Plugin> pluginType) {
-        if (isInitialized)
-            throw new IllegalStateException("Cannot add plugin type after initialization");
         pluginTypes.add(pluginType);
+        URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
+        pluginsByType.put(pluginType, new PluginsOfType<>(pluginType, BlackLab.config().getPlugins(), cl));
     }
 
     /**
      * Attempts to load and initialize all plugin classes and scripts in the plugin
      * directory (and classes on the classpath), passing the values in the config
      * to the matching plugin.
-     *
-     * @param pluginConfig configurations per plugin id
-     * @param configDir directory where plugins and their configs can be found
      */
-    public static synchronized void initialize(BLConfigPlugins pluginConfig, File configDir) {
+    public static synchronized void ensureInitialized() {
         if (isInitialized)
-            throw new IllegalStateException("PluginManager already initialized");
+            return; // only do this once
         isInitialized = true;
+
+        BLConfigPlugins pluginConfig = BlackLab.config().getPlugins();
+        File configDir = BlackLab.configDir();
         PluginManager.pluginsDir = new File(configDir, PLUGINS_DIR_NAME);
 
         logger.debug("Initializing plugin system...");
@@ -325,7 +322,7 @@ public class PluginManager {
         }
     }
 
-    private static void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName, boolean registerClassName) {
+    private static synchronized void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName, boolean registerClassName) {
         ensureInitialized();
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             if (pluginClass.isInstance(plugin)) {
@@ -345,7 +342,7 @@ public class PluginManager {
     }
 
     /** Get all registered plugin types. */
-    public static List<Class<? extends Plugin>> getPluginTypes() {
+    public static synchronized List<Class<? extends Plugin>> getPluginTypes() {
         ensureInitialized();
         return List.copyOf(pluginTypes);
     }

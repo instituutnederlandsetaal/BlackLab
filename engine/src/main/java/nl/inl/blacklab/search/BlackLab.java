@@ -51,6 +51,9 @@ import nl.inl.util.ZipHandleManager;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
+    public static final String MSG_DEFAULT_CONFIG_ALREADY_APPLIED = "Cannot set default configuration - " +
+            " configuration has already been applied.";
+
     /**
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
      * automatically.
@@ -369,14 +372,11 @@ public final class BlackLab {
      * because another default config has been applied already.
      */
     public static synchronized void setConfigFromFile() {
-        if (globalSettingsApplied)
-            throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
-
         List<File> dirsToSearch = Collections.singletonList(configDir());
         File file = FileUtil.findFile(dirsToSearch, "blacklab", Arrays.asList("yaml", "yml", "json"));
         if (file != null) {
             try {
-                blackLabConfig = BlackLabConfig.readConfigFile(file);
+                setConfig(BlackLabConfig.readConfigFile(file), true);
                 configDir = file.getParentFile();
             } catch (IOException e) {
                 logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
@@ -396,12 +396,8 @@ public final class BlackLab {
     public static synchronized void setConfig(BlackLabConfig config, boolean forceApply) {
         if (globalSettingsApplied && !forceApply)
             return;
-
-        if (globalSettingsApplied) {
-            throw new UnsupportedOperationException(
-                    "Cannot set default configuration - another configuration has already been applied.");
-        }
-        
+        if (globalSettingsApplied)
+            throw new UnsupportedOperationException(MSG_DEFAULT_CONFIG_ALREADY_APPLIED);
         blackLabConfig = config; 
     }
 

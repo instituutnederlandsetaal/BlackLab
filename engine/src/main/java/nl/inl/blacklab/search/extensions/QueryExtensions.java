@@ -15,7 +15,7 @@ public class QueryExtensions {
     private QueryExtensions() {
     }
 
-    static {
+    public static void registerAll() {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
         register(XFRelations.class);  // Functions for working with relations
         register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
