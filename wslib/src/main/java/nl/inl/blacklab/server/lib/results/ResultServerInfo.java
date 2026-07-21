@@ -23,6 +23,8 @@ public class ResultServerInfo {
 
     private final ResultUserInfo userInfo;
 
+    private final ResultListPlugins plugins;
+
     private final List<ResultIndexStatus> indexStatuses;
 
     public ResultServerInfo(RequestServerInfo request) {
@@ -32,6 +34,7 @@ public class ResultServerInfo {
         User user = request.user();
         IndexManager indexManager = request.indexManager();
         userInfo = new ResultUserInfo(user, indexManager);
+        plugins = new ResultListPlugins();
         indexStatuses = new ArrayList<>();
         Collection<Index> indices = indexManager.getAllAvailableCorpora(user);
         for (Index index: indices) {
@@ -54,6 +57,10 @@ public class ResultServerInfo {
 
     public ResultUserInfo getUserInfo() {
         return userInfo;
+    }
+
+    public ResultListPlugins getPlugins() {
+        return plugins;
     }
 
     public List<ResultIndexStatus> getIndexStatuses() {

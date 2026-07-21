@@ -19,7 +19,7 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
     private PluginParam parChars;
 
     @Override
-    public synchronized String getId() {
+    public synchronized String getName() {
         return "strip";
     }
 

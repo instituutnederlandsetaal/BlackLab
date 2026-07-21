@@ -11,6 +11,7 @@ public enum BlsPath {
     HITS("hits"),
     INPUT_FORMATS("input-formats"),
     PARSE_PATTERN("parse-pattern"),
+    PLUGINS("plugins"),
     RELATIONS("relations"),
     SCHEMA("schema"),
     SHARED_WITH_ME("shared-with-me"),

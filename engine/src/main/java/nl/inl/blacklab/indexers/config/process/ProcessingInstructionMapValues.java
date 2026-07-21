@@ -18,7 +18,7 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
     private PluginParam parTable;
 
     @Override
-    public synchronized String getId() {
+    public synchronized String getName() {
         return "map";
     }
 

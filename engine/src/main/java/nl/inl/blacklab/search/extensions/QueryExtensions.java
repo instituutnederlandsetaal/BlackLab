@@ -1,9 +1,7 @@
 package nl.inl.blacklab.search.extensions;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.QueryFunction;
@@ -17,10 +15,7 @@ public class QueryExtensions {
     private QueryExtensions() {
     }
 
-    /** Registry of extension functions by name */
-    private static final Map<String, QueryFunction> functions = new HashMap<>();
-
-    static {
+    public static void registerAll() {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
         register(XFRelations.class);  // Functions for working with relations
         register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
@@ -62,7 +57,7 @@ public class QueryExtensions {
     }
 
     public static void register(QueryFunction func) {
-        functions.put(func.getName(), func);
+        PluginManager.type(QueryFunction.class).add(func.getName(), func);
     }
 
     public static void registerRelationsFunction(String name, List<PluginParam> argTypes, List<Object> defaultValues,
@@ -92,10 +87,7 @@ public class QueryExtensions {
     }
 
     private static QueryFunction getInternal(String name) {
-        QueryFunction queryFunction = functions.get(name);
-        return queryFunction == null ?
-                PluginManager.type(QueryFunction.class).getIfExists(name).orElse(null) :
-                queryFunction;
+        return PluginManager.type(QueryFunction.class).getIfExists(name).orElse(null);
     }
 
 }

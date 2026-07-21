@@ -1233,7 +1233,7 @@ public class ResponseStreamer {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
                 if (hitsGrouped.getReqGroup().groupScorer() != HitGroupScorer.NONE) {
                     ds.startEntry("scorer").startMap();
-                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getId());
+                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getName());
                     ds.endMap().endEntry();
                 }
 
@@ -1455,6 +1455,8 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
+            if (isNewApi)
+                plugins(result.getPlugins());
         }
         ds.endMap();
     }
@@ -1878,6 +1880,44 @@ public class ResponseStreamer {
                 .entry("configFileType", result.getConfig().getConfigFileType())
                 .entry("configFile", result.getFileContents())
                 .endMap();
+    }
+
+    public void pluginsResponse(ResultListPlugins result) {
+        ds.startMap();
+        plugins(result);
+        ds.endMap();
+    }
+
+    public void plugins(ResultListPlugins result) {
+        ds.startEntry("plugins").startMap();
+        for (Map.Entry<String, List<ResultListPlugins.PluginInfo>> typeEntry : result.getPluginsByType().entrySet()) {
+            ds.startEntry(typeEntry.getKey()).startMap();
+            for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
+                ds.startEntry(pluginInfo.getName()).startMap();
+                {
+                    ds.startEntry("params").startList();
+                    for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParamsMap().values()) {
+                        ds.startItem(param.getName()).startMap();
+                        {
+                            paramInfo(param);
+                        }
+                        ds.endMap().endItem();
+                    }
+                    ds.endList().endEntry();
+                }
+                ds.endMap().endItem();
+            }
+            ds.endMap().endEntry();
+        }
+        ds.endMap().endEntry();
+    }
+
+    private void paramInfo(ResultListPlugins.PluginParamInfo param) {
+        ds.entry("name", param.getName());
+        ds.entry("type", param.getType());
+        if (!param.getOptions().isEmpty())
+            ds.entry("options",  param.getOptions());
+        ds.entry("required", param.isRequired());
     }
 
     public void cacheInfo(SearchCache blackLabCache, boolean includeDebugInfo) {

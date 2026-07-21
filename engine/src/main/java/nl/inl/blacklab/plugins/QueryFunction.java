@@ -15,6 +15,7 @@ import nl.inl.blacklab.plugins.param.PList;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
@@ -30,7 +31,9 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     /** Default value for a query parameter that means "any span" (<code><'.*' //></code>) */
     public static final String VALUE_ANY_SPAN = "_ANY_SPAN_";
 
-    /** Function name */
+    /** Function name
+     * <p>
+     * Must be unique among QueryFunction plugins. The id, on the other hand, must be unique among all plugins. */
     private final String name;
 
     /** Parameter types */
@@ -61,7 +64,17 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
 
     @Override
     public String getId() {
+        String id = super.getId();
+        return id == null ? (this instanceof QueryFunctionLambda ? name : getClass().getSimpleName()) : id;
+    }
+
+    @Override
+    public String getName() {
         return name;
+    }
+
+    public List<PluginParam> getParameters() {
+        return argTypes;
     }
 
     public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
@@ -185,10 +198,6 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
 
     public boolean isRelationsFunction() {
         return relationsFunction;
-    }
-
-    public String getName() {
-        return name;
     }
 
     @Override

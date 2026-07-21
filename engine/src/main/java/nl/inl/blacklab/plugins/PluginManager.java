@@ -43,6 +43,7 @@ import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSplit;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionStrip;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.extensions.QueryFunctionAbs;
 import nl.inl.blacklab.search.extensions.QueryFunctionEnd;
 import nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan;
@@ -109,6 +110,12 @@ public class PluginManager {
 
     private static final Set<Class<? extends Plugin>> safePluginClasses = new HashSet<>();
 
+    /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
+    record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
+
+    /** Groovy plugin scripts we've found but not loaded yet. We don't yet know their plugin type. */
+    private static final Map<String, UnloadedGroovyPlugin> unloadedGroovyScripts = new LinkedHashMap<>();
+
     static {
         addWebSafePlugins(List.of(
                 // FileConverter
@@ -173,17 +180,6 @@ public class PluginManager {
         return safePluginClasses.contains(plugin.getClass());
     }
 
-    private static synchronized void ensureInitialized() {
-        if (!isInitialized)
-            initialize(BlackLab.config().getPlugins(), BlackLab.configDir());
-    }
-
-    /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
-    record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
-
-    /** Groovy plugin scripts we've found but not loaded yet. We don't yet know their plugin type. */
-    private static final Map<String, UnloadedGroovyPlugin> unloadedGroovyScripts = new LinkedHashMap<>();
-
     // Nothing to do; initialization happens when the blacklab config is loaded.
     // The blacklab Config is automatically loaded when the first BlackLabIndex is
     // opened, or earlier by a user library.
@@ -198,23 +194,23 @@ public class PluginManager {
     }
 
     public static synchronized void addPluginType(Class<? extends Plugin> pluginType) {
-        if (isInitialized)
-            throw new IllegalStateException("Cannot add plugin type after initialization");
+        URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
         pluginTypes.add(pluginType);
+        pluginsByType.put(pluginType, new PluginsOfType<>(pluginType, BlackLab.config().getPlugins(), cl));
     }
 
     /**
      * Attempts to load and initialize all plugin classes and scripts in the plugin
      * directory (and classes on the classpath), passing the values in the config
      * to the matching plugin.
-     *
-     * @param pluginConfig configurations per plugin id
-     * @param configDir directory where plugins and their configs can be found
      */
-    public static synchronized void initialize(BLConfigPlugins pluginConfig, File configDir) {
+    public static synchronized void ensureInitialized() {
         if (isInitialized)
-            throw new IllegalStateException("PluginManager already initialized");
+            return; // only do this once
         isInitialized = true;
+
+        BLConfigPlugins pluginConfig = BlackLab.config().getPlugins();
+        File configDir = BlackLab.configDir();
         PluginManager.pluginsDir = new File(configDir, PLUGINS_DIR_NAME);
 
         logger.debug("Initializing plugin system...");
@@ -227,6 +223,8 @@ public class PluginManager {
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             pluginsByType.put(pluginClass, new PluginsOfType<>(pluginClass, pluginConfig, cl));
         }
+
+        QueryExtensions.registerAll(); // register e.g. rspan(), debug functions, etc.
 
         findGroovyScripts(pluginConfig);
 
@@ -247,6 +245,7 @@ public class PluginManager {
     }
 
     private static URLClassLoader getPluginsDirClassLoader(ClassLoader parent) {
+        ensureInitialized();
         List<URL> urlList = new ArrayList<>();
         FilenameFilter filenameFilter = (dir, name) -> name.toLowerCase().endsWith(".jar");
         File[] files = pluginsDir.listFiles(filenameFilter);
@@ -286,23 +285,23 @@ public class PluginManager {
      */
     static void loadAllGroovyScripts() {
         ensureInitialized();
-        ArrayList<String> ids = new ArrayList<>(unloadedGroovyScripts.keySet());
-        for (String id: ids) {
-            getUnloaded(id);
+        ArrayList<String> scriptNames = new ArrayList<>(unloadedGroovyScripts.keySet());
+        for (String scriptName: scriptNames) {
+            getUnloaded(scriptName);
         }
     }
 
     /**
      * See if there's a groovy script with this name we can load.
      *
-     * @param id  plugin id (groovy script name)
+     * @param scriptName  groovy script name
      * @param <T> plugin type
      */
-    static synchronized <T extends Plugin> void getUnloaded(String id) {
+    static synchronized <T extends Plugin> void getUnloaded(String scriptName) {
         ensureInitialized();
         UnloadedGroovyPlugin unloaded;
         synchronized (unloadedGroovyScripts) {
-            unloaded = unloadedGroovyScripts.remove(id);
+            unloaded = unloadedGroovyScripts.remove(scriptName);
         }
         if (unloaded == null)
             return;
@@ -311,12 +310,12 @@ public class PluginManager {
             Object result = shell.evaluate(FileUtils.readFileToString(unloaded.scriptFile, StandardCharsets.UTF_8));
             if (result instanceof Plugin plugin) {
                 if (plugin.getId() == null) {
-                    plugin.setId(id);
-                } else if (!plugin.getId().equals(id)) {
+                    plugin.setId(scriptName);
+                } else if (!plugin.getId().equals(scriptName)) {
                     throw new PluginException("Groovy plugin overrides getId(): script file is " + unloaded.scriptFile +
                             ", getId() returns " + plugin.getId());
                 }
-                register(plugin, unloaded.pluginConfig, id);
+                register(plugin, unloaded.pluginConfig, scriptName, true);
             } else {
                 logger.warn("Groovy script " + unloaded.scriptFile + " does not evaluate to a Plugin instance; ignoring.");
             }
@@ -325,11 +324,11 @@ public class PluginManager {
         }
     }
 
-    private static void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName) {
+    private static synchronized void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName, boolean registerClassName) {
         ensureInitialized();
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             if (pluginClass.isInstance(plugin)) {
-                type(pluginClass).register(pluginClass.cast(plugin), pluginConfig, scriptFileName);
+                type(pluginClass).register(pluginClass.cast(plugin), pluginConfig, scriptFileName, registerClassName);
             }
         }
     }
@@ -342,6 +341,12 @@ public class PluginManager {
         if (tPluginsOfType == null)
             throw new IllegalArgumentException("Unknown plugin type: " + pluginType.getName());
         return tPluginsOfType;
+    }
+
+    /** Get all registered plugin types. */
+    public static synchronized List<Class<? extends Plugin>> getPluginTypes() {
+        ensureInitialized();
+        return List.copyOf(pluginTypes);
     }
 
 }

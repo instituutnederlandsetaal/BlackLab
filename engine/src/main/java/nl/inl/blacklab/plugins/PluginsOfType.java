@@ -4,13 +4,14 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,12 +35,21 @@ public class PluginsOfType<T extends Plugin> {
      */
     private static final Pattern PLUGIN_ID_PATTERN = Pattern.compile("[\\p{L}\\p{N}\\-._]+");
 
+    /** Plugin type we're managing. */
     private final Class<T> pluginClass;
 
-    /**
-     * Plugins by their id
+    /** Registered plugins of this type. */
+    private final Set<PluginData<T>> plugins = new LinkedHashSet<>();
+
+    /** Mapping from ids to plugins.
+     *
+     * Note that multiple ids may point to the same plugin,
+     * e.g. [fully qualified] class name, script name, value returned by plugin.getId().
+     * Usually you will use the script name for Groovy plugins and the class name for Java plugins.
+     * plugin.getId() should only be used if you want to support a different id as well, e.g.
+     * in the case of QueryFunctionAbs we want to refer to it as just "abs".
      */
-    private final Map<String, PluginData<T>> pluginsById = new HashMap<>();
+    private final Map<String, PluginData<T>> idToPlugin = new HashMap<>();
 
     PluginsOfType(Class<T> pluginClass, BLConfigPlugins pluginConfig, URLClassLoader cl) {
         this.pluginClass = pluginClass;
@@ -54,8 +64,7 @@ public class PluginsOfType<T extends Plugin> {
                 plugin = it.next();
                 if (plugin.getId() == null)
                     plugin.setId(plugin.getClass().getSimpleName());
-                //logger.info("Loading plugin {}", plugin);
-                register(plugin, pluginConfig, null);
+                register(plugin, pluginConfig, null, true);
             } catch (ServiceConfigurationError e) {
                 logger.error("Plugin failed to load: " + e.getMessage(), e);
             } catch (Exception e) {
@@ -66,7 +75,7 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
-    void register(Plugin plugin, BLConfigPlugins configs, String alternateId) {
+    void register(Plugin plugin, BLConfigPlugins configs, String alternateId, boolean registerClassName) {
         String id = plugin.getId();
         if (id != null && !PLUGIN_ID_PATTERN.matcher(id).matches()) {
             logger.warn("Plugin id " + id + " (class " + plugin.getClass().getName() +
@@ -86,7 +95,9 @@ public class PluginsOfType<T extends Plugin> {
             add(id, data);
         if (!StringUtils.isEmpty(alternateId) && !alternateId.equals(id))
             add(alternateId, data); // e.g. groovy script name without extension
-        if (!plugin.getClass().isAnonymousClass()) {
+        if (!plugin.getName().equals(id)) // e.g. function name, so "abs" for QueryFunctionAbs (unique for this plugin type)
+            add(plugin.getName(), data);
+        if (registerClassName && !plugin.getClass().isAnonymousClass()) {
             if (!plugin.getClass().getName().contains("$")) // skip e.g. "Script1$1"
                 add(plugin.getClass().getName(), data);
             if (!plugin.getClass().getSimpleName().matches("\\d+")) // skip e.g. "1"
@@ -94,10 +105,20 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
+    public void add(String id, Plugin plugin) {
+        PluginData<T> data = new PluginData<>((T) plugin, null, null);
+        add(id, data);
+    }
+
     private void add(String id, PluginData<T> data) {
         if (BlackLab.isPluginAllowed(data.getPlugin())) {
-            synchronized (pluginsById) {
-                pluginsById.putIfAbsent(id.toLowerCase(), data);
+            synchronized (this) {
+                if (!idToPlugin.containsKey(id)) {
+                    idToPlugin.put(id.toLowerCase(), data);
+                    plugins.add(data);
+                } else if (!idToPlugin.get(id).equals(data)){
+                    logger.warn("Plugin id collision, plugin '" + id + "' was already registered.");
+                }
             }
         } else
             logger.warn("Skipping plugin '" + id + "'; it's not on the plugins.allowed list)");
@@ -107,8 +128,8 @@ public class PluginsOfType<T extends Plugin> {
         PluginManager.loadAllGroovyScripts();
         List<T> result = new ArrayList<>();
         Collection<PluginData<T>> pluginDatas;
-        synchronized (pluginsById) {
-            pluginDatas = pluginsById.values();
+        synchronized (this) {
+            pluginDatas = new ArrayList<>(plugins);
         }
         for (PluginData<T> data: pluginDatas) {
             T plugin = data.getPlugin();
@@ -149,14 +170,14 @@ public class PluginsOfType<T extends Plugin> {
 
     public Optional<T> getIfExists(String id) throws PluginException {
         PluginData<T> pluginData;
-        synchronized (pluginsById) {
-            pluginData = pluginsById.get(id.toLowerCase());
+        synchronized (this) {
+            pluginData = idToPlugin.get(id.toLowerCase());
         }
         if (pluginData == null) {
             // Maybe this is a groovy script we haven't loaded yet.
             PluginManager.getUnloaded(id);
-            synchronized (pluginsById) {
-                pluginData = pluginsById.get(id.toLowerCase());
+            synchronized (this) {
+                pluginData = idToPlugin.get(id.toLowerCase());
             }
         }
         if (pluginData == null) {
@@ -173,8 +194,8 @@ public class PluginsOfType<T extends Plugin> {
      */
     void initializePlugins() {
         Collection<PluginData<T>> pluginDatas;
-        synchronized (pluginsById) {
-            pluginDatas = new HashSet<>(pluginsById.values());
+        synchronized (this) {
+            pluginDatas = new ArrayList<>(plugins);
         }
         pluginDatas.forEach(pluginData -> {
             try {

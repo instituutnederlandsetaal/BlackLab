@@ -268,6 +268,11 @@ public class WebserviceRequestHandler {
         rs.listFormatsResponse(result);
     }
 
+    public static void opListPlugins(ResponseStreamer rs) {
+        ResultListPlugins result = new ResultListPlugins();
+        rs.pluginsResponse(result);
+    }
+
     public static void opCacheInfo(SearchCache blackLabCache, boolean includeDebugInfo, ResponseStreamer rs) {
         rs.cacheInfo(blackLabCache, includeDebugInfo);
     }

@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public class BcqlParserProvider extends QueryParserProvider {
 
     @Override
-    public String getId() {
+    public String getName() {
         return "corpusql";
     }
 

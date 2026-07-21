@@ -38,9 +38,15 @@ public class BlsMain {
 
     private static BlsMain instance;
 
+    /** Get instance, creating one if it doesn't exist yet */
     public static synchronized BlsMain get() {
         if (instance == null)
             instance = new BlsMain();
+        return instance;
+    }
+
+    /** Get the instance if it exists */
+    public static BlsMain getInstance() {
         return instance;
     }
 
@@ -57,17 +63,6 @@ public class BlsMain {
     private DataFormat defaultOutputType;
 
     private BlsMain() {
-        // Before the plugin system is initialized, add our plugin type to it
-        PluginManager.addPluginType(AuthMethodProvider.class);
-        PluginManager.addWebSafePlugins(List.of(
-                AuthHttpBasic.class,
-                AuthDebugFixed.class,
-                AuthClarinEppn.class,
-                AuthDebugUrl.class,
-                AuthRequestValue.class,
-                BcqlParserProvider.class,
-                JsonParserProvider.class,
-                ContextQLParserProvider.class));
 
         BLSConfig config = ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
 
@@ -85,6 +80,22 @@ public class BlsMain {
         // Determine default output type.
         defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
                 DataFormat.XML);
+    }
+
+    public static void setUpBlsPlugins() {
+        // Before the plugin system is initialized, add our plugin type to it
+        // and mark plugins as websafe. Opposite order so the list of safe plugins
+        // exist when the plugin type is added and the classes are loaded.
+        PluginManager.addWebSafePlugins(List.of(
+                AuthHttpBasic.class,
+                AuthDebugFixed.class,
+                AuthClarinEppn.class,
+                AuthDebugUrl.class,
+                AuthRequestValue.class,
+                BcqlParserProvider.class,
+                JsonParserProvider.class,
+                ContextQLParserProvider.class));
+        PluginManager.addPluginType(AuthMethodProvider.class);
     }
 
     private void setMetricsProvider(BLSConfigDebug configDebug) throws ConfigurationException {

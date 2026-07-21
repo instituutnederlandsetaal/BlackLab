@@ -34,6 +34,26 @@ The simplest option is a script written in [Groovy](https://groovy-lang.org/) (a
 The other option is a `.jar` file containing one or more Java classes. This is a bit more complex, but allows you to use any JVM language (Java, Kotlin, Scala, etc.), use third-party libraries, etc. See the [ProcessingInstruction](#processinginstruction) example below or see [blacklab-java-plugin](@github:/contrib/blacklab-java-plugin) for a working Maven template project.
 
 
+## Plugin id vs. plugin name
+
+A plugin has both an `id` and a `name`. These may be the same or different.
+They have different requirements:
+- an `id` must be unique among all available plugins and is used for configuration. By default, the simple class name is a valid `id` for a plugin.
+- `name` must be unique among plugins of the same type. It defaults to the simple class name as well, but can be overridden.
+
+Concrete example: there may be plugins with `id`s `ProcessingInstructionAbs` and `QueryFunctionAbs` (their class names). They could both have `abs` as their `name`, because they are different plugin types.
+
+The config file for these plugins would have to use `id` (so `QueryFunctionAbs.yaml`, not `abs.yaml`), because the plugin directory is shared between all types of plugins. Whenever the plugin type follows from context, you may use the `name`. So in a BCQL query, `abs(...)` will resolve to `QueryFunctionAbs`.
+
+Note that a plugin is usually registered with multiple `id`s:
+- its simple and qualified class name, e.g. `my.awesome.plugins.AmazingPlugin` or just `AmazingPlugin`. (it follows that the simple class name must be unique among all available plugins)
+- (for Groovy plugins) its script file name (without the `.groovy` extension), e.g. `amazing-plugin` for a script named `amazing-plugin.groovy`
+- the return value of the `getId()` method. This defaults to the simple class name as well, but can be overridden to any string.
+
+A plugin's `name` is just the value returned by `getName()`. Unless overridden, this returns the same as `getId()`.
+
+The server info page (APIv5) lists all plugins by type and `name`. It does not show `id`s because those are not relevant to BlackLab clients, only when configuring the plugin.
+
 ## Installing/configuring a plugin
 
 Place your plugin script or `.jar` file in the `$BLACKLAB_CONFIG_DIR/plugins/` directory. Let's assume your plugin id (class name or script file name) is `AmazingPlugin`.
@@ -41,25 +61,6 @@ Place your plugin script or `.jar` file in the `$BLACKLAB_CONFIG_DIR/plugins/` d
 If your plugin needs configuration, create a file named `AmazingPlugin.yaml` in the same `plugins/` directory. BlackLab will automatically read it an pass it to your plugin as a `Map<String, Object>`. From the `initialize()` method, you can access the configuration using either method like `cfgString(key, defaultValue)` or `fullConfig()` to get the full map.
 
 If your plugin needs to read additional files, create a directory named `AmazingPlugin/` in the same `plugins/` directory. BlackLab will pass this directory to your plugin automatically. Call `pluginsDir()` from your plugin to get the path to this directory. This method will always return a `File` object, but the directory may not exist.
-
-
-## Referring to plugins
-
-A plugin can be referred to by:
-- its simple or qualified class name (if not implemented as an anonymous class), e.g. `my.awesome.plugins.AmazingPlugin` or just `AmazingPlugin`
-- for Groovy plugins, their script file name (without the `.groovy` extension), e.g. `amazing-plugin` for a script named `amazing-plugin.groovy`
-- the return value of the `getId()` method (if overridden)
-
-Places where you refer to a plugin include:
-- in a input format config (`.blf.yaml`) file:
-  - in the `converters:` list
-  - in the `process:` section for a metadata field or annotation (e.g. `action: AmazingOperation`)
-- in `blacklab[-server].yaml`, in the `plugins.plugins` section (see below)
-- when running IndexTool to:
-  - indicate what to index (e.g. `file:/path/to/my/files` or `AmazingFileFinder:123456`)
-  - indicate what input format to use (e.g. `IndexTool create index input AmazingInputFormat`)
-- In BCQL, e.g. `AmazingFunction([lemma="tiger"], "word")`
-- in Java code, via `PluginManager.type(ThePluginType.class).get("AmazingPlugin")`
 
 
 ## Plugin parameters
@@ -109,6 +110,20 @@ These are the available parameter types and their creation methods:
 - `PQuery`/`PMatchInfo`: a query / match info object (only for `QueryFunction` plugins)
   - `optional(name)`: optional parameter
   - `required(name)`: required parameter
+
+## Referring to plugins
+
+Places where you refer to a plugin include:
+- in a input format config (`.blf.yaml`) file:
+    - in the `converters:` list
+    - in the `process:` section for a metadata field or annotation (e.g. `action: AmazingOperation`)
+- in `blacklab[-server].yaml`, in the `plugins.plugins` section (see below)
+- when running IndexTool to:
+    - indicate what to index (e.g. `file:/path/to/my/files` or `AmazingFileFinder:123456`)
+    - indicate what input format to use (e.g. `IndexTool create index input AmazingInputFormat`)
+- In BCQL, e.g. `AmazingFunction([lemma="tiger"], "word")`
+- in Java code, via `PluginManager.type(ThePluginType.class).get("AmazingPlugin")`
+
 
 ## Troubleshooting common issues
 

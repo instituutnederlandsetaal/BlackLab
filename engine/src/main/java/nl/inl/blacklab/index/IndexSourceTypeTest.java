@@ -17,7 +17,7 @@ import nl.inl.util.fileprocessor.FileReference;
 public class IndexSourceTypeTest extends IndexSourceType {
 
     @Override
-    public String getId() {
+    public String getName() {
         return "test";
     }
 

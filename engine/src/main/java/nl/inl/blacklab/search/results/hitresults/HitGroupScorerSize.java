@@ -12,7 +12,7 @@ public class HitGroupScorerSize extends HitGroupScorerType {
     public static final String TYPE_ID = "coll-groupsize";
 
     @Override
-    public String getId() {
+    public String getName() {
         return TYPE_ID;
     }
 

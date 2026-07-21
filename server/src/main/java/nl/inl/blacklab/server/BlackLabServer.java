@@ -143,8 +143,8 @@ public class BlackLabServer extends HttpServlet {
     }
 
     private String optAddAllowOriginHeader(HttpServletResponse responseObject) {
-        String allowOrigin = BlsMain.get() == null ? "*" :
-                BlsMain.get().getSearchManager().config().getProtocol().getAccessControlAllowOrigin();
+        String allowOrigin = BlsMain.getInstance() == null ? "*" :
+                BlsMain.getInstance().getSearchManager().config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null)
             responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
         return allowOrigin;

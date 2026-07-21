@@ -11,16 +11,6 @@ import nl.inl.blacklab.exceptions.PluginException;
  */
 public final class PluginDescriptor {
 
-    public static final PluginDescriptor NO_PARAMETERS = new PluginDescriptor(Map.of());
-
-    public static PluginDescriptor of(PluginParam... params) {
-        Map<String, PluginParam> paramsMap = new HashMap<>();
-        for (PluginParam param: params) {
-            paramsMap.put(param.name(), param);
-        }
-        return new PluginDescriptor(paramsMap);
-    }
-
     private final Map<String, PluginParam> params;
 
     private boolean frozen;
@@ -48,6 +38,10 @@ public final class PluginDescriptor {
 
     public boolean isEmpty() {
         return params.isEmpty();
+    }
+
+    public Map<String, PluginParam> getParams() {
+        return Map.copyOf(params);
     }
 
     public PluginParams validate(Map<String, ?> rawInput) {
