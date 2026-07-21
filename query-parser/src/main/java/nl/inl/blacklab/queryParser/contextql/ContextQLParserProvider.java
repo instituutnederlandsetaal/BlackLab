@@ -13,6 +13,11 @@ public class ContextQLParserProvider extends QueryParserProvider {
     }
 
     @Override
+    public String getDescription() {
+        return "Parse a query in SRU CQL (Contextual Query Language)";
+    }
+
+    @Override
     public BLQueryParser get(BlackLabIndex index, PluginParams config) {
         return new ContextualQueryLanguageParser(index, config);
     }

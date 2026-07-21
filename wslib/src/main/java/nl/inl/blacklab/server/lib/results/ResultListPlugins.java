@@ -57,15 +57,19 @@ public class ResultListPlugins {
 
         private final String name;
 
+        private final String description;
+
         private final Map<String, PluginParamInfo> paramsMap;
 
-        PluginInfo(String name, Map<String, PluginParamInfo> params) {
+        PluginInfo(String name, String description, Map<String, PluginParamInfo> params) {
             this.name = name;
+            this.description = description;
             this.paramsMap = params;
         }
 
-        PluginInfo(String name, List<PluginParamInfo> params) {
+        PluginInfo(String name, String description, List<PluginParamInfo> params) {
             this.name = name;
+            this.description = description;
             this.paramsMap = new LinkedHashMap<>();
             for (PluginParamInfo p : params) {
                 this.paramsMap.put(p.getName(), p);
@@ -73,6 +77,8 @@ public class ResultListPlugins {
         }
 
         public String getName() { return name; }
+
+        public String getDescription() { return description; }
 
         public Map<String, PluginParamInfo> getParamsMap() { return paramsMap; }
     }
@@ -109,7 +115,7 @@ public class ResultListPlugins {
                                 return new PluginParamInfo(p.name(), typeName, p.isRequired(), opt);
                             })
                             .toList();
-                    pluginInfos.add(new PluginInfo(plugin.getName(), par));
+                    pluginInfos.add(new PluginInfo(plugin.getName(), plugin.getDescription(), par));
                 } else {
                     // By default, plugins use named parameters (without a defined order)
                     // We use a treemap because we will output them as a list (because QueryFunction is a list,
@@ -121,7 +127,7 @@ public class ResultListPlugins {
                         List<String> opt = getMultipleTypeOptions(param);
                         paramInfos.put(param.name(), new PluginParamInfo(param.name(), typeName, param.isRequired(), opt));
                     }
-                    pluginInfos.add(new PluginInfo(plugin.getName(), paramInfos));
+                    pluginInfos.add(new PluginInfo(plugin.getName(), plugin.getDescription(), paramInfos));
                 }
             }
             pluginsByType.put(pluginType.getSimpleName(), pluginInfos);

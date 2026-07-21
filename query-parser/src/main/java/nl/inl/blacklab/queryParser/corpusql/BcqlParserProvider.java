@@ -14,6 +14,11 @@ public class BcqlParserProvider extends QueryParserProvider {
     }
 
     @Override
+    public String getDescription() {
+        return "Parse a query in BCQL (BlackLab Corpus Query Language)";
+    }
+
+    @Override
     public BLQueryParser get(BlackLabIndex index, PluginParams config) {
         return new BcqlQueryLanguageParser(index, config);
     }

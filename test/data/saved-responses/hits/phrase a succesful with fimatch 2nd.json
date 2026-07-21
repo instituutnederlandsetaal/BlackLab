@@ -1,0 +1,161 @@
+{
+  "docInfos": {
+    "PRint602": {
+      "mayView": true,
+      "metadata": {
+        "fromInputFile": [
+          "PRint602.xml"
+        ],
+        "pid": [
+          "PRint602"
+        ],
+        "title": [
+          "interview about conference experience and impressions of city"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 268
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "lemma": [
+          "meet/meeting"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "meeting"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "'s"
+        ]
+      },
+      "docPid": "PRint602",
+      "end": 152,
+      "match": {
+        "lemma": [
+          "a",
+          "successful"
+        ],
+        "pos": [
+          "",
+          ""
+        ],
+        "punct": [
+          " ",
+          " "
+        ],
+        "word": [
+          "a",
+          "successful"
+        ]
+      },
+      "start": 150
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "indexname": "test",
+      "op": "hits",
+      "patt": "_fimatch(\"a\", [lemma=\"successful\"], 1)",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "_fimatch(\"a\", [lemma = \"successful\"], 1)",
+      "fieldName": "contents",
+      "json": {
+        "args": [
+          {
+            "bcqlFragment": "\"a\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"a\"",
+                "type": "string",
+                "value": "a"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          },
+          {
+            "bcqlFragment": "[lemma = \"successful\"]",
+            "clauses": [
+              {
+                "bcqlFragment": "lemma",
+                "type": "symbol",
+                "value": "lemma"
+              },
+              {
+                "bcqlFragment": "\"successful\"",
+                "type": "string",
+                "value": "successful"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          },
+          {
+            "bcqlFragment": "1",
+            "type": "integer",
+            "value": 1
+          }
+        ],
+        "bcqlFragment": "_fimatch(\"a\", [lemma = \"successful\"], 1)",
+        "name": "_fimatch",
+        "type": "callfunc"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

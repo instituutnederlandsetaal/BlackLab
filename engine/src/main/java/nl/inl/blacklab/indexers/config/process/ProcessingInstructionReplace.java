@@ -32,6 +32,11 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Perform a regular expression replace operation";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parFind = addParam(PString.matching("find", ".+", true));
         parReplace = addParam(PString.any("replace", true));

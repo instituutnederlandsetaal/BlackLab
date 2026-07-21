@@ -29,14 +29,17 @@
     },
     "HitGroupScorerType": {
       "coll-dice": {
+        "description": "Calculates collocation group score using the Dice coefficient.",
         "params": [
         ]
       },
       "coll-groupsize": {
+        "description": "Calculates collocation group score by taking the group size.",
         "params": [
         ]
       },
       "coll-salience": {
+        "description": "Calculates collocation group score using the salience measure.",
         "params": [
         ]
       }
@@ -45,6 +48,7 @@
     },
     "ProcessingInstruction": {
       "append": {
+        "description": "Appends a constant value, or the value of a metadata field",
         "params": [
           {
             "name": "field",
@@ -69,6 +73,7 @@
         ]
       },
       "concatDate": {
+        "description": "Concatenate 3 separate date fields into one",
         "params": [
           {
             "name": "autofill",
@@ -93,10 +98,12 @@
         ]
       },
       "identity": {
+        "description": "Return the value(s) unchanged",
         "params": [
         ]
       },
       "ifEmpty": {
+        "description": "If there is no value, fill in a constant value or the value of another field",
         "params": [
           {
             "name": "field",
@@ -116,6 +123,7 @@
         ]
       },
       "map": {
+        "description": "Map values according to a mapping table",
         "params": [
           {
             "name": "table",
@@ -125,6 +133,7 @@
         ]
       },
       "parsePos": {
+        "description": "Parse a part of speech and features expression of the form \"A(b=c,d=e)\"",
         "params": [
           {
             "name": "field",
@@ -134,6 +143,7 @@
         ]
       },
       "replace": {
+        "description": "Perform a regular expression replace operation",
         "params": [
           {
             "name": "find",
@@ -158,10 +168,12 @@
         ]
       },
       "sort": {
+        "description": "Sort values alphetically",
         "params": [
         ]
       },
       "split": {
+        "description": "Split values based on a regular expression",
         "params": [
           {
             "name": "flags",
@@ -180,11 +192,8 @@
           }
         ]
       },
-      "stmt-block": {
-        "params": [
-        ]
-      },
       "strip": {
+        "description": "Strip certain characters from the start and end of the value(s)",
         "params": [
           {
             "name": "chars",
@@ -194,40 +203,14 @@
         ]
       },
       "unique": {
+        "description": "Eliminate duplicate values",
         "params": [
         ]
       }
     },
     "QueryFunction": {
-      "_FI1": {
-        "params": [
-          {
-            "name": "first",
-            "required": true,
-            "type": "query"
-          },
-          {
-            "name": "second",
-            "required": true,
-            "type": "query"
-          }
-        ]
-      },
-      "_FI2": {
-        "params": [
-          {
-            "name": "first",
-            "required": true,
-            "type": "query"
-          },
-          {
-            "name": "second",
-            "required": true,
-            "type": "query"
-          }
-        ]
-      },
       "_adjust": {
+        "description": "Adjust starts and ends of hit",
         "params": [
           {
             "name": "query",
@@ -247,6 +230,7 @@
         ]
       },
       "_edge": {
+        "description": "Get the leading or trailing edge of hit",
         "params": [
           {
             "name": "query",
@@ -261,6 +245,7 @@
         ]
       },
       "_fimatch": {
+        "description": "Force matching one of the clauses using the forward index",
         "params": [
           {
             "name": "first",
@@ -280,6 +265,7 @@
         ]
       },
       "_fixed": {
+        "description": "Finds a fixed span in each document",
         "params": [
           {
             "name": "start",
@@ -294,6 +280,7 @@
         ]
       },
       "_fuzzy": {
+        "description": "Performs fuzzy matching",
         "params": [
           {
             "name": "find",
@@ -313,6 +300,7 @@
         ]
       },
       "_ident": {
+        "description": "Return the argument unchanged",
         "params": [
           {
             "name": "query",
@@ -322,6 +310,7 @@
         ]
       },
       "_indoc": {
+        "description": "Search within a single Lucene doc id",
         "params": [
           {
             "name": "query",
@@ -336,6 +325,7 @@
         ]
       },
       "_lenfilter": {
+        "description": "Filter by hit length (min and max inclusive)",
         "params": [
           {
             "name": "query",
@@ -355,6 +345,7 @@
         ]
       },
       "_posfilter": {
+        "description": "Construct a position filter query",
         "params": [
           {
             "name": "producer",
@@ -379,6 +370,7 @@
         ]
       },
       "abs": {
+        "description": "Calculates the absolute value of a number",
         "params": [
           {
             "name": "number",
@@ -388,6 +380,7 @@
         ]
       },
       "cspan": {
+        "description": "Change the hit to the captured span of a relation",
         "params": [
           {
             "name": "query",
@@ -402,6 +395,7 @@
         ]
       },
       "end": {
+        "description": "Gets the end position of a span",
         "params": [
           {
             "name": "matchInfo",
@@ -411,6 +405,7 @@
         ]
       },
       "gap": {
+        "description": "Determine the gap between two captures",
         "params": [
           {
             "name": "first",
@@ -430,6 +425,7 @@
         ]
       },
       "in_range": {
+        "description": "Checks if a number is within a range",
         "params": [
           {
             "name": "number",
@@ -449,6 +445,7 @@
         ]
       },
       "len": {
+        "description": "Determine the length of its parameter",
         "params": [
           {
             "name": "value",
@@ -458,6 +455,7 @@
         ]
       },
       "list": {
+        "description": "Creates a list of values",
         "params": [
           {
             "name": "list",
@@ -467,6 +465,7 @@
         ]
       },
       "meet": {
+        "description": "Finds matches near other matches",
         "params": [
           {
             "name": "first",
@@ -491,6 +490,7 @@
         ]
       },
       "meet_within": {
+        "description": "Finds matches near other matches, both within a span",
         "params": [
           {
             "name": "first",
@@ -520,6 +520,7 @@
         ]
       },
       "punctAfter": {
+        "description": "Find punctuation after a token",
         "params": [
           {
             "name": "regex",
@@ -529,6 +530,7 @@
         ]
       },
       "punctBefore": {
+        "description": "Find punctuation before a token",
         "params": [
           {
             "name": "regex",
@@ -538,6 +540,7 @@
         ]
       },
       "query": {
+        "description": "Interprets its parameter as a query.",
         "params": [
           {
             "name": "query",
@@ -547,6 +550,7 @@
         ]
       },
       "rcapture": {
+        "description": "Capture relations inside a span",
         "params": [
           {
             "name": "query",
@@ -566,6 +570,7 @@
         ]
       },
       "rel": {
+        "description": "Find relations matching type and target",
         "params": [
           {
             "name": "relType",
@@ -595,6 +600,7 @@
         ]
       },
       "rfield": {
+        "description": "Get the hits from a specific parallel field/version",
         "params": [
           {
             "name": "query",
@@ -609,6 +615,7 @@
         ]
       },
       "rmatch": {
+        "description": "Perform and AND operation with the additional requirement that clauses match unique relations",
         "params": [
           {
             "name": "queries",
@@ -618,6 +625,7 @@
         ]
       },
       "rspan": {
+        "description": "Change the hit to the source, target or full span of the active relation",
         "params": [
           {
             "name": "subject",
@@ -636,6 +644,7 @@
         ]
       },
       "start": {
+        "description": "Gets the start position of a span",
         "params": [
           {
             "name": "matchInfo",
@@ -645,6 +654,7 @@
         ]
       },
       "str": {
+        "description": "Interprets its parameter as a string",
         "params": [
           {
             "name": "value",
@@ -654,6 +664,7 @@
         ]
       },
       "symbol": {
+        "description": "Interprets its parameter as a symbol",
         "params": [
           {
             "name": "name",
@@ -663,6 +674,7 @@
         ]
       },
       "union": {
+        "description": "Combines matches from two clauses",
         "params": [
           {
             "name": "clauses",
@@ -672,6 +684,7 @@
         ]
       },
       "with-spans": {
+        "description": "Automatically capture any enclosing spans with each hit",
         "params": [
           {
             "name": "query",
@@ -693,14 +706,17 @@
     },
     "QueryParserProvider": {
       "contextql": {
+        "description": "Parse a query in SRU CQL (Contextual Query Language)",
         "params": [
         ]
       },
       "corpusql": {
+        "description": "Parse a query in BCQL (BlackLab Corpus Query Language)",
         "params": [
         ]
       },
       "json-bql": {
+        "description": "Parse a query in BlackLab's JSON format",
         "params": [
         ]
       }

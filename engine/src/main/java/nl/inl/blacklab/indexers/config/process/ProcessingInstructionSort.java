@@ -9,13 +9,18 @@ import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLab;
 
 /**
- * Eliminate any duplicate values.
+ * Sort values.
  */
 public class ProcessingInstructionSort extends ProcessingInstruction {
 
     @Override
     public synchronized String getName() {
         return "sort";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sort values alphetically";
     }
 
     private static final ProcessingStepSort INSTANCE = new ProcessingStepSort();

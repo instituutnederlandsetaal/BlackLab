@@ -13,7 +13,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Ensures its argument is interpreted as a string. */
 public class QueryFunctionStr extends QueryFunction {
     public QueryFunctionStr() {
-        super("str", List.of(PAny.required("value")),
+        super("str", "Interprets its parameter as a string",
+                List.of(PAny.required("value")),
                 null, false);
     }
 

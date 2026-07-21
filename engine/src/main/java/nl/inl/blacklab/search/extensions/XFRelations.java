@@ -94,6 +94,7 @@ public class XFRelations implements ExtensionFunctionClass {
     public void register() {
         // rel: Find relations matching type and target.
         QueryExtensions.registerRelationsFunction(FUNC_REL,
+                "Find relations matching type and target",
                 List.of(PString.any("relType"), PQuery.required("query"),
                         PEnum.of("spanMode", RelationInfo.SpanMode.class),
                         PString.identifier("captureAs"),
@@ -123,6 +124,7 @@ public class XFRelations implements ExtensionFunctionClass {
         // rmatch: Perform an AND operation with the additional requirement that clauses match unique relations.
         QueryExtensions.register(
             "rmatch",
+            "Perform and AND operation with the additional requirement that clauses match unique relations",
             List.of(PList.optional("queries", PList.Validator.ALL_QUERIES)),
             List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM),
             (QueryInfo queryInfo, QueryExecutionContext context, List<Object> parameters) -> {
@@ -146,7 +148,9 @@ public class XFRelations implements ExtensionFunctionClass {
          */
         PMultiple queryOrMatchInfo = PMultiple.required("subject",
                 List.of(PQuery.required("query"), PMatchInfo.required("matchInfo")));
-        QueryExtensions.register(FUNC_RSPAN, List.of(queryOrMatchInfo,
+        QueryExtensions.register(FUNC_RSPAN,
+                "Change the hit to the source, target or full span of the active relation",
+                List.of(queryOrMatchInfo,
                         PEnum.of("spanMode", RelationInfo.SpanMode.class)),
                 Arrays.asList(null, "full"),
                 (queryInfo, context, args) -> {
@@ -180,7 +184,8 @@ public class XFRelations implements ExtensionFunctionClass {
          * spans of the active relation, or the full relation span, or to a span
          * covering all matched relations.
          */
-        QueryExtensions.register("cspan", List.of(PQuery.required("query"),
+        QueryExtensions.register("cspan", "Change the hit to the captured span of a relation",
+                List.of(PQuery.required("query"),
                         PString.identifier("captureName", true)),
                 Arrays.asList(null, null),
                 (queryInfo, context, args) -> {
@@ -196,7 +201,8 @@ public class XFRelations implements ExtensionFunctionClass {
          *
          * This is useful to e.g. highlight one of the versions with the hits from a parallel query.
          */
-        QueryExtensions.register("rfield", List.of(PQuery.required("query"),
+        QueryExtensions.register("rfield", "Get the hits from a specific parallel field/version",
+                List.of(PQuery.required("query"),
                         PString.identifier("fieldOrVersion", true)), List.of(),
                 (queryInfo, context, args) -> {
                     if (args.size() < 2)
@@ -217,7 +223,9 @@ public class XFRelations implements ExtensionFunctionClass {
          * Will capture all relations matching the specified type regex as a list
          * under the specified capture name.
          */
-        QueryExtensions.registerRelationsFunction("rcapture", List.of(PQuery.required("query"),
+        QueryExtensions.registerRelationsFunction("rcapture",
+                "Capture relations inside a span",
+                List.of(PQuery.required("query"),
                         PString.identifier("captureAs"), PString.any("relationType")),
                 Arrays.asList(null, DEFAULT_RCAP_NAME, REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE),
                 (queryInfo, context, args) -> {

@@ -107,6 +107,15 @@ public abstract class Plugin {
     }
 
     /**
+     * Optional description for this plugin.
+     * Will appear in the plugins section on the server info page.
+     * @return plugin description
+     */
+    public String getDescription() {
+        return "";
+    }
+
+    /**
      * Set the short ID of this plugin. Can only be set once.
      *
      * This is used to set a Groovy script's ID to the script name.

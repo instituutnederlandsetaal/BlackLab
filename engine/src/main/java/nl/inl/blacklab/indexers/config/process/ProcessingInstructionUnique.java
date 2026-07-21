@@ -17,6 +17,11 @@ public class ProcessingInstructionUnique extends ProcessingInstruction {
         return "unique";
     }
 
+    @Override
+    public String getDescription() {
+        return "Eliminate duplicate values";
+    }
+
     private static final ProcessingStepUnique INSTANCE = new ProcessingStepUnique();
 
     @Override

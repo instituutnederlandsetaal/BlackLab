@@ -17,6 +17,11 @@ public class IndexSourceTypeFileInArchive extends IndexSourceType {
     }
 
     @Override
+    public String getDescription() {
+        return "Fetch a single file from an archive. Mostly useful for linked metadata.";
+    }
+
+    @Override
     public IndexSource get(String path, PluginParams params) {
         return new IndexSourceFileInArchive(path);
     }

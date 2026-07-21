@@ -22,6 +22,11 @@ public class IndexSourceTypeTest extends IndexSourceType {
     }
 
     @Override
+    public String getDescription() {
+        return "Generate a simple TEI XML file from a list of words.";
+    }
+
+    @Override
     public IndexSource get(String path, PluginParams params) {
         return new IndexSourceTest(path);
     }

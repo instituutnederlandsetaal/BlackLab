@@ -11,11 +11,17 @@ import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.Json;
 
+/** Parse JSON structure to a TextPattern. */
 public class JsonParserProvider extends QueryParserProvider {
 
     @Override
     public String getName() {
         return "json-bql";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Parse a query in BlackLab's JSON format";
     }
 
     @Override

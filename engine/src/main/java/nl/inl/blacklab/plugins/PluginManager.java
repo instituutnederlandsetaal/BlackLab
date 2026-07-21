@@ -142,7 +142,7 @@ public class PluginManager {
                 ProcessingInstructionSort.class,
                 ProcessingInstructionReplace.class,
                 ProcessingInstructionConcatDate.class,
-                ProcessingInstructionMultiple.class,
+                //ProcessingInstructionMultiple.class,
                 ProcessingInstructionMapValues.class,
                 ProcessingInstructionParsePos.class,
                 ProcessingInstructionAppend.class,

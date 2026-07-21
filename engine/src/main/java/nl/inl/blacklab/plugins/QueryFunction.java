@@ -36,6 +36,9 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
      * Must be unique among QueryFunction plugins. The id, on the other hand, must be unique among all plugins. */
     private final String name;
 
+    /** Description of this function */
+    private final String description;
+
     /** Parameter types */
     private final List<PluginParam> argTypes;
 
@@ -45,18 +48,19 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     /** Is this a function that operates specifically on relations queries? */
     private final boolean relationsFunction;
 
-    public QueryFunction(String name, List<PluginParam> argTypes) {
-        this(name, argTypes, null, false);
+    public QueryFunction(String name, String description, List<PluginParam> argTypes) {
+        this(name, description, argTypes, null, false);
     }
 
-    public QueryFunction(String name, List<PluginParam> argTypes,
+    public QueryFunction(String name, String description, List<PluginParam> argTypes,
             List<Object> defaultValues) {
-        this(name, argTypes, defaultValues, false);
+        this(name, description, argTypes, defaultValues, false);
     }
 
-    public QueryFunction(String name, List<PluginParam> argTypes,
+    public QueryFunction(String name, String description, List<PluginParam> argTypes,
             List<Object> defaultValues, boolean relationsFunction) {
         this.name = name;
+        this.description = description;
         this.argTypes = argTypes;
         this.defaultValues = defaultValues == null ? Collections.emptyList() : defaultValues;
         this.relationsFunction = relationsFunction;
@@ -71,6 +75,11 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     public List<PluginParam> getParameters() {

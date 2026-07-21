@@ -12,7 +12,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Get start position of span (matchfilter) */
 public class QueryFunctionStart extends QueryFunction {
     public QueryFunctionStart() {
-        super("start", List.of(PMatchInfo.required("matchInfo")),
+        super("start", "Gets the start position of a span",
+                List.of(PMatchInfo.required("matchInfo")),
                 null, false);
     }
 

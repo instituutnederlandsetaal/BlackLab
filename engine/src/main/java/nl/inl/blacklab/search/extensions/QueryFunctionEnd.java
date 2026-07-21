@@ -9,10 +9,11 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueInt;
 
-/** Get start position of span (matchfilter) */
+/** Get end position of span (matchfilter) */
 public class QueryFunctionEnd extends QueryFunction {
     public QueryFunctionEnd() {
-        super("end", List.of(PMatchInfo.required("matchInfo")),
+        super("end", "Gets the end position of a span",
+                List.of(PMatchInfo.required("matchInfo")),
                 null, false);
     }
 

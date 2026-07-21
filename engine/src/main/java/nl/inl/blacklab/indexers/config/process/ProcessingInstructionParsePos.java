@@ -25,6 +25,11 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Parse a part of speech and features expression of the form \"A(b=c,d=e)\"";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parField = addParam(PString.identifier("field"));
     }

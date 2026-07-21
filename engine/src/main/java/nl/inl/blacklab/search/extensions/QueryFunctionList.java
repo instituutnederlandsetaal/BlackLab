@@ -13,7 +13,8 @@ public class QueryFunctionList extends QueryFunction {
     public QueryFunctionList() {
         // Takes a single argument of type LIST and just returns it
         // (this works because LIST is automatically interpreted as a variable number of arguments)
-        super("list", List.of(PList.required("list", (l) -> {})),
+        super("list", "Creates a list of values",
+                List.of(PList.required("list", (l) -> {})),
                 null, false);
     }
 

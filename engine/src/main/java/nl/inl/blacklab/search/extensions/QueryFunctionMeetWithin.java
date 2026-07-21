@@ -29,7 +29,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  */
 public class QueryFunctionMeetWithin extends QueryFunction {
     public QueryFunctionMeetWithin() {
-        super("meet_within", List.of(
+        super("meet_within", "Finds matches near other matches, both within a span",
+                List.of(
                 PQuery.required("first"),
                         PQuery.required("second"),
                         PQuery.required("within"),

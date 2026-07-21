@@ -17,6 +17,11 @@ public class IndexSourceTypeFile extends IndexSourceType {
     }
 
     @Override
+    public String getDescription() {
+        return "Fetch a single file, directory or glob to index.";
+    }
+
+    @Override
     public IndexSource get(String path, PluginParams params) {
         return new IndexSourceFile(path);
     }

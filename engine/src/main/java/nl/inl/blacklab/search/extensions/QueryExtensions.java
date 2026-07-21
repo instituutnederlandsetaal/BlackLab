@@ -16,7 +16,7 @@ public class QueryExtensions {
     }
 
     public static void registerAll() {
-        register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
+        register(XFDebug.class);      // Debug functions such as _ident(), _fimatch()
         register(XFRelations.class);  // Functions for working with relations
         register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
         register(XFSpans.class);      // Functions for working with spans
@@ -33,11 +33,13 @@ public class QueryExtensions {
     /**
      * Add a query function to the registry.
      *
+     * @param name function name
+     * @param description description of the function
      * @param func query extension function
      * @param argTypes argument types
      */
-    public static void register(String name, ExtensionFunction func, List<PluginParam> argTypes) {
-        register(name, argTypes, Collections.emptyList(), func, false);
+    public static void register(String name, String description, ExtensionFunction func, List<PluginParam> argTypes) {
+        register(name, description, argTypes, Collections.emptyList(), func, false);
     }
 
     /**
@@ -47,22 +49,22 @@ public class QueryExtensions {
      * @param defaultValues default values for arguments
      * @param func          query extension function
      */
-    public static void register(String name, List<PluginParam> argTypes, List<Object> defaultValues, ExtensionFunction func) {
-        register(name, argTypes, defaultValues, func, false);
+    public static void register(String name, String description, List<PluginParam> argTypes, List<Object> defaultValues, ExtensionFunction func) {
+        register(name, description, argTypes, defaultValues, func, false);
     }
 
-    private static void register(String name, List<PluginParam> argTypes, List<Object> defaultValues, ExtensionFunction func,
+    private static void register(String name, String description, List<PluginParam> argTypes, List<Object> defaultValues, ExtensionFunction func,
             boolean relationsFunction) {
-        register(new QueryFunctionLambda(name, func, argTypes, defaultValues, relationsFunction));
+        register(new QueryFunctionLambda(name, description, func, argTypes, defaultValues, relationsFunction));
     }
 
     public static void register(QueryFunction func) {
         PluginManager.type(QueryFunction.class).add(func.getName(), func);
     }
 
-    public static void registerRelationsFunction(String name, List<PluginParam> argTypes, List<Object> defaultValues,
+    public static void registerRelationsFunction(String name, String description, List<PluginParam> argTypes, List<Object> defaultValues,
             ExtensionFunction func) {
-        register(name, argTypes, defaultValues, func, true);
+        register(name, description, argTypes, defaultValues, func, true);
     }
 
     /**

@@ -16,7 +16,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  */
 public class QueryFunctionFixedSpan extends QueryFunction {
     public QueryFunctionFixedSpan() {
-        super("_fixed", List.of(
+        super("_fixed", "Finds a fixed span in each document",
+                List.of(
                 PInteger.nonnegative("start", true),
                 PInteger.nonnegative("end", true)), Arrays.asList(null, null),
                 false);

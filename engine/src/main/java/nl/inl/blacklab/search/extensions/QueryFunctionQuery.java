@@ -11,7 +11,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Ensures its string argument is interpreted as a query. */
 public class QueryFunctionQuery extends QueryFunction {
     public QueryFunctionQuery() {
-        super("query", List.of(PQuery.required("query")),
+        super("query", "Interprets its parameter as a query.",
+                List.of(PQuery.required("query")),
                 null, false);
     }
 

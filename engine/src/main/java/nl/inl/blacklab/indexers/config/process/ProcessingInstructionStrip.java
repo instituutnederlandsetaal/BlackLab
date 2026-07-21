@@ -24,6 +24,11 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Strip certain characters from the start and end of the value(s)";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parChars = addParam(PString.matching("chars", ".+"));
     }

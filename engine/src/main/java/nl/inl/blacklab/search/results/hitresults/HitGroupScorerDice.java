@@ -16,6 +16,11 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     }
 
     @Override
+    public String getDescription() {
+        return "Calculates collocation group score using the Dice coefficient.";
+    }
+
+    @Override
     public Type getType() {
         return Type.COLLOCATION;
     }

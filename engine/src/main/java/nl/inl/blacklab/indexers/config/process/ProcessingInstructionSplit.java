@@ -29,6 +29,11 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Split values based on a regular expression";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parSeparator = addParam(PString.matching("separator", ".+"));
         parFlags = addParam(PString.any("flags"));

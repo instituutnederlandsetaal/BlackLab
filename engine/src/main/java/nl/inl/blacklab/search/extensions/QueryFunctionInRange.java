@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Check if a number is within a range */
 public class QueryFunctionInRange extends QueryFunction {
     public QueryFunctionInRange() {
-        super("in_range",
+        super("in_range", "Checks if a number is within a range",
                 List.of(PInteger.any("number"), PInteger.any("min"), PInteger.any("max")),
                 null, false);
     }

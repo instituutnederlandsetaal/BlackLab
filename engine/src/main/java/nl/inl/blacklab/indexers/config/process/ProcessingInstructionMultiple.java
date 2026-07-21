@@ -20,6 +20,11 @@ public class ProcessingInstructionMultiple extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Multiple processing steps (a script)";
+    }
+
+    @Override
     public ProcessingStep get(PluginParams param) {
         throw new UnsupportedOperationException();
     }

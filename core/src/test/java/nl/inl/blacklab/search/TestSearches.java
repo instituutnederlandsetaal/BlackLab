@@ -114,8 +114,8 @@ public class TestSearches {
                 "the [lazy dog]");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj'] [pos='nou'] "));
         // Also test that forward index matching either the first or the second clause produces the same results
-        Assert.assertEquals(expected, testIndex.findConc(" _FI1([pos='adj'], [pos='nou']) "));
-        Assert.assertEquals(expected, testIndex.findConc(" _FI2([pos='adj'], [pos='nou']) "));
+        Assert.assertEquals(expected, testIndex.findConc(" _fimatch([pos='adj'], [pos='nou'], 0) "));
+        Assert.assertEquals(expected, testIndex.findConc(" _fimatch([pos='adj'], [pos='nou'], 1) "));
     }
 
     @Test
@@ -134,8 +134,8 @@ public class TestSearches {
         int expected = 33;
         Assert.assertEquals(expected, testIndex.findConc(" [] [] ").size());
         // Also test that forward index matching either the first or the second clause produces the same results
-        Assert.assertEquals(expected, testIndex.findConc(" _FI1([], []) ").size());
-        Assert.assertEquals(expected, testIndex.findConc(" _FI2([], []) ").size());
+        Assert.assertEquals(expected, testIndex.findConc(" _fimatch([], [], 0) ").size());
+        Assert.assertEquals(expected, testIndex.findConc(" _fimatch([], [], 1) ").size());
     }
 
     @Test

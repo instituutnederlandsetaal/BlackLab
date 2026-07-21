@@ -29,7 +29,8 @@ public class XFDebug implements ExtensionFunctionClass {
     public void register() {
 
         // Adjust hits
-        QueryExtensions.register("_adjust", List.of(
+        QueryExtensions.register("_adjust", "Adjust starts and ends of hit",
+                List.of(
                         PQuery.required("query"),
                         PInteger.any("before"),
                         PInteger.any("after")),
@@ -42,7 +43,8 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Get the leading or trailing edge of the query
-        QueryExtensions.register("_edge", List.of(
+        QueryExtensions.register("_edge", "Get the leading or trailing edge of hit",
+                List.of(
                 PQuery.required("query"),
                 PString.matching("whichEdge", "l(eading)?|b(efore)?|t(railing)?|a(after)?")
                 ), Arrays.asList(null, "leading"),
@@ -54,7 +56,8 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Resolve the first query using the forward index and the second using the inverted index
-        QueryExtensions.register("_fimatch", List.of(
+        QueryExtensions.register("_fimatch", "Force matching one of the clauses using the forward index",
+                List.of(
                     PQuery.required("first"),
                     PQuery.required("second"),
                     PInteger.range("fiClause", 0, 1)),
@@ -80,33 +83,15 @@ public class XFDebug implements ExtensionFunctionClass {
                                 fiAccessor);
                     }
                 });
-        // Resolve the first query using the forward index and the second using the inverted index
-        QueryExtensions.register("_FI1", List.of(PQuery.required("first"), PQuery.required("second")), List.of(),
-                (queryInfo, context, args) -> {
-                    BLSpanQuery a = (BLSpanQuery) args.get(0);
-                    BLSpanQuery b = (BLSpanQuery) args.get(1);
-                    ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
-                    NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
-                    return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT,
-                            fiAccessor);
-                });
-        // Resolve the second query using the forward index and the first using the inverted index
-        QueryExtensions.register("_FI2", List.of(PQuery.required("first"), PQuery.required("second")), List.of(),
-                (queryInfo, context, args) -> {
-                    BLSpanQuery a = (BLSpanQuery) args.get(0);
-                    BLSpanQuery b = (BLSpanQuery) args.get(1);
-                    ForwardIndexAccessor fiAccessor = b.getAnnotatedField().forwardIndexAccessor();
-                    NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
-                    return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b, SpanQueryFiSeq.DIR_TO_RIGHT,
-                            fiAccessor);
-                });
 
         // Return the argument unchanged
-        QueryExtensions.register("_ident", List.of(PQuery.required("query")), List.of(),
+        QueryExtensions.register("_ident", "Return the argument unchanged",
+                List.of(PQuery.required("query")), List.of(),
                 (queryInfo, context, args) -> (BLSpanQuery) args.get(0));
 
         // Search within a single docId, e.g. _indoc("water", "3") to find "water" in docId 3 only
-        QueryExtensions.register("_indoc", List.of(
+        QueryExtensions.register("_indoc", "Search within a single Lucene doc id",
+            List.of(
             PQuery.required("query"),
             PInteger.nonnegative("docId", true)
             ),
@@ -119,7 +104,8 @@ public class XFDebug implements ExtensionFunctionClass {
         );
 
         // Filter by hit length; min and max are inclusive.
-        QueryExtensions.register("_lenfilter", List.of(
+        QueryExtensions.register("_lenfilter", "Filter by hit length (min and max inclusive)",
+            List.of(
                 PQuery.required("query"),
                 PInteger.nonnegative("minLength", true),
                 PInteger.nonnegative("maxLength", true)),
@@ -134,7 +120,8 @@ public class XFDebug implements ExtensionFunctionClass {
         // Filter producer hits by filter query using the specified operation (optionally inverted)
         List<String> posFilterOps = Arrays.asList(SpanFilter.values()).stream()
                 .map(v -> v.toString()).toList();
-        QueryExtensions.register("_posfilter", List.of(
+        QueryExtensions.register("_posfilter", "Construct a position filter query",
+            List.of(
                 PQuery.required("producer"),
                 PQuery.required("filter"),
                 PEnum.of("operation", SpanFilter.class, true),

@@ -16,6 +16,11 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
     }
 
     @Override
+    public String getDescription() {
+        return "Calculates collocation group score using the salience measure.";
+    }
+
+    @Override
     public Type getType() {
         return Type.COLLOCATION;
     }

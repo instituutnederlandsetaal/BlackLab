@@ -13,9 +13,9 @@ public class QueryFunctionLambda extends QueryFunction {
 
     private final ExtensionFunction func;
 
-    public QueryFunctionLambda(String name, ExtensionFunction func, List<PluginParam> argTypes,
+    public QueryFunctionLambda(String name, String description, ExtensionFunction func, List<PluginParam> argTypes,
             List<Object> defaultValues, boolean relationsFunction) {
-        super(name, argTypes, defaultValues, relationsFunction);
+        super(name, description, argTypes, defaultValues, relationsFunction);
         this.func = func;
     }
 

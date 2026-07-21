@@ -10,10 +10,11 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
-/** Implements the union function that combines clauses using OR */
+/** Implements the intersection function that combines clauses using AND */
 public class QueryFunctionIntersect extends QueryFunction {
     public QueryFunctionIntersect() {
-        super("intersect", List.of(PList.required("clauses", PList.Validator.ALL_QUERIES)),
+        super("intersect", "Finds matches that are common to all clauses",
+            List.of(PList.required("clauses", PList.Validator.ALL_QUERIES)),
             null, false);
     }
 

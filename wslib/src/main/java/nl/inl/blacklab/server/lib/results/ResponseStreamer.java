@@ -1895,6 +1895,7 @@ public class ResponseStreamer {
             for (ResultListPlugins.PluginInfo pluginInfo : typeEntry.getValue()) {
                 ds.startEntry(pluginInfo.getName()).startMap();
                 {
+                    ds.entry("description", pluginInfo.getDescription());
                     ds.startEntry("params").startList();
                     for (ResultListPlugins.PluginParamInfo param: pluginInfo.getParamsMap().values()) {
                         ds.startItem(param.getName()).startMap();

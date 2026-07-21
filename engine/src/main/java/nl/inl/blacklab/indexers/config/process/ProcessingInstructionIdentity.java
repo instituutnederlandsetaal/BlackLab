@@ -8,13 +8,18 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
- * Strip certain characters from the start and end of the value(s)
+ * Return the value(s) unchanged
  */
 public class ProcessingInstructionIdentity extends ProcessingInstruction {
 
     @Override
     public synchronized String getName() {
         return "identity";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Return the value(s) unchanged";
     }
 
     public static ProcessingStep getInstance() {

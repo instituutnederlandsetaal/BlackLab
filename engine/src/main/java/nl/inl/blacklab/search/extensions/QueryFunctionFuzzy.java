@@ -15,7 +15,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Does fuzzy matching. */
 public class QueryFunctionFuzzy extends QueryFunction {
     public QueryFunctionFuzzy() {
-        super("_fuzzy", List.of(
+        super("_fuzzy", "Performs fuzzy matching",
+                List.of(
                 PString.any("find", true),
                 PInteger.nonnegative("maxEdits", true),
                 PInteger.nonnegative("prefixLength", true)

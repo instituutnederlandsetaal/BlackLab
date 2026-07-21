@@ -17,6 +17,11 @@ public class HitGroupScorerSize extends HitGroupScorerType {
     }
 
     @Override
+    public String getDescription() {
+        return "Calculates collocation group score by taking the group size.";
+    }
+
+    @Override
     public Type getType() {
         return Type.COLLOCATION;
     }

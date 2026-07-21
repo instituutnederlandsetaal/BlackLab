@@ -34,6 +34,11 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "If there is no value, fill in a constant value or the value of another field";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parField = addParam(PString.identifier("field"));
         parValue = addParam(PString.any("value"));

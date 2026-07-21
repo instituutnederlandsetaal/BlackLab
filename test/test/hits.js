@@ -52,8 +52,8 @@ function expectHitsUnchanged(testName, params) {
 expectHitsUnchanged("single word the", '"the"');
 expectHitsUnchanged("simple phrase a succesful", '"a" [lemma="successful"]');
 // Also test that forward index matching either the first or the second clause produces the same results
-expectHitsUnchanged("phrase a succesful with _FI1", '_FI1("a", [lemma="successful"])');
-expectHitsUnchanged("phrase a succesful with _FI2", '_FI2("a", [lemma="successful"])');
+expectHitsUnchanged("phrase a succesful with fimatch 1st", '_fimatch("a", [lemma="successful"], 0)');
+expectHitsUnchanged("phrase a succesful with fimatch 2nd", '_fimatch("a", [lemma="successful"], 1)');
 
 // Simple capture group
 expectHitsUnchanged("simple capture group", '"one" A:[]');

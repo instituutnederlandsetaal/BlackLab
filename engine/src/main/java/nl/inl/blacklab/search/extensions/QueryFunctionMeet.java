@@ -14,7 +14,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  */
 public class QueryFunctionMeet extends QueryFunction {
     public QueryFunctionMeet() {
-        super("meet", List.of(
+        super("meet", "Finds matches near other matches",
+                List.of(
                 PQuery.required("first"),
                         PQuery.required("second"),
                         PInteger.any("rangeStart"),

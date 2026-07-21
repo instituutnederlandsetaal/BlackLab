@@ -10,12 +10,13 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
-/** Creates a list from its arguments. */
+/** Determines the length of a list, string, matchinfo or intrange. */
 public class QueryFunctionLen extends QueryFunction {
     public QueryFunctionLen() {
         // Takes a single argument of type LIST and just returns it
         // (this works because LIST is automatically interpreted as a variable number of arguments)
-        super("len", List.of(PAny.required("value")),
+        super("len", "Determine the length of its parameter",
+                List.of(PAny.required("value")),
                 null, false);
     }
 

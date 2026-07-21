@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Calculate the gap between two captures */
 public class QueryFunctionGap extends QueryFunction {
     public QueryFunctionGap() {
-        super("gap",
+        super("gap", "Determine the gap between two captures",
                 List.of(PMatchInfo.required("first"), PMatchInfo.required("second"), PBoolean.optional("directional")),
                 null, false);
     }

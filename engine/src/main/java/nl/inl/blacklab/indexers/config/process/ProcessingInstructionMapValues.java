@@ -23,6 +23,11 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Map values according to a mapping table";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parTable = addParam(PStringStringMap.required("table", PStringStringMap.Validator.REASONABLE_LENGTHS));
     }

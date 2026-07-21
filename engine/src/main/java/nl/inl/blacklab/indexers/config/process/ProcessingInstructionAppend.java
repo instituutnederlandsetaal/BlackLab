@@ -36,6 +36,11 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Appends a constant value, or the value of a metadata field";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parSeparator = addParam(PString.any("separator"));
         parPrefix = addParam(PString.any("prefix"));

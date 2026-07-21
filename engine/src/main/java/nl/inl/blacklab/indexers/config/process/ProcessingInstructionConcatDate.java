@@ -39,6 +39,11 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
     }
 
     @Override
+    public String getDescription() {
+        return "Concatenate 3 separate date fields into one";
+    }
+
+    @Override
     public void initialize() throws PluginException {
         parYearField = addParam(PString.identifier("yearField", true));
         parMonthField = addParam(PString.identifier("monthField", true));

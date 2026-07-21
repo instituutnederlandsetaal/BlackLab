@@ -24,12 +24,14 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
     /** Register the punctBefore and punctAfter functions to simplify finding punctuation. */
     @Override
     public void register() {
-        QueryExtensions.register("punctBefore", List.of(PString.any("regex")),
+        QueryExtensions.register("punctBefore", "Find punctuation before a token",
+            List.of(PString.any("regex")),
                 List.of(REGEX_ANY_NON_WS),
             (queryInfo, context, args) ->
                     getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS)
         );
-        QueryExtensions.register("punctAfter", List.of(PString.any("regex")),
+        QueryExtensions.register("punctAfter", "Find punctuation after a token",
+            List.of(PString.any("regex")),
             List.of(REGEX_ANY_NON_WS),
             (queryInfo, context, args) -> {
                 BLSpanQuery punctQuery = getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS);

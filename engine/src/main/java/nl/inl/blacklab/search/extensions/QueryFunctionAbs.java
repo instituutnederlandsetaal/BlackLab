@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Calculate the absolute value of a number */
 public class QueryFunctionAbs extends QueryFunction {
     public QueryFunctionAbs() {
-        super("abs",
+        super("abs", "Calculates the absolute value of a number",
                 List.of(PInteger.any("number")),
                 null, false);
     }
@@ -20,5 +20,4 @@ public class QueryFunctionAbs extends QueryFunction {
         Integer number = (Integer)parameters.get(0);
         return ConstraintValue.get(Math.abs(number));
     }
-
 }

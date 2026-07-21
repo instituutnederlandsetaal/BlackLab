@@ -14,7 +14,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Implements the union function that combines clauses using OR */
 public class QueryFunctionUnion extends QueryFunction {
     public QueryFunctionUnion() {
-        super("union", List.of(PList.required("clauses", PList.Validator.ALL_QUERIES)),
+        super("union", "Combines matches from two clauses",
+            List.of(PList.required("clauses", PList.Validator.ALL_QUERIES)),
             null, false);
     }
 

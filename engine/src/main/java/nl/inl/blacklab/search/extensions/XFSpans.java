@@ -20,7 +20,9 @@ public class XFSpans implements ExtensionFunctionClass {
     @Override
     public void register() {
         /// with-spans(query, spans, captureAs): automatically capture any enclosing spans with each hit.
-        QueryExtensions.register(FUNC_WITH_SPANS, List.of(PQuery.required("query"),
+        QueryExtensions.register(FUNC_WITH_SPANS,
+                "Automatically capture any enclosing spans with each hit",
+                List.of(PQuery.required("query"),
                         PQuery.required("spans"), PString.identifier("captureAs")),
                 Arrays.asList(null, QueryFunction.VALUE_ANY_SPAN, FUNC_WITH_SPANS),
                 (queryInfo, context, args) -> {
