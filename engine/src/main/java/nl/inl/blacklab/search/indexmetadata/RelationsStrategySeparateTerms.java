@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,8 +13,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.store.ByteArrayDataInput;
+import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.store.DataOutput;
-import org.apache.lucene.store.OutputStreamDataOutput;
+import org.apache.lucene.util.BitUtil;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.RegExp;
 
@@ -58,6 +58,10 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     /** Prefix for special term that's only added so we can write the relation index */
     public static final String RELATION_INFO_TERM_PREFIX = "\u0004";
 
+    private static String relationInfoTermWithoutAttributes(String fullRelationType) {
+        return RELATION_INFO_TERM_PREFIX + fullRelationType + ATTR_SEPARATOR;
+    }
+
     /**
      * Character class meaning "any non-special character" (replacement for .)
      */
@@ -81,7 +85,9 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                     return e.getKey() + KEY_VALUE_SEPARATOR + attrs;
                 })
                 .collect(Collectors.joining(ATTR_SEPARATOR));
-        String riTerm = RELATION_INFO_TERM_PREFIX + fullRelationType + ATTR_SEPARATOR + attrPart;
+        String riTerm = attrPart.isEmpty() ?
+                relationInfoTermWithoutAttributes(fullRelationType) :
+                RELATION_INFO_TERM_PREFIX + fullRelationType + ATTR_SEPARATOR + attrPart;
 
         if (attributes == null || attrPart.isEmpty())
             return List.of(fullRelationType, riTerm);
@@ -281,11 +287,22 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     @Override
     public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         List<String> terms = indexTerms(fullType, attributes);
+        indexRelationTerms(terms, payload, indexTermFunc);
+    }
+
+    @Override
+    public PreparedRelationTerms prepareRelationTerms(String fullType, Map<String, List<String>> attributes) {
+        List<String> terms = indexTerms(fullType, attributes);
+        return (payload, indexTermFunc) -> indexRelationTerms(terms, payload, indexTermFunc);
+    }
+
+    private static void indexRelationTerms(List<String> terms, BytesRef payload,
+            BiConsumer<String, BytesRef> indexTermFunc) {
         indexTermFunc.accept(terms.get(0), payload);
 
         // Extract only the relationId from the payload, and index it with the other terms
         if (terms.size() > 1) {
-            ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes);
+            ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes, payload.offset, payload.length);
             int relationId = CODEC.readRelationId(dataInput);
             BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
             for (int i = 1; i < terms.size(); i++)
@@ -307,6 +324,13 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         return relationInfo.hasTarget() ?
                 CODEC.serialize(relationInfo) :
                 CODEC.relationIdOnlyPayload(relationInfo.getRelationId());
+    }
+
+    @Override
+    public BytesRef getPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
+            int targetEnd, int relationId, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+        return CODEC.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
+                targetStart, targetEnd, relationId, hasExtraInfoStored);
     }
 
     @Override
@@ -469,12 +493,14 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          */
         @Override
         public BytesRef serialize(RelationInfo relInfo) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            DataOutput dataOutput = new OutputStreamDataOutput(os);
+            byte[] payload = new byte[relationPayloadLength(relInfo.getSourceStart(),
+                    relInfo.getSourceEnd(), relInfo.getTargetStart(), relInfo.getTargetEnd(),
+                    relInfo.getRelationId())];
+            ByteArrayDataOutput dataOutput = new ByteArrayDataOutput(payload);
             serializeRelationWithRelationId(relInfo.isRoot(), relInfo.getSourceStart(),
                     relInfo.getSourceEnd(), relInfo.getTargetStart(), relInfo.getTargetEnd(),
                     relInfo.getRelationId(), relInfo.mayHaveInfoInRelationIndex(), dataOutput);
-            return new BytesRef(os.toByteArray());
+            return new BytesRef(payload, 0, dataOutput.getPosition());
         }
 
         /**
@@ -495,9 +521,11 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         @Override
         public BytesRef inlineTagPayload(int startPosition, int endPosition, int relationId, boolean maybeExtraInfo) {
             try {
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
-                return new BytesRef(os.toByteArray());
+                byte[] payload = new byte[relationPayloadLength(startPosition, startPosition,
+                        endPosition, endPosition, relationId)];
+                ByteArrayDataOutput dataOutput = new ByteArrayDataOutput(payload);
+                serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, dataOutput);
+                return new BytesRef(payload, 0, dataOutput.getPosition());
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
@@ -506,22 +534,58 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         @Override
         public BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
                 int targetEnd, int relationId, boolean maybeExtraInfo) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            byte[] payload = new byte[relationPayloadLength(sourceStart, sourceEnd,
+                    targetStart, targetEnd, relationId)];
+            ByteArrayDataOutput dataOutput = new ByteArrayDataOutput(payload);
             serializeRelationWithRelationId(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                    relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
-            return new BytesRef(os.toByteArray());
+                    relationId, maybeExtraInfo, dataOutput);
+            return new BytesRef(payload, 0, dataOutput.getPosition());
         }
 
         @Override
         public BytesRef relationIdOnlyPayload(int relationId) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            byte[] payload = new byte[vIntLength(relationId)];
+            ByteArrayDataOutput dataOutput = new ByteArrayDataOutput(payload);
             try {
-                OutputStreamDataOutput outputStreamDataOutput = new OutputStreamDataOutput(os);
-                writeRelationId(relationId, outputStreamDataOutput);
+                writeRelationId(relationId, dataOutput);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
-            return new BytesRef(os.toByteArray());
+            return new BytesRef(payload, 0, dataOutput.getPosition());
+        }
+
+        private static int relationPayloadLength(int sourceStart, int sourceEnd,
+                int targetStart, int targetEnd, int relationId) {
+            int sourceLength = sourceEnd - sourceStart;
+            int relTargetStart = targetStart - sourceStart;
+            int targetLength = targetEnd - targetStart;
+            boolean useAlternateDefaultLength =
+                    sourceLength == DEFAULT_LENGTH_ALT && targetLength == DEFAULT_LENGTH_ALT;
+            int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+            boolean writeOtherLength = targetLength != defaultLength;
+            boolean writeSourceLength = writeOtherLength || sourceLength != defaultLength;
+            boolean writeRelTargetStart = writeSourceLength || relTargetStart != DEFAULT_REL_OTHER_START;
+
+            int length = vIntLength(relationId) + 1; // relation id and flags
+            if (writeRelTargetStart)
+                length += vIntLength(BitUtil.zigZagEncode(relTargetStart));
+            if (writeSourceLength)
+                length += vIntLength(sourceLength);
+            if (writeOtherLength)
+                length += vIntLength(targetLength);
+            return length;
+        }
+
+        private static int vIntLength(int value) {
+            if ((value & ~0x7F) == 0)
+                return 1;
+            if ((value & ~0x3FFF) == 0)
+                return 2;
+            if ((value & ~0x1FFFFF) == 0)
+                return 3;
+            if ((value & ~0xFFFFFFF) == 0)
+                return 4;
+            return 5;
         }
     }
 }

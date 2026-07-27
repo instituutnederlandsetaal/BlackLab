@@ -66,6 +66,16 @@ public interface RelationsStrategy {
     BytesRef getPayload(RelationInfo relationInfo);
 
     /**
+     * Get a relation payload without requiring callers to know the strategy's
+     * encoding. Strategies may override this to avoid allocating RelationInfo.
+     */
+    default BytesRef getPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
+            int targetEnd, int relationId, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+        return getPayload(RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd,
+                targetStart, targetEnd, relationId, sourceField, hasExtraInfoStored));
+    }
+
+    /**
      * Information about encoding and decoding payloads for relations.
      */
     interface PayloadCodec {
@@ -113,6 +123,22 @@ public interface RelationsStrategy {
      */
     default boolean writeRelationInfoToIndex() {
         return true;
+    }
+
+    /**
+     * Relation terms prepared for repeated indexing with different payloads.
+     */
+    @FunctionalInterface
+    interface PreparedRelationTerms {
+        void index(BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
+    }
+
+    /**
+     * Prepare the terms for a relation type and attributes that will be indexed
+     * repeatedly.
+     */
+    default PreparedRelationTerms prepareRelationTerms(String fullType, Map<String, List<String>> attributes) {
+        return (payload, indexTermFunc) -> indexRelationTerms(fullType, attributes, payload, indexTermFunc);
     }
 
     /**
