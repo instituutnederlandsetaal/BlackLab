@@ -109,6 +109,13 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     }
 
     /**
+     * Does this segment have a forward index for this Lucene field?
+     */
+    public boolean hasForwardIndex(String luceneField) {
+        return forwardIndex.getForwardIndexField(luceneField) != null;
+    }
+
+    /**
      * Create a relation info reader for this segment.
      *
      * The returned reader is not thread-safe and shouldn't be stored.

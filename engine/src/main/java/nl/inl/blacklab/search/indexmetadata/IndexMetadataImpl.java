@@ -762,7 +762,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         countPerField.put(field.name(), fieldCount);
                 }
                 index.forEachDocument(segment -> segmentDocId -> {
-                    boolean firstField = true;
+                    boolean documentHasAnnotatedField = false;
                     for (AnnotatedField field: annotatedFields()) {
                         Annotation annot = field.mainAnnotation();
                         if (annot == null) // can happen if we e.g. store linked metadata XML
@@ -770,6 +770,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         CorpusSize.Count fieldCount = countPerField.get(field.name());
                         // Add up token counts for all the documents
                         String luceneField = annot.forwardIndexSensitivity().luceneField();
+                        if (!FieldForwardIndex.exists(segment, luceneField))
+                            continue;
                         AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                         int docLength = (int) fi.docLength(segmentDocId);
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
@@ -778,12 +780,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             fieldCount.add(1,
                                     (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
                             documentVersionCount++;
-                            if (firstField) {
-                                documentCount++;
-                            }
+                            documentHasAnnotatedField = true;
                         }
-                        firstField = false;
                     }
+                    if (documentHasAnnotatedField)
+                        documentCount++;
                 });
                 tokenCount = countPerField.values().stream().mapToLong(CorpusSize.Count::getTokens).sum();
             }

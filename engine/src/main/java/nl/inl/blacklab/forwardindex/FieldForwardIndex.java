@@ -19,6 +19,10 @@ public class FieldForwardIndex implements AnnotationForwardIndex {
         return BlackLabPostingsReader.forSegment(lrc).forwardIndex(luceneField);
     }
 
+    public static boolean exists(LeafReaderContext lrc, String luceneField) {
+        return BlackLabPostingsReader.forSegment(lrc).hasForwardIndex(luceneField);
+    }
+
     private final ForwardIndexSegmentReader forwardIndex;
 
     private final ForwardIndexField field;
