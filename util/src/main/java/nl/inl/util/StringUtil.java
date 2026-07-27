@@ -1,10 +1,13 @@
 package nl.inl.util;
 
-import java.text.Normalizer;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.ibm.icu.text.Normalizer2;
 
 /**
  * A collection of String-related utility methods and regular expression
@@ -107,11 +110,24 @@ public final class StringUtil {
         return PATT_WHITESPACE.matcher(s).replaceAll(" ");
     }
 
-    /** Diacritical marks to be removed after decomposition */
-    private static final Pattern PATT_DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+    /** Some common accented characters and ligatures that are not decomposed by Normalizer2. */
+    private static final Map<Character, String> MANUALLY_DECOMPOSE_CHARS = new HashMap<>();
 
-    private static final Pattern PATT_DIACRITICAL_MARKS_AND_EM_SPACE =
-            Pattern.compile("[\\p{InCombiningDiacriticalMarks}" + CHAR_EM_SPACE + "]+");
+    static {
+        // Some common accented characters and ligatures that are not decomposed by Normalizer2.
+        MANUALLY_DECOMPOSE_CHARS.put('Ł', "L");
+        MANUALLY_DECOMPOSE_CHARS.put('ł', "l");
+        MANUALLY_DECOMPOSE_CHARS.put('Æ', "AE");
+        MANUALLY_DECOMPOSE_CHARS.put('æ', "ae");
+        MANUALLY_DECOMPOSE_CHARS.put('Œ', "OE");
+        MANUALLY_DECOMPOSE_CHARS.put('œ', "oe");
+        MANUALLY_DECOMPOSE_CHARS.put('ß', "ss");
+        MANUALLY_DECOMPOSE_CHARS.put('ﬁ', "fi");
+        MANUALLY_DECOMPOSE_CHARS.put('ﬂ', "fl");
+        MANUALLY_DECOMPOSE_CHARS.put('ﬀ', "ff");
+        MANUALLY_DECOMPOSE_CHARS.put('ﬃ', "ffi");
+        MANUALLY_DECOMPOSE_CHARS.put('ﬄ', "ffl");
+    }
 
     /**
      * Removes diacritics (~= accents) from a string. The case will not be altered.
@@ -138,7 +154,7 @@ public final class StringUtil {
         if (input == null) {
             return null;
         }
-        final StringBuilder decomposed = new StringBuilder(Normalizer.normalize(input, Normalizer.Form.NFD));
+        final StringBuilder decomposed = new StringBuilder(Normalizer2.getNFDInstance().normalize(input));
 
         // Note that this doesn't correctly remove ligatures...
         for (int i = 0; i < decomposed.length(); i++) { // Loop is much faster than regex.
@@ -148,12 +164,12 @@ public final class StringUtil {
                 // Adjust index. Otherwise, a string like "\u0301\u0301"
                 // (i.e. 2 bare accents in a row) would skip processing the second accent.
                 i--;
-            } else if (c == CHAR_LATIN_UPPER_L_WITH_STROKE) {
-                decomposed.deleteCharAt(i);
-                decomposed.insert(i, 'L');
-            } else if (c == CHAR_LATIN_LOWER_L_WITH_STROKE) {
-                decomposed.deleteCharAt(i);
-                decomposed.insert(i, 'l');
+            } else {
+                String replaceWith = MANUALLY_DECOMPOSE_CHARS.get(c);
+                if (replaceWith != null) {
+                    decomposed.deleteCharAt(i);
+                    decomposed.insert(i, replaceWith);
+                }
             }
         }
 
@@ -164,10 +180,6 @@ public final class StringUtil {
     // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
     private static final char BEGIN_COMBINING_DIACRITICAL_MARKS = '\u0300';
     private static final char END_COMBINING_DIACRITICAL_MARKS = '\u036F';
-
-    private static final char CHAR_LATIN_UPPER_L_WITH_STROKE = '\u0141'; // Ł
-
-    private static final char CHAR_LATIN_LOWER_L_WITH_STROKE = '\u0142'; // ł
 
     /**
      * A lowercase letter followed by an uppercase one, both matched in groups.
@@ -285,7 +297,7 @@ public final class StringUtil {
      */
     public static String sanitizeAndNormalizeUnicode(String value) {
         value = PATT_REMOVE_UNPRINTABLES.matcher(value).replaceAll("");
-        return Normalizer.normalize(value, Normalizer.Form.NFC);
+        return Normalizer2.getNFCInstance().normalize(value);
     }
 
     public static Pattern insensitiveCollatorPattern = Pattern.compile("[" /*+"\t\n\r" + CHAR_EM_SPACE*/ + CHAR_DELETE + "-\u009F" + "]");

@@ -174,12 +174,6 @@
             <version>3.2.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.ibm.icu</groupId>
-            <artifactId>icu4j</artifactId>
-            <version>78.3</version>
-        </dependency>
-
         <!-- Groovy for scripting support -->
         <dependency>
             <groupId>org.apache.groovy</groupId>

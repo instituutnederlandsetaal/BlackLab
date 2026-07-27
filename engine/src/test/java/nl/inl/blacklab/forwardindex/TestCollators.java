@@ -49,7 +49,18 @@ public class TestCollators {
     @Test
     public void testInsensitiveCompare() {
         testInsensitiveCollatorIgnoresChars(StringUtil.CHAR_SOFT_HYPHEN);
-        testInsensitiveCollatorComparesChar(StringUtil.CHAR_EM_SPACE, StringUtil.CHAR_NON_BREAKING_SPACE, '\r', '\n', '\t', ' ');
+        testInsensitiveCollatorComparesChar(StringUtil.CHAR_EM_SPACE, StringUtil.CHAR_NON_BREAKING_SPACE,
+                '\r', '\n', '\t', ' ');
+    }
+
+    @Test
+    public void testLigatures() {
+        Assert.assertEquals(0, getCollator(false).compare("Æ", "ae"));
+        Assert.assertEquals(1, getCollator(true).compare("æ", "ae"));
+        Assert.assertEquals("æ",MatchSensitivity.CASE_INSENSITIVE.desensitize("Æ"));
+        Assert.assertEquals("æ",MatchSensitivity.SENSITIVE.desensitize("æ"));
+        Assert.assertEquals("ae", MatchSensitivity.INSENSITIVE.desensitize("æ"));
+        Assert.assertEquals("ae", MatchSensitivity.DIACRITICS_INSENSITIVE.desensitize("æ"));
     }
 
     public static void testSensitiveCollatorComparesChar(char... chars) {
