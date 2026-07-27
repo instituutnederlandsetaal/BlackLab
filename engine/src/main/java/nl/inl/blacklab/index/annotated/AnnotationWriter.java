@@ -160,7 +160,7 @@ public class AnnotationWriter {
         if (!includePayloads && needsPrimaryValuePayloads)
             includePayloads = true;
         if (includePayloads)
-            payloads = new ArrayList<>();
+            payloads = new PooledBytesRefList();
 
         maximumValueLength = BlackLab.config().getIndexing().getMaxValueLength();
     }
@@ -179,7 +179,7 @@ public class AnnotationWriter {
                 for (BytesRef payload: payloads) {
                     assert payload != null;
                     int relationId = relationsStrategy.getPayloadCodec()
-                            .readRelationId(new ByteArrayDataInput(payload.bytes));
+                            .readRelationId(new ByteArrayDataInput(payload.bytes, payload.offset, payload.length));
                     relIdsSeen.add(relationId);
                 }
                 int expectedRelId = 0;
@@ -305,6 +305,20 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+        return addValueAtPosition(value, position, payload, true);
+    }
+
+    /**
+     * Add a value without interning it.
+     *
+     * Use this when the caller already reuses the same value instance for many
+     * occurrences in the current document.
+     */
+    private int addValueAtPositionWithoutInterning(String value, int position, BytesRef payload) {
+        return addValueAtPosition(value, position, payload, false);
+    }
+
+    private int addValueAtPosition(String value, int position, BytesRef payload, boolean internValue) {
         assert position >= 0;
         if (maximumValueLength > 0) {
             if (value.length() > maximumValueLength) {
@@ -320,7 +334,8 @@ public class AnnotationWriter {
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-        value = value.intern();
+        if (internValue)
+            value = value.intern();
 
         if (position >= lastValuePosition) {
             // Beyond the last position; just add at the end.
@@ -418,13 +433,27 @@ public class AnnotationWriter {
         values = new ArrayList<>();
         increments = new IntArrayList();
         if (payloads != null) {
-            payloads = new ArrayList<>();
+            payloads = new PooledBytesRefList();
         }
         nextRelationId = 0;
     }
 
     public boolean hasPayload() {
         return payloads != null;
+    }
+
+    public void ensureAdditionalCapacity(int additionalValues) {
+        if (additionalValues <= 0)
+            return;
+        int targetSize = values.size() + additionalValues;
+        if (values instanceof ArrayList<?> arrayList)
+            arrayList.ensureCapacity(targetSize);
+        if (increments instanceof IntArrayList intArrayList)
+            intArrayList.ensureCapacity(targetSize);
+        if (payloads instanceof ArrayList<?> arrayList)
+            arrayList.ensureCapacity(targetSize);
+        else if (payloads instanceof PooledBytesRefList pooledList)
+            pooledList.ensureCapacity(targetSize);
     }
 
     public AnnotatedField field() {
@@ -488,6 +517,35 @@ public class AnnotationWriter {
         indexRelation(fullRelationType, attributes, relationInfo);
     }
 
+    /**
+     * Prepare an attribute-less relation type for repeated indexing.
+     */
+    public RelationWriter prepareRelationWithoutAttributes(String fullRelationType) {
+        return new RelationWriter(relationsStrategy.prepareRelationTerms(
+                fullRelationType, Collections.emptyMap()));
+    }
+
+    public class RelationWriter {
+        private final RelationsStrategy.PreparedRelationTerms preparedTerms;
+        private int sourceStart;
+        private final java.util.function.BiConsumer<String, BytesRef> indexTerm =
+                (value, payload) -> addValueAtPositionWithoutInterning(value, sourceStart, payload);
+
+        private RelationWriter(RelationsStrategy.PreparedRelationTerms preparedTerms) {
+            this.preparedTerms = preparedTerms;
+        }
+
+        public void index(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd) {
+            this.sourceStart = sourceStart;
+            int relationId = relationsStrategy.getRelationId(
+                    AnnotationWriter.this, targetStart, Collections.emptyMap());
+            BytesRef payload = relationsStrategy.getPayload(onlyHasTarget,
+                    sourceStart, sourceEnd, targetStart, targetEnd, relationId, field(),
+                    relationsStrategy.writeRelationInfoToIndex());
+            preparedTerms.index(payload, indexTerm);
+        }
+    }
+
     private int indexRelation(String fullRelationType, Map<String, List<String>> attributes, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
@@ -518,7 +576,8 @@ public class AnnotationWriter {
     }
 
     public int getRelationIdAtIndex(int tagIndex) {
-        ByteArrayDataInput dataInput = new ByteArrayDataInput(payloads.get(tagIndex).bytes);
+        BytesRef payload = payloads.get(tagIndex);
+        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes, payload.offset, payload.length);
         return relationsStrategy.getPayloadCodec().readRelationId(dataInput);
     }
 }
