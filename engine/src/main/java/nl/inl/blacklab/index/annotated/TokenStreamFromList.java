@@ -60,7 +60,7 @@ public class TokenStreamFromList extends TokenStream {
         // Capture token contents
         if (iterator.hasNext()) {
             String word = iterator.next();
-            termAttr.copyBuffer(word.toCharArray(), 0, word.length());
+            termAttr.setEmpty().append(word);
             positionIncrementAttr.setPositionIncrement(incrementIt == null ? 1 : incrementIt.next());
             if (payloadAttr != null) {
                 if (payloadIt.hasNext())

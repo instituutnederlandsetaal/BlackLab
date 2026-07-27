@@ -642,8 +642,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 addMetadataToDocument();
                 try {
                     // Add Lucene doc to indexer, if not existing already
-                    if (getDocWriter() != null && !indexingIntoExistingDoc)
+                    if (getDocWriter() != null && !indexingIntoExistingDoc) {
                         getDocWriter().add(currentDoc);
+                        currentDoc = null; // Drop token stream/list references before clearing reusable writers.
+                    }
                 } catch (Exception e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
