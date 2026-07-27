@@ -653,7 +653,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
         IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
-        config.setRAMBufferSizeMB(150); // faster indexing
+        config.setRAMBufferSizeMB(BlackLab.config().getIndexing().getRamBufferSizeMB());
         // Defer segment merges during indexing
         // Merge once indexing is finished, skipping intermediate merges, which saves time
         if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEFER_SEGMENT_MERGES_DURING_INDEXING))) {

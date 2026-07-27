@@ -369,6 +369,11 @@ indexing:
     # (useful if referring to external zip files containing metadata)
     # (default: 10)
     zipFilesMaxOpen: 10
+
+    # Lucene indexing buffer size in MB. Larger values may improve indexing
+    # throughput at the cost of additional heap usage.
+    # (default: 150)
+    ramBufferSizeMB: 150
 ```
 
 :::

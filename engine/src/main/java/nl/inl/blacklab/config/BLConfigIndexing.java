@@ -20,6 +20,9 @@ public class BLConfigIndexing {
     
     int numberOfThreads = 2;
 
+    /** Lucene indexing buffer size in MB. */
+    double ramBufferSizeMB = 150;
+
     int maxNumberOfIndicesPerUser = 10;
 
     /** Should inline tags and relations be indexed case- and accent-sensitive?
@@ -118,6 +121,17 @@ public class BLConfigIndexing {
     @SuppressWarnings("unused")
     public void setNumberOfThreads(int numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
+    }
+
+    public double getRamBufferSizeMB() {
+        return ramBufferSizeMB;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRamBufferSizeMB(double ramBufferSizeMB) {
+        if (!Double.isFinite(ramBufferSizeMB) || ramBufferSizeMB <= 0)
+            throw new IllegalArgumentException("ramBufferSizeMB must be finite and > 0");
+        this.ramBufferSizeMB = ramBufferSizeMB;
     }
 
     public int getMaxNumberOfIndicesPerUser() {
