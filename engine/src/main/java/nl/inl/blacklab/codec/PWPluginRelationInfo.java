@@ -17,6 +17,7 @@ import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
@@ -79,24 +80,14 @@ class PWPluginRelationInfo implements PWPlugin {
      */
     private final Map<String, Integer> indexFromAttributeName = new HashMap<>();
 
-    /** Offsets of attribute values in attrvalues file */
-    private final Map<String, Long> attrValueOffsets = new HashMap<>();
+    /** Attribute-set offset per relationId, per document. */
+    SortedMap<Integer, LongArrayList> attrPerRelationIdPerDoc;
 
-    /** Attributes per relationId, per document (docId -> (relationId -> (attrIndex -> valueOffset))) */
-    SortedMap<Integer, SortedMap<Integer, SortedMap<Integer, Long>>> attrPerRelationIdPerDoc;
-
-    /** For current document: attributes per relationId (relationId -> (attrIndex -> valueOffset)) */
-    SortedMap<Integer, SortedMap<Integer, Long>> attrPerRelationId;
+    /** Attribute-set offsets for the current document. */
+    LongArrayList attrPerRelationId;
 
     /** Field we're currently processing. */
     private RelationInfoFieldMutable currentField;
-
-    /** Offsets of attribute set in the attrsets file.
-     * The key is a sorted map of attribute name index to attribute value offset.
-     * The value is the offset in the attrsets file.
-     */
-    private final Map<SortedMap<Integer, Long>, Long> attributeSetOffsets = new HashMap<>();
-
 
     // PER FIELD
 
@@ -112,6 +103,9 @@ class PWPluginRelationInfo implements PWPlugin {
      * this doesn't need to be a map anymore, as there can only be 1 attribute per term.
      */
     private final SortedMap<Integer, Long> currentTermAttributes = new TreeMap<>();
+
+    /** Offset of the complete attribute set encoded in the current relation-info term. */
+    private long currentAttributeSetOffset;
 
 
     // PER DOCUMENT
@@ -172,36 +166,40 @@ class PWPluginRelationInfo implements PWPlugin {
         return true;
     }
 
-    /** Look up this attribute set's offset, storing the attribute set if this is the first time we see it */
+    /**
+     * Store the complete attribute set encoded by the current relation-info term.
+     * Lucene visits each unique term once, so retaining an unbounded deduplication
+     * map here is unnecessary and can exhaust the heap for high-cardinality data.
+     */
     private long getAttributeSetOffset(SortedMap<Integer, Long> currentTermAttributes) {
-        return attributeSetOffsets.computeIfAbsent(currentTermAttributes, k -> {
-            try {
-                long attributeSetOffset = outAttrSetsFile.getFilePointer();
-                outAttrSetsFile.writeVInt(currentTermAttributes.size());
-                for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
-                    assert e.getKey() >= 0 : "negative attribute name id";
-                    assert e.getValue() >= 0 : "negative attribute value offset";
-                    outAttrSetsFile.writeVInt(e.getKey());    // attribute name id
-                    outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
-                }
-                return attributeSetOffset;
-            } catch (IOException e1) {
-                throw new InvalidIndex(e1);
+        try {
+            long attributeSetOffset = outAttrSetsFile.getFilePointer();
+            outAttrSetsFile.writeVInt(currentTermAttributes.size());
+            for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
+                assert e.getKey() >= 0 : "negative attribute name id";
+                assert e.getValue() >= 0 : "negative attribute value offset";
+                outAttrSetsFile.writeVInt(e.getKey());    // attribute name id
+                outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
             }
-        });
+            return attributeSetOffset;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
-    /** Look up the attribute value offset, storing the attribute name if this is the first time we see it */
+    /**
+     * Store an attribute value for the current unique relation-info term.
+     * Avoid retaining an unbounded value-to-offset cache; duplicate values may
+     * occupy a little more disk, but high-cardinality attributes stay memory-safe.
+     */
     private long getAttributeValueOffset(String attrValue) {
-        return attrValueOffsets.computeIfAbsent(attrValue, k -> {
-            try {
-                long offset = outAttrValuesFile.getFilePointer();
-                outAttrValuesFile.writeString(attrValue);
-                return offset;
-            } catch (IOException e1) {
-                throw new InvalidIndex(e1);
-            }
-        });
+        try {
+            long offset = outAttrValuesFile.getFilePointer();
+            outAttrValuesFile.writeString(attrValue);
+            return offset;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     /** Look up the attribute name index, storing the attribute name if this is the first time we see it */
@@ -232,6 +230,9 @@ class PWPluginRelationInfo implements PWPlugin {
                 assert attributeValueOffset >= 0 : "negative attribute value offset";
                 currentTermAttributes.put(attributeIndex, attributeValueOffset);
             });
+            // The relation-info term contains the complete set of attributes. Resolve it once
+            // per term; every occurrence only needs to retain this primitive file offset.
+            currentAttributeSetOffset = getAttributeSetOffset(currentTermAttributes);
         } else {
             log("  startTerm: ignoring: " + termStr);
         }
@@ -241,7 +242,7 @@ class PWPluginRelationInfo implements PWPlugin {
     public void startDocument(int docId, int nOccurrences) {
         log("    startDocument: " + docId + " (" + nOccurrences + " occurrences)");
         // Keep track of relation ids in relations file
-        attrPerRelationId = attrPerRelationIdPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
+        attrPerRelationId = attrPerRelationIdPerDoc.computeIfAbsent(docId, __ -> new LongArrayList());
         if (relationIdsSeenPerDoc != null)
             relationIdsSeen = relationIdsSeenPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
     }
@@ -285,9 +286,13 @@ class PWPluginRelationInfo implements PWPlugin {
                 // Note that duplicates are normal (for attributes, using RelationsStrategyMultipleTerms)
             }
 
-            // Add the attributes from this term to those for this relationId
-            attrPerRelationId.computeIfAbsent(relationId, __ -> new TreeMap<>())
-                    .putAll(currentTermAttributes);
+            if (attrPerRelationId.size() <= relationId)
+                attrPerRelationId.size(relationId + 1);
+            long encodedOffset = currentAttributeSetOffset + 1;
+            long previousOffset = attrPerRelationId.getLong(relationId);
+            if (previousOffset != 0 && previousOffset != encodedOffset)
+                throw new InvalidIndex("Conflicting attribute sets for relation id " + relationId);
+            attrPerRelationId.set(relationId, encodedOffset);
         }
     }
 
@@ -342,24 +347,19 @@ class PWPluginRelationInfo implements PWPlugin {
             assert docEntry.getKey() == expectedDocId : "Wrong docId!?";
 
             outDocsFile.writeLong(outRelationsFile.getFilePointer());
-            int expectedRelationId = 0;
             // For each relationId...
-            SortedMap<Integer, SortedMap<Integer, Long>> relationId2AttributeSet = docEntry.getValue();
-            for (var rel: relationId2AttributeSet.entrySet()) {
+            LongArrayList relationId2AttributeSet = docEntry.getValue();
+            for (int relationId = 0; relationId < relationId2AttributeSet.size(); relationId++) {
                 // Get attribute set offset (storing it if this is the first time we've seen it)
                 // and write it to the relations file
-                if (rel.getKey() != expectedRelationId)
-                    throw new AssertionError(
-                            "Not all relationIds found (expected " + expectedRelationId + ", got " + rel.getKey()
-                                    + ")");
-                // mitigation for when assertions are disabled: write invalid values to the file to prevent desynching
-                while (expectedRelationId < rel.getKey()) {
+                long encodedOffset = relationId2AttributeSet.getLong(relationId);
+                if (encodedOffset == 0) {
+                    // Mitigation for missing relation ids when assertions are disabled:
+                    // write an invalid value to prevent desynchronizing subsequent ids.
                     outRelationsFile.writeLong(RelationInfo.RELATION_ID_NO_INFO); // no info for this relation
-                    expectedRelationId++;
+                } else {
+                    outRelationsFile.writeLong(encodedOffset - 1);
                 }
-                long attrSetOffset = getAttributeSetOffset(rel.getValue());
-                outRelationsFile.writeLong(attrSetOffset);
-                expectedRelationId++;
             }
             expectedDocId++;
         }
