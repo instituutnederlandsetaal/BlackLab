@@ -52,7 +52,7 @@ public class AuthHttpBasic extends AuthMethodProvider {
         // We configure these so validation succeeds, but we don't use them here.
         // HttpAuthFilter read them from the BLS config directly.
         // We should find a less nasty way to do this.
-        addParam(PString.identifier("userId"));
+        addParam(PString.any("userId"));
         addParam(PString.any("password"));
         addParam(PBoolean.optional("required"));
     }
