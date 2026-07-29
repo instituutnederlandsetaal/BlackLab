@@ -23,6 +23,8 @@ services:
       - BLACKLAB_FEATURE_defaultIndexType
 
     volumes:
+      # Configuration file with basic HTTP authentication enabled for indexing tests
+      - ./config/blacklab-server.yaml:/etc/blacklab/blacklab-server.yaml
       # Test data to index
       - ./data:/test-data
       # Script that indexes test data

@@ -83,12 +83,12 @@ public class HitResultsFromQuery extends HitResultsAbstract {
             BLSpanQuery optimizedQuery;
             synchronized (ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
-                if (fiMatchFactor != -1) {
+                boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+                if (traceOptimization && fiMatchFactor != -1) {
                     logger.debug("setting NFA threshold for this query to {}", fiMatchFactor);
                     ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
                 }
 
-                boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
                 if (traceOptimization)
                     logger.debug("Query before optimize()/rewrite(): {}", sourceQuery);
 

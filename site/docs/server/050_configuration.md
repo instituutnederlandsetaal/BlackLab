@@ -237,6 +237,14 @@ To use HTTP Basic Authentication (if enabled in `web.xml`, which it is not by de
 authentication:
     system:
         class: AuthHttpBasic
+        userId: test@example.com
+        password: secret123
+        
+        # require user to be logged in?
+        # (with required: false (the default), you can still search public 
+        #  corpora even if you're not logged in; only creating and searching 
+        #  private corpora is restricted)
+        required: true
 ```
 
 For testing, `AuthDebugFixed` can be useful:

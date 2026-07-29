@@ -7,7 +7,10 @@ import java.util.Base64.Decoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.param.PBoolean;
+import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.server.lib.User;
 
@@ -20,12 +23,14 @@ public class AuthHttpBasic extends AuthMethodProvider {
 
     static final Logger logger = LogManager.getLogger(AuthHttpBasic.class);
 
+    public static final String HTTP_HEADER_AUTHORIZATION = "Authorization";
+
     @Override
     public AuthMethod get(PluginParams config) {
         Decoder base64Decoder = Base64.getDecoder();
         return request -> {
             String userId = null;
-            String authHeader = request.getHeader("authorization");
+            String authHeader = request.getHeader(HTTP_HEADER_AUTHORIZATION);
             if (authHeader != null) {
                 String encodedValue = authHeader.split(" ")[1];
                 String decodedValue = new String(base64Decoder.decode(encodedValue), StandardCharsets.UTF_8);
@@ -42,4 +47,13 @@ public class AuthHttpBasic extends AuthMethodProvider {
         };
     }
 
+    @Override
+    public void initialize() throws PluginException {
+        // We configure these so validation succeeds, but we don't use them here.
+        // HttpAuthFilter read them from the BLS config directly.
+        // We should find a less nasty way to do this.
+        addParam(PString.identifier("userId"));
+        addParam(PString.any("password"));
+        addParam(PBoolean.optional("required"));
+    }
 }

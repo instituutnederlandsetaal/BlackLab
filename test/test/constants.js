@@ -1,7 +1,7 @@
 "use strict";
 const SERVER_URL = process.env.APP_URL || "http://localhost:8080/blacklab-server";
 const BLACKLAB_USER = process.env.BLACKLAB_USER || "user";
-const BLACKLAB_PASSWORD = process.env.BLACKLAB_USER || "";
+const BLACKLAB_PASSWORD = process.env.BLACKLAB_PASSWORD || "secret";
 
 const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
 

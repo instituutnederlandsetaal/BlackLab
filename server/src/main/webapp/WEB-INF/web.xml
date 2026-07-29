@@ -7,6 +7,18 @@
 >
   <display-name>BlackLab Server</display-name>
 
+  <!-- Optional HTTP Basic Authentication filter.
+       Enabled by setting both BLACKLAB_HTTP_AUTH_USER and BLACKLAB_HTTP_AUTH_PASSWORD
+       environment variables; no further web.xml changes are needed. -->
+  <filter>
+    <filter-name>httpAuth</filter-name>
+    <filter-class>nl.inl.blacklab.server.HttpAuthFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>httpAuth</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
   <!-- make sure static resources are forwarded to the default servlet -->
   <filter>  
     <filter-name>default</filter-name>  

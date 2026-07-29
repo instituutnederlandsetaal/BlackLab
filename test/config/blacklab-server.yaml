@@ -1,0 +1,55 @@
+---
+# BlackLab Server config file
+# ===============================================================
+
+# This indicates we're using the new index format.
+configVersion: 2
+
+# Where indexes can be found
+# (list directories whose subdirectories are indexes, or directories containing a single index)
+indexLocations:
+- /data/index
+
+userIndexes: /data/user-index
+
+
+# Settings related to tuning server load and client responsiveness
+performance:
+
+    # How many search tasks should be able to run simultaneously
+    # (set this to take advantage of the cores/threads available to the machine;
+    # probably don't set it any larger, as this won't help and might hurt)
+    # (-1 to autodetect)
+    maxConcurrentSearches: -1
+
+    # How many threads may a single search task use at most?
+    # (lower values will allow more simultaneous searches to run;
+    # higher values improve search performance, but will crowd out other searches.
+    # e.g. if you set this to the same number as maxConcurrentSearches, a single 
+    # search may queue all other searches until it's done)
+    maxThreadsPerSearch: -1
+
+
+# Settings for diagnosing problems
+debug:
+    #  A list of IPs that will run in debug mode.
+    #  In debug mode, ...
+    #  - the /cache-info resource show the contents of the job cache
+    #    (other debug information resources may be added in the future)
+    #  - output is prettyprinted by default (can be overriden with the prettyprint
+    #    GET parameter)
+    addresses:
+    - 127.0.0.1       #  IPv4 localhost
+    - 0:0:0:0:0:0:0:1 #  IPv6 localhost
+
+    # Always allow debug info? (default: no)
+    # Useful for development. Disable in production.
+    #alwaysAllowDebugInfo: yes
+
+# For simple tests of user indexes: optional HTTP login
+authentication:
+    system:
+        class: AuthHttpBasic
+        userId: user
+        password: secret
+        required: false
