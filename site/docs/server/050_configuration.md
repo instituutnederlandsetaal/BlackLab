@@ -231,7 +231,7 @@ authentication:
         name: userId
 ```
 
-To use HTTP Basic Authentication (if enabled in `web.xml`, which it is not by default):
+To use HTTP Basic Authentication:
 
 ```yaml
 authentication:
