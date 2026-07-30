@@ -481,7 +481,7 @@ performance:
 Plugins allow you to customize BlackLab in several ways, such as adding query functions or converting files before 
 indexing. You can configure a plugin using a separate configuration file or alternatively in the main configuration file.
 
-::: TIP per-plugin configuration files
+::: tip per-plugin configuration files
 Prefer placing a separate configuration file per plugin in the plugins directory. See [plugins](/development/customization/).
 :::
 
