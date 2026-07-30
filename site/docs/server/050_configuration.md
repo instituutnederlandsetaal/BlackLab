@@ -215,23 +215,35 @@ protocol:
     omitEmptyProperties: false
 ```
 
-### Authentication
+### Authentication system
 
 You can configure an authentication system in BlackLab. This does not take care of log in, sign up, etc., but only instructs BlackLab how to find the currently logged-in user (if there is one). This is useful if you want users to be able to create private corpora.
 
-To read the user id from a request header, attribute or parameter:
+`authentication.system.class` specifies the class that implements the authentication system. The different classes get the userId from different sources.
+
+#### HTTP header, request parameter or servlet request attribute 
+
+To read the user id from a HTTP request header, GET/POST parameter or servlet request attribute:
 
 ```yaml
 authentication:
     system:
         class: AuthRequestValue
-        # attribute|header|parameter
+        # header|parameter|attribute
         type: attribute
-        # name of the attribute, header or parameter that contains the user id
+        # name of the header, parameter or attribute that contains the user id
         name: userId
 ```
 
-To use HTTP Basic Authentication:
+#### HTTP Basic authentication
+
+To get the user id using HTTP Basic Authentication, you can use the `AuthHttpBasic` class.
+
+Without any additional configuration, this will simply require that a user is logged in. You will have to ensure that the required HTTP header is set, e.g. by configuring Tomcat or a proxy server to check the user credentials.
+
+Alternatively, you can specify a fixed user id and password in the configuration file. BlackLab will check the HTTP Basic Authentication header against these credentials, and if they match, the user will be logged in as the specified user id. This is mainly useful for testing purposes. Note that if no password is given, any password is accepted!
+
+If the `required` parameter is set to `true`, users cannot even search public corpora without logging in. If omitted or set to `false`, logging in is only necessary for creating and searching private user corpora.
 
 ```yaml
 authentication:
@@ -246,6 +258,8 @@ authentication:
         #  private corpora is restricted)
         required: true
 ```
+
+#### Fixed debug login
 
 For testing, `AuthDebugFixed` can be useful:
 

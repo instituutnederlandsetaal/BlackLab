@@ -31,13 +31,11 @@ public class HttpAuthFilter implements Filter {
     static final Logger logger = LogManager.getLogger(HttpAuthFilter.class);
 
     private static final String REALM = "BlackLab";
-    public static final String AUTH_HEADER_PREFIX_BASIC = "Basic ";
+
+    private static final String AUTH_HEADER_PREFIX_BASIC = "Basic ";
 
     /** Is HTTP authentication enabled? (i.e. we're using AuthHttpBasic) */
     private boolean authEnabled = false;
-
-    /** If improperly configured, deny all requests */
-    private boolean denyAll = false;
 
     /** HTTP auth user name */
     private String requiredUser;
@@ -68,14 +66,13 @@ public class HttpAuthFilter implements Filter {
             requiredUser = authCfg.get("userId");
             requiredPassword = authCfg.get("password");
             okayWithoutLogin = authCfg.get("required") == null || !Boolean.parseBoolean(authCfg.get("required"));
-            if (!StringUtils.isEmpty(requiredUser) && !StringUtils.isEmpty(requiredPassword)) {
-                logger.info("HttpAuthFilter: HTTP Basic Authentication is ENABLED (user='{}')", requiredUser);
+            if (!StringUtils.isEmpty(requiredUser)) {
+                logger.info("HTTP Basic Authentication enabled (required user '{}', {} password check, login {})",
+                        requiredUser, requiredPassword == null ? "no" : "",
+                        okayWithoutLogin ? "optional" : "required");
             } else {
-                requiredUser = null;
-                requiredPassword = null;
-                denyAll = true;
-                logger.warn("HttpAuthFilter: HTTP Basic Authentication is DISABLED "
-                        + "(correctly configure AuthHttpBasic with userId and password)");
+                logger.warn("HTTP Basic Authentication enabled (users/password configured externally), login {}",
+                        okayWithoutLogin ? "optional" : "required");
             }
         }
     }
@@ -112,8 +109,6 @@ public class HttpAuthFilter implements Filter {
 
     /** Valid login, or no login but login is optional? */
     private boolean isAuthorized(HttpServletRequest request) {
-        if (denyAll)
-            return false;
         String authHeader = request.getHeader(AuthHttpBasic.HTTP_HEADER_AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith(AUTH_HEADER_PREFIX_BASIC)) {
             return okayWithoutLogin;
@@ -129,10 +124,13 @@ public class HttpAuthFilter implements Filter {
             }
             String user = decoded.substring(0, colonIdx);
             String password = decoded.substring(colonIdx + 1);
-            if (!requiredUser.isEmpty())
-                return requiredUser.equals(user) && requiredPassword.equals(password);
-            else
-                return okayWithoutLogin;
+            if (!StringUtils.isEmpty(requiredUser)) {
+                // Only check password if specified; otherwise assume it's checked by e.g. Tomcat or a proxy
+                return requiredUser.equals(user) && (requiredPassword == null || requiredPassword.equals(password));
+            } else {
+                // No required user set; just check that a user was supplied (or login is optional)
+                return !user.isEmpty() || okayWithoutLogin;
+            }
         } catch (IllegalArgumentException e) {
             // Invalid Base64
             logger.warn("HttpAuthFilter: invalid Base64 in Authorization header", e);
