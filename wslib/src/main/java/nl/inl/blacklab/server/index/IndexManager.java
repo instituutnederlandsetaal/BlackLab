@@ -100,8 +100,15 @@ public class IndexManager {
         collectionsDirs = new ArrayList<>();
         for (String indexPath: indexes) {
             File indexDir = new File(indexPath);
-            if (!indexDir.exists())
-                throw new ConfigurationException("Directory in indexLocations doesn't exist (or parent dir not accessible): " + indexDir);
+            if (!indexDir.exists()) {
+                File parentDir = indexDir.getParentFile();
+                if (parentDir.exists() && !parentDir.canRead())
+                    throw new ConfigurationException(
+                        "Cannot access directory in indexLocations (" + indexDir + ") because parent dir (" + parentDir + ") is not accessible");
+                else
+                    throw new ConfigurationException(
+                        "Directory in indexLocations doesn't exist: " + indexDir);
+            }
             if (!indexDir.canRead())
                 throw new ConfigurationException("Directory in indexLocations cannot be read (check permissions): " + indexDir);
 
@@ -118,7 +125,7 @@ public class IndexManager {
                 }
             } else {
                 // Collection of indices, probably..?
-                logger.debug("Index collection dir found: " + indexDir);
+                logger.debug("Index collection dir found: {}", indexDir);
                 collectionsDirs.add(indexDir);
             }
         }
@@ -128,9 +135,9 @@ public class IndexManager {
         if (!StringUtils.isEmpty(blsConfig.getUserIndexes())) {
             File userIndexesDir = new File(blsConfig.getUserIndexes());
             if (!userIndexesDir.exists())
-                logger.warn("Configured user collections does not exist: " + userIndexesDir);
+                logger.warn("Configured user collections does not exist: {}", userIndexesDir);
             else if (!userIndexesDir.canRead())
-                logger.warn("Configured user collections unreadable: " + userIndexesDir);
+                logger.warn("Configured user collections unreadable: {}", userIndexesDir);
             else {
                 userCollectionsDir = userIndexesDir;
                 userFormatManager = new FinderInputFormatUserFormats(userCollectionsDir);
@@ -191,8 +198,8 @@ public class IndexManager {
         if (!dir.exists())
             dir.mkdir();
         if (!dir.canRead()) {
-            logger.error("Cannot read collections dir for user: " + dir);
-            logger.error("(userCollectionsDir = " + userCollectionsDir);
+            logger.error("Cannot read collections dir for user: {}", dir);
+            logger.error("(userCollectionsDir = {})", userCollectionsDir);
             return null;
         }
 
@@ -305,7 +312,7 @@ public class IndexManager {
         }
 
         try {
-            logger.debug("Created index: " + indexName + " (" + indexDir + ")");
+            logger.debug("Created index: {} ({})", indexName, indexDir);
             indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
         } catch (IOException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
@@ -382,7 +389,7 @@ public class IndexManager {
         }
 
         // Everything seems ok. Delete the index.
-        logger.debug("Deleting user index " + index.getId());
+        logger.debug("Deleting user index {}", index.getId());
         indices.remove(indexId);
         index.close();
 
@@ -528,7 +535,7 @@ public class IndexManager {
 
         logger.debug("Looking for indices in collectionsDirs...");
         for (File dir : collectionsDirs) {
-            logger.debug("Scanning collectionsDir: " + dir);
+            logger.debug("Scanning collectionsDir: {}", dir);
             loadIndexesInDir(dir);
         }
 
@@ -590,9 +597,9 @@ public class IndexManager {
                 // (otherwise we get warnings about all forward index directories)
                 if (indexPath.toFile().getParentFile().equals(dir)) {
                     if (!Files.isReadable(indexPath))
-                        logger.debug("  Cannot read dir: " + indexPath);
+                        logger.debug("  Cannot read dir: {}", indexPath);
                     else
-                        logger.debug("  No index found in dir: " + indexPath);
+                        logger.debug("  No index found in dir: {}", indexPath);
                 }
                 continue;
             }
@@ -602,17 +609,16 @@ public class IndexManager {
                 // Index was already loaded, or name collision
                 File otherDir = indices.get(indexName).getDir();
                 if (!otherDir.equals(subDir)) {
-                    logger.warn("  Skipping subdir " + subDir + " because another index (" + otherDir + ") is named '" + indexName + "' as well.");
+                    logger.warn("  Skipping subdir {} because another index ({}) is named '{}' as well.", subDir, otherDir, indexName);
                 }
                 continue;
             }
 
             try {
-                logger.debug("  Index found: " + indexName + " (" + subDir + ")");
+                logger.debug("  Index found: {} ({})", indexName, subDir);
                 indices.put(indexName, new Index(indexName, subDir, searchMan));
             } catch (Exception e) {
-                logger.info("Error while loading index " + indexName + " at location " + subDir + "; "
-                        + e.getMessage());
+                logger.info("Error while loading index {} at location {}; {}", indexName, subDir, e.getMessage());
             }
         }
     }
@@ -670,7 +676,7 @@ public class IndexManager {
          * The name of the directory is the UNPREFIXED name of the index, so we need to take care to concatenate the userId and indexName
          * so the index can be recognised as a private index.
          */
-        logger.debug("Scanning userDir: " + userDir);
+        logger.debug("Scanning userDir: {}", userDir);
         for (File f: Objects.requireNonNull(userDir.listFiles(BlsUtils.readableDirFilter))) {
             if (removeIfPendingDeletion(userDir, f))
                 continue;
@@ -681,11 +687,10 @@ public class IndexManager {
                 if (indices.containsKey(indexId))
                     continue;
 
-                logger.debug("User index found: " + indexId + " (" + f + ")");
+                logger.debug("User index found: {} ({})", indexId, f);
                 indices.put(indexId, new Index(indexId, f, searchMan));
             } catch (Exception e) {
-                logger.info("Error while loading index " + f.getName() + " at location " + f + "; " +
-                                e.getMessage());
+                logger.info("Error while loading index {} at location {}; {}", f.getName(), f, e.getMessage());
             }
         }
     }
