@@ -1052,6 +1052,8 @@ public class ResponseStreamer {
             ds.entry("hasXmlTags", fieldDesc.hasRelationAnnotation());
         if (annotations.main() != null) // legacy linkedDocument sometimes created annotated field without annotations...
             ds.entry("mainAnnotation", annotations.main().name());
+        if (annotations.defaultSearch() != null)
+            ds.entry("defaultSearchAnnotation", annotations.defaultSearch().name());
         if (!isNewApi) {
             // Moved to custom
             ds.startEntry("displayOrder").startList();

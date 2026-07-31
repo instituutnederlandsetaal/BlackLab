@@ -22,7 +22,7 @@ import nl.inl.util.LuceneUtil;
 
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
+@JsonPropertyOrder({ "custom", "mainAnnotation", "defaultSearchAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     /** Max. number of values per e.g. tag attribute to cache.

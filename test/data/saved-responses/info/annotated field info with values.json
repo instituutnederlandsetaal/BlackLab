@@ -196,6 +196,7 @@
     "documents": 3,
     "tokens": 766
   },
+  "defaultSearchAnnotation": "word",
   "fieldName": "contents",
   "hasContentStore": true,
   "isAnnotatedField": true,

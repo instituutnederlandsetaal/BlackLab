@@ -26,6 +26,7 @@
         "tokens": 334
       },
       "mainAnnotation": "word",
+      "defaultSearchAnnotation": "word",
       "annotations": {
         "word": {
           "hasForwardIndex": true,
