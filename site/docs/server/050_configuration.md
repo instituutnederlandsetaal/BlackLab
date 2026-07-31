@@ -573,6 +573,8 @@ If you're not sure, you probably don't need `blacklab.yaml`.
 
 ## Configuration override files
 
+<!-- @include: ../../_from_v5.md -->
+
 You may choose to have both `blacklab-server.yaml` and `blacklab-server.override.yaml` files. As you might expect, settings in the second file override the ones in the first file. No "merging" is done; objects in the second file just overwrite whatever object was there previously.
 
 This may be useful if you run BlackLab using Docker, e.g. to keep a mostly generic `blacklab-server.yaml` inside the container, and bind mount `blacklab-server.override.yaml` with your customizations.
