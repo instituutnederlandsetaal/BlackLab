@@ -1,13 +1,11 @@
 package nl.inl.blacklab.server.config;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BLConfigLog;
@@ -19,19 +17,14 @@ import nl.inl.util.Json;
 
 public class BLSConfig {
 
-    public static BLSConfig read(File configFile) throws InvalidConfiguration {
-        try {
-            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            return mapper.readValue(configFile, BLSConfig.class);
-        } catch (IOException e) {
-            throw new InvalidConfiguration("Invalid configuration file: " + configFile + " (" + e.getMessage() + ")", e);
-        }
-    }
-
-    public static BLSConfig read(Reader reader, boolean isJson) throws InvalidConfiguration {
+    public static BLSConfig read(Reader reader, Reader overrides, boolean isJson) throws InvalidConfiguration {
         try {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            return mapper.readValue(reader, BLSConfig.class);
+            BLSConfig blsConfig = mapper.readValue(reader, BLSConfig.class);
+            if (overrides != null) {
+                mapper.readerForUpdating(blsConfig).readValue(overrides);
+            }
+            return blsConfig;
         } catch (IOException e) {
             throw new InvalidConfiguration("Invalid configuration (" + e.getMessage() + ")", e);
         }

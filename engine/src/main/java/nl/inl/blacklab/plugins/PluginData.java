@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.config.BLConfigPlugins;
+import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -65,7 +66,7 @@ class PluginData<T extends Plugin> {
         List<File> dir = List.of(PluginManager.getPluginsDir());
         List<String> names = Arrays.asList(plugin.getId(), altId, plugin.getClass().getName(),
                 plugin.getClass().getSimpleName());
-        return FileUtil.findFile(dir, names, List.of("yaml", "yml", "json"));
+        return FileUtil.findFile(dir, names, BlackLabConfig.CONFIG_EXTENSIONS);
     }
 
     /**

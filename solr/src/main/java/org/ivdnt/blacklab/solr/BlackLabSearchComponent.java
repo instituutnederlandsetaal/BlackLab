@@ -20,6 +20,8 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -51,6 +53,7 @@ import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsParam;
+import nl.inl.util.Json;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -100,16 +103,29 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         boolean isJson = configFilePath.endsWith(".json");
         SolrResourceLoader resourceLoader = core.getResourceLoader();
         BLSConfig config = null;
-        
-        
+
+        // Read blacklab-webservice.yaml
+        ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
         if (resourceLoader.resourceLocation(configFilePath) != null)  {
             try (InputStream is = resourceLoader.openResource(configFilePath)) {
                 InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                config = BLSConfig.read(reader, isJson);
+                config = mapper.readValue(reader, BLSConfig.class);
             } catch (IOException e) {
                 // ignore, file doesn't exist, fallback to default.
             }
-        } 
+        }
+
+        // Read override file if there is one
+        String overrideFilePath = configFilePath.replaceAll("\\.(json|yaml|yml)$", ".override.$1");
+        if (!overrideFilePath.equals(configFilePath) && resourceLoader.resourceLocation(overrideFilePath) != null) {
+            try (InputStream is = resourceLoader.openResource(overrideFilePath)) {
+                InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                mapper.readerForUpdating(config).readValue(reader);
+            } catch (IOException e) {
+                // ignore, file doesn't exist, fallback to default.
+            }
+        }
+
         if (config == null) {
             config = new BLSConfig(); // Default config if no config file found
             logger.error("##### no BLS config file found at " + configFilePath);

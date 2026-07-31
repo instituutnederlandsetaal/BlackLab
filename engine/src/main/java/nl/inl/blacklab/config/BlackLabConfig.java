@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -24,11 +25,16 @@ import nl.inl.util.Json;
 public class BlackLabConfig {
 
     private static final Logger logger = LogManager.getLogger(BlackLabConfig.class);
+    public static final List<String> CONFIG_EXTENSIONS = Arrays.asList("json", "yaml", "yml");
 
-    private static BlackLabConfig read(Reader reader, boolean isJson) throws InvalidConfiguration {
+    private static BlackLabConfig read(Reader reader, Reader overrideReader, boolean isJson) throws InvalidConfiguration {
         try {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            return mapper.readValue(reader, BlackLabConfig.class);
+            BlackLabConfig config = mapper.readValue(reader, BlackLabConfig.class);
+            if (overrideReader != null) {
+                mapper.readerForUpdating(config).readValue(overrideReader, BlackLabConfig.class);
+            }
+            return config;
         } catch (IOException e) {
             throw new InvalidConfiguration("Invalid configuration (" + e.getMessage() + ")", e);
         }
@@ -47,29 +53,27 @@ public class BlackLabConfig {
      * an UnsupportedOperationException.
      *
      * @param file file to read
+     * @param overrideFile override file to read (if any); will override settings from the main file
      * @return configuration configuration from file
      */
-    public static synchronized BlackLabConfig readConfigFile(File file) throws IOException {
+    public static synchronized BlackLabConfig readConfigFile(File file, File overrideFile) throws IOException {
         if (file == null || !file.canRead())
             throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
-        if (!FilenameUtils.isExtension(file.getName(), Arrays.asList("yaml", "yml", "json")))
+        if (!FilenameUtils.isExtension(file.getName(), BlackLabConfig.CONFIG_EXTENSIONS))
             throw new InvalidConfiguration("Configuration file " + file + " is of an unsupported type.");
 
         boolean isJson = file.getName().endsWith(".json");
-        return readConfigFile(file.getCanonicalPath(), FileUtils.readFileToString(file, StandardCharsets.UTF_8), isJson);
-    }
+        String fileContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        String overrideContents = overrideFile == null ? null :  FileUtils.readFileToString(overrideFile, StandardCharsets.UTF_8);
 
-    /**
-     * Read config file.
-     *
-     * @param fileName config file name
-     * @param fileContents contents of the config file
-     * @param isJson if true, reads JSON. Otherwise, reads YAML.
-     */
-    private static synchronized BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
-        logger.debug("Reading global BlackLab config");
-        return BlackLabConfig.read(new StringReader(fileContents), isJson);
+        if (overrideContents != null)
+            logger.debug("Reading global BlackLab config from {} with overrides from {}", fileContents, overrideContents);
+        else
+            logger.debug("Reading global BlackLab config from {}", fileContents);
+        return BlackLabConfig.read(new StringReader(fileContents),
+                overrideContents == null ? null : new StringReader(overrideContents),
+                isJson);
     }
 
     private int configVersion = 2;

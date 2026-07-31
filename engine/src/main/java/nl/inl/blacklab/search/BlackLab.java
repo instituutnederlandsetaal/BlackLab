@@ -6,7 +6,6 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -53,6 +52,12 @@ public final class BlackLab {
 
     public static final String MSG_DEFAULT_CONFIG_ALREADY_APPLIED = "Cannot set default configuration - " +
             " configuration has already been applied.";
+
+    /** Name for generic BlackLab config file for e.g. QueryTool, IndexTool, etc. */
+    public static final String TOOL_CONFIG_FILE_NAME = "blacklab";
+
+    /** Suffix for an config override file name (so e.g. blacklab.override.yaml or blacklab-server.override.yaml) */
+    public static final String OVERRIDE_FILE_SUFFIX = ".override";
 
     /**
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
@@ -350,8 +355,8 @@ public final class BlackLab {
     public static synchronized File configDir() {
         if (configDir == null) {
             List<File> dirsToSearch = defaultConfigDirs();
-            File file = FileUtil.findFile(dirsToSearch, List.of("blacklab", "blacklab-server"),
-                    List.of("yaml", "yml", "json"));
+            File file = FileUtil.findFile(dirsToSearch, List.of(TOOL_CONFIG_FILE_NAME, "blacklab-server"),
+                    BlackLabConfig.CONFIG_EXTENSIONS);
             if (file == null) {
                 logger.warn("None of the directories scanned (" + dirsToSearch + ") contained blacklab.yaml or " +
                         "blacklab-server.yaml. Using default /etc/blacklab as config directory. " +
@@ -373,10 +378,11 @@ public final class BlackLab {
      */
     public static synchronized void setConfigFromFile() {
         List<File> dirsToSearch = Collections.singletonList(configDir());
-        File file = FileUtil.findFile(dirsToSearch, "blacklab", Arrays.asList("yaml", "yml", "json"));
+        File file = FileUtil.findFile(dirsToSearch, TOOL_CONFIG_FILE_NAME, BlackLabConfig.CONFIG_EXTENSIONS);
+        File overrideFile = FileUtil.findFile(dirsToSearch, TOOL_CONFIG_FILE_NAME + OVERRIDE_FILE_SUFFIX, BlackLabConfig.CONFIG_EXTENSIONS);
         if (file != null) {
             try {
-                setConfig(BlackLabConfig.readConfigFile(file), true);
+                setConfig(BlackLabConfig.readConfigFile(file, overrideFile), true);
                 configDir = file.getParentFile();
             } catch (IOException e) {
                 logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());

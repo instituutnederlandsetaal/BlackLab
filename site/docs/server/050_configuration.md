@@ -570,3 +570,11 @@ The `log`, `search`, `indexing` and `plugins` sections can occur in `blacklab.ya
 If you're not sure, you probably don't need `blacklab.yaml`.
 
 **NOTE:** if it exists, BlackLab Server will read `blacklab.yaml` first, and only then read `blacklab-server.yaml`. So settings in the latter can override settings in the former.
+
+## Configuration override files
+
+You may choose to have both `blacklab-server.yaml` and `blacklab-server.override.yaml` files. As you might expect, settings in the second file override the ones in the first file. No "merging" is done; objects in the second file just overwrite whatever object was there previously.
+
+This may be useful if you run BlackLab using Docker, e.g. to keep a mostly generic `blacklab-server.yaml` inside the container, and bind mount `blacklab-server.override.yaml` with your customizations.
+
+This override mechanism also works with `blacklab.yaml`.
