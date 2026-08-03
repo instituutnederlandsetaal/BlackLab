@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
-import nl.inl.blacklab.util.ObjectSerializationWriter;
+import nl.inl.util.ObjectSerializationWriter;
 
 /**
  * A Jackson serializer for TextPattern.

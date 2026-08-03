@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on an attribute of a matched span.

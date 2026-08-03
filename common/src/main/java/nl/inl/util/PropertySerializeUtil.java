@@ -1,4 +1,4 @@
-package nl.inl.blacklab.util;
+package nl.inl.util;
 
 import java.util.Arrays;
 import java.util.List;

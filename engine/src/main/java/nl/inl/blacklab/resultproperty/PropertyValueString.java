@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.ibm.icu.text.CollationKey;
 
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 public class PropertyValueString extends PropertyValue {
 

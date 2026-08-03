@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

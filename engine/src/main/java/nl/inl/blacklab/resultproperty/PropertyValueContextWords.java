@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
 

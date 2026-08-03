@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * A collection of GroupProperty's identifying a particular group.

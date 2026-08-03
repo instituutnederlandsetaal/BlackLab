@@ -9,7 +9,7 @@ import org.ivdnt.blacklab.proxy.representation.Hit;
 import org.ivdnt.blacklab.proxy.representation.HitMin;
 import org.ivdnt.blacklab.proxy.representation.MetadataValues;
 
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 class HitComparators {
 

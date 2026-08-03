@@ -17,7 +17,6 @@
         <module>build-tools</module> -->
 
         <!-- Smaller modules used by Java lib and webservice -->
-        <module>util</module>
         <module>common</module>
         <module>engine</module>
         <module>query-parser</module>

@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 public class PropertyValueMultiple extends PropertyValue {
     final PropertyValue[] value;

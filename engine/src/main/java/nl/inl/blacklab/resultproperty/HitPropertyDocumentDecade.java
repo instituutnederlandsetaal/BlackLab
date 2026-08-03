@@ -4,7 +4,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the

@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerJson;
 import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.util.ObjectSerializationWriter;
+import nl.inl.util.ObjectSerializationWriter;
 
 public class DataStreamSolr implements DataStream {
 

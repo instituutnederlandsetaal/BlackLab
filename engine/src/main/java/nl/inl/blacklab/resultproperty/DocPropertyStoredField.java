@@ -11,7 +11,7 @@ import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.docs.DocResult;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 

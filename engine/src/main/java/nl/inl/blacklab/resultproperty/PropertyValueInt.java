@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 public class PropertyValueInt extends PropertyValue {
     final long value;

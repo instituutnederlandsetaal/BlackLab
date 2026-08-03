@@ -16,6 +16,34 @@
 
     <dependencies>
 
+
+        <!-- Specific more efficient collection types -->
+        <dependency>
+            <groupId>org.eclipse.collections</groupId>
+            <artifactId>eclipse-collections</artifactId>
+            <version>${eclipse.collections.version}</version>
+        </dependency>
+
+        <!-- jackson is our json and yaml library, it's not a part of jakarta/Java EE -->
+        <!-- transitively pulls in data-binding, core -->
+        <!-- Jakarta equivalent would be some implementation JSONB (as opposed to JAXB). But would require porting all json code. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>78.3</version>
+        </dependency>
+
     </dependencies>
 
 

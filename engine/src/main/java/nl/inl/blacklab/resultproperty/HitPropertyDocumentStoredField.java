@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -12,7 +11,7 @@ import org.jspecify.annotations.NonNull;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene

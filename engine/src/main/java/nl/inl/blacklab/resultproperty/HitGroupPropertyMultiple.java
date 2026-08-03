@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * A collection of HitGroupProperty's.

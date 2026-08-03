@@ -1,7 +1,6 @@
 package nl.inl.util;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;

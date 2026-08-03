@@ -10,7 +10,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.docs.DocResult;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.

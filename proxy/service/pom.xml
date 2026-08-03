@@ -106,12 +106,6 @@
         </dependency>
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab-util</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-wslib</artifactId>
             <version>5.0.0-SNAPSHOT</version>
             <scope>compile</scope>

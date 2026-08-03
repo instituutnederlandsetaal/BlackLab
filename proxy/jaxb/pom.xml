@@ -112,13 +112,6 @@
         </dependency>
 
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab-util</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
             <version>78.3</version>

@@ -3,7 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)

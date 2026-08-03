@@ -3,7 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Comparator;
 
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

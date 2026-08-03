@@ -6,7 +6,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.docs.DocResult;
-import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.PropertySerializeUtil;
 
 /**
  * For grouping DocResult objects by decade based on a stored field containing a

@@ -33,12 +33,7 @@
     </build>
 
     <dependencies>
-    
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-common</artifactId>
