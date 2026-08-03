@@ -67,11 +67,6 @@ CURRENT_DIR = $(shell basename $(PWD))
 ifneq ($(PROJECT_NAME),$(CURRENT_DIR))
 OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
 endif
-#opt-project-name:
-#ifneq ($(PROJECT_NAME),$(CURRENT_DIR))
-#	OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
-#endif
-#-include opt-project-name
 
 # Pass CONTEXT=<name> to use that Docker context
 ifdef CONTEXT
