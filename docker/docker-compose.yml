@@ -8,7 +8,7 @@ services:
   server:
     image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     build:
-        context: .
+        context: ..
         dockerfile: docker/Dockerfile
     environment:
       # Give JVM enough heap memory
@@ -26,7 +26,7 @@ services:
     image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     profiles: [ "tools" ]
     build:
-        context: .
+        context: ..
         dockerfile: docker/Dockerfile
     command: >-
         /bin/bash -c 
@@ -46,7 +46,7 @@ services:
       # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
       - "SOLR_SECURITY_MANAGER_ENABLED=false"
     build:
-      context: .
+      context: ..
       dockerfile: solr/Dockerfile
 
 
@@ -55,11 +55,11 @@ services:
     profiles: [ "tools" ]
     image: instituutnederlandsetaal/blacklab-proxy:${VERSION:-latest}
     build:
-      context: .
+      context: ..
       dockerfile: proxy/Dockerfile
     volumes:
       # Configuration file (pointing to solr and specifying a default corpus name)
-      - ./solr/proxy.yaml:/etc/blacklab/proxy.yaml
+      - ../solr/proxy.yaml:/etc/blacklab/proxy.yaml
     ports:
       # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
       - "8080:8080"

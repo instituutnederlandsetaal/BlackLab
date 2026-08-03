@@ -1,4 +1,4 @@
-# Makefile for BlackLab Docker images
+	# Makefile for BlackLab Docker images
 #
 # This provides some convenient shorthands for common Docker (Compose) commands
 # related to building and tagging images, running and deploying the application.
@@ -59,7 +59,7 @@ IMAGE_NAME_PREFIX = instituutnederlandsetaal/blacklab
 # Helper to be able to have leading whitespace in variable...
 EMPTY_STRING =
 
-CURRENT_DIR = $(shell basename $(PWD))
+CURRENT_DIR = $(shell basename $(realpath -- ..))
 
 # See if our directory name matches our project name.
 # If not, pass --project-name to Compose so it always behaves the same way.
