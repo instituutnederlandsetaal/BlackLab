@@ -50,8 +50,7 @@ Our intention is to:
 ## Code style
 
 BlackLab mostly uses the standard Java code style, with a few small tweaks.
-There is an `.editorconfig` file in the project root that may be picked up by your IDE automatically.
-If not, configurations for IDE code formatters can be found in the `doc/` directory.
+There is an `.editorconfig` file in the project root that may be picked up by your IDE automatically (perhaps with a plugin).
 
 ## Building the site
 
