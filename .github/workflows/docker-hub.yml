@@ -1,0 +1,92 @@
+# This workflow simply builds a Docker image using Docker Buildx
+# and pushes it to Docker Hub upon pushes to the dev branch or version tags.
+name: Build and push Docker image to Docker Hub
+
+on:
+  # This will run the workflow on pushes to dev and version tags.
+  # Adjust to match your branching and tagging strategy.
+  push:
+    branches:
+      - dev
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  # Avoid concurrent runs pushing the same tag/ref at the same time.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Define the context path and Dockerfile path.
+
+  # DOCKER_AUTOBUILDS_CONTEXT_PATH should be set to the "Build Context" in the Build Rules of your Docker Hub Automated Builds configuration.
+  DOCKER_AUTOBUILDS_CONTEXT_PATH: .
+
+  # DOCKER_AUTOBUILDS_DOCKERFILE_PATH should be set to the "Dockerfile Location" in the Build Rules of your Docker Hub Automated Builds configuration.
+  DOCKER_AUTOBUILDS_DOCKERFILE_PATH: docker/Dockerfile
+
+  # DOCKER_REPOSITORY_NAME should be set to the name of the Docker Hub repository where the image will be pushed to.
+  DOCKER_REPOSITORY_NAME: instituutnederlandsetaal/blacklab
+
+jobs:
+  autobuilds:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up paths
+        id: paths
+        run: |
+          echo "build_path=./${{ env.DOCKER_AUTOBUILDS_CONTEXT_PATH }}" >> $GITHUB_OUTPUT
+          echo "dockerfile_path=${{ env.DOCKER_AUTOBUILDS_DOCKERFILE_PATH }}" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Hub secrets
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ]; then
+            echo "Missing required secrets: DOCKER_USERNAME and/or DOCKER_TOKEN" >&2
+            exit 1
+          fi
+
+      # Configure the Docker image tags based on the Git reference.
+      # The configuration here will push the `dev` branch as `dev` and version tags as semver tags.
+      # See https://github.com/docker/metadata-action?tab=readme-ov-file#semver
+      - name: Generate Docker image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REPOSITORY_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            # set dev tag for dev branch
+            type=raw,value=dev,enable=${{ github.ref == format('refs/heads/{0}', 'dev') }}
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+
+      # Configure Docker Buildx.
+      # To speed up your builds with Docker Build Cloud see https://docs.docker.com/build-cloud/ci/
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to Docker Hub with your Docker Hub credentials stored in GitHub Secrets.
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      # Build, tag, and push the Docker image
+      - name: Build and tag Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ steps.paths.outputs.build_path }}
+          file: ${{ steps.paths.outputs.dockerfile_path }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
