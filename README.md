@@ -58,13 +58,13 @@ If not, configurations for IDE code formatters can be found in the `doc/` direct
 The [BlackLab end-user documentation site](https://blacklab.ivdnt.org/) can be built locally if you want:
 
 ```bash
-# Contains the configurations for various checking plugins shared by multiple modules
-cd build-tools
-mvn install
+# Run the site locally with hot reloading
+cd site
+npm install
+npm run start
 
-# Build the actual site (result will be in core/target/site)
-cd ..
-mvn site
+# Build the final site (result will be in .vitepress/dist)
+npm run docs:build
 ```
 
 ## Using BlackLab with Docker

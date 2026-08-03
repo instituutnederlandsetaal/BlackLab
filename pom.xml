@@ -11,11 +11,6 @@
 
     <modules>
 
-        <!-- Contains config for checkstyle, PMD and findbugs.
-        Disabled because of problems publishing to Maven Central.
-        Also, we use Sonar Cloud now.
-        <module>build-tools</module> -->
-
         <!-- Smaller modules used by Java lib and webservice -->
         <module>common</module>
         <module>engine</module>
@@ -313,48 +308,6 @@
                 <artifactId>maven-jxr-plugin</artifactId>
                 <version>3.3.0</version>
             </plugin>
-
-            <!-- Report on (possible) bugs
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>findbugs-maven-plugin</artifactId>
-                <version>${findbugs.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>nl.inl.blacklab</groupId>
-                        <artifactId>build-tools</artifactId>
-                        <version>${project.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin> -->
-
-            <!-- Report on possible bugs/style problems
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>${pmd.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>nl.inl.blacklab</groupId>
-                        <artifactId>build-tools</artifactId>
-                        <version>${project.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin> -->
-
-            <!-- Report on style problems
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>${checkstyle.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>nl.inl.blacklab</groupId>
-                        <artifactId>build-tools</artifactId>
-                        <version>${project.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin> -->
 
             <!-- Javadoc -->
             <plugin>
