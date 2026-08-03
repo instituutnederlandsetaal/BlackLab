@@ -59,20 +59,23 @@ IMAGE_NAME_PREFIX = instituutnederlandsetaal/blacklab
 # Helper to be able to have leading whitespace in variable...
 EMPTY_STRING =
 
-CURRENT_DIR = $(shell basename $(realpath -- ..))
+CURRENT_DIR = $(shell basename $(PWD))
 
 # See if our directory name matches our project name.
 # If not, pass --project-name to Compose so it always behaves the same way.
 # (if we didn't do this, container names would vary based on the directory name)
-opt-project-name:
 ifneq ($(PROJECT_NAME),$(CURRENT_DIR))
-	OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
+OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
 endif
--include opt-project-name
+#opt-project-name:
+#ifneq ($(PROJECT_NAME),$(CURRENT_DIR))
+#	OPT_PROJECT_NAME = $(EMPTY_STRING) --project-name $(PROJECT_NAME)
+#endif
+#-include opt-project-name
 
 # Pass CONTEXT=<name> to use that Docker context
 ifdef CONTEXT
-	CONTEXT_PARAM = $(EMPTY_STRING) --context $(CONTEXT)
+CONTEXT_PARAM = $(EMPTY_STRING) --context $(CONTEXT)
 endif
 
 # Our standard commands for calling Docker and Compose
@@ -83,7 +86,7 @@ COMPOSE_COMMAND_DEV  = $(COMPOSE_NO_FILE)
 
 # Make sure VERSION defaults to 'latest'
 ifndef VERSION
-	VERSION = latest
+VERSION = latest
 endif
 
 # Short hash of latest Git commit
@@ -94,7 +97,7 @@ ALL_PROFILES = $(EMPTY_STRING) --profile default --profile tools
 
 # By default, don't add any options to docker compose build
 ifndef BUILD_OPT
-	BUILD_OPT =
+BUILD_OPT =
 endif
 
 # Application management targets

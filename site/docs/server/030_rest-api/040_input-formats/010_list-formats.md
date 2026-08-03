@@ -116,7 +116,8 @@ A server with just the built-in formats might show the result below.
 }
 ```
 
-Notes:
+### Notes
 
+- If no input formats are listed, add some `.blf.yaml` files to the directory `$BLACKLAB_CONFIG_DIR/formats` (i.e. `/etc/blacklab/formats/`). Example formats can be found in `contrib/input-formats`.
 - `configurationBased` indicates whether the format is based on a configuration file (modern) or a custom DocIndexer class (legacy).
 - `isVisible` indicates whether the format should be shown in a GUI list of available formats. A format can be hidden by including `visible: false` in the format file.

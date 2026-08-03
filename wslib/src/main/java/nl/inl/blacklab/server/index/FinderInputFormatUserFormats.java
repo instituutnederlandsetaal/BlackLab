@@ -1,10 +1,8 @@
 package nl.inl.blacklab.server.index;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashSet;
@@ -169,17 +167,16 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
 
             // This is a little stupid, but we need to read the stream twice:
             // once to validate the file's contents, then again to store the file once the validation passes
-            byte[] content = IOUtils.toByteArray(is);
+            String content = IOUtils.toString(is, StandardCharsets.UTF_8);
 
-            InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8);
             boolean isJson = fileName.endsWith(".json");
-            ConfigInputFormat config = ConfigInputFormat.read(reader, isJson, formatIdentifier);
+            ConfigInputFormat config = ConfigInputFormat.read(content, isJson, formatIdentifier, null);
 
             File userFormatDir = getUserFormatDir(this.userFormatParentDir, userIdFromFormatIdentifier);
             File formatFile = new File(userFormatDir, fileName);
             if (!FileUtil.isFileInDirectory(formatFile, userFormatDir))
                 throw new BadRequest("CANNOT_CREATE_INDEX", "Incorrect format file name. Use only regular file name characters.");
-            FileUtils.writeByteArrayToFile(formatFile, content, false);
+            FileUtils.writeStringToFile(formatFile, content, StandardCharsets.UTF_8, false);
             config.setReadFromFile(formatFile);
             DocumentFormats.add(config);
         } catch (IllegalUserFormatIdentifier e) {

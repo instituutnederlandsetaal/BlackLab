@@ -24,6 +24,19 @@
             <version>${eclipse.collections.version}</version>
         </dependency>
 
+        <!-- JAXB-runtime is our XML serialization library. It's an implementation of Jakarta XML Binding (part of Jakarta EE)
+             Needed because we use JAXB annotations in our code that does JSON/YAML (de)serialization -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <!-- jackson is our json and yaml library, it's not a part of jakarta/Java EE -->
         <!-- transitively pulls in data-binding, core -->
         <!-- Jakarta equivalent would be some implementation JSONB (as opposed to JAXB). But would require porting all json code. -->

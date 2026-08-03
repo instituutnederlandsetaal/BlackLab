@@ -35,6 +35,10 @@ Get the complete format configuration file for one of the available formats.
 }
 ```
 
+## Notes
+
+If you have no input formats available, add some `.blf.yaml` files to the directory `$BLACKLAB_CONFIG_DIR/formats` (i.e. `/etc/blacklab/formats/`). Example formats can be found in `contrib/input-formats`.
+
 ## TODO
 
 - maybe use a different error than `404 Not Found` if the format exists but does not target XML.

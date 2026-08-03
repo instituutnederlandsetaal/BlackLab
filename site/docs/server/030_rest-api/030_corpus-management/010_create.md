@@ -10,11 +10,11 @@ _(will fail if you are not logged in or not authorized)_
 
 #### Parameters
 
-| Parameter | Description                                                                                                                              |
-|-----------|------------------------------------------------------------------------------------------------------------------------------------------|
-| `name`    | name for the new corpus. Must start with the user id, followed by a `:`, followed by a short index name (which must consist of letters, digits, underscore `_`, dash `-` or period `.`). Will become part of the URL. Example: (e.g. `jan.niestadt@ivdnt.org:my-fun-corpus`)                                                                                                       |
-| `display` | display name for the new corpus (e.g. `My fun corpus!`)                                                                                 |
-| `format`  | default input format name for the new corpus (e.g. `tei-p5`). Must refer to an available input format.                                  |
+| Parameter | Description                                                                                                                                                                                                                                                                  |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`    | name for the new corpus. Must start with the user id, followed by a `:`, followed by a short index name (which must consist of letters, digits, underscore `_`, dash `-` or period `.`). Will become part of the URL. Example: (e.g. `jan.niestadt@ivdnt.org:my-fun-corpus`) |
+| `display` | display name for the new corpus (e.g. `My fun corpus!`)                                                                                                                                                                                                                      |
+| `format`  | default input format name for the new corpus (e.g. `tei-p5`). Must refer to an available input format. Examples in `contrib/input-formats`.                                                                                                                                  |
 
 ## Success Response
 

@@ -51,31 +51,44 @@ public class ConfigInputFormat {
 
     private static final Logger logger = LogManager.getLogger(ConfigInputFormat.class);
 
-    /**
-     * Reads a config from a YAML or JSON reader.
-     *
-     * @param reader the reader to read from
-     * @param isJson true if the reader is JSON, false if YAML
-     * @param formatIdentifier the name to give this format
-     * @return the config
-     */
-    public static ConfigInputFormat read(Reader reader, boolean isJson, String formatIdentifier) {
+    public static ConfigInputFormat read(String formatFileContents, boolean isJson, String formatIdentifier, File readFromFile) {
         assert formatIdentifier != null;
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
         ConfigInputFormat config;
         try {
-            config = mapper.readValue(reader, ConfigInputFormat.class);
+            config = mapper.readValue(formatFileContents, ConfigInputFormat.class);
             config.setName(formatIdentifier);
             InputFormatMessages messages = new InputFormatMessages();
             config.finalizeAndValidate(messages);
             if (!messages.getErrors().isEmpty()) {
                 String combined = String.join("; ", messages.getErrors());
                 throw new InvalidInputFormatConfig(combined);
-            }
-            else if (!messages.getWarnings().isEmpty()) {
+            } else if (!messages.getWarnings().isEmpty()) {
                 messages.log(logger, formatIdentifier);
             }
+            if (readFromFile != null)
+                config.setReadFromFile(readFromFile);
+            else
+                config.setFormatFileContents(formatFileContents);
             return config;
+        } catch (Exception e) {
+            throw InvalidInputFormatConfig.withFormatIdentifier(e, formatIdentifier);
+        }
+    }
+
+    /**
+     * Reads a config from a YAML or JSON reader.
+     *
+     * @param reader the reader to read from
+     * @param isJson true if the reader is JSON, false if YAML
+     * @param formatIdentifier the name to give this format
+     * @param readFromFile file this was read from (to get full contents later to store in index)
+     * @return the config
+     */
+    public static ConfigInputFormat read(Reader reader, boolean isJson, String formatIdentifier, File readFromFile) {
+        try {
+            String formatFileContents = IOUtils.toString(reader);
+            return read(formatFileContents, isJson, formatIdentifier, readFromFile);
         } catch (Exception e) {
             throw InvalidInputFormatConfig.withFormatIdentifier(e, formatIdentifier);
         }
@@ -94,8 +107,7 @@ public class ConfigInputFormat {
             assert file != null;
             BufferedReader reader = FileUtil.openForReading(file);
             boolean isJson = file.getName().endsWith(".json");
-            ConfigInputFormat cfg = read(reader, isJson, formatIdentifier);
-            cfg.setReadFromFile(file);
+            ConfigInputFormat cfg = read(reader, isJson, formatIdentifier, file);
             return cfg;
         } catch (Exception e) {
             throw InvalidInputFormatConfig.withFormatFile(e, file);
@@ -112,8 +124,7 @@ public class ConfigInputFormat {
      * @throws InvalidInputFormatConfig if the file is not a valid config
      */
     public static ConfigInputFormat read(File file) {
-        String formatIdentifier = FormatFileNameUtil.stripExtensions(file.getName());
-        return read(file, formatIdentifier);
+        return read(file, FormatFileNameUtil.stripExtensions(file.getName()));
     }
 
     /** Basic file types we support */
@@ -320,6 +331,10 @@ public class ConfigInputFormat {
     @JsonIgnore
     private File readFromFile;
 
+    /** Full contents of the format file, if readFromFile == null */
+    @JsonIgnore
+    private String formatFileContents;
+
     /**
      * Construct empty input format instance.
      */
@@ -339,6 +354,8 @@ public class ConfigInputFormat {
     @JsonIgnore
     public String getOriginalFileContents() {
         try {
+            if (formatFileContents != null)
+                return formatFileContents;
             if (readFromFile == null)
                 return "(configuration file not available)";
             return IOUtils.toString(getFormatFile());
@@ -616,6 +633,10 @@ public class ConfigInputFormat {
 
     public void setReadFromFile(File readFromFile) {
         this.readFromFile = readFromFile;
+    }
+
+    public void setFormatFileContents(String formatFileContents) {
+        this.formatFileContents = formatFileContents;
     }
 
     public String getHelpUrl() {

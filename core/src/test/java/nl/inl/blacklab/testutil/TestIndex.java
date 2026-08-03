@@ -1,6 +1,12 @@
 package nl.inl.blacklab.testutil;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -15,8 +21,10 @@ import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -55,6 +63,20 @@ public class TestIndex {
 
     /** Pre-indexed (to test that we don't accidentally break file compatibility). */
     private static TestIndex testIndexPre;
+
+    static {
+        String fileNameRelative = "testformat.blf.yaml";
+        try (InputStream is = TestIndex.class.getClassLoader().getResourceAsStream(fileNameRelative)) {
+            if (is == null)
+                throw new IllegalStateException("Resource not found: testformat.blf.yaml");
+            try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                ConfigInputFormat format = ConfigInputFormat.read(reader, false, "testformat", null);
+                DocumentFormats.add(format);
+            }
+        } catch (InvalidInputFormatConfig | IOException e) {
+            throw BlackLabException.wrapRuntime(e);
+        }
+    }
 
     public static TestIndex get() {
         return new TestIndex(false);

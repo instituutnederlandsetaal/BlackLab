@@ -1,12 +1,7 @@
 package nl.inl.blacklab.index;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,7 +15,6 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -50,7 +44,7 @@ public class DocumentFormats {
 
         // We also add these in a specific order, so that format files in the default directories
         // may override builtin formats.
-        addStandardConfigFormats(); // load formats built in to BL and from standard directories
+//        addStandardConfigFormats(); // load formats built in to BL and from standard directories
         addFromFormatsConfigDir();
     }
 
@@ -156,36 +150,36 @@ public class DocumentFormats {
         }
     }
 
-    private static void addStandardConfigFormats() {
-        // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass,
-        // or this will override those classes.
-        String[] formats = {
-                "chat", "cmdi", "conll-u", "csv",
-                "eaf", "folia", "naf", "sketch-wpl",
-                "tcf", "tei-p5", "tei-p4-legacy",
-                "tei-p5-legacy", "testformat", "tsv-frog",
-                "tsv", "txt" };
-        for (String formatIdentifier : formats) {
-            String fileNameRelative = "formats/" + FormatFileNameUtil.yamlFormatFileName(formatIdentifier);
-            try (InputStream is = DocumentFormats.class.getClassLoader()
-                    .getResourceAsStream(fileNameRelative)) {
-                if (is == null)
-                    continue; // not found
-
-                try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-
-                    ConfigInputFormat format = ConfigInputFormat.read(reader, false, formatIdentifier);
-                    format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
-                    add(format);
-                }
-            } catch (InvalidInputFormatConfig | IOException e) {
-                //formatErrors.put(formatIdentifier, e.getMessage());
-                InputFormatInfo inputFormat = new InputFormatInfoError(formatIdentifier, e.getMessage());
-                add(inputFormat);
-                throw BlackLabException.wrapRuntime(e);
-            }
-        }
-    }
+//    private static void addStandardConfigFormats() {
+//        // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass,
+//        // or this will override those classes.
+//        String[] formats = {
+//                "chat", "cmdi", "conll-u", "csv",
+//                "eaf", "folia", "naf", "sketch-wpl",
+//                "tcf", "tei-p5", "tei-p4-legacy",
+//                "tei-p5-legacy", "testformat", "tsv-frog",
+//                "tsv", "txt" };
+//        for (String formatIdentifier : formats) {
+//            String fileNameRelative = "formats/" + FormatFileNameUtil.yamlFormatFileName(formatIdentifier);
+//            try (InputStream is = DocumentFormats.class.getClassLoader()
+//                    .getResourceAsStream(fileNameRelative)) {
+//                if (is == null)
+//                    continue; // not found
+//
+//                try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+//
+//                    ConfigInputFormat format = ConfigInputFormat.read(reader, false, formatIdentifier);
+//                    format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
+//                    add(format);
+//                }
+//            } catch (InvalidInputFormatConfig | IOException e) {
+//                //formatErrors.put(formatIdentifier, e.getMessage());
+//                InputFormatInfo inputFormat = new InputFormatInfoError(formatIdentifier, e.getMessage());
+//                add(inputFormat);
+//                throw BlackLabException.wrapRuntime(e);
+//            }
+//        }
+//    }
 
     private static void addFromFormatsConfigDir() {
         File formatsDir = new File(BlackLab.configDir(), FORMATS_CONFIG_DIR_NAME);

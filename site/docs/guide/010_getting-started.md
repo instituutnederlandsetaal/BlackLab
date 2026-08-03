@@ -91,7 +91,8 @@ It is possible to configure BlackLab to perform the necessary tokenizing and tag
 
 If you can't use your own data yet, we've provided a [tokenized, annotated TEI version of the Brown corpus](https://github.com/instituutnederlandsetaal/BlackLab/wiki/brownCorpus.lemmatized.xml.zip) for you to test with. 
 
-**NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format.
+**NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format. See `contrib/input-formats` 
+for example input format (`.blf.yaml`) files.
 
 ::: details The Brown Corpus
 The [Brown Corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedia.org/wiki/Brown_Corpus") is a corpus compiled in the 1960s by [Nelson Francis and Henry Kucera](http://archive.org/details/BrownCorpus) at Brown University. It is small by today's standard (500 documents, 1M words). It was converted to TEI format by [Lou Burnard](http://users.ox.ac.uk/~lou/). It is available from archive.org under the [CC-BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/) license, but we've created our own version which includes lemmata.<br/>(Please note that we didn't check the lemmatization, and it probably contains errors - useful for testing purposes only!)
@@ -126,13 +127,13 @@ For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create a corp
 java -cp "blacklab-VERSION.jar" nl.inl.blacklab.tools.IndexTool create /data/blacklab-corpora/my-corpus /tmp/my-tei/ tei-p5
 ```
 
-(**NOTE:** for the included Brown corpus data, use the `tei-p5-legacy` input format)
+(**NOTE:** for the included Brown corpus data, use the `tei-p5-legacy` input format; see `contrib/input-formats` for example input format (`.blf.yaml`) files)
 
 Your data is indexed and placed in a new BlackLab corpus in the `/data/blacklab-corpora/my-corpus` directory.
 
 ::: details <b>TIP:</b> TEI variants
 
-BlackLab now includes three TEI variants: `tei-p5` (TEI-P5 using the `pos` attribute), `tei-p5-legacy` (same but using the nonstandard `type` attribute for part of speech) and `tei-p4-legacy` (TEI-P4 using the `type` attribute). Make sure you pick the right variant for you, or copy one of the `tei-*.blf.yaml` files (see [here](@github:/engine/src/main/resources/formats)) and customize it to your needs.
+BlackLab now includes three TEI variants (in `contrib/input-formats`): `tei-p5` (TEI-P5 using the `pos` attribute), `tei-p5-legacy` (same but using the nonstandard `type` attribute for part of speech) and `tei-p4-legacy` (TEI-P4 using the `type` attribute). Make sure you pick the right variant for you, or copy one of the `tei-*.blf.yaml` files (see [here](@github:/engine/src/main/resources/formats)) and customize it to your needs.
 
 :::
 

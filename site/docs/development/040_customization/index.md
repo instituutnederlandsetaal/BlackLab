@@ -253,6 +253,8 @@ IndexTool create index myindex "index-test:This is a test" tei-p5
 
 It will create a TEI file in memory with the words "This is a test" wrapped in `<w>` tags, and index it using the `tei-p5` input format.
 
+Note that the IndexTool must be able to find `tei-p5.blf.yaml` in the current directory or in `$BLACKLAB_CONFIG_DIR/formats`. See `contrib/input-formats` for a number of input format file examples, including `tei-p5.blf.yaml`.
+
 ::: tip Skipping files
 
 If you want to skip certain files from being indexed, have your `FileIterator.next()` method return 

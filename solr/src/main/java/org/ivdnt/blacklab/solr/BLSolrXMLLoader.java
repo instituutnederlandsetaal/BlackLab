@@ -1,8 +1,6 @@
 package org.ivdnt.blacklab.solr;
 
 import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,9 +61,8 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         ConfigInputFormat formatConfig = inputFormat != null ? inputFormat.getConfig() : null;
         if (formatConfig == null) {
             // format isn't recognized by name, try loading it as string (it might be the contents of the file).
-            Reader r = new StringReader(paramFormat);
             boolean isJson = paramFormat.trim().charAt(0) == '{';
-            formatConfig = ConfigInputFormat.read(r, isJson, "");
+            formatConfig = ConfigInputFormat.read(paramFormat, isJson, "", null);
         }
         
         String fileName = params.get(UserRequestSolr.BL_PAR_PREFIX + "filename");
