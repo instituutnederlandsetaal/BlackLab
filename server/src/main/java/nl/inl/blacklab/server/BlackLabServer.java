@@ -15,7 +15,6 @@ import org.apache.logging.log4j.jul.Log4jBridgeHandler;
 import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
 
-import io.micrometer.core.instrument.Metrics;
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -25,7 +24,6 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamAbstract;
@@ -163,10 +161,6 @@ public class BlackLabServer extends HttpServlet {
             request.setCharacterEncoding(REQUEST_ENCODING.name());
         } catch (UnsupportedEncodingException ex) {
             logger.error(ex);
-        }
-
-        if (PrometheusMetricsProvider.handlePrometheus(Metrics.globalRegistry, request, responseObject, OUTPUT_ENCODING.name())) {
-            return;
         }
 
         // === Create RequestHandler object
