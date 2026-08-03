@@ -44,12 +44,12 @@ jobs:
 
       - name: Validate Docker Hub secrets
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ]; then
-            echo "Missing required secrets: DOCKER_USERNAME and/or DOCKER_TOKEN" >&2
+          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "Missing required secrets: DOCKERHUB_USERNAME and/or DOCKERHUB_TOKEN" >&2
             exit 1
           fi
 
