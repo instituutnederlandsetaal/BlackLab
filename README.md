@@ -78,7 +78,7 @@ See the [Docker README](docker/#readme) for more details.
 
 We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://blacklab.ivdnt.org/indexing-with-blacklab.html) to learn more.
 
-The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the root of the repository. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
+The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the `scripts` directory. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
 
 Alternatively, you can use Docker Compose to run the indexer. This will create your index on a named volume defined by the Compose file.
 
