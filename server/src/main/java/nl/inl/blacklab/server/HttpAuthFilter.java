@@ -58,7 +58,8 @@ public class HttpAuthFilter implements Filter {
             return;
         configRead = true;
         Map<String, String> authCfg = SearchManager.get().config().getAuthentication().getSystem();
-        if (authCfg.get("class").endsWith("AuthHttpBasic")) {
+        String authClass = authCfg.get("class");
+        if (authClass != null && authClass.endsWith("AuthHttpBasic")) {
             authEnabled = true;
             // Dirty hack - grab user/password from the BLS config directly
             // (the AuthHttpBasic doesn't get the config, the AuthMethod it produces does, and we don't have
