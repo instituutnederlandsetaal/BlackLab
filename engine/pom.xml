@@ -44,11 +44,6 @@
             <artifactId>blacklab-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-content-store</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <!-- Lucene libs -->
         <dependency>

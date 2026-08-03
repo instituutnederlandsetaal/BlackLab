@@ -19,7 +19,6 @@
         <!-- Smaller modules used by Java lib and webservice -->
         <module>util</module>
         <module>common</module>
-        <module>content-store</module>
         <module>engine</module>
         <module>query-parser</module>
         <module>tools</module>

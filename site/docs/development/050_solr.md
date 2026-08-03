@@ -60,7 +60,6 @@ Tested using an edited version of [the solr-xslt-plugin config](https://github.c
     - `blacklab`
     - `blacklab-common`
     - `blacklab-engine`
-    - `blacklab-content-store`
     - `blacklab-util`
 - Run luke and inspect the index.
 
