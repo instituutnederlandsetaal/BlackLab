@@ -22,10 +22,6 @@
         <module>core</module>
         <module>server</module>
 
-        <!-- Optional instrumentation modules -->
-        <module>instrumentation/instrumentation</module>
-        <module>instrumentation/instrumentation-impl</module>
-
         <!-- Solr integration (experimental) -->
         <module>solr</module>
 
