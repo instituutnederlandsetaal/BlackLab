@@ -5,7 +5,16 @@
 ### New
 
 - You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
-- `IndexTool` will now default to `upsert` when adding a document with a persistent identifier that's already present.
+- If you have configured a persistent identifier (pid), adding another document with the same pid will fail by default. To replace instead (i.e. upsert), pass `--ifexists replace` to `IndexTool` or configure `indexing.ifDocumentExists` in blacklab\[-server\].yaml.
+- New functions: `meet` and `meet_within` find collocations; `cspan` to adjust the hit to a capture group; `abs`, `in_range`, `gap`
+- New BCQL operators: `!within`, `!containing`, `!overlap`; `+` and `-` (in constraints) 
+- BLS: add `complete=full` to the `/autocomplete` endpoint to get matching original field values, not just individual tokens (assuming the field is tokenized).
+- Added hit group scorers, specifically collocation scorers, that can calculate the strength of association between two words in a collocation.
+- BLS: added `/collocations` endpoint, which is an easy way to perform collocation queries. Internally, it simply performs a specific hit grouping and uses a collocation scorer to score each resulting group.
+- In addition to `mainAnnotation`, it is possible to set a separate `defaultSearchAnnotation`, which is used in BCQL if no annotation is specified. It defaults to `mainAnnotation`.
+- BCQL now supports separate case and diacritics sensitivity. Use "(?c)..." for case-sensitive (but diacritics insensitive) and "(?d)..." for diacritics-sensitive (but case insensitive). ("(?s)..." means case and diacritics sensitive, and "(?i)..." both insensitive (the default).
+- It is possible to override some settings from `blacklab[-server].yaml` using e.g. `blacklab-server.override.yaml`. Mainly useful for automated (Docker) deployments where you want to have your system manager the main config file, but want the freedom to manually override some settings.
+
 
 ### Changed
 
@@ -14,6 +23,7 @@
 - BLS: upgraded to Tomcat 10.
 - trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
 - ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
+- `StringUtils.stripAccents()` explicitly decomposes several common ligatures (because Unicode normalization doesn't do this).
 - The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins directory, but a `.jar` file can also be used of course. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
 - `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or a scheme associated with your custom plugin, e.g. `mydb:`.
 - You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
@@ -21,6 +31,22 @@
 - By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
   the XML documents have schema declarations but others don't.
 - BlackLab no longer sanitizes field/annotation names with illegal XML characters. API v5 will never use field/annotation names as XML element names, so this is now unnecessary. Note that if you still use API v4 and have characters in your field/annotation names not allowed in XML element names, the BLS XML responses will be invalid. But this should be rare.
+- `rspan()` can also be used in constraints, taking a captured relation and returning the e.g. source or target.
+- capture operator `:` binds stronger than `!`, so e.g. `!A:(some_query)` now parses correctly.
+- BLS: server info page now reports on available plugins (that have been marked as safe).
+- `HttpBasicAuth` now allows you to configure a username and password directly, rather than delegating that to your application or proxy server. Mainly useful for testing.
+- All of the `.blf.yaml` files that were previously baked into the BlackLab JAR/WAR were instead moved to `contrib/input-formats`. You can select the ones you want (or customize them) and place them in `$BLACKLAB_CONFIG_DIR/formats` to make them available to BlackLab.
+- Docker images are now built using GitHub Actions.
+
+### Fixed
+
+- actually write the `csvdescription` parameter to the CSV export response
+- bug with subcorpusSize for hit groups when grouping on a numeric field
+- BLS: correctly stop the changed file monitor thread when shutting down the server
+- `usecache=no` now uses a disposable cache for the request, avoiding spawning the same search multiple times
+- some implicit narrowing conversions between long and int
+- race condition when adding docs with the same pid
+- many smaller bugs
 
 
 ### Performance
@@ -28,6 +54,9 @@
 - more operations are performed per-segment, which allows us to run them in parallel without additional locking.
 - A run-length encoding codec was added for forward indexes. It can reduce disk size for annotations that only occasionally have a value, or often repeat the same value. CPU cost could be a bit higher for these annotations. We only use this codec where it saves a significant amount of disk space.
 - indexing performance was improved.
+- `SpanQueryEdge` can internalize certain neighboring queries.
+- Optimize trivial nested containing/within.
+- we don't always store hits while grouping, but instead figure out the query to get the hits in a certain group after grouping. This can save a lot of memory.
 
 
 ### Refactored
@@ -37,6 +66,10 @@ Too much to list, but most importantly:
 - removed excessive use of generics in the `Results` and related class hierarchies.
 - BLS CSV export response code was refactored to eliminate duplicate code.
 - File processing was refactored to separate finding the files (file iteration) from how they are processed. 
+- BLS: each request has a record with the specific information they need. Before all requests shared QueryParams.
+- Modules `content-store`, `util`, `build-tools` were removed and their remaining code rolled into other modules 
+  (`common`, `engine`).
+
 
 ### Removed
 
@@ -47,6 +80,7 @@ Too much to list, but most importantly:
 - the `captureValuePaths` option (use XPath 3 instead)
 - legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
 - many deprecated and unused methods.
+- INT-specific `convert-and-tag` plugin.
 
 
 ## v4.1.0
