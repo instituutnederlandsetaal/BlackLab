@@ -78,74 +78,37 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     @Override
     public void addDocument(BLInputDocument document) throws IOException {
         // Do we have a persistent identifier?
+        Document doc = luceneDoc(document);
         if (getPidFieldName() != null) {
-            // Yes; does this pid already exist in the corpus?
-            Term pid = getPidTerm(document);
-            if (!addToPids(pid.text())) {
-                // Already exists; handle according to configuration
-                switch (index.getIfDocumentExists()) {
-                case UPSERT:
-                    indexWriter.updateDocument(pid, luceneDoc(document));
-                    break;
-                case SKIP:
-                    /* do nothing */
-                    break;
-                case FAIL:
-                    throw new ErrorIndexingFile("Document with pid '" + pid +
-                            "' already exists in corpus; cannot add it again " +
-                            "(ifDocumentExists setting set to 'fail'; set to 'replace' to upsert instead)");
-                default:
-                    throw new IllegalArgumentException();
-                }
-                return;
-            }
+            // We have a persistent identifier; ensure it only occurs once in the corpus.
+            Term pidTerm = getPidTerm(document);
+            BlackLabIndexWriter.IfDocumentExists ifDocumentExists = index.getIfDocumentExists();
+            addOrUpdate(doc, pidTerm, ifDocumentExists);
+        } else {
+            // We don't have persistent identifiers. Just add the document.
+            indexWriter.addDocument(doc);
         }
-        // We don't have persistent identifiers, or this pid doesn't occur in the corpus yet.
-        // Just add the document.
-        indexWriter.addDocument(luceneDoc(document));
     }
 
-    private Document luceneDoc(BLInputDocument document) {
-        return ((BLInputDocumentLucene)document).getDocument();
-    }
-
-    @Override
-    public void close() throws IOException {
-        indexWriter.close();
-    }
-
-    @Override
-    public void commit() throws IOException {
-        indexWriter.commit();
-    }
-
-    @Override
-    public void rollback() throws IOException {
-        indexWriter.rollback();
-    }
-
-    @Override
-    public boolean isOpen() {
-        return indexWriter.isOpen();
-    }
-
-    public IndexWriter getWriter() {
-        return indexWriter;
-    }
-
-    @Override
-    public void deleteDocuments(Query q) throws IOException {
-        indexWriter.deleteDocuments(q);
-    }
-
-    @Override
-    public long updateDocument(Term term, BLInputDocument document) throws IOException {
-        return indexWriter.updateDocument(term, luceneDoc(document));
-    }
-
-    @Override
-    public int getNumberOfDocs() {
-        return indexWriter.getDocStats().numDocs;
+    /**
+     * Atomically add or update document (or skip/fail, depending on config).
+     */
+    private synchronized void addOrUpdate(Document doc, Term pidTerm,
+            BlackLabIndexWriter.IfDocumentExists ifDocumentExists) throws IOException {
+        if (!addToPids(pidTerm.text())) {
+            // Already exists; handle according to configuration
+            switch (ifDocumentExists) {
+            case UPSERT -> indexWriter.updateDocument(pidTerm, doc);
+            case SKIP -> { /* do nothing */ }
+            case FAIL -> throw new ErrorIndexingFile("Document with pid '" + pidTerm.text() +
+                    "' already exists in corpus; cannot add it again " +
+                    "(ifDocumentExists setting set to 'fail'; set to 'replace' to upsert instead)");
+            default -> throw new IllegalArgumentException();
+            }
+        } else {
+            // Not in the index yet; add it now.
+            indexWriter.addDocument(doc);
+        }
     }
 
     /**
@@ -192,6 +155,49 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
             }
         }
         return usedPids.add(pid);
+    }
+
+    private Document luceneDoc(BLInputDocument document) {
+        return ((BLInputDocumentLucene)document).getDocument();
+    }
+
+    @Override
+    public void close() throws IOException {
+        indexWriter.close();
+    }
+
+    @Override
+    public void commit() throws IOException {
+        indexWriter.commit();
+    }
+
+    @Override
+    public void rollback() throws IOException {
+        indexWriter.rollback();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return indexWriter.isOpen();
+    }
+
+    public IndexWriter getWriter() {
+        return indexWriter;
+    }
+
+    @Override
+    public void deleteDocuments(Query q) throws IOException {
+        indexWriter.deleteDocuments(q);
+    }
+
+    @Override
+    public long updateDocument(Term term, BLInputDocument document) throws IOException {
+        return indexWriter.updateDocument(term, luceneDoc(document));
+    }
+
+    @Override
+    public int getNumberOfDocs() {
+        return indexWriter.getDocStats().numDocs;
     }
 
 }
