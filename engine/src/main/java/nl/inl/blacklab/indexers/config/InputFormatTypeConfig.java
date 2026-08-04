@@ -8,7 +8,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -64,7 +63,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                         .map(FileConverter::fromConfig).toList();
                 return docIndexerConvertAndTag.createInputFormat(inputFormat, converters);
             } catch (Exception e) {
-                throw BlackLabException.wrapRuntime(e);
+                throw new InvalidInputFormatConfig(e);
             }
         } else {
             return inputFormat;

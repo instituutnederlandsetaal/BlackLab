@@ -1854,7 +1854,7 @@ public class ResponseStreamer {
                     displayName = inputFormat.getDisplayName();
                 } catch (InvalidInputFormatConfig e) {
                     // Invalid input format shouldn't break the response; just log and skip it
-                    logger.error(e.getMessage());
+                    logger.error("Invalid input format: " + inputFormat.getIdentifier(), e);
                     continue;
                 }
                 ds.startAttrEntry("format", KEY_NAME, inputFormat.getIdentifier());
