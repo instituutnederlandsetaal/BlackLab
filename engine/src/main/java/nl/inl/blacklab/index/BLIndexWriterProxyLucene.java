@@ -92,7 +92,8 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
                     break;
                 case FAIL:
                     throw new ErrorIndexingFile("Document with pid '" + pid +
-                            "' already exists in corpus; cannot add document: " + document);
+                            "' already exists in corpus; cannot add it again " +
+                            "(ifDocumentExists setting set to 'fail'; set to 'replace' to upsert instead)");
                 default:
                     throw new IllegalArgumentException();
                 }

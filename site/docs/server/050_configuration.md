@@ -331,12 +331,23 @@ You probably won't need to change these settings, but they are available for adv
 ```yaml
 indexing:
     # (...above settings...)
+
+    # What to do if a document with the same persistent identifier
+    # already exists in the index.
+    # Options: fail (default), replace, skip
+    # (note that this will never apply if no pidField has been configured!)
+    ifDocumentExists: fail
     
     # Should inline tags and relations be indexed case- and accent-sensitively?
     # This used to be the default, but we've switched over to case-insensitive
     # indexing by default. Set to true to revert to the old behavior.
     # (default: false)
     relationsSensitive: false
+
+    # Max. length of a value of an annotation value (i.e. word, lemma)
+    # or 0 for no limit (Lucene has a limit of 32766 characters for a term though;
+    # longer values will cause an error)
+    maxValueLength: 0
 
     # Are http downloads of e.g. metadata allowed?
     # (default: false)

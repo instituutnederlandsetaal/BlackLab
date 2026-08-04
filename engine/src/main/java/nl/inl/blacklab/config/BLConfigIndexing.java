@@ -1,5 +1,6 @@
 package nl.inl.blacklab.config;
 
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.DownloadCache;
 
 public class BLConfigIndexing {
@@ -35,6 +36,11 @@ public class BLConfigIndexing {
 
     @Deprecated
     int maxMetadataValuesToStore = 0;
+
+    /** What to do if a document already exists in the index (i.e. has the same persistent identifier):
+     * fail (default), replace (i.e. upsert) or skip?
+     */
+    BlackLabIndexWriter.IfDocumentExists ifDocumentExists = BlackLabIndexWriter.IfDocumentExists.FAIL;
 
     public DownloadCache.Config downloadCacheConfig() {
         return new DownloadCache.Config() {
@@ -155,7 +161,11 @@ public class BLConfigIndexing {
         this.maxValueLength = maxValueLength;
     }
 
-    public void setMaxMetadataValuesToStore(int maxMetadataValuesToStore) {
-        this.maxMetadataValuesToStore = maxMetadataValuesToStore;
+    public BlackLabIndexWriter.IfDocumentExists getIfDocumentExists() {
+        return this.ifDocumentExists;
+    }
+
+    public void setIfDocumentExists(BlackLabIndexWriter.IfDocumentExists ifDocumentExists) {
+        this.ifDocumentExists = ifDocumentExists;
     }
 }

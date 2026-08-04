@@ -147,6 +147,23 @@ public class IndexTool {
                             return;
                         }
                     }
+                    case "ifexists" -> {
+                        if (i + 1 == args.length) {
+                            System.err.println("--ifexists option needs argument");
+                            usage();
+                            return;
+                        }
+                        try {
+                            BlackLabIndexWriter.IfDocumentExists ifExists = BlackLabIndexWriter.IfDocumentExists.forValue(
+                                    args[i + 1]);
+                            BlackLab.config().getIndexing().setIfDocumentExists(ifExists);
+                            i++;
+                        } catch (IllegalArgumentException e) {
+                            System.err.println("--ifexists option needs valid argument (fail, replace or skip)");
+                            usage();
+                            return;
+                        }
+                    }
                     case "help" -> {
                         usage();
                         return;
@@ -243,19 +260,11 @@ public class IndexTool {
         // Init log4j
         LogUtil.setupBasicLoggingConfig();
 
-        List<File> dirs = new ArrayList<>(List.of(new File(".")));
         Optional<File> inputDir = indexSource.getAssociatedDirectory();
         File inputDirParent = null;
-        if (inputDir.isPresent()) {
-            dirs.add(inputDir.get());
+        if (inputDir.isPresent())
             inputDirParent = inputDir.get().getAbsoluteFile().getParentFile();
-        }
-        if (inputDirParent != null)
-            dirs.add(inputDirParent);
-        dirs.add(indexDir);
         File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
-        if (indexDirParent != null)
-            dirs.add(indexDirParent);
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
         System.out.println(op + " index in " + indexDir + File.separator + " from " + indexSource +

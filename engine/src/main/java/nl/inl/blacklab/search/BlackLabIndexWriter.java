@@ -7,6 +7,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -27,12 +30,35 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
         SKIP,
 
         /** Fail with an error message. */
-        FAIL,
+        FAIL;
+
+        @JsonCreator
+        public static IfDocumentExists forValue(String ifDocumentExists) {
+            switch (ifDocumentExists.toLowerCase()) {
+                case "upsert", "replace", "overwrite" -> {
+                    return UPSERT;
+                }
+                case "skip" -> {
+                    return SKIP;
+                }
+                case "fail" -> {
+                    return FAIL;
+                }
+                default -> throw new IllegalArgumentException("Unknown IfDocumentExists value: " + ifDocumentExists + "(valid values: fail, replace or skip)");
+            }
+        }
+
+        @JsonValue
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
     }
 
     /** What to do if a document with the same persistent identifier (pidField) already exists? */
     default IfDocumentExists getIfDocumentExists() {
-        return IfDocumentExists.UPSERT; // TODO: make configurable (IndexTool cmdline, BLS config)
+        return BlackLab.config().getIndexing().getIfDocumentExists();
+        //return IfDocumentExists.UPSERT; // TODO: make configurable (IndexTool cmdline, BLS config)
     }
 
     /**
