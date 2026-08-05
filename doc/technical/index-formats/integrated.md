@@ -2,15 +2,13 @@
 
 This describes the new index format that integrates all previously external files (forward index, content store, index metadata, version files) into the Lucene index. The goal is to enable distributed indexing and search using Solr. Eventually this will become the default for new indexes.
 
-> **NOTE:** this index format is in development and documentation may still be a little rough.
-
 The integrated index has a codec name `BlackLab40Codec` and version of 1. (Additional versions or codecs may be added in the future)
 
 ## Index metadata
 
 The index metadata (the equivalent to the `indexmetadata.yaml` file from the classic index format) is not written to a segment file (like information related to a document), but instead it is written to a special document in the Lucene index.
 
-The document can be found by searching for a field with the name and value `__index_metadata_marker__`. The metadata is stored, in JSON form, in the field `__index_metadata__`. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataIntegrated` class.
+The document can be found by searching for a field with the name and value `__index_metadata_marker__`. The metadata is stored, in JSON form, in the field `__index_metadata__`. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataImpl` class.
 
 You can export the index metadata to a file using `IndexTool`. Use the `--help` option to learn more. It is even possible to change and re-import the file, although this can be risky.
 
@@ -93,56 +91,6 @@ Fields may be omitted from the end if they have the default value. Therefore, an
 
 As another example, the payload `0x81; 0x04` would mean `{ relationId: 1, flags: 4, relTargetStart: 1, sourceLength: 1, targetLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
 
-
-
-
-### Old single-term approach
-
-***(we used to do this, but this was superseded by indexing several terms, one extra per attribute; older indexes should still work for now, but eventually we'll drop support)***
-
-The term indexed is a string of one of these forms.
-
-Without attributes:
-
-    relClass::relType\u0001
-
-With attributes:
-
-    relClass::relType\u0001\u0003attrName1\u0002value1\u0001\u0003attrName2\u0002value2\u0001...
-
-Again, we call `relClass::relType`, the relation class and the relation type, the _full relation type_. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
-
-If there are any attributes, they follow next. These are sorted alphabetically by name (so we can generate an efficient regular expression).
-
-Three special characters delineate the separate parts of the term:
-
-- `\u0001` ("value suffix") follows the full relation type and all attribute values.
-- `\u0002` ("value separator") separates attribute names from their values.
-- `\u0003` ("name prefix") precedes each attribute name.
-
-These delineation characters make sure we can generate a regular expressions that avoid any unwanted matches (e.g. prefix or suffix matches).
-
-Relations with attributes are indexed twice: once with, and once without
-attributes. The second version is used to speed up queries that don't
-filter on the attributes. This version is marked with a `\u0004` appended to the term, so we know to skip it when determining relations statistics.
-
-### Old payload (for single-term approach, see above)
-
-This payload was almost the same as the current one, but used a scheme where the first `ZInt` could be two different things depending on a `flag`. This is now no longer needed.
-
-Relation payloads are always stored at the source position.
-
-The payload for a relation consists of the following fields:
-
-* This number, a `ZInt`, is either `relTargetStart` or `relationId`, depending on the `flags` byte (see below). `relationId` is a unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future. Note that if `relationId == -1`, there is no extra information to look up. For `relTargetStart`, see below. Default value: `1`.
-* `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `sourceLength` and `targetLength`. If `0x08` is set, the first number in the payload is the `relationId`. The other bits are reserved for future use and must not be set. Default: `0`.
-* If flag `0x08` was set, `flags` is followed by `relTargetStart: ZInt`: relative position of the (start of the) target end. Default: `1`. If flag `0x08` was not set, this number will not be written here (in that case, the first number of the payload is `relTargetStart`, see above).
-* `sourceLength: VInt`: length of the source end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, it will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
-* `targetLength: VInt`: length of the target end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, this will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
-
-Fields may be omitted from the end if they have the default value. Therefore, an empty payload means `{ relTargetStart: 1, flags: 0, sourceLength: 0, targetLength: 0 }`.
-
-As another example, the payload `0x81; 0x04` would mean `{ relTargetStart: 1, flags: 4, sourceLength: 1, targetLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
 
 ### Calculate Lucene span from relation term
 
@@ -251,10 +199,11 @@ This file will have an extension of `.blfi.tokens`.
 
 ### Tokens encodings
 
-| Name                | Code | Description                                                                                                           |
-|---------------------|-----:|-----------------------------------------------------------------------------------------------------------------------|
-| INT_PER_TOKEN       |    1 | One fixed-size integer for each token in the document. The codec parameter specifies the number of bytes per integer. |
-| ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document.                                       |
+| Name                | Code | Description                                                                                                                                                                                      |
+|---------------------|-----:|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| VALUE_PER_TOKEN     |    1 | One fixed-size integer for each token in the document. The codec parameter specifies the number of bytes per integer.                                                                            |
+| ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document.                                                                                                                  |
+| RUN_LENGTH_ENCODING |    3 | Blocks of run-length encoded tokens (preceded by some bookkeeping information). See `TokensCodecRunLengthEncoded` for details. Slightly slower codec, only chosen if it saves significant space. |
 
 
 ## Relation info

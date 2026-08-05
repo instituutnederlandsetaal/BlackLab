@@ -82,12 +82,12 @@ search:
 
     # The default maximum number of hits to retrieve (and use for sorting, grouping, etc.).
     # -1 means no limit, but be careful, this may stress your server.
-    # (default: 5000000)
+    # (default: no limit)
     maxHitsToRetrieve: 1000000
     
     # The default maximum number of hits to count.
     # -1 means no limit, but be careful, this may stress your server.
-    # (default: 10000000)
+    # (default: no limit)
     maxHitsToCount: -1
 ``` 
 

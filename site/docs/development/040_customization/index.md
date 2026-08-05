@@ -444,7 +444,9 @@ InputFormatType is the most complex type of plugin, and you likely don't need it
 
 If you do need it, have a look at `InputFormatTypePlainText`, `InputFormatTypeTabular` and `InputFormatTypeXml` in the BlackLab source code for more complete examples. These are all configuration-based, so you can use them with `.blf.yaml` files.
 
-If you decide to forego the flexibility of `.blf.yaml` support and try to index your format directly, have a look at `InputFormatTypeExample`, which is a toy example of a non-configuration-based format.
+If you decide to forego the flexibility of `.blf.yaml` support and try to index your format directly, have a look at `InputFormatTypeExample`, which is a toy example of a non-configuration-based format. (You still need a mostly-empty `.blf.yaml` file that points to this class)
+
+If you implement your own `InputFormatType`, in your `.blf.yaml` file, you must set `fileTypeOptions.inputFormatTypeClass` to the plugin id (i.e. simple class name) so the correct class is instantiated.
 
 You are also always welcome to contact us for advice, via GitHub issue or directly.
 

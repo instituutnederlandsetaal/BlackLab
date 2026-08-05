@@ -23,6 +23,7 @@ processor: saxon
 ## We've shown the options for tabular he're but commented them out as we're describing
 ## an xml format here.
 ##fileTypeOptions:
+##  inputFormatTypeClass: InputFormatTypeTabular # (use custom class, not needed here because type: tsv implies this already)
 ##  type: tsv         # type of tabular format (tsv or csv)
 ##  delimiter: "\t"   # delimiter, if different from default (determined by "type", tab or comma)
 ##  quote: "\""       # quote character, if different from default (double quote)

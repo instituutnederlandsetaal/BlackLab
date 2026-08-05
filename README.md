@@ -1,8 +1,8 @@
 # What is BlackLab?
 
-[BlackLab](https://blacklab.ivdnt.org/) is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
+[BlackLab](https://blacklab.ivdnt.org/) is a corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches on large, tagged and annotated, bodies of text. It supports both token-based and (dependency) relations querying. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
 
-In addition to the Java library (BlackLab Core), there is also a web service (BlackLab Server), so you can access it from any programming language.
+The main way to use BlackLab is through the BlackLab Server API, but there is also a Java library if you want to use that directly.
 
 BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
@@ -68,9 +68,9 @@ npm run docs:build
 
 ## Using BlackLab with Docker
 
-An alpha version of the Docker setup is provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). For each upcoming release, we will publish a corresponding Docker image.
+Docker images are provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab).
 
-A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher. 
+To build the Docker image yourself, use a modern Docker version supporting BuildKit (minimum versions: Docker 18.09, Compose 1.27.1). 
 
 See the [Docker README](docker/#readme) for more details.
 
