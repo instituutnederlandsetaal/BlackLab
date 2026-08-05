@@ -11,9 +11,9 @@ public class BLConfigSearch {
 
     private int contextSize = 5;
 
-    private long maxHitsToRetrieve = 5_000_000;
+    private long maxHitsToRetrieve = Long.MAX_VALUE;
 
-    private long maxHitsToCount = 10_000_000;
+    private long maxHitsToCount = Long.MAX_VALUE;
 
     private long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
 

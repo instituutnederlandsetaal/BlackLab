@@ -13,13 +13,13 @@ public class BLSConfigParameters {
     MatchSensitivity defaultSearchSensitivity = MatchSensitivity.INSENSITIVE;
 
     /** After how many hits should we stop processing them? */
-    DefaultMax processHits = DefaultMax.get(5000000, 5000000);
+    DefaultMax processHits = DefaultMax.get(Long.MAX_VALUE, Long.MAX_VALUE);
 
     /** After how many hits should we stop counting them? */
-    DefaultMax countHits = DefaultMax.get(10000000, 10000000);
+    DefaultMax countHits = DefaultMax.get(Long.MAX_VALUE, Long.MAX_VALUE);
 
     /** How many results should we return per page by default? */
-    DefaultMax pageSize = DefaultMax.get(50, 3000);
+    DefaultMax pageSize = DefaultMax.get(50, Long.MAX_VALUE);
 
     /** How many words of context should we return before and after matches? */
     DefaultMax contextSize = DefaultMax.get(5, 200);

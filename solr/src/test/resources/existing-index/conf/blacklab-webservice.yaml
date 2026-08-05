@@ -36,21 +36,21 @@ parameters:
     defaultSearchSensitivity: insensitive
 
     # The maximum number of hits to process (return as results, and
-    # use for sorting, grouping, etc.). -1 means no limit.
+    # use for sorting, grouping, etc.). -1 means no limit (default).
     # ("maxretrieve" parameter)
     # (higher values will put more stress on the server)
     processHits:
         default: 1000000
         max: 2000000
 
-    # The maximum number of hits to count. -1 means no limit.
+    # The maximum number of hits to count. -1 means no limit (default).
     # ("maxcount" parameter)
     # (higher values will put more stress on the server)
     countHits:
         default: -1
         max: 10000000
 
-    # Number of results per page ("number" parameter). -1 means no limit.
+    # Number of results per page ("number" parameter). -1 means no limit (default for max).
     # (a very high max value might lead to performance problems)
     pageSize:
         default: 50

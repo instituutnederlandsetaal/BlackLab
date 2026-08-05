@@ -50,7 +50,6 @@ public interface TokensCodec {
             codec = (sizeWithRunLengthEncoding < tokensInDoc.length / 2 ?
                     TokensCodecType.RUN_LENGTH_ENCODING :
                     TokensCodecType.VALUE_PER_TOKEN);
-            //TokensCodecType codec = TokensCodecType.RUN_LENGTH_ENCODING; //TEST
         } else {
             codec = allTheSame ? TokensCodecType.ALL_TOKENS_THE_SAME : TokensCodecType.VALUE_PER_TOKEN;
         }
