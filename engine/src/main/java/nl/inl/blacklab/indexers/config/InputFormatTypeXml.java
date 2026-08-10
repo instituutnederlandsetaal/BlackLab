@@ -8,8 +8,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.stream.XMLStreamException;
@@ -611,8 +613,67 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 });
             }
 
-            /** A fragment with its metadata (not yet any inherited metadata!) */
-            record Fragment(Span span, Map<String, Collection<String>> metadata) {
+            List<Fragment> chopOverlappingFragments(List<Fragment> fragments) {
+                /** A position where a fragment starts or ends */
+                record FragmentMilestone(int pos, boolean isStart, Fragment fragment) implements Comparable<FragmentMilestone> {
+                    @Override
+                    public int compareTo(FragmentMilestone other) {
+                        int cmp = Integer.compare(this.pos, other.pos);
+                        if (cmp == 0) {
+                            // Ends are sorted before starts (i.e. adjoining fragments don't overlap)
+                            return Boolean.compare(this.isStart, other.isStart);
+                        }
+                        return cmp;
+                    }
+                }
+
+                // Get a sorted list of milestones
+                List<FragmentMilestone> milestones = new ArrayList<>(fragments.size() * 2);
+                for (Fragment fragment: fragments) {
+                    milestones.add(new FragmentMilestone(fragment.span.start(), true, fragment));
+                    milestones.add(new FragmentMilestone(fragment.span.end(), false, fragment));
+                }
+                Collections.sort(milestones);
+
+                // Now iterate over the milestones, chopping into non-overlapping new fragments.
+                // TODO: apply document metadata; create fragment before first and after last fragment
+                List<Fragment> choppedFrags = new ArrayList<>();
+                Set<Fragment> openFragments = new LinkedHashSet<>();
+                int pos = 0;
+                for (int i = 0; i < milestones.size(); i++) {
+                    FragmentMilestone milestone = milestones.get(i);
+                    if (!openFragments.isEmpty() && milestone.pos > pos)
+                        choppedFrags.add(new Fragment(Span.between(pos, milestone.pos), metadataFromFragments(openFragments)));
+                    if (milestone.isStart())
+                        openFragments.add(milestone.fragment());
+                    else
+                        openFragments.remove(milestone.fragment());
+                    pos = milestone.pos;
+                }
+                return choppedFrags;
+            }
+
+            private Map<String, Collection<String>> metadataFromFragments(Set<Fragment> openFragments) {
+                Map<String, Collection<String>> result = new HashMap<>();
+                for (Fragment fragment: openFragments) {
+                    result.putAll(fragment.metadata());
+                }
+                return result;
+            }
+
+            /** A document fragment with its metadata (not yet any inherited metadata!) */
+            record Fragment(Span span, Map<String, Collection<String>> metadata) implements Comparable<Fragment> {
+
+                /** Sort fragments by start position first, then endposition */
+                @Override
+                public int compareTo(Fragment other) {
+                    int cmp = Integer.compare(this.span().start(), other.span().start());
+                    return cmp == 0 ? Integer.compare(this.span().end(), other.span().end()) : cmp;
+                }
+
+                public boolean contains(Fragment fragment) {
+                    return fragment.span.start() >= span().start() && fragment.span.end() <= span().end();
+                }
             }
 
             /** The list of fragments found for each annotated field */
