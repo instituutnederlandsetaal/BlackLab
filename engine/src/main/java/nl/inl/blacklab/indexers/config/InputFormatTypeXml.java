@@ -621,11 +621,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, List<ConfigMetadataBlock> metadataCfg) {
                 List<Fragment> frags = this.fragsPerField.get(currentAnnotatedField.name());
 
-                // Collect metadata
+                // Collect metadata using the rules, from the document level and/or specific to this fragment.
                 Map<String, Collection<String>> metadata = new HashMap<>();
                 if (config.getMetadata().iterator().next().isApplyDocRules()) {
-                    // Apply the regular document-level metadata rules here.
-                    //@@@@ WHAT ABOUT UNSPECIFIED ...? SHOULD ONLY APPLY AT THE END...?
+                    // Apply the regular document-level metadata rules.
+                    // (unknownValues are only applied just before saving to the index, so don't pose a problem here)
                     List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
                     for (ConfigMetadataBlock b : mainMetadataCfg) {
                         processMetadataBlock(fragmentNode, b, metadata);
