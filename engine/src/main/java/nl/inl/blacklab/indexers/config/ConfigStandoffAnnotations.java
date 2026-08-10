@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -53,18 +55,27 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      */
     private String valuePath;
 
+    /** Metadata (for type=FRAGMENT only!) */
+    @JsonDeserialize(using = ConfigInputFormat.MetadataDeserializer.class)
+    @JsonPropertyDescription("Block(s) that configure how to index metadata fields.")
+    private final List<ConfigMetadataBlock> metadata = new ArrayList<>();
+
+    public List<ConfigMetadataBlock> getMetadata() {
+        return metadata;
+    }
+
     /** The annotations to index at the referenced token positions. */
     private final List<ConfigAnnotation> annotations = new ArrayList<>();
-
-    public List<ConfigAnnotation> getAnnotations() {
-        return Collections.unmodifiableList(annotations);
-    }
 
     public void setAnnotations(List<ConfigAnnotation> annotations) {
         this.annotations.clear();
         for (ConfigAnnotation a : annotations) {
             addAnnotation(a);
         }
+    }
+
+    public List<ConfigAnnotation> getAnnotations() {
+        return Collections.unmodifiableList(annotations);
     }
 
     @Override
@@ -112,12 +123,24 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         messages.mustHave(t, tokenRefPath, "tokenRefPath");
         for (ConfigAnnotation a : annotations)
             a.validate(messages, false);
+        if (type == AnnotationType.FRAGMENT) {
+            if (!annotations.isEmpty())
+                messages.error("Fragments cannot have annotations.");
+        } else {
+            if (!metadata.isEmpty())
+                messages.error("Standoff annotations of type " + type + " cannot have metadata blocks.");
+        }
+        for (ConfigMetadataBlock m : metadata)
+            m.validate(messages);
     }
 
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
         for (ConfigAnnotation a : annotations) {
             result.addAnnotation(a.copy());
+        }
+        for (ConfigMetadataBlock m : metadata) {
+            result.metadata.add(m.copy());
         }
         return result;
     }

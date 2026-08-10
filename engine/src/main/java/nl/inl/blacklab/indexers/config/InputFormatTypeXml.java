@@ -594,14 +594,49 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             } else {
                                 // Standoff annotation to index a relation (or inline tag).
                                 for (Span position: indexAtPositions) {
-                                    processStandoffSpan(standoffNode, type, position, endOrTarget,
-                                            standoffAnnotations,
-                                            spanOrRelType);
+                                    if (type == AnnotationType.FRAGMENT) {
+                                        // A fragment (or "subdocument") that can have its own metadata.
+                                        // (note that fragments don't have annotations or a type)
+                                        processFragment(standoffNode, position, endOrTarget, standoff.getMetadata());
+                                    } else {
+                                        // A span (inline tag) or relation.
+                                        processStandoffSpan(standoffNode, type, position, endOrTarget,
+                                                standoffAnnotations,
+                                                spanOrRelType);
+                                    }
                                 }
                             }
                         }
                     }
                 });
+            }
+
+            /** A fragment with its metadata (not yet any inherited metadata!) */
+            record Fragment(Span span, Map<String, Collection<String>> metadata) {
+            }
+
+            /** The list of fragments found for each annotated field */
+            Map<String, List<Fragment>> fragsPerField = new HashMap<>();
+
+            void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, List<ConfigMetadataBlock> metadataCfg) {
+                List<Fragment> frags = this.fragsPerField.get(currentAnnotatedField.name());
+
+                // Collect metadata
+                Map<String, Collection<String>> metadata = new HashMap<>();
+                if (config.getMetadata().iterator().next().isApplyDocRules()) {
+                    // Apply the regular document-level metadata rules here.
+                    //@@@@ WHAT ABOUT UNSPECIFIED ...? SHOULD ONLY APPLY AT THE END...?
+                    List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
+                    for (ConfigMetadataBlock b : mainMetadataCfg) {
+                        processMetadataBlock(fragmentNode, b, metadata);
+                    }
+                }
+                // Apply any custom metadata rules for this fragment
+                for (ConfigMetadataBlock b : config.getMetadata()) {
+                    processMetadataBlock(fragmentNode, b, metadata);
+                }
+
+                frags.add(new Fragment(Span.between(fragStart.start(), fragEnd.start()), metadata));
             }
 
             WarnOnce warnOnce() {
@@ -793,11 +828,15 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
+                processMetadataBlock(doc, metaBlock, metadataFieldValues);
+            }
+
+            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, Map<String, Collection<String>> metadataFieldValues) {
                 // For each instance of this metadata block...
                 finder.xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
                     // For each subblock... (for multiple levels of containerPaths)
                     for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
-                        processMetadataBlock(block, subBlock);
+                        processMetadataBlock(block, subBlock, metadataFieldValues);
                     }
 
                     // For each configured metadata field...
@@ -816,17 +855,18 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         if (field.isForEach()) {
                             // "forEach" metadata specification
                             // (allows us to capture many metadata fields with 3 XPath expressions)
-                            processMetaForEach(metaBlock, block, field);
+                            processMetaForEach(metaBlock, block, field, metadataFieldValues);
                         } else {
                             // Regular metadata field; just the fieldName and an XPath expression for the value
                             // Multiple matches will be indexed at the same position.
-                            indexMetadataFieldMatches(block, field, field.getName(), null);
+                            indexMetadataFieldMatches(block, field, field.getName(), null, metadataFieldValues);
                         }
                     }
                 });
             }
 
-            protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach) {
+            protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach,
+                    Map<String, Collection<String>> metadataFieldValues) {
                 finder.xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
                     String fieldName = finder.xpathValue(forEach.getNamePath(), match);
@@ -846,23 +886,23 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         return;
 
                     // Multiple matches will be indexed at the same position.
-                    indexMetadataFieldMatches(match, forEach, fieldName, indexAsField);
+                    indexMetadataFieldMatches(match, forEach, fieldName, indexAsField, metadataFieldValues);
                 });
             }
 
             protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
-                    String indexAsFieldName, ConfigMetadataField indexAsFieldConfig) {
+                    String indexAsFieldName, ConfigMetadataField indexAsFieldConfig, Map<String, Collection<String>> metadataFieldValues) {
                 // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
                 finder.xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                     for (String value: processStringMultipleValues(unprocessedValue, field.getCompiledProcessSteps())) {
                         if (indexAsFieldConfig == null) {
-                            addMetadataField(indexAsFieldName, value);
+                            addMetadataField(indexAsFieldName, value, metadataFieldValues);
                         } else {
                             // Also execute process defined for named metadata field, if any
                             for (String processedValue: processStringMultipleValues(value,
                                     indexAsFieldConfig.getCompiledProcessSteps())) {
-                                addMetadataField(indexAsFieldName, processedValue);
+                                addMetadataField(indexAsFieldName, processedValue, metadataFieldValues);
                             }
                         }
                     }
@@ -954,4 +994,5 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
         }
     }
+
 }
