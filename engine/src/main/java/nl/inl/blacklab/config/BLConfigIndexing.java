@@ -1,9 +1,13 @@
 package nl.inl.blacklab.config;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.DownloadCache;
 
 public class BLConfigIndexing {
+    static final Logger logger = LogManager.getLogger(BLConfigIndexing.class);
 
     /** Max tokens for a private user index, default 100M **/
     private long userIndexMaxTokenCount = 100_000_000;
@@ -35,7 +39,10 @@ public class BLConfigIndexing {
     int maxValueLength = 0;
 
     @Deprecated
-    int maxMetadataValuesToStore = 0;
+    public void setMaxMetadataValuesToStore(@SuppressWarnings("unused") int maxMetadataValuesToStore) {
+        // IGNORED, removed setting that may still linger in older config files.
+        logger.warn("Ignoring deprecated setting 'maxMetadataValuesToStore'. Please remove this setting from blacklab[-server].yaml.");
+    }
 
     /** What to do if a document already exists in the index (i.e. has the same persistent identifier):
      * fail (default), replace (i.e. upsert) or skip?
