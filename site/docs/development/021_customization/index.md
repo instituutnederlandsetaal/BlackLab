@@ -12,7 +12,7 @@ The previous plugin system was more limited and likely did not have many users.
 Plugins can be used to customize various aspects of BlackLab:
 
 - a `FileConverter` converts documents before indexing (i.e. extract text from binary format or tag text with linguistic information) (previously we had separate `ConvertPlugin` and `TagPlugin`; this replaces both)
-- an `IndexSourceType` fetches documents to be indexed from a custom source (e.g. a web service, a database, etc.)
+- an `IndexSourceType` fetches documents to be indexed from a custom source (e.g. an API, a database, etc.)
 - an `InputFormatType` defines a new document format for indexing (formerly called `DocIndexer`)
 - a `ProcessingInstruction` provides additional processing during indexing (e.g. apply stemming, look up a value by id, etc.)
 - a `QueryFunction` adds a new function to BCQL. You could use this to expand a simple function call to a complex, frequently-used BCQL query.

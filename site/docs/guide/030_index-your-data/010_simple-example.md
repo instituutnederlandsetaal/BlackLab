@@ -6,7 +6,7 @@ They can be used to index data from the commandline using the [IndexTool](create
 to allow a logged-in user to upload and index their own corpora).
 
 BlackLab already [supports](create-an-index.md#supported-formats) a number of common input formats out of the box. Your data may differ slightly of 
-course, so you may use the [predefined formats](@github:/engine/src/main/resources/formats) as a starting point and customize them to fit your data. But here 
+course, so you may use the [predefined formats](@github:/contrib/input-formats) as a starting point and customize them to fit your data. But here 
 we will look at writing a simple configuration file from scratch.
 
 Suppose our tokenized XML files look like this:

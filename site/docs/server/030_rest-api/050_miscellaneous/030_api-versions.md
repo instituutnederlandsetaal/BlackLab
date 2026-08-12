@@ -1,6 +1,6 @@
 # API versions
 
-We're evolving the BlackLab web service API over time, using versioning.
+We're evolving the BlackLab REST API over time, using versioning.
 
 There's currently two supported versions:
 - `4.0`: API used by BlackLab 4.x. Still supported on `dev` branch and (future) BlackLab 5.x.

@@ -2,30 +2,26 @@
 
 ## IndexTool
 
-IndexTool is a simple commandline application to create a corpus and add documents to it.
+See [Getting started](/guide/getting-started) for a simple way to create an index. The script used there runs the IndexTool.
 
-Get the blacklab JAR and the required libraries (see [Getting started](/guide/getting-started.md#getting-blacklab)). The libraries should be in a directory called `lib` that's in the same directory as the BlackLab JAR (or elsewhere on the classpath).
-
-Start the `IndexTool` without parameters for help information:
+IndexTool has more features. Start the `IndexTool` without parameters for help information: 
 
 ```bash
-java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool
+java -cp "*" nl.inl.blacklab.tools.IndexTool
 ```
 
-(this assumes `blacklab.jar` and the `lib` subdirectory containing required libraries are located in the current directory)
-
-(if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
+(this assumes `blacklab-tools-VERSION.jar` and the `lib` subdirectory containing required libraries are located in the current directory)
 
 To create a new index:
 
 ```bash
-java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
+java -cp "*" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
 ```
 
 To add documents to an existing index:
 
 ```bash
-java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
+java -cp "*" nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
 ```
 
 If you specify a directory as the `INPUT_FILES`, it will be scanned recursively. You can also specify a file glob (such as `*.xml`; single-quote it if you're on Linux so it doesn't get expanded by the shell) or a single file. If you specify a `.zip` or `.tar.gz` file, BlackLab will automatically index the contents.
@@ -49,7 +45,7 @@ Please note that if you're indexing very large files, you should give `java` mor
 To delete documents from an index:
 
 ```bash
-java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY
+java -cp "*" nl.inl.blacklab.tools.IndexTool delete INDEX_DIR FILTER_QUERY
 ```
 
 Here, `FILTER_QUERY` is a metadata filter query in [Lucene query language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) that matches the documents to delete. Deleting documents and re-adding them can be used to update documents.
@@ -76,17 +72,6 @@ If you choose the first option, specify the format name (which must match the na
 
 If you choose the second option, specify the fully-qualified class name of your DocIndexer class as the `FORMAT` parameter.
 
-## Add your own format
-
-The preferred way to add support for your input format one is to write an input format configuration file in either YAML or JSON format. See the [next section](simple-example.md).
-
-::: details Expert: implementing a custom indexer
-
-It is possible to [implement your own DocIndexer class](/development/customization/docindexer.md), which offers complete control over the indexing process, but we don't recommend this unless really necessary.
-
-If you encounter limitations with the configuration file approach, please [contact us](/guide/about.md#contact-us).
-
-:::
 
 ## Faster indexing
 

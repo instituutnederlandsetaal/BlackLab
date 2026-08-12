@@ -4,133 +4,108 @@ order: -1
 
 # BlackLab Server
 
-## What is it?
+BlackLab Server is the REST API (web service) for accessing BlackLab corpora. For most users, it is the best way to use BlackLab. It can be used from any programming language, and for anything from quick analysis scripts to full-featured corpus search applications (such as [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/)).
 
-BlackLab Server is a web service (REST API) for accessing BlackLab corpora. It is the preferred way of using BlackLab from any programming language. It can be used for anything from quick analysis scripts to full-featured corpus search applications (such as [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/)).
+See [Getting started](/guide/getting-started) for the basics. Below, we'll assume you have BlackLab Server up and running.
 
-## Basic installation, configuration
+What you might want to look at next:
 
-### Using Docker
+- Learn the [API by example](rest-api/by-example)
+- Consult the [API reference](/server/rest-api/)
+- Use BlackLab from [different programming languages](from-different-languages)
+- Configure BlackLab through [blacklab-server.yaml](configuration).
 
-Images are available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). The current image should be considered somewhat experimental: details may change. Suggestions for improving the image (and this guide) are welcome.
+Below we'll look at a few specific subjects.
 
-Since `v4.0.0`, we provide stable release images. We also provide a `dev` tag, which is always up to date with the `dev` branch.
+## Configuration directory
 
-To build a version from source, a Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
+BlackLab's configuration directory contains its `blacklab-server.yaml` as well as other files (mentioned below).
 
-We assume here that you are familiar with the BlackLab indexing process; see [Indexing with BlackLab](/guide/index-your-data/create-an-index.md) to learn more.
+For Docker users, this directory is always `/etc/blacklab`. If you don't use Docker, and want to use a different configuration directory, here's where BlackLab will look:
 
-Create a file named `test.env` with your indexing configuration:
+- the directory specified in `$BLACKLAB_CONFIG_DIR`
+- `$HOME/.blacklab/` (if you're running Tomcat under your own user account, e.g. on a development machine; `$HOME` refers to your home directory)
 
-```ini
-BLACKLAB_FORMATS_DIR=/path/to/my/formats
-INDEX_NAME=my-index
-INDEX_FORMAT=my-file-format
-INDEX_INPUT_DIR=/path/to/my/input-files
-JAVA_OPTS=-Xmx10G
-```
+::: details Passing `$BLACKLAB_CONFIG_DIR` to Tomcat
 
-To index your data:
-
-```bash
-docker compose --env-file test.env run --rm indexer
-```
-
-Now start the server:
-
-```bash
-docker compose up -d
-```
-
-Your corpus should now be accessible at http://localhost:8080/blacklab-server/my-index.
-
-
-See the [Docker README](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/docker#readme) for more details.
-
-### Manual installation (without Docker)
-
-#### Java JRE
-
-Install a JRE (Java runtime environment). BlackLab requires at least version 17, but version 21 or newer versions should work as well.
-
-#### Tomcat
-
-BlackLab Server needs a Java application server to run. We will use Apache Tomcat.
-
-Install Tomcat 9 (for `v4`) or 10 (for future `v5` and current `dev` branch) on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
-
-
-### Configuration file
-
-Create a configuration file `/etc/blacklab/blacklab-server.yaml`.
-
-::: details <b>TIP:</b> Other locations for the configuration file
-
-If `/etc/blacklab` is not practical for you, you can also place `blacklab-server.yaml` here:
-
-- the directory specified in `$BLACKLAB_CONFIG_DIR`, if Tomcat is started with this environment variable set (create or edit `setenv.sh` in the Tomcat `bin` directory to set environment variables, or e.g. put it in `/etc/sysconfig/tomcat` on a system using systemd)
-- `$HOME/.blacklab/` (if you're running Tomcat under your own user account, e.g. on a development machine; `$HOME` refers to your home directory)  
+To pass `$BLACKLAB_CONFIG_DIR` to Tomcat, create or edit `setenv.sh` in the Tomcat `bin` directory to set environment variables. You can also set them in `/etc/sysconfig/tomcat` if using systemd. Check the Tomcat documentation for details
 
 :::
 
-The minimal configuration file only needs to specify a location for your corpora. Create a directory for your corpora, e.g. `/data/index` and refer to it in your `blacklab-server.yaml` file:
+There can be various subdirectories in the configuration directory:
+- `formats/` (`.blf.yaml` input format configuration files)
+- `plugins/` ([plugins](/development/customization/) with their configuration and any files they might need) should be if they exist
 
-```yaml
----
-configVersion: 2
+[BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) will look for its main configuration file and per-corpus configuration files (`projectconfigs`) here.
 
-# Where BlackLab can find corpora
-indexLocations:
-- /data/index
-```
-
-Your corpora would be in directories `/data/index/corpus1`, `/data/index/corpus2`, etc.
-
-
-### BlackLab Server WAR
-
-Download the BlackLab Server WAR (Java web application archive). You can either:
-- download the binary attached to the [latest release](https://github.com/instituutnederlandsetaal/BlackLab/releases) (the file should be called `blacklab-server-<VERSION>.war`) or
-- clone the [repository](https://github.com/instituutnederlandsetaal/BlackLab) and build it using Maven (`mvn package`; WAR file will be in `server/target/blacklab-server-<VERSION>.war` ).
-
-Place `blacklab-server.war` in Tomcat’s `webapps` directory (`$TOMCAT/webapps/`, where `$TOMCAT` is the directory where Tomcat is installed). Tomcat should automatically discover and deploy it, and you should be able to go to [http://servername:8080/blacklab-server/](http://servername:8080/blacklab-server/ "http://servername:8080/blacklab-server/") and see the BlackLab Server information page, which includes a list of available corpora.
-
-::: details <b>TIP:</b> Unicode URLs
-To ensure the correct handling of accented characters in (search) URLs, you should [configure Tomcat](https://tomcat.apache.org/tomcat-9.0-doc/config/http.html#Common_Attributes) to interpret URLs as UTF-8 (by default, it does ISO-8859-1) by adding an attribute `URIEncoding="UTF-8"` to the `<Connector/>` element with the attribute `port="8080"` in Tomcat's `server.xml` file.
-
-Of course, make sure that URLs you send to BlackLab are URL-encoded using UTF-8 (so e.g. searching for `"señor"` corresponds to a request like `http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22`). [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) does this by default.
-:::
 
 ## Memory usage
 
-For larger corpora, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.
+If your memory settings are suboptimal, performance may suffer.
 
-On the other hand, do not assign all of the system's memory to the JVM either. You should leave a significant amount for the operating system's disk cache, which can greatly speed up certain operations.
+This is assuming your machine has enough memory for what you're trying to do, of course. As a rough indication: we run a 4.5 billion token corpus on a (virtual) machine with 50 GB of memory, with few simultaneous users that generally perform simple queries, with the occasional heavier query.
+
+### Heap memory vs. disk cache
+
+For larger corpora, it is important to give Tomcat's JVM enough (heap) memory. (if memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl)
+
+On the other hand, do not assign all of the system's memory to JVM's heap, either. You should leave a significant amount for the operating system's disk cache, which can greatly speed up certain operations.
 
 The optimum way to divide up memory depends on many factors, but a good starting point is to assign no more than 50% of the system memory to the JVM. You can then experiment with increasing or decreasing the heap size to see what works best in your case.
 
 **NOTE:** If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward index](/guide/index-your-data/annotations.md#disable-the-forward-index) for that 'unique id' annotation.
 
+### How do I configure heap memory?
 
-## Indexing data
+For Docker users, this is done by setting the `JAVA_OPTS` environment variable, e.g. in your `docker-compose.yml`:
 
-You can index your data using the provided commandline tool IndexTool. See [Indexing with BlackLab](/guide/index-your-data/create-an-index.md).
+```yaml
+  blacklab:
+    image: instituutnederlandsetaal/blacklab:dev
+    environment:
+      # Set the JVM's maximum heap size to 10 GB
+      - "JAVA_OPTS=-Xmx10G"
+    # (... volumes, etc.)
+```
 
-Another option is to configure user authentication to allow users to create corpora and add their data using BlackLab Server. See [here](/server/user-corpora.html) to get started.
+For non-Docker usage, it's similar; for example, see [here](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/).
 
-There is currently no way to use BlackLab Server to add data to non-user ("global" or regular) corpora. In the future, this will be available using Solr.
+## Docker images
 
-## Searching your corpus
+Docker images are available on [Docker Hub](https://hub.docker.com/orgs/instituutnederlandsetaal/repositories?search=blacklab).
 
-You can try most BlackLab Server requests out by typing URLs into your browser. See [How to use](./overview) and the [API reference](/server/rest-api/) for more information.
+These are the two blacklab Docker images available:
+- `blacklab` is the base image, with BlackLab running inside Tomcat
+- `blacklab-frontend` adds BlackLab Frontend as well
 
-We also have a full-featured corpus search application available. See [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) for more information.
+The are numbered release tags such as `4.1.1`, `4.1` and `4`. For the most stable experience, use a numbered release, especially a specific patch version. (`4` is always the latest minor/patch, `4.1` the latest patch)
 
+There is also a `dev` tag that is always up to date with the `dev` branch. This provides more features and often better performance, but obviously less stability. We do aim to always keep the `dev` version in a releasable state, though.
 
-## What's next?
+If you want to build your own image from source, use a recent Docker version (at least version 23).
 
-- [Take a guided tour](overview.md)
-- [See all the API endpoints](/server/rest-api/)
-- [Learn how to use it from your favourite language](from-different-languages.md)
-- [Configuration options for BlackLab Server](configuration.md).
+### Paths in the images
 
+The images use the following paths:
+
+- `/etc/blacklab`: BlackLab's configuration directory. This is where main configuration file `blacklab-server.yaml` goes, plus the `formats` and `plugins` directories.
+- `/data/index`: where BlackLab looks for indexed corpora.
+- `/data/user-index`: where private user corpora are stored (only available if authentication is enabled)
+
+To extend the image's built-in `blacklab-server.yaml` file, bind mount a file at `/etc/blacklab/blacklab-server.override.yaml` (dev/future v5) and it will be read after `blacklab-server.yaml`. So in `docker-compose.yml`:
+
+```yaml
+    volumes:
+      # BlackLab will look for corpora here 
+      - /data/blacklab-corpora:/data/index
+      # Some configuration overrides
+      - ./my-bls-settings.yaml:/etc/blacklab/blacklab-server.override.yaml
+```
+
+### Build your own image
+
+To build the Docker image yourself, run this from the `docker` subdirectory:
+
+```bash
+docker compose build
+```

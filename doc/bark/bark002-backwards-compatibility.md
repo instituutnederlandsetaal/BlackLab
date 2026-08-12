@@ -31,7 +31,7 @@ If we decide to do a major overhaul of the REST API, we will use this parameter 
 
 Methods slated for removal will generally be deprecated first, with a recommended alternative, then removed in the next major version. There may occasionally be exceptions to this, e.g. if the interface changes so much that supporting the deprecated method is not practical.
 
-We do generally assume that most users are using the web service, not the Java code, so we are less worried about making Java changes than changing the REST API.
+We do generally assume that most users are using the REST API, not the Java code, so we are less worried about making Java changes than changing the API.
 
 
 ## Impact on users

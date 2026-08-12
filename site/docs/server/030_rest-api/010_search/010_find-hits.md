@@ -4,7 +4,7 @@ Find occurrences of a text pattern in the corpus, optionally filtered on documen
 
 This endpoint can also group hits (returning a list of groups), or show the contents of one of the resulting groups.
 
-This is generally the most-used endpoint for BlackLab Server, and includes the most features.  For a more gentle introduction, see the [overview](/server/overview.md).
+This is generally the most-used endpoint for BlackLab Server, and includes the most features.  For a more gentle introduction, see the [overview](/server/rest-api/by-example.md).
 
 **URL**
 - `/blacklab-server/<corpus-name>/hits` (API `v4`)
@@ -144,6 +144,14 @@ Some less commonly used parameters for advanced use cases.
 | `withspans`          | capture a list (named `with-spans`) of all spans overlapping each hit (e.g. this might contain the relevant sentence, paragraph and chapter spans if you've indexed those)                                                                                                                                                                                                                                                                                                                        |
 | `adjusthits`         | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                                 |
 | `scorer`             | Hit group scorer configuration (JSON). Specifies a way to assign a score to each hit group. Detailed explanation below.                                                                                                                                                                                                                                                                                                                                                                           |
+
+::: details Results limits
+
+Note that BlackLab has two results limits: one for _processing_ and one for _counting_. Processing a hit means the hit is stored and can be retrieved, sorted, grouped, faceted, etc. If the retrieval limit is reached, BLS will still keep _counting_ hits (to determine the total number of hits) but will no longer store them.
+
+By default, these limits are disabled.
+
+:::
 
 ::: details <b>The <code>pattgapdata</code> parameter explained</b>
 You may leave 'gaps' in the double-quoted strings in your BCQL query that can be filled in from tabular data. The gaps should be denoted by `@@`, e.g. `[lemma="@@"]` or `[word="@@cat"]`. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is `"The" "@@" "@@"` and your TSV data is `white\tcat\nblack\tdog`, this will execute the query `("The" "white" "cat") | ("The" "black" "dog")`. Please note that if you want to pass a large amount of data, you should use a `POST` request as the amount of data you can pass in a `GET` request is limited.  

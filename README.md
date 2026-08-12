@@ -14,18 +14,18 @@ If you wish to cite BlackLab, see [Citing BlackLab](https://blacklab.ivdnt.org/g
 
 ## Branches
 
-The default branch, **dev**, corresponds to the "bleeding edge" in-development version. You can certainly run it (we do), but if you need maximum stability, it might be better to stay on a stable release instead. 
+The default branch, **dev**, corresponds to the "bleeding edge" in-development version. It can offer new features and better performance, but could be less stable or polished.
 
-The branch that corresponds to BlackLab's latest release is called **main**.
+There is also a [**maintenance**](https://github.com/instituutnederlandsetaal/BlackLab/tree/maintenance) branch where we backport bugfixes to the latest release.
 
 There are additional branches related to in-development features. These are intended to be short-lived and will be merged into dev.
 
 
 ## Compatibility: Java, Lucene
 
-The current version of BlackLab requires Java 17 or higher. It has been tested up to and including Java 21.
+The current version of BlackLab requires Java 17 or higher. It has been tested up to and including Java 25.
 
-This version uses Lucene 8. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed.
+This version uses Lucene 9. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed.
 
 
 ## Roadmap
@@ -68,55 +68,10 @@ npm run docs:build
 
 ## Using BlackLab with Docker
 
-Docker images are provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab).
+Docker images for BlackLab are provided on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). There are release tags (e.g. `v4.1.1`) and a `dev` tag that is always up-to-date with the `dev` branch. Use a numbered release for stability and reliabily, or `dev` for the latest features and best performance.
 
-To build the Docker image yourself, use a modern Docker version supporting BuildKit (minimum versions: Docker 18.09, Compose 1.27.1). 
+See https://blacklab.ivdnt.org/guide/getting-started.html to start using BlackLab with Docker.
 
-See the [Docker README](docker/#readme) for more details.
-
-### Indexing with Docker 
-
-We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://blacklab.ivdnt.org/indexing-with-blacklab.html) to learn more.
-
-The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the `scripts` directory. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
-
-Alternatively, you can use Docker Compose to run the indexer. This will create your index on a named volume defined by the Compose file.
-
-Create a file named `test.env` with your indexing configuration:
-
-```ini
-BLACKLAB_FORMATS_DIR=/path/to/my/formats
-INDEX_NAME=my-index
-INDEX_FORMAT=my-file-format
-INDEX_INPUT_DIR=/path/to/my/input-files
-JAVA_OPTS=-Xmx10G
-```
-
-To index your data:
-
-```bash
-docker compose --env-file test.env run --rm indexer
-```
-
-Now start the server:
-
-```bash
-docker compose up -d
-```
-
-Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
-
-If you want to be able to use the corpus frontend as well, create a file named `.env` in the root of the repository with the following contents:
-
-```ini
-DOCKER_IMAGE=blacklab-frontend
-```
-
-Then run:
-
-```bash
-docker compose up -d --no-build
-```
 
 ## Special thanks
 

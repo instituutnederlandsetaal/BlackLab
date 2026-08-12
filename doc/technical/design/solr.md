@@ -4,14 +4,7 @@ Various notes and thoughts on integrating BlackLab with Solr.
 
 ::: warning
 
-BlackLab/Solr integration is still in early development. This information
-is only provided for the curious who want to experiment.
-
-Specifically, it is not yet possible to find patterns in text using Corpus Query
-Language, which is the whole point of BlackLab.
-
-Eventually, all BlackLab features will be made available through Solr, and distributed
-corpus and search will be enabled.
+BlackLab/Solr integration was started a while ago. We may continue developing it, or we may choose a different route to achieve distributed search. This information is only provided for the curious who want to experiment.
 
 :::
 

@@ -4,8 +4,8 @@
 
 BlackLab was developed at the [Dutch Language Institute (INT)](http://www.ivdnt.org/) to provide a fast and feature-rich search interface on our historical and contemporary text corpora. It was released as open source (Apache License 2.0) in 2012 and has since gathered a number of users and contributors. It is still in active development.
 
-* GitHub repositories: [BlackLab Server and Core](https://github.com/instituutnederlandsetaal/BlackLab) and [BlackLab Frontend](https://github.com/instituutnederlandsetaal/blacklab-frontend)
-* [Release history](/development/changelog.md)
+* GitHub repositories: [BlackLab](https://github.com/instituutnederlandsetaal/BlackLab) and [BlackLab Frontend](https://github.com/instituutnederlandsetaal/blacklab-frontend)
+* [Changelog, release history](/development/changelog.md)
 
 ## Contact us
 

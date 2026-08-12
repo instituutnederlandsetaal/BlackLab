@@ -1,6 +1,6 @@
 # Change Log
 
-## Changes in dev
+## Changes in dev (future v5)
 
 ### New
 
@@ -81,6 +81,16 @@ Too much to list, but most importantly:
 - legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
 - many deprecated and unused methods.
 - INT-specific `convert-and-tag` plugin.
+
+
+## v4.1.1
+
+### Fixed
+
+- Fix NPE in SaxonDocumentWithElementOffsets with DOCTYPE SYSTEM entity declarations.
+- Try to load external entity from file.
+- Guard against annotated field without annotations.
+- Fix off-by-one when reading document contents.
 
 
 ## v4.1.0

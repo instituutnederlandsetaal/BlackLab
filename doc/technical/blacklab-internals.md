@@ -129,7 +129,7 @@ This the current list of modules:
 | `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar.                                                                                                                                        |
 | `mocks`           | mock objects useful for testing. Shouldn't be included in library build.                                                                                                                                                    |
 | `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser).                                                                                                                          |
-| `server`          | the BlackLab Server web service                                                                                                                                                                                             |
+| `server`          | the BlackLab Server REST API                                                                                                                                                                                                |
 
 Future plans for this module structure:
 

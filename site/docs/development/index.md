@@ -4,17 +4,6 @@ order: -1
 
 # Development resources
 
-## BlackLab Core
-
-The Java library
-
-
-First you need to get the BlackLab library. The simplest way is to let Maven download it automatically from the Central Repository, but you can also download a prebuilt binary, and it's trivial to build it yourself.
-
-<blockquote>
-<b>Note to MacOS users</b>: Dirk Roorda at DANS wrote a detailed guide for installing and indexing data on MacOS. It's available <a href='https://github.com/Dans-labs/clariah-gm/blob/master/blacklab/install.md'>here</a>. It's also archived <a href="../server/install-macos.html">here</a>.
-</blockquote>
-
 ## Getting BlackLab
 
 ### Getting BlackLab from Maven Central
@@ -41,29 +30,15 @@ BlackLab Server only consists of a WAR file that includes everything. You could 
 
 If you want the very latest version (the "dev" branch) of BlackLab, you can easily build it from source code.
 
-First, you need to download the source code from GitHub. You can download it from there in a .zip file (be sure to select the `dev` branch before doing so), but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
+Either use Git to clone https://github.com/instituutnederlandsetaal/BlackLab or download a .zip file from GitHub.
 
-	git clone git://github.com/instituutnederlandsetaal/BlackLab.git
+Install JDK 17+ and build BlackLab using Maven:
 
-Git will download the project and place it in a subdirectory "BlackLab". Now switch to the `dev` branch:
+```bash
+mvn install
+```
 
-    git checkout dev
-    
-Install a recent JDK (Java Development Kit). If you're on Linux, you can use your package manager to do this (OpenJDK is fine too). Note that you will need at least JDK version 8 (i.e. openjdk-1.8.0) to use the latest BlackLab versions.
-
-BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build tool. [Install Maven](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) (use your package manager if on Linux), change into the BlackLab directory, and build the library:
-
-	mvn install
-
-("install" refers to the fact that the library is "installed" to your private Maven repository after it is built)
-
-After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "5.0.0-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
-
-::: tip NOTE
-If you want to use BlackLab Server and [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the `webapps` directory (e.g. `/var/lib/tomcat/webapps/`, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](/server/overview.md).
-:::
-
-## A simple BlackLab application
+## A simple Java BlackLab application
 
 Finally, let's look at an example Java application.
 
@@ -82,10 +57,10 @@ The above in code:
 ```java
 	// Open your corpus
 	try (BlackLabIndex index = BlackLab.open(new File("/home/zwets/testindex"))) {
-	    String corpusQlQuery = " \"the\" [pos=\"adj.*\"] \"brown\" \"fox\" ";
+	    String query = " \"the\" [pos=\"adj.*\"] \"brown\" \"fox\" ";
 	
 	    // Parse your query to get a TextPattern
-	    TextPattern pattern = CorpusQueryLanguageParser.parse(corpusQlQuery);
+	    TextPattern pattern = CorpusQueryLanguageParser.parse(query);
 	
 	    // Execute the TextPattern
 	    Hits hits = index.find(pattern);
@@ -111,26 +86,6 @@ The above in code:
 	}
 ```
 
-See also:
-- [The included example application](/guide/example-application)
+## More development documentation
 
-
-
-## Tutorials / howtos
-
-### A custom analysis script
-
-
-### Using the forward index
-
-
-### Using capture groups
-
-
-### Indexing a different input format
-
-
-
-## Internals
-
-The more in-depth information about BlackLab's internals, such as the structure of the code, and details about file formats, is available in [the GitHub repository](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/doc/#readme), along with other documentation related to development.
+The more development-related documentation is available in [the GitHub repository](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/doc/#readme). It includes various information about BlackLab's internals, such as the structure of the code, and details about file formats.

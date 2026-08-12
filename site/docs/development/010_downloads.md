@@ -13,19 +13,19 @@ the corpora they support.
 
 The reason for not all older corpora being usable with a newer BlackLab version is mostly that Lucene drops support for older index formats.
 
-| BlackLab       | 1st release | Java | Lucene | Solr | Supports corpora...     |
-|----------------|:------------|------|--------|------|-------------------------|
-| future 6.x     | 2026        | 21   | 10     | 10   | created with BL 5/6     |
-| dev/future 5.x | 2026        | 17   | 9      | 9    | created with BL 4/5     |
-| 4.x            | Jul 2025    | 17   | 8      | 8    | created with BL 4       |
-| 3.x            | Jul 2022    | 11   | 8      | -    | created with BL 3       |
-| 2.x            | Jan 2020    | 8    | 5      | -    | created with BL 1.2-2.x |
-| 1.7-1.9        | Jun 2018    | 8    | 5      | -    | created with BL 1.2-2.x |
-| 1.0-1.2        | Apr 2014    | 6    | 3/5    | -    | created with BL 1.x     |
+| BlackLab       | 1st release    | Java | Lucene | Solr | Supports corpora...     |
+|----------------|:---------------|------|--------|------|-------------------------|
+| future 6.x     | (planned) 2026 | 21   | 10     | 10   | created with BL 5/6     |
+| dev/future 5.x | (planned) 2026 | 17   | 9      | 9    | created with BL 4/5     |
+| 4.x            | Jul 2025       | 17   | 8      | 8    | created with BL 4       |
+| 3.x            | Jul 2022       | 11   | 8      | -    | created with BL 3       |
+| 2.x            | Jan 2020       | 8    | 5      | -    | created with BL 1.2-2.x |
+| 1.7-1.9        | Jun 2018       | 8    | 5      | -    | created with BL 1.2-2.x |
+| 1.0-1.2        | Apr 2014       | 6    | 3/5    | -    | created with BL 1.x     |
 
 You can stay on an older version to avoid reindexing your corpora, but you'll miss out on performance improvements and new features.
 
-We will generally maintain a major release until the next major release comes out. We may backport some critical fixes after that.
+We will generally maintain a major release until the next major release comes out. We may backport some critical fixes after that; check the [`maintenance`](https://github.com/instituutnederlandsetaal/BlackLab/tree/maintenance) branch.
 
 
 ## Build your own
@@ -37,12 +37,5 @@ using Maven:
 git clone git://github.com/instituutnederlandsetaal/BlackLab.git
 cd BlackLab
 # git checkout dev    # (the default branch)
-mvn clean package
-```
-
-To instead build the most recent release of BlackLab yourself:
-
-```bash
-git checkout main
 mvn clean package
 ```

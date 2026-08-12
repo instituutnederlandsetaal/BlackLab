@@ -24,7 +24,7 @@ No? No. Back to the drawing board, I guess.
 
 Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://blacklab.ivdnt.org/) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
 
-BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](/development/changelog)). Have a look at our [roadmap](/guide/future-plans) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
+BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](/development/changelog)). Have a look at our [roadmap](/guide/faq#future-plans) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
 
 <a id="whitelab"></a>
 
@@ -149,6 +149,6 @@ The QueryTool is a useful debugging aid. It lets you try out BlackLab and test y
 Past, present and future
 ------------------------
 
-Want to know about every recent improvement in BlackLab? Check out the [changelog](/development/changelog) page. Or, if you'd rather look to the future, the [roadmap](/guide/future-plans) gives a good overview of where we're headed.
+Want to know about every recent improvement in BlackLab? Check out the [changelog](/development/changelog) page. Or, if you'd rather look to the future, the [roadmap](/guide/faq#future-plans) gives a good overview of where we're headed.
 
 If you have any questions about BlackLab, or suggestions of course, don't hesitate to [contact us](/guide/about#contact-us). Also, I will be at eLex 2013 in Tallinn in October, so if you're going there as well, we can meet to talk shop!

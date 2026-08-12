@@ -1,8 +1,10 @@
-# Files in the integrated index
+# Files in a BlackLab index
 
-This describes the new index format that integrates all previously external files (forward index, content store, index metadata, version files) into the Lucene index. The goal is to enable distributed indexing and search using Solr. Eventually this will become the default for new indexes.
+This describes BlackLab's index format.
 
-The integrated index has a codec name `BlackLab40Codec` and version of 1. (Additional versions or codecs may be added in the future)
+This is the index format introduced with BlackLab v4 that integrates all previously external files (forward index, content store, index metadata, version files) into the Lucene index.
+
+BlackLab indexes have a codec name `BlackLab40Codec` and version of 1. (Additional versions or codecs may be added in the future)
 
 ## Index metadata
 

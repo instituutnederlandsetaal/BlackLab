@@ -213,7 +213,7 @@ Use this configuration for this situation:
 ## (each anchor id will point to the token FOLLOWING the anchor!)
 inlineTags:
   - path: ./anchor
-    tokenIdPath: "@id"
+    tokenIdPath: "@xml:id"
 
 standoffAnnotations:
 - path: .//span

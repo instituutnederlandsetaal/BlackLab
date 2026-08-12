@@ -4,7 +4,7 @@ If you configure a form of user authentication, you can allow users to manager t
 
 BlackLab Server includes support for creating corpora and adding documents to them. We use these features in BlackLab Frontend to allow users to quickly corpus data and search it, without having to set up a BlackLab installation themselves. Here's a very quick overview.
 
-Currently, only private corpora can be created and appended to. This means there must be a logged-in user. The [`authentication`](configuration.md#authentication) section in `blacklab-server.yaml` will let you specify what authentication system you'd like to use.
+Currently, only private corpora can be created and appended to. This means there must be a logged-in user. The [`authentication`](configuration.md#authentication-system) section in `blacklab-server.yaml` will let you specify what authentication system you'd like to use.
 
 Another required setting is [`userIndexes`](/server/configuration.html#corpora-locations) (in addition to `indexLocations` which points to the "globally available" corpora). In this directory, user-private corpora will be created. Obviously, the application needs write permissions on this directory.
 

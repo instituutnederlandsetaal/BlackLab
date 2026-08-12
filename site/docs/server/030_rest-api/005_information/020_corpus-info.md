@@ -8,10 +8,12 @@ Return the corpus metadata, including size, document format, annotated and metad
 
 **Method** : `GET`
 
-| Parameter     | Description                                                                                                |
-|---------------|------------------------------------------------------------------------------------------------------------|
-| `limitvalues` | Maximum number of values to return for fields. Default: `200`                                              |
-| `custom`      | **(API `v5`)** Whether to include custom properties like `displayName`, `description`, etc. Default: `false` |
+| Parameter            | Description                                                                                                  |
+|----------------------|--------------------------------------------------------------------------------------------------------------|
+| `limitvalues`        | Maximum number of values to return for fields. Default: `200`                                                |
+| `listvalues`         | Annotations to list the values for. Default: none                                                            |
+| `listmetadatavalues` | Metadata fields to list the values for. Default: all                                                         |
+| `custom`             | **(API `v5`)** Whether to include custom properties like `displayName`, `description`, etc. Default: `false` |
 
 ## Success Response
 

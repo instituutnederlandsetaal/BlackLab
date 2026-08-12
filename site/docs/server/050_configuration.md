@@ -1,6 +1,6 @@
-# Configuration
+# Configuration file
 
-BlackLab Server settings can be configured in a configuration file.
+BlackLab Server settings can be configured in a configuration file usually named `blacklab-server.yaml`.
 
 ## YAML vs. JSON
 
@@ -15,6 +15,8 @@ Where should this file (or files) be located? BlackLab looks for them in the fol
 - `/etc/blacklab`
 
 In addition, BlackLab Server will also look for `blacklab-server.yaml` in the directory where the .war file is located, e.g. `/usr/share/tomcat/webapps`.
+
+More about the configuration directory [here](/server/#configuration-directory).
 
 ## Minimal config file
 
@@ -243,7 +245,7 @@ Without any additional configuration, this will simply require that a user is lo
 
 Alternatively, you can specify a fixed user id and password in the configuration file. BlackLab will check the HTTP Basic Authentication header against these credentials, and if they match, the user will be logged in as the specified user id. This is mainly useful for testing purposes. Note that if no password is given, any password is accepted!
 
-If the `required` parameter is set to `true`, users cannot even search public corpora without logging in. If omitted or set to `false`, logging in is only necessary for creating and searching private user corpora.
+By default, logging in is required for all requests. Set the `required` parameter to `false` to allow a user to search public corpora without logging in. This doesn't work with BlackLab Frontend, however.
 
 ```yaml
 authentication:
@@ -251,13 +253,8 @@ authentication:
         class: AuthHttpBasic
         userId: test@example.com
         password: secret123
-        
-        # require user to be logged in?
-        # (with required: false (the default), you can still search public 
-        #  corpora even if you're not logged in; only creating and searching 
-        #  private corpora is restricted)
-        required: true
 ```
+
 
 #### Fixed debug login
 
@@ -272,32 +269,8 @@ authentication:
 
 With this, BlackLab will simply assume the specified user is always logged in. This is obviously not safe to use in production.
 
-To enable private user corpora, you also need to specify a `userIndexes` directory in which each user will get a subdirectory containing their corpora. See [User-managed corpora](user-corpora.md) for more about this.
+To enable private user corpora, you also need to specify a `userIndexes` directory in which each user will get a subdirectory containing their corpora. See [User-managed corpora](/server/user-corpora) for more about this.
 
-::: details Advanced authentication settings
-
-There's one more setting that can occur under `authentication`:
-
-```yaml
-authentication:
-    # (...above settings...)
-    
-    # This is an insecure way of authenticating to BlackLab Server by sending
-    # two HTTP headers. It is only intended for testing purposes.
-    # 
-    # Choose a 'secret' password here. Then send your requests to BlackLab Server 
-    # with the extra HTTP headers X-BlackLabAccessToken (the 'secret' password) and
-    # X-BlackLabUserId (the user you wish to authenticate as).
-    # 
-    # Needless to say this method is insecure because it allows full access to
-    # all users' corpora, and the access token could potentially leak to an
-    # attacker.
-    #
-    # DO NOT USE EXCEPT FOR TESTING
-    #debugHttpHeaderAuthToken: secret
-```
-
-:::
 
 ### Indexing
 
@@ -318,6 +291,9 @@ indexing:
     # (only relevant if you've configured private corpora and authentication)
     # (default: 10)
     maxNumberOfIndicesPerUser: 10
+
+    # Max tokens for a private user index, default 100M
+    userIndexMaxTokenCount: 100_000_000
 ```
 
 (this section can also occur in `blacklab.yaml`, to apply to IndexTool; see [Configuring other tools](#configuring-other-tools))

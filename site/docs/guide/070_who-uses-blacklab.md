@@ -1,4 +1,4 @@
-# Who is using BlackLab?
+# Who uses BlackLab?
 
 A number of institutes and companies have chosen BlackLab for their corpus or text analysis projects.
 
