@@ -9,22 +9,17 @@ import nl.inl.util.DownloadCache;
 public class BLConfigIndexing {
     static final Logger logger = LogManager.getLogger(BLConfigIndexing.class);
 
-    /** Max tokens for a private user index, default 100M **/
-    private long userIndexMaxTokenCount = 100_000_000;
-
-    boolean downloadAllowed = false;
-    
-    String downloadCacheDir = null;
-    
-    int downloadCacheSizeMegs = 100;
-    
-    int downloadCacheMaxFileSizeMegs = 100;
-    
-    int zipFilesMaxOpen = 10;
-    
     int numberOfThreads = 2;
 
     int maxNumberOfIndicesPerUser = 10;
+
+    /** Max tokens for a private user index, default 100M **/
+    private long userIndexMaxTokenCount = 100_000_000;
+
+    /** What to do if a document already exists in the index (i.e. has the same persistent identifier):
+     * fail (default), replace (i.e. upsert) or skip?
+     */
+    BlackLabIndexWriter.IfDocumentExists ifDocumentExists = BlackLabIndexWriter.IfDocumentExists.FAIL;
 
     /** Should inline tags and relations be indexed case- and accent-sensitive?
      * This used to be the default, but we've switched over to case-insensitive
@@ -38,16 +33,21 @@ public class BLConfigIndexing {
      */
     int maxValueLength = 0;
 
+    boolean downloadAllowed = false;
+    
+    String downloadCacheDir = null;
+    
+    int downloadCacheSizeMegs = 100;
+    
+    int downloadCacheMaxFileSizeMegs = 100;
+    
+    int zipFilesMaxOpen = 10;
+
     @Deprecated
     public void setMaxMetadataValuesToStore(@SuppressWarnings("unused") int maxMetadataValuesToStore) {
         // IGNORED, removed setting that may still linger in older config files.
         logger.warn("Ignoring deprecated setting 'maxMetadataValuesToStore'. Please remove this setting from blacklab[-server].yaml.");
     }
-
-    /** What to do if a document already exists in the index (i.e. has the same persistent identifier):
-     * fail (default), replace (i.e. upsert) or skip?
-     */
-    BlackLabIndexWriter.IfDocumentExists ifDocumentExists = BlackLabIndexWriter.IfDocumentExists.FAIL;
 
     public DownloadCache.Config downloadCacheConfig() {
         return new DownloadCache.Config() {

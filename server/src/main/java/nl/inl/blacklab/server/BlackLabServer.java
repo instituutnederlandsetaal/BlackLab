@@ -11,6 +11,7 @@ import java.util.Calendar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.jul.Log4jBridgeHandler;
 import org.apache.lucene.index.IndexFormatTooOldException;
 
 import io.micrometer.core.instrument.Metrics;
@@ -60,6 +61,8 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
+        Log4jBridgeHandler.install(true, null, true);
+
         File servletPath = new File(config.getServletContext().getRealPath("."));
         logger.debug("Running from dir: " + servletPath);
 

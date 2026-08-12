@@ -99,15 +99,6 @@ public class UserRequestBls implements UserRequest {
                     }
                 }
             }
-
-            // Override via HTTP header? (insecure, normally disabled)
-            String debugHttpHeaderToken = config.getAuthentication().getDebugHttpHeaderAuthToken();
-            if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
-                String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
-                if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
-                    user = User.fromIdAndSessionId(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
-                }
-            }
         }
         return user;
     }

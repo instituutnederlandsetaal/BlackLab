@@ -1,10 +1,11 @@
 ---
-# BlackLab Server config file
-# ===============================================================
+# BlackLab Server configuration, see https://blacklab.ivdnt.org/server/configuration.html
 
-# Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# Where corpora can be found (inside the container)
+# (list directories whose subdirectories are indexed corpora, or directories containing a single indexed corpus)
 indexLocations:
-- /data/index
+  - /data/index
 
+# Where user-created corpora will be stored (inside the container)
+# (note that user corpora only works if authentication is enabled)
 userIndexes: /data/user-index

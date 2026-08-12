@@ -16,6 +16,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,7 @@ public class IndexTool {
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+        LogUtil.setupBasicLoggingConfig(Level.WARN);
 
         // Parse command line
         int maxDocsToIndex = 0;

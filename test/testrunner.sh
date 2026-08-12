@@ -31,15 +31,7 @@ cd "$( dirname -- "$0"; )"/
 # Ensure latest-test-output dirs exist
 mkdir -p data/latest-test-output
 
-# Check how to call Compose
-#COMPOSE=docker-compose
-#if ! command -v $COMPOSE &> /dev/null
-#then
-    COMPOSE="docker compose"
-#fi
-
-# Enable BuildKit
-export DOCKER_BUILDKIT=1
+COMPOSE="docker compose"
 
 #----------------------------------------------------------
 # Build and run BlackLab Server

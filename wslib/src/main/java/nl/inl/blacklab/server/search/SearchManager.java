@@ -141,7 +141,7 @@ public class SearchManager {
                 .getDeclaredConstructor(BLSConfig.class, ExecutorService.class);
             SearchCache cache = (SearchCache) declaredConstructor
                 .newInstance(config, executorService);
-            logger.info("Created cache with class: {}", fqClassName);
+            logger.debug("Created cache with class: {}", fqClassName);
             return cache;
         } catch (Exception ex) {
             String message = String.format("Can not create cache with class: %s. Did you check your implementation " +

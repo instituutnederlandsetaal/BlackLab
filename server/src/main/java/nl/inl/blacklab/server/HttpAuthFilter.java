@@ -66,7 +66,7 @@ public class HttpAuthFilter implements Filter {
             //  access to that here)
             requiredUser = authCfg.get("userId");
             requiredPassword = authCfg.get("password");
-            okayWithoutLogin = authCfg.get("required") == null || !Boolean.parseBoolean(authCfg.get("required"));
+            okayWithoutLogin = authCfg.get("required") != null && !Boolean.parseBoolean(authCfg.get("required"));
             if (!StringUtils.isEmpty(requiredUser)) {
                 logger.info("HTTP Basic Authentication enabled (required user '{}', {} password check, login {})",
                         requiredUser, requiredPassword == null ? "no" : "",

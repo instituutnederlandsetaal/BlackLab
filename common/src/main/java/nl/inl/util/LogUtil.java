@@ -11,6 +11,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.logging.log4j.jul.Log4jBridgeHandler;
 import org.apache.logging.log4j.status.StatusLogger;
 
 /**
@@ -33,6 +34,10 @@ public final class LogUtil {
     @SuppressWarnings("deprecation")
     public static void setupBasicLoggingConfig(Level level) {
         // (use a config file (e.g. log4j2.xml) or programmatically configure log4j yourself)
+
+        // Bridge JUL (used by Lucene and others) into Log4j2 so all logging is unified.
+        // This is a no-op if the JVM-level bridge (-Djava.util.logging.manager=...) is already active.
+        Log4jBridgeHandler.install(true, null, true);
 
         // Temporarily disable status logger to suppress "no config file found" message
         StatusLogger statusLogger = StatusLogger.getLogger();

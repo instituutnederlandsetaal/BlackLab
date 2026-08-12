@@ -10,12 +10,6 @@ public class BLSConfigAuth {
     Map<String, String> system = new HashMap<>();
     
     List<String> overrideUserIdIps = Collections.emptyList();
-
-    /**
-     * An insecure way of authenticating a user via HTTP headers
-     * X-BlackLabAccessToken / X-BlackLabUserId, only to be used for testing.
-     */
-    final String debugHttpHeaderAuthToken = "";
     
     public Map<String, String> getSystem() {
         return system;
@@ -33,9 +27,5 @@ public class BLSConfigAuth {
 
     public boolean isOverrideIp(String ip) {
         return overrideUserIdIps.contains(ip);
-    }
-
-    public String getDebugHttpHeaderAuthToken() {
-        return debugHttpHeaderAuthToken;
     }
 }

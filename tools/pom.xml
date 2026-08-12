@@ -37,7 +37,7 @@
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.30.5</version>
+            <version>4.3.1</version>
         </dependency>
 
         <!-- Frequency Tool: faster CSV, LZ4 compression and object serialization -->

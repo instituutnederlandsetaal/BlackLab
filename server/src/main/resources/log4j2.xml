@@ -6,7 +6,16 @@
 		</Console>
 	</Appenders>
 	<Loggers>
-		<Root level="debug">
+		<!-- BlackLab's own code: keep at INFO so any issues are visible -->
+		<Logger name="nl.inl" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<!-- Suppress Lucene/Solr startup INFO messages that are routed here via log4j-jul -->
+		<Logger name="org.apache.lucene" level="warn" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<!-- Everything else (third-party libraries) at INFO to reduce noise -->
+		<Root level="info">
 			<AppenderRef ref="Console" />
 		</Root>
 	</Loggers>

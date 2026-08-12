@@ -4,6 +4,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,6 +22,11 @@ import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.IndexSourceTypeFile;
+import nl.inl.blacklab.index.IndexSourceTypeFileInArchive;
+import nl.inl.blacklab.index.IndexSourceTypeTest;
+import nl.inl.blacklab.indexers.config.InputFormatTypeExample;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMultiple;
 import nl.inl.blacklab.search.BlackLab;
 
 /**
@@ -110,6 +116,20 @@ public class PluginsOfType<T extends Plugin> {
         add(id, data);
     }
 
+    /** Internal, non-allowed plugins we don't want to report. */
+    private static final Set<Class<? extends Plugin>> internalPluginsDontReport = Set.of(
+            RemoveDocIfNotInList.class,
+            PrintPid.class,
+            IndexSourceTypeFile.class,
+            IndexSourceTypeTest.class,
+            IndexSourceTypeFileInArchive.class,
+            InputFormatTypeExample.class,
+            ProcessingInstructionMultiple.class
+    );
+
+    /** Non-allowed plugins that have already been reported. */
+    private final Set<PluginData<T>> disallowedPluginsReported = new HashSet<>();
+
     private void add(String id, PluginData<T> data) {
         if (BlackLab.isPluginAllowed(data.getPlugin())) {
             synchronized (this) {
@@ -120,8 +140,15 @@ public class PluginsOfType<T extends Plugin> {
                     logger.warn("Plugin id collision, plugin '" + id + "' was already registered.");
                 }
             }
-        } else
-            logger.warn("Skipping plugin '" + id + "'; it's not on the plugins.allowed list)");
+        } else {
+            // Report non-allowed plugins once (don't report non-allowed builtin plugins)
+            synchronized (this) {
+                if (!disallowedPluginsReported.contains(data) && !internalPluginsDontReport.contains(data.getPlugin().getClass())) {
+                    disallowedPluginsReported.add(data);
+                    logger.warn("Skipping plugin '" + data.getPlugin().getId() + "'; it's not on the plugins.allowed list)");
+                }
+            }
+        }
     }
 
     public Collection<T> getAll() {

@@ -712,7 +712,7 @@ public class IndexManager {
      * @return the monitor
      */
     public FileAlterationMonitor startRemovedIndicesMonitor(List<File> directories, long pollingIntervalInMs) throws Exception {
-        logger.info("Installing index removal watcher on: {}", directories);
+        logger.debug("Installing index removal watcher on: {}", directories);
         FileAlterationMonitor monitor = new FileAlterationMonitor(pollingIntervalInMs);
         List<FileAlterationObserver> observers = directories.stream()
             .map(FileAlterationObserver::new)

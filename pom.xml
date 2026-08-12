@@ -456,6 +456,12 @@
 
         <!-- Logging -->
         <dependency>
+            <!-- Bridge JUL (used by Lucene and others) into Log4j2 so log4j2.xml controls everything -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jul</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>

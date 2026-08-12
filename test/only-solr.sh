@@ -25,15 +25,7 @@ fi
 # Go to the test dir
 cd $( dirname -- "$0"; )/
 
-# Check how to call Compose
-#COMPOSE=docker-compose
-#if ! command -v $COMPOSE &> /dev/null
-#then
-    COMPOSE="docker compose"
-#fi
-
-# Enable BuildKit
-export DOCKER_BUILDKIT=1
+COMPOSE="docker compose"
 
 ##----------------------------------------------------------
 ## Re-run the same tests using Solr+proxy
