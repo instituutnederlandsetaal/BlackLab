@@ -36,20 +36,23 @@ Try the `dev` branch for better performance, expanded plugin support, and many o
 
 ## Features
 
-BlackLab's features include:
-
-- **Index annotated text**, so you can search for specific headwords or parts of speech.
-- **Easy to use**, well-documented REST API.
-- **Fast and scalable**: search very large corpora in seconds.
-- **Index your data** using a built-in format or by writing a configuration file.
-- **Search for complex patterns** using the powerful [BlackLab Corpus Query Language](query-language/)
-- **Search within spans** to e.g. find named entities containing _tower_ at the end of a sentence.
-- **Search (dependency) relations**, to find specific (tree) structures in your text. **(NEW in `v4`)**
-- **Search parallel corpora**, so you can find alignments between different languages or historical versions. **(NEW in `v4`)**
-- **Capture** parts of matches.
+BlackLab's features:
+- **Index annotated data**: flexibly handles different input formats with any kind of annotations (e.g. headword/part-of-speech, named entities, etc.)
+- **Search for complex patterns** using the powerful [query language BCQL](query-language/) (see below)
 - **Group and sort** result sets on many criteria, such as the text preceding the match.
 - **Highlight** hits in a document and keyword-in-context (KWIC) view of hits.
-- **Mature and actively developed** since 2010.
+- **Fast and scalable**: supports searching corpora with billions of tokens
+- **Easy to use**, well-documented REST API
+- **Highly customizable using plugins**. Add your own data preprocessors, query functions, etc. (try on the dev branch or wait for v5)
+- **Mature and actively developed** since 2010
+
+Examples of search features:
+- **Token-based querying**<br>To find _dog_ or _cat_ followed within 10 tokens by one or more adjectives and a word starting with _friend_:<br>`[lemma="dog|cat"] []{1,10} [pos="ADJ"]+ "friend.*"`
+- **Search within spans**<br>To find named entities such as  _Sir Barkington the Third_:<br>`<ne/> containing "bark.*"`
+- **Find collocations**<br> (try on the dev branch or wait for v5)<br>To find nouns that occur close to _paw_ within a sentence:<br>`meet_within([pos=NOUN], [lemma="paw"], <s/>, -3, 3)`
+- **Search (dependency or other) relations**<br>To find nominal subjects for the verb _pet_<br>`[lemma="pet" & pos="VERB"] -nsubj-> [pos="NOUN"]`
+- **Search parallel corpora**, such as different languages or historical versions.<br>To find Dutch translations for _good dog_ and _bad dog_<br>`"good|bad" "dog" ==>nl _`
+- **Capture parts of matches**<br>Capture the noun after _canine_ or _feline_ as A<br>`"canine|feline" A:[pos="NOUN"] within <s/>`
 
 
 ## Try it out
