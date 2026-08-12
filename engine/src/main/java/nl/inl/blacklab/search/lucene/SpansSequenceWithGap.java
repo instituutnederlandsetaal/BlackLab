@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
-import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -100,12 +100,12 @@ class SpansSequenceWithGap extends BLSpans {
 
             @Override
             public int hitsLengthMin() {
-                return first.hitsLengthMin() + gap.minSize() + second.hitsLengthMin();
+                return first.hitsLengthMin() + gap.min() + second.hitsLengthMin();
             }
 
             @Override
             public int hitsLengthMax() {
-                return first.hitsLengthMax() + gap.maxSize() + second.hitsLengthMax();
+                return first.hitsLengthMax() + gap.max() + second.hitsLengthMax();
             }
         };
     }
@@ -314,11 +314,11 @@ class SpansSequenceWithGap extends BLSpans {
             // Where should the second clause start?
             // - firstPossibleSecondClauseMatchPosition: we never need to look at matches in second clause that start
             //                                           before this position
-            int firstPossibleSecondClauseMatchPosition = firstStart + gap.minSize();
+            int firstPossibleSecondClauseMatchPosition = firstStart + gap.min();
             // - currentSecondClauseMatchPosition: for current first clause match, this is the start position in the
             //                                     second clause
-            int currentSecondClauseMatchPosition = first.endPosition() + gap.minSize();
-            secondStartLast = gap.maxSize() == MAX_UNLIMITED ? MAX_UNLIMITED : first.endPosition() + gap.maxSize();
+            int currentSecondClauseMatchPosition = first.endPosition() + gap.min();
+            secondStartLast = gap.max() == MAX_UNLIMITED ? MAX_UNLIMITED : first.endPosition() + gap.max();
             
             // Do we need to advance the starting point in the second clause's bucket?
             // First, position indexFirstPossibleSecondClauseMatch according to firstPossibleSecondClauseMatchPosition.

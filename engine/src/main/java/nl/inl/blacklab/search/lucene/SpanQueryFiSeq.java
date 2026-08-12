@@ -23,9 +23,9 @@ import nl.inl.blacklab.search.fimatch.NfaTwoWay;
  */
 public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
-    public static final int DIR_TO_LEFT = -1;
+    public static final int DIR_BACKWARD = -1;
 
-    public static final int DIR_TO_RIGHT = 1;
+    public static final int DIR_FORWARD = 1;
 
     public static final boolean START_OF_ANCHOR = true;
 
@@ -40,7 +40,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
             @Override
             public int hitsLengthMin() {
-                if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
+                if (startOfAnchor && direction == DIR_BACKWARD || !startOfAnchor && direction == DIR_FORWARD) {
                     // Non-overlapping; add the two values
                     return clause.hitsLengthMin() + nfaQuery.hitsLengthMin();
                 }
@@ -50,7 +50,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
             @Override
             public int hitsLengthMax() {
-                if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
+                if (startOfAnchor && direction == DIR_BACKWARD || !startOfAnchor && direction == DIR_FORWARD) {
                     // Non-overlapping; add the two values
                     return clause.hitsLengthMax() + nfaQuery.hitsLengthMax();
                 }
@@ -60,28 +60,28 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
             @Override
             public boolean hitsStartPointSorted() {
-                if (direction == DIR_TO_RIGHT)
+                if (direction == DIR_FORWARD)
                     return clause.hitsStartPointSorted();
                 return clause.hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
             }
 
             @Override
             public boolean hitsEndPointSorted() {
-                if (direction == DIR_TO_LEFT)
+                if (direction == DIR_BACKWARD)
                     return clause.hitsEndPointSorted();
                 return clause.hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
             }
 
             @Override
             public boolean hitsHaveUniqueStart() {
-                if (direction == DIR_TO_RIGHT)
+                if (direction == DIR_FORWARD)
                     return clause.hitsHaveUniqueStart();
                 return clause.hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
             }
 
             @Override
             public boolean hitsHaveUniqueEnd() {
-                if (direction == DIR_TO_LEFT)
+                if (direction == DIR_BACKWARD)
                     return clause.hitsHaveUniqueEnd();
                 return clause.hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
             }
@@ -217,7 +217,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     public SpanQueryFiSeq appendNfa(BLSpanQuery originalQuery) {
         NfaTwoWay newNfa = nfa.copy();
         newNfa.append(originalQuery.getNfaTwoWay(fiAccessor, direction));
-        boolean addToRight = direction == DIR_TO_RIGHT;
+        boolean addToRight = direction == DIR_FORWARD;
         SpanQuerySequence newNfaQuery = SpanQuerySequence.sequenceInternalize(nfaQuery, originalQuery, addToRight);
         return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfa, newNfaQuery, direction, fiAccessor);
     }

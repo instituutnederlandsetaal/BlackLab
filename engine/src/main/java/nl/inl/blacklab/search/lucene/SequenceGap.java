@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 /**
  * Allowable gap size between parts of a sequence.
  */
-public record SequenceGap(int minSize, int maxSize) {
+public record SequenceGap(int min, int max) {
 
     public static final SequenceGap NONE = fixed(0);
 
@@ -26,12 +26,12 @@ public record SequenceGap(int minSize, int maxSize) {
     }
 
     public boolean isFixed() {
-        return minSize == maxSize;
+        return min == max;
     }
 
     @Override
     public String toString() {
-        return minSize + "-" + maxSize;
+        return min + "-" + max;
     }
 
 }

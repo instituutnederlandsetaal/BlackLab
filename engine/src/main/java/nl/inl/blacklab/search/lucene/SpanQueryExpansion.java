@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -246,7 +245,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         NfaState any = new NfaStateAnyToken(clauses.get(0).getRealField(), null);
         Nfa frag = new Nfa(any, List.of(any));
         frag.repeat(min, max);
-        if (direction == Direction.LEFT && nfaDirection == SpanQueryFiSeq.DIR_TO_RIGHT || direction == Direction.RIGHT && nfaDirection == SpanQueryFiSeq.DIR_TO_LEFT) {
+        if (direction == Direction.LEFT && nfaDirection == SpanQueryFiSeq.DIR_FORWARD
+                || direction == Direction.RIGHT && nfaDirection == SpanQueryFiSeq.DIR_BACKWARD) {
             // Prepend nfa with stretch of anytokens
             frag.append(nfa);
             nfa = frag;

@@ -669,7 +669,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                         BLSpans gapped = new SpansSequenceWithGap(expFirst.clause(),
                                 expFirst.gap(), spans);
                         newSpans = new SpansExpansionRaw(expSecond.lengthGetter(), gapped,
-                                Direction.RIGHT, expSecond.gap().minSize(), expSecond.gap().maxSize());
+                                Direction.RIGHT, expSecond.gap().min(), expSecond.gap().max());
                     } else {
                         // Only first is a forward expansion.
                         SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
@@ -689,7 +689,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                         BLSpans gapped = new SpansSequenceWithGap(spans1,
                                 expSecond.gap(), spans);
                         newSpans = new SpansExpansionRaw(expFirst.lengthGetter(), gapped,
-                                Direction.LEFT, expFirst.gap().minSize(), expFirst.gap().maxSize());
+                                Direction.LEFT, expFirst.gap().min(), expFirst.gap().max());
                     } else {
                         // Only second is a backward expansion
                         BLSpans spans = expSecond.clause();
@@ -729,8 +729,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         Nfa frag = null;
-        int start = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? 0 : clauses.size() - 1;
-        int end = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? clauses.size() : -1;
+        int start = direction == SpanQueryFiSeq.DIR_FORWARD ? 0 : clauses.size() - 1;
+        int end = direction == SpanQueryFiSeq.DIR_FORWARD ? clauses.size() : -1;
         for (int i = start; i != end; i += direction) {
             BLSpanQuery clause = clauses.get(i);
             Nfa clauseNfa = clause.getNfa(fiAccessor, direction);

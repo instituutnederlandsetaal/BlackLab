@@ -252,25 +252,25 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
         if (factor > 0) {
             // Forward (i.e. left is anchor, right is NFA)
-            if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) left).getDirection() == SpanQueryFiSeq.DIR_TO_RIGHT) {
+            if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) left).getDirection() == SpanQueryFiSeq.DIR_FORWARD) {
                 // Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
             ForwardIndexAccessor fiAccessor = right.getAnnotatedField().forwardIndexAccessor();
-            NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
-            return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
+            NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
+            return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_FORWARD, fiAccessor);
         }
 
         // Backward (i.e. right is anchor, left is NFA)
-        if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) right).getDirection() == SpanQueryFiSeq.DIR_TO_LEFT) {
+        if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) right).getDirection() == SpanQueryFiSeq.DIR_BACKWARD) {
             // Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
         ForwardIndexAccessor fiAccessor = left.getAnnotatedField().forwardIndexAccessor();
-        NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
-        return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
+        NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
+        return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_BACKWARD, fiAccessor);
     }
 
     @Override

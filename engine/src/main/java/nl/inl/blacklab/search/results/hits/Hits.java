@@ -131,7 +131,7 @@ public interface Hits extends Iterable<EphemeralHit> {
      * have been fetched.
      *
      * @param minSize minimum number of hits required
-     * @return true if there are at least minSize hits, false otherwise
+     * @return true if there are at least min hits, false otherwise
      */
     boolean sizeAtLeast(long minSize);
 

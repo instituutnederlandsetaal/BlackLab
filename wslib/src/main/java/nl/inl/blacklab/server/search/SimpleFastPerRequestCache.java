@@ -144,7 +144,7 @@ public class SimpleFastPerRequestCache implements SearchCache {
         };
 
         int maxSize = config.getCache().getMaxNumberOfJobs();
-        logger.info("Creating cache with maxSize:{}", maxSize);
+        logger.info("Creating cache with max:{}", maxSize);
         searchCache = Caffeine.newBuilder()
             .recordStats()
             .maximumSize(maxSize)
