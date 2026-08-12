@@ -8,10 +8,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.stream.XMLStreamException;
@@ -599,12 +597,12 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                                     if (type == AnnotationType.FRAGMENT) {
                                         // A fragment (or "subdocument") that can have its own metadata.
                                         // (note that fragments don't have annotations or a type)
-                                        processFragment(standoffNode, position, endOrTarget, standoff.getMetadata());
+                                        processFragment(standoffNode, position,
+                                                endOrTarget, standoff.getMetadata());
                                     } else {
                                         // A span (inline tag) or relation.
-                                        processStandoffSpan(standoffNode, type, position, endOrTarget,
-                                                standoffAnnotations,
-                                                spanOrRelType);
+                                        processStandoffSpan(standoffNode, type, position,
+                                                endOrTarget, standoffAnnotations, spanOrRelType);
                                     }
                                 }
                             }
@@ -613,91 +611,30 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 });
             }
 
-            List<Fragment> chopOverlappingFragments(List<Fragment> fragments) {
-                /** A position where a fragment starts or ends */
-                record FragmentMilestone(int pos, boolean isStart, Fragment fragment) implements Comparable<FragmentMilestone> {
-                    @Override
-                    public int compareTo(FragmentMilestone other) {
-                        int cmp = Integer.compare(this.pos, other.pos);
-                        if (cmp == 0) {
-                            // Ends are sorted before starts (i.e. adjoining fragments don't overlap)
-                            return Boolean.compare(this.isStart, other.isStart);
-                        }
-                        return cmp;
-                    }
-                }
-
-                // Get a sorted list of milestones
-                List<FragmentMilestone> milestones = new ArrayList<>(fragments.size() * 2);
-                for (Fragment fragment: fragments) {
-                    milestones.add(new FragmentMilestone(fragment.span.start(), true, fragment));
-                    milestones.add(new FragmentMilestone(fragment.span.end(), false, fragment));
-                }
-                Collections.sort(milestones);
-
-                // Now iterate over the milestones, chopping into non-overlapping new fragments.
-                // TODO: apply document metadata; create fragment before first and after last fragment
-                List<Fragment> choppedFrags = new ArrayList<>();
-                Set<Fragment> openFragments = new LinkedHashSet<>();
-                int pos = 0;
-                for (int i = 0; i < milestones.size(); i++) {
-                    FragmentMilestone milestone = milestones.get(i);
-                    if (!openFragments.isEmpty() && milestone.pos > pos)
-                        choppedFrags.add(new Fragment(Span.between(pos, milestone.pos), metadataFromFragments(openFragments)));
-                    if (milestone.isStart())
-                        openFragments.add(milestone.fragment());
-                    else
-                        openFragments.remove(milestone.fragment());
-                    pos = milestone.pos;
-                }
-                return choppedFrags;
-            }
-
-            private Map<String, Collection<String>> metadataFromFragments(Set<Fragment> openFragments) {
-                Map<String, Collection<String>> result = new HashMap<>();
-                for (Fragment fragment: openFragments) {
-                    result.putAll(fragment.metadata());
-                }
-                return result;
-            }
-
-            /** A document fragment with its metadata (not yet any inherited metadata!) */
-            record Fragment(Span span, Map<String, Collection<String>> metadata) implements Comparable<Fragment> {
-
-                /** Sort fragments by start position first, then endposition */
-                @Override
-                public int compareTo(Fragment other) {
-                    int cmp = Integer.compare(this.span().start(), other.span().start());
-                    return cmp == 0 ? Integer.compare(this.span().end(), other.span().end()) : cmp;
-                }
-
-                public boolean contains(Fragment fragment) {
-                    return fragment.span.start() >= span().start() && fragment.span.end() <= span().end();
-                }
-            }
-
-            /** The list of fragments found for each annotated field */
-            Map<String, List<Fragment>> fragsPerField = new HashMap<>();
-
             void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, List<ConfigMetadataBlock> metadataCfg) {
-                List<Fragment> frags = this.fragsPerField.get(currentAnnotatedField.name());
-
-                // Collect metadata using the rules, from the document level and/or specific to this fragment.
+                // Collect metadata using the rules in the .blf.yaml file
+                // (from the document level and/or specific to this fragment)
                 Map<String, Collection<String>> metadata = new HashMap<>();
                 if (config.getMetadata().iterator().next().isApplyDocRules()) {
                     // Apply the regular document-level metadata rules.
                     // (unknownValues are only applied just before saving to the index, so don't pose a problem here)
                     List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
-                    for (ConfigMetadataBlock b : mainMetadataCfg) {
+                    for (ConfigMetadataBlock b: mainMetadataCfg) {
                         processMetadataBlock(fragmentNode, b, metadata);
                     }
                 }
                 // Apply any custom metadata rules for this fragment
-                for (ConfigMetadataBlock b : config.getMetadata()) {
+                for (ConfigMetadataBlock b: metadataCfg) {
                     processMetadataBlock(fragmentNode, b, metadata);
                 }
 
-                frags.add(new Fragment(Span.between(fragStart.start(), fragEnd.start()), metadata));
+                // Add to the list of fragments for this annotated field.
+                this.fragsPerField.compute(currentAnnotatedField.name(),
+                        (k, v) -> {
+                            List<Fragment> fragments = v == null ? new ArrayList<>() : v;
+                            fragments.add(new Fragment(Span.between(fragStart.start(), fragEnd.start()), metadata));
+                            return fragments;
+                });
             }
 
             WarnOnce warnOnce() {
@@ -1054,6 +991,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
             }
         }
+
     }
 
 }

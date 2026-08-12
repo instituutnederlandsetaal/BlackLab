@@ -97,6 +97,9 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              */
             protected Map<String, Collection<String>> metadataFieldValues = new HashMap<>();
 
+            /** The list of fragments found for each annotated field, if any */
+            Map<String, List<Fragment>> fragsPerField = new HashMap<>();
+
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
                 this.relationsStrategy =
@@ -644,6 +647,29 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     // Add Lucene doc to indexer, if not existing already
                     if (getDocWriter() != null && !indexingIntoExistingDoc)
                         getDocWriter().add(currentDoc);
+
+                    // Are there document fragments to store as well?
+                    // (each fragment is stored in a separate Lucene document that references the main document)
+                    if (!fragsPerField.isEmpty()) {
+                        // For each annotated field that has fragments...
+                        MetadataField pidField = getDocWriter().metadata().metadataFields().pidField();
+                        BLFieldType untokenizedFieldType = getDocWriter().metadataFieldType(false);
+                        final String FRAG_PREFIX = "_frag_";
+                        if (pidField == null)
+                            throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
+                        String pid = currentDoc.get(pidField.name());
+                        for (Map.Entry<String, List<Fragment>> entry: fragsPerField.entrySet()) {
+                            String fieldName = entry.getKey();
+                            for (Fragment fragment: entry.getValue()) {
+                                currentDoc = createNewDocument();
+                                currentDoc.addField(FRAG_PREFIX + "doc", pid, untokenizedFieldType);
+                                currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
+                                currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
+                                fragment.store(getDocWriter());
+                            }
+                        }
+                    }
+
                 } catch (Exception e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
