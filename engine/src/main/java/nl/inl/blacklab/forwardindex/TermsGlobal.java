@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.store.AlreadyClosedException;
 
 import com.ibm.icu.text.CollationKey;
 import com.ibm.icu.text.Collator;
@@ -263,6 +264,8 @@ public class TermsGlobal implements Terms {
                     }
                 }
             }
+        } catch (AlreadyClosedException e) {
+            // Index was closed before we could fully initialize. This can happen with e.g. short tests.
         } catch (Exception e) {
             logger.error(e);
         }
