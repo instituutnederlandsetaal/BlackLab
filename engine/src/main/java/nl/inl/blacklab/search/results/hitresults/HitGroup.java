@@ -65,8 +65,10 @@ public class HitGroup implements HitOrDocGroup {
             }
             if (storeResults || hitsInGroupQuery == null) {
                 // Store results
-                group = new HitGroup(groupId, HitResults.list(queryInfo, grouped.getStoredHits()),
-                        grouped.getTotalNumberOfHits(), -1, hitsInGroupQuery, scorer);
+                group = new HitGroup(groupId, new HitResultsList(queryInfo, grouped.getStoredHits(),
+                        grouped.getStoredHits().countDocs(),
+                        grouped.getTotalNumberOfHits(), grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED),
+                        grouped.getTotalNumberOfHits(), grouped.getTotalNumberOfDocs(), hitsInGroupQuery, scorer);
             } else {
                 // Don't store results.
                 group = withoutResults(queryInfo, groupId, grouped.getTotalNumberOfHits(),
@@ -82,9 +84,9 @@ public class HitGroup implements HitOrDocGroup {
             long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery,
             HitGroupScorer scorer) {
         HitResultsList results = new HitResultsList(queryInfo,
-                Hits.empty(new Hits.HitsContext(queryInfo.field())), 0,
+                Hits.empty(new Hits.HitsContext(queryInfo.field())), totalDocuments,
                 totalSize, totalDocuments, maxStats);
-        return new HitGroup(groupIdentity, results, totalSize, -1, hitsInGroupQuery, scorer);
+        return new HitGroup(groupIdentity, results, totalSize, totalDocuments, hitsInGroupQuery, scorer);
     }
 
     /**

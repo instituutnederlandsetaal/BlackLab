@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results.hits;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
 /** A simple container representing a group of hits, some or all of which may be stored. */
@@ -15,7 +17,14 @@ public class Group {
     private int totalNumberOfDocs;
 
     /** Query to get hits in this group, or null if unknown */
-    private CompleteQuery hitsInGroupQuery;
+    private final CompleteQuery hitsInGroupQuery;
+
+    /** Doc ids in this group (stored or not), so we can get an accurate number of documents in the group.
+     *  Only valid for segment groups and while !isFinished. */
+    private IntSet docIdsInGroup = new IntOpenHashSet();
+
+    /** Have all hits been added to this group? */
+    private boolean isFinished = false;
 
     public Group(HitsMutable storedHits, long totalNumberOfHits, int totalNumberOfDocs, CompleteQuery hitsInGroupQuery) {
         this.storedHits = storedHits;
@@ -64,13 +73,44 @@ public class Group {
         return this;
     }
 
-    public void updateCounts(int addHits, boolean incrementDocs) {
-        totalNumberOfHits += addHits;
-        if (incrementDocs)
-            totalNumberOfDocs++;
-    }
-
     public CompleteQuery getHitsInGroupQuery() {
         return hitsInGroupQuery;
+    }
+
+    public void add(EphemeralHit hit, boolean storeHit) {
+        assert !isFinished;
+        if (storeHit)
+            storedHits.add(hit);
+        totalNumberOfHits++;
+        if (docIdsInGroup.add(hit.doc()))
+            totalNumberOfDocs++;
+        assert sanityCheck();
+    }
+
+    public void finishGroup() {
+        isFinished = true;
+        docIdsInGroup = null;
+    }
+
+    public boolean sanityCheck() {
+        if (storedHits.size() > totalNumberOfHits)
+            throw new IllegalStateException(
+                    "Stored hits size (" + storedHits.size() + ") is greater than total number of hits ("
+                            + totalNumberOfHits + ")");
+
+        if (totalNumberOfDocs > totalNumberOfHits)
+            throw new IllegalStateException(
+                    "Total number of docs (" + totalNumberOfDocs + ") is greater than total number of hits ("
+                            + totalNumberOfHits + ")");
+
+        if (totalNumberOfDocs == 0) {
+            if (totalNumberOfHits > 0)
+                throw new IllegalStateException(
+                        "Total number of docs is 0 but total number of hits is " + totalNumberOfHits);
+            if (!storedHits.isEmpty())
+                throw new IllegalStateException(
+                        "Total number of docs is 0 but stored hits size is " + storedHits.size());
+        }
+        return true;
     }
 }

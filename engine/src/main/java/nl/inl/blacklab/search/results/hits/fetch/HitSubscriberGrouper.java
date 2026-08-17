@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results.hits.fetch;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,9 +8,11 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import com.ibm.icu.text.CollationKey;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Group;
@@ -42,6 +45,9 @@ public class HitSubscriberGrouper implements HitSubscriber {
         this.originalQuery = originalQuery;
     }
 
+    /** If you group by context and there is no context for some hits, this is the identity value used for that group */
+    private static final int[] NO_TERM_VALUE = new int[] { Constants.NO_TERM };
+
     /**
      * Add a batch of hits to a grouping
      */
@@ -53,7 +59,6 @@ public class HitSubscriberGrouper implements HitSubscriber {
         groupBy = groupBy.copyWith(PropContext.segmentToGlobal(hits, lrc, collationCache));
 
         EphemeralHit hit = new EphemeralHit();
-        int prevDoc = -1;
         for (long hitIndex = startIndex; hitIndex < endIndex; hitIndex++) {
 
             // Determine group indentity
@@ -74,17 +79,23 @@ public class HitSubscriberGrouper implements HitSubscriber {
                             "Cannot handle more than " + HitGroups.MAX_NUMBER_OF_GROUPS + " groups");
                 HitsMutable hitsInGroup = HitsMutable.create(
                         hits.context(), -1, hits.size(), false);
-                // With the query, we can free memory and find hits again later
-                CompleteQuery completeQuery = originalQuery == null ? null :
-                        groupBy.refine(hits.index(), originalQuery, identity).orElse(null);
+                CompleteQuery completeQuery;
+                boolean isNoTerm = identity instanceof PropertyValueContextWords pcvw && Arrays.equals(pcvw.value(),
+                        NO_TERM_VALUE);
+                if (isNoTerm) {
+                    // We cannot make a query for "no value". If we have the stored hits, this is not a problem,
+                    // but if we don't, we have no way easy to find the hits in this group again.
+                    completeQuery = null;
+                } else {
+                    // With the query, we can free memory and find hits again later
+                    completeQuery = originalQuery == null ? null :
+                            groupBy.refine(hits.index(), originalQuery, identity).orElse(null);
+                }
                 group = new Group(hitsInGroup, 0, 0, completeQuery);
                 groups.put(identity, group);
             }
-            if (maxResultsToStorePerGroup < 0 || group.getStoredHits().size() < maxResultsToStorePerGroup) {
-                group.getStoredHits().add(hit);
-            }
-            group.updateCounts(1, hit.doc() != prevDoc);
-            prevDoc = hit.doc();
+            boolean storeHit = maxResultsToStorePerGroup < 0 || group.getStoredHits().size() < maxResultsToStorePerGroup;
+            group.add(hit, storeHit);
         }
     }
 
@@ -122,6 +133,7 @@ public class HitSubscriberGrouper implements HitSubscriber {
         for (Map.Entry<PropertyValue, Group> entry: segmentGroups.entrySet()) {
             PropertyValue groupId = entry.getKey();
             Group segmentGroup = entry.getValue();
+            segmentGroup.finishGroup(); // free some resources
             groups.compute(groupId, (PropertyValue k, Group v) ->
                     v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
         }
