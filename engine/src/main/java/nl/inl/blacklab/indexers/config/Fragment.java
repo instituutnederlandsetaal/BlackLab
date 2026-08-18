@@ -45,10 +45,11 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
      *
      * @param fragments        the list of fragments to chop
      * @param documentMetadata document-level metadata to apply to all fragments (before any overrides)
+     * @param docLengthTokens   the length of the document in tokens (used to create a fragment after the last fragment)
      * @return a list of non-overlapping fragments in document order, with combined metadata
      */
     public static List<Fragment> chopOverlappingFragments(List<Fragment> fragments,
-            Map<String, Collection<String>> documentMetadata) {
+            Map<String, Collection<String>> documentMetadata, int docLengthTokens) {
         // Get a sorted list of milestones
         List<Milestone> milestones = new ArrayList<>(fragments.size() * 2);
         for (Fragment fragment: fragments) {
@@ -58,21 +59,31 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
         Collections.sort(milestones);
 
         // Now iterate over the milestones, chopping into non-overlapping new fragments.
-        // TODO: apply document metadata; create fragment before first and after last fragment
+        // TODO: create fragment before first and after last fragment
         List<Fragment> choppedFrags = new ArrayList<>();
         Set<Fragment> openFragments = new LinkedHashSet<>();
-        openFragments.add(
-                new Fragment(Span.between(0, 0), documentMetadata)); // apply doc-level metadata to all fragments
+        if (!documentMetadata.isEmpty()) {
+            // Make sure document-level metadata is applied before any metadata from actual fragments
+            openFragments.add(new Fragment(Span.between(0, 0), documentMetadata));
+        }
         int pos = 0;
-        for (int i = 0; i < milestones.size(); i++) {
-            Milestone milestone = milestones.get(i);
-            if (!openFragments.isEmpty() && milestone.pos > pos)
+        for (Milestone milestone: milestones) {
+            if (!openFragments.isEmpty() && milestone.pos > pos) {
+                // Add fragment from last milestone to this milestone, with combined metadata from all open fragments
+                // (note that this will create a fragment before the first fragment if the first milestone is not at
+                //  position 0 and there was document-level metadata)
                 choppedFrags.add(new Fragment(Span.between(pos, milestone.pos), metadataFrom(openFragments)));
+            }
+            // Update openFragments according to the milestone type
             if (milestone.isStart())
                 openFragments.add(milestone.fragment());
             else
                 openFragments.remove(milestone.fragment());
             pos = milestone.pos;
+        }
+        if (!documentMetadata.isEmpty() && docLengthTokens > pos) {
+            // Add final fragment after last fragment, with only the document-level metadata
+            choppedFrags.add(new Fragment(Span.between(pos, docLengthTokens), documentMetadata));
         }
         return choppedFrags;
     }
