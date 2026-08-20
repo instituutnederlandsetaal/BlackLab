@@ -628,6 +628,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     processMetadataBlock(fragmentNode, b, metadata);
                 }
 
+                // Keep track of what metadata fields occur at the fragment level.
+                // We won't index these at the document level because they don't apply to the whole document.
+                this.metadataFieldsThatOccurInFragments.addAll(metadata.keySet());
+
                 // Add to the list of fragments for this annotated field.
                 this.fragsPerField.compute(currentAnnotatedField.name(),
                         (k, v) -> {

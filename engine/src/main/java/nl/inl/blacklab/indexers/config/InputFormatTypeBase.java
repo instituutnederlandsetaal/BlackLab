@@ -100,6 +100,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             /** The list of fragments found for each annotated field, if any */
             Map<String, List<Fragment>> fragsPerField = new HashMap<>();
 
+            /** Metadata fields that occur in at least one fragment. We don't want to index these at the document level,
+             * because they don't apply to the whole document. */
+            Set<String> metadataFieldsThatOccurInFragments = new HashSet<>();
+
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
                 this.relationsStrategy =
@@ -253,6 +257,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 e -> e.getValue().stream().map(String::length).reduce(0, Integer::sum)))
                         .toList();
                 for (Map.Entry<String, Collection<String>> e: entries) {
+                    if (metadataFieldsThatOccurInFragments.contains(e.getKey())) {
+                        // Don't index this metadata field at the document level, because it occurs in a fragment
+                        continue;
+                    }
                     addMetadataFieldToDocument(e.getKey(), e.getValue());
                 }
                 metadataFieldValues.clear();
@@ -663,9 +671,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                             for (Fragment fragment: entry.getValue()) {
                                 currentDoc = createNewDocument();
                                 currentDoc.addField(FRAG_PREFIX + "doc", pid, untokenizedFieldType);
+                                currentDoc.addField(FRAG_PREFIX + "annotatedField", entry.getKey(), untokenizedFieldType);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
-                                fragment.store(getDocWriter());
+                                getDocWriter().add(currentDoc);
                             }
                         }
                     }
