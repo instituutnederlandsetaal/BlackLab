@@ -112,7 +112,7 @@ is exactly equivalent to this grouped hits request:
     /CORPUSNAME/hits?
         patt=rspan("boot" -nsubj-> [pos="N.*"], "target")&
         group=hit:word:i&
-        scorer={"id":"coll-dice","patt":"\"boot\"","annotation":"word","sensitive":false}
+        scorer={"id":"coll-dice","patt":"\"boot\"","annotation":"word","sensitive":false,"reltype":"nsubj","colltype":"reltargets"}
 
 
 

@@ -90,10 +90,10 @@ public record RequestHitsGrouped(
         if (findQuery.isEmpty())
             throw new BadRequest("NO_PATTERN_GIVEN", "Missing required parameter: patt (pattern to find collocations for)");
         String collocateQuery = qpar.opt(WsParam.COLLOCATE_PATTERN).orElse("[]");
-        CollocationType collocationType = qpar.opt(WsParam.COLLOCATION_TYPE,
-                        CollocationType::fromStringValue)
-                .orElse(CollocationType.PROXIMITY);
-        boolean findRelations = collocationType != CollocationType.PROXIMITY;
+        HitGroupCollocationScorer.CollocationType collocationType = qpar.opt(WsParam.COLLOCATION_TYPE,
+                        HitGroupCollocationScorer.CollocationType::fromStringValue)
+                .orElse(HitGroupCollocationScorer.CollocationType.PROXIMITY);
+        boolean findRelations = collocationType != HitGroupCollocationScorer.CollocationType.PROXIMITY;
         String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_VALUE);
 
         // Construct and parse the query that will yield the collocations
@@ -139,7 +139,7 @@ public record RequestHitsGrouped(
 
     /** Determine the query that will yield the collocations we're looking for. */
     private static @NonNull String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
-            CollocationType collocationType, String relTypeRegex, String within) {
+            HitGroupCollocationScorer.CollocationType collocationType, String relTypeRegex, String within) {
         if (findQuery.isEmpty())
             throw new IllegalArgumentException("Missing findQuery (pattern to find collocations for)");
         if (context.isInlineTag()) {
@@ -150,7 +150,7 @@ public record RequestHitsGrouped(
             within = context.inlineTagName();
             context = ContextSize.ZERO;
         }
-        if (collocationType == CollocationType.PROXIMITY) {
+        if (collocationType == HitGroupCollocationScorer.CollocationType.PROXIMITY) {
             // Proximity-based collocations.
             int lower, upper;
             if (context == ContextSize.ZERO) {
@@ -175,7 +175,7 @@ public record RequestHitsGrouped(
             String optRelTypeFilter = StringUtils.isEmpty(relTypeRegex) ||
                     relTypeRegex.equals(StringUtil.REGEX_ANY_VALUE) ? "" :
                     "(" + relTypeRegex + ")";
-            if (collocationType == CollocationType.RELATION_TARGETS) {
+            if (collocationType == HitGroupCollocationScorer.CollocationType.RELATION_TARGETS) {
                 // Find all targets for specified source and relation type
                 return "rspan(" + findQuery + " -" + optRelTypeFilter + "-> " + collocateQuery + ", \"target\")";
             } else {
@@ -215,32 +215,4 @@ public record RequestHitsGrouped(
         return requestHits.paramsForResponse();
     }
 
-    /** Type of collocations to find */
-    public enum CollocationType {
-        /** Proximity-based collocations (i.e. words occurring near specified word) */
-        PROXIMITY("proximity"),
-
-        /** Find all relation sources for the specified target.
-         *  That is: find words that are the source of the specified relation and have the specified relation target. */
-        RELATION_SOURCES("relsources"),
-
-        /** Find all relation targets for the specified source.
-         *  That is: find words that are the target of the specified relation and have the specified relation source. */
-        RELATION_TARGETS("reltargets");
-
-        private final String stringValue;
-
-        CollocationType(String stringValue) {
-            this.stringValue = stringValue;
-        }
-
-        public static CollocationType fromStringValue(String v) {
-            v = v.toLowerCase();
-            for (CollocationType t : CollocationType.values()) {
-                if (t.stringValue.equals(v) || v.equals(t.name().toLowerCase()))
-                    return t;
-            }
-            throw new IllegalArgumentException("Unrecognized value for collocation type: " + v);
-        }
-    }
 }

@@ -4,6 +4,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 
 /** Can provide a scorer for a group of hits.
@@ -36,7 +37,8 @@ public abstract class HitGroupScorerType extends Plugin {
      */
     public abstract Type getType();
 
-    /** Get a scorer for a group representing a collocate of a word or query.
+    /**
+     * Get a scorer for a group representing a collocate of a word or query.
      * <p>
      * Check getType() to make sure this HitGroupScorerProvider does collocation scoring.
      * This method will throw a {@link nl.inl.blacklab.exceptions.PluginException} if the type is not supported.
@@ -48,14 +50,18 @@ public abstract class HitGroupScorerType extends Plugin {
      *                            around the lemma "ship", and we're looking case-insensitively, this would be the
      *                            case-insensitive alternative of the word annotation. Used to find frequency from
      *                            group identity.
-     * @param filter document filter
-     * @param totalFrequency number of words in the corpus (for proximity collocations), or cardinality of the
-     *                       relation (for relation-based collocations).
-     * @param wordFrequency total frequency of the search word (or query) we're finding collocations *for* ("ship" in
-     *                      the example)
+     * @param filter              document filter
+     * @param totalFrequency      number of words in the corpus (for proximity collocations), or cardinality of the
+     *                            relation (for relation-based collocations).
+     * @param wordFrequency       total frequency of the search word (or query) we're finding collocations *for* ("ship" in
+     *                            the example)
+     * @param collocationType     collocation type, e.g. proximity, relation sources or targets.
+     * @param relationType        relation type if we're finding relation collocations, null otherwise
      * @return collocate scorer
      */
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
+    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+            long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
+            String relationType) {
         throw new PluginException("HitGroupScorerType " + getName() + " does not support collocation scoring");
     }
 

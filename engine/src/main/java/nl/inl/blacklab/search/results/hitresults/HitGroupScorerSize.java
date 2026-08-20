@@ -27,7 +27,9 @@ public class HitGroupScorerSize extends HitGroupScorerType {
     }
 
     @Override
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
+    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+            long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
+            String relationType) {
         return new HitGroupCollocationScorer(collocateAnnotation, filter) {
             @Override
             public HitGroupScorerType getType() {

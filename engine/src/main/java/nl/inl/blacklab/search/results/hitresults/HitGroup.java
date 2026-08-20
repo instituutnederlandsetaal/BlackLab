@@ -96,7 +96,7 @@ public class HitGroup implements HitOrDocGroup {
      * @param groupIdentity identity of the group
      * @param storedResults the hits
      * @param totalHits     total group size
-     * @param scorer
+     * @param scorer        group scorer to use
      */
     protected HitGroup(PropertyValue groupIdentity, HitResults storedResults, long totalHits, int totalDocs, CompleteQuery hitsInGroupQuery,
             HitGroupScorer scorer) {
