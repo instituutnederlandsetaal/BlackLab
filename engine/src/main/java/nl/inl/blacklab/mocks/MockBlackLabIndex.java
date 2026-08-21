@@ -41,6 +41,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
@@ -64,6 +65,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
     private IndexSearcher searcher;
 
     private final SearchCache cache = new SearchCacheDummy();
+
+    private final FreqListCache freqListCache = new FreqListCache();
 
     private final BlackLabEngine blackLab;
 
@@ -250,6 +253,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public SearchCache cache() {
         return cache;
+    }
+
+    @Override
+    public FreqListCache freqListCache() {
+        return freqListCache;
     }
 
     @Override

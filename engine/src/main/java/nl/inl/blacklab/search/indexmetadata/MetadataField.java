@@ -9,15 +9,6 @@ public interface MetadataField extends Field {
 
     MetadataFieldValues values(long maxValues);
 
-    /**
-     * Wrap a cached {@link TruncatableFreqList} as a {@link MetadataFieldValues}.
-     * Used to avoid re-reading the index when a suitable list is already cached.
-     *
-     * @param cached the cached value list
-     * @return a {@link MetadataFieldValues} backed by the provided list
-     */
-    MetadataFieldValues valuesFromCache(TruncatableFreqList cached);
-
     @Override
     default String contentsFieldName() {
         return name();

@@ -59,6 +59,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -166,6 +167,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     /** Search cache to use */
     private SearchCache cache = new SearchCacheDummy();
+
+    /** Cache for annotation and metadata field value lists */
+    private final FreqListCache freqListCache = new FreqListCache();
 
     /** Was this index closed? */
     private boolean closed;
@@ -761,6 +765,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public void setCache(SearchCache cache) {
         this.cache = cache;
+    }
+
+    @Override
+    public FreqListCache freqListCache() {
+        return freqListCache;
     }
 
     @Override

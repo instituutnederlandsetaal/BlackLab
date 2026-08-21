@@ -40,9 +40,6 @@ public class SearchManager {
     /** Manages all the indices we have available and/or open */
     private IndexManager indexMan;
 
-    /** Cache for annotation and metadata field value lists. */
-    private final FreqListCache freqListCache = new FreqListCache();
-
     /** Main BlackLab object, containing the search executor service */
     private BlackLabEngine blackLab;
 
@@ -103,10 +100,6 @@ public class SearchManager {
 
     public BlackLabEngine getEngine() {
         return blackLab;
-    }
-
-    public FreqListCache getFreqListCache() {
-        return freqListCache;
     }
 
     public SearchCache getBlackLabCache() {

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.search;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -6,14 +6,15 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
-
 /**
  * LRU cache for {@link TruncatableFreqList} instances, used to avoid
  * re-reading annotation and metadata field values from the Lucene index on
  * every request.
  * <p>
- * The cache is keyed by a combination of index name and field/annotation name.
+ * The cache is keyed by field/annotation name. Each {@link nl.inl.blacklab.search.BlackLabIndex}
+ * instance holds its own {@code FreqListCache}, so there is no need to include
+ * the index name in the key.
+ * <p>
  * Only one entry per field is kept: when a new list with more values is stored,
  * any existing entry for the same field (which would be a subset) is replaced.
  * When a requested {@code limitValues} can be satisfied by truncating a cached
@@ -41,7 +42,7 @@ public class FreqListCache {
     private final int maxValuesPerEntry;
 
     /**
-     * LRU map: key is "indexName\0fieldName", value is the (possibly truncated)
+     * LRU map: key is the field/annotation name, value is the (possibly truncated)
      * {@link TruncatableFreqList}.
      */
     private final Map<String, TruncatableFreqList> cache;
@@ -62,21 +63,16 @@ public class FreqListCache {
         };
     }
 
-    private static String key(String indexName, String fieldName) {
-        return indexName + '\0' + fieldName;
-    }
-
     /**
      * Look up cached values for a field/annotation.
      *
-     * @param indexName   index name
      * @param fieldName   field or annotation name
      * @param limitValues maximum number of values requested
      * @return a {@link TruncatableFreqList} (possibly truncated) if the cache can
      *         satisfy the request, or {@code null} on a cache miss
      */
-    public synchronized TruncatableFreqList get(String indexName, String fieldName, long limitValues) {
-        TruncatableFreqList cached = cache.get(key(indexName, fieldName));
+    public synchronized TruncatableFreqList get(String fieldName, long limitValues) {
+        TruncatableFreqList cached = cache.get(fieldName);
         if (cached == null)
             return null;
         if (!cached.canTruncateTo(limitValues))
@@ -92,20 +88,17 @@ public class FreqListCache {
      * existing entry is kept. When the new entry supersedes (is larger than) an
      * existing entry, the old entry is replaced.
      *
-     * @param indexName index name
      * @param fieldName field or annotation name
      * @param freqList  the value list to cache
      */
-    public synchronized void put(String indexName, String fieldName, TruncatableFreqList freqList) {
+    public synchronized void put(String fieldName, TruncatableFreqList freqList) {
         if (freqList == null || freqList.size() == 0)
             return;
         if (freqList.size() > maxValuesPerEntry) {
-            logger.debug("FreqListCache: not caching {}/{} – too large ({} values)", indexName, fieldName,
-                    freqList.size());
+            logger.debug("FreqListCache: not caching {} – too large ({} values)", fieldName, freqList.size());
             return;
         }
-        String k = key(indexName, fieldName);
-        TruncatableFreqList existing = cache.get(k);
+        TruncatableFreqList existing = cache.get(fieldName);
         if (existing != null) {
             // Keep the existing entry if it is strictly better:
             //   - it is not truncated (complete), while the new one is, OR
@@ -121,25 +114,14 @@ public class FreqListCache {
                 // Both truncated; existing has at least as many values – keep it.
                 return;
             }
-            cache.put(k, freqList);
-            logger.debug("FreqListCache: replaced entry for {}/{} with larger list ({} > {} values)",
-                    indexName, fieldName, freqList.size(), existing.size());
+            cache.put(fieldName, freqList);
+            logger.debug("FreqListCache: replaced entry for {} with larger list ({} > {} values)",
+                    fieldName, freqList.size(), existing.size());
         } else {
-            cache.put(k, freqList);
-            logger.debug("FreqListCache: stored entry for {}/{} ({} values, truncated={})",
-                    indexName, fieldName, freqList.size(), freqList.isTruncated());
+            cache.put(fieldName, freqList);
+            logger.debug("FreqListCache: stored entry for {} ({} values, truncated={})",
+                    fieldName, freqList.size(), freqList.isTruncated());
         }
-    }
-
-    /**
-     * Remove all entries for a given index (e.g. when the index is closed or
-     * reindexed).
-     *
-     * @param indexName index name
-     */
-    public synchronized void invalidateIndex(String indexName) {
-        String prefix = indexName + '\0';
-        cache.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
     }
 
     /** Clear the entire cache. */

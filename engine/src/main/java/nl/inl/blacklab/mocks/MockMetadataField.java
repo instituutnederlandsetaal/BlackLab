@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
-import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 
 public record MockMetadataField(String name) implements MetadataField {
 
@@ -46,11 +45,6 @@ public record MockMetadataField(String name) implements MetadataField {
 
     @Override
     public MetadataFieldValues values(long maxValues) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public MetadataFieldValues valuesFromCache(TruncatableFreqList cached) {
         throw new UnsupportedOperationException("Not implemented");
     }
 

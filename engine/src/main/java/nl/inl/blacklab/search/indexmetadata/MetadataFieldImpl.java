@@ -85,16 +85,19 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
 
     @Override
     public MetadataFieldValues values(long maxValues) {
+        if (index != null) {
+            // Check the per-index FreqListCache first to avoid re-reading from Lucene.
+            TruncatableFreqList cached = index.freqListCache().get(name(), maxValues);
+            if (cached != null)
+                return new MetadataFieldValuesFromIndex(name(), type == FieldType.NUMERIC, cached);
+        }
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);
+        if (index != null)
+            index.freqListCache().put(name(), values.valueList());
         return values.truncated(maxValues);
     }
 
-    @Override
-    public MetadataFieldValues valuesFromCache(TruncatableFreqList cached) {
-        return new MetadataFieldValuesFromIndex(name(), type == FieldType.NUMERIC, cached);
-    }
-    
     @Override
     public String offsetsField() {
         return name();
