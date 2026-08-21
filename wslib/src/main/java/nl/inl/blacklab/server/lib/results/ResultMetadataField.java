@@ -20,6 +20,12 @@ public class ResultMetadataField {
         this.valueListComplete = valueListComplete;
     }
 
+    /** Get index name
+     *
+     * @return index name
+     * @deprecated used by APIv4, no longer needed for APIv5
+     */
+    @Deprecated(since = "5.0.0", forRemoval = true)
     public String getIndexName() {
         return indexName;
     }
