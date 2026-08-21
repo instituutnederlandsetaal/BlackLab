@@ -89,6 +89,11 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
             values = factory.create(name(), type, maxValues);
         return values.truncated(maxValues);
     }
+
+    @Override
+    public MetadataFieldValues valuesFromCache(TruncatableFreqList cached) {
+        return new MetadataFieldValuesFromIndex(name(), type == FieldType.NUMERIC, cached);
+    }
     
     @Override
     public String offsetsField() {

@@ -77,6 +77,7 @@ import nl.inl.blacklab.server.lib.requests.RequestDocs;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.server.lib.requests.RequestOldCollocations;
 import nl.inl.blacklab.server.lib.requests.RequestTermFrequencies;
+import nl.inl.blacklab.server.search.FreqListCache;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
@@ -378,7 +379,15 @@ public class WebserviceOperations {
      * @return values for this annotation
      */
     public static TruncatableFreqList getAnnotationValues(BlackLabIndex index, Annotation annotation, long limitValues) {
-        final TruncatableFreqList terms = new TruncatableFreqList(limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues);
+        long effectiveLimit = limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues;
+
+        // Check cache first
+        FreqListCache freqListCache = SearchManager.get().getFreqListCache();
+        TruncatableFreqList cached = freqListCache.get(index.name(), annotation.name(), effectiveLimit);
+        if (cached != null)
+            return cached;
+
+        final TruncatableFreqList terms = new TruncatableFreqList(effectiveLimit);
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
                 MatchSensitivity.INSENSITIVE :
                 MatchSensitivity.SENSITIVE;
@@ -393,6 +402,10 @@ public class WebserviceOperations {
                 return true;
             });
         }
+
+        // Store in cache for future requests
+        freqListCache.put(index.name(), annotation.name(), terms);
+
         return terms;
     }
 
@@ -675,7 +688,20 @@ public class WebserviceOperations {
     }
 
     public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
-        MetadataFieldValues values = fieldDesc.values(limitValues);
+        long effectiveLimit = limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues;
+        String effectiveIndexName = indexName != null ? indexName : fieldDesc.index().name();
+        FreqListCache freqListCache = SearchManager.get().getFreqListCache();
+
+        // Check the cache first; if it has a sufficiently large entry, truncate and use it.
+        TruncatableFreqList cached = freqListCache.get(effectiveIndexName, fieldDesc.name(), effectiveLimit);
+        MetadataFieldValues values;
+        if (cached != null) {
+            values = fieldDesc.valuesFromCache(cached);
+        } else {
+            values = fieldDesc.values(effectiveLimit);
+            // Store the underlying list in the cache for future requests.
+            freqListCache.put(effectiveIndexName, fieldDesc.name(), values.valueList());
+        }
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
                 !values.valueList().isTruncated());
