@@ -608,6 +608,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             }
 
             protected void endDocument() {
+                Map<String, Integer> docLengthsPerField = new HashMap<>();
                 for (AnnotatedFieldWriter field: getAnnotatedFields().values()) {
                     AnnotationWriter propMain = field.mainAnnotation();
 
@@ -644,6 +645,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     // were gathered in lists while parsing.
                     field.addToDoc(currentDoc);
 
+                    // Keep track of doc length for fragments later
+                    docLengthsPerField.put(field.name(), lastValuePos);
                 }
 
                 if (isStoreDocuments()) {
@@ -667,11 +670,17 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                             throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
                         String pid = currentDoc.get(pidField.name());
                         for (Map.Entry<String, List<Fragment>> entry: fragsPerField.entrySet()) {
-                            String fieldName = entry.getKey();
-                            for (Fragment fragment: entry.getValue()) {
+                            String annotatedFieldName = entry.getKey();
+                            // Merge fragments with the same span, and chop overlapping fragments into non-overlapping fragments
+                            List<Fragment> fragments = entry.getValue();
+                            fragments = Fragment.mergeFragmentsWithSameSpan(fragments);
+                            int docLength = docLengthsPerField.get(annotatedFieldName);
+                            fragments = Fragment.chopOverlappingFragments(fragments, metadataFieldValues, docLength);
+                            // Store each fragment in a separate Lucene document, with a reference to the main document
+                            for (Fragment fragment: fragments) {
                                 currentDoc = createNewDocument();
                                 currentDoc.addField(FRAG_PREFIX + "doc", pid, untokenizedFieldType);
-                                currentDoc.addField(FRAG_PREFIX + "annotatedField", entry.getKey(), untokenizedFieldType);
+                                currentDoc.addField(FRAG_PREFIX + "annotatedField", annotatedFieldName, untokenizedFieldType);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
                                 getDocWriter().add(currentDoc);

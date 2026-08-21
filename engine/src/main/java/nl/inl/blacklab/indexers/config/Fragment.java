@@ -9,13 +9,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * A document fragment with its metadata.
  *
  * @param span     start and end position of the fragment
  * @param metadata metadata for this fragment
  */
-record Fragment(Span span, Map<String, Collection<String>> metadata) implements Comparable<Fragment> {
+record Fragment(Span span, @NonNull Map<String, Collection<String>> metadata) implements Comparable<Fragment> {
 
     /**
      * A position where a fragment starts or ends
@@ -24,7 +26,7 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
      * @param isStart  true if this milestone is the start of a fragment, false if it's the end
      * @param fragment the associated fragment
      */
-    private record Milestone(int pos, boolean isStart, Fragment fragment) implements Comparable<Milestone> {
+    private record Milestone(int pos, boolean isStart, @NonNull Fragment fragment) implements Comparable<Milestone> {
         @Override
         public int compareTo(Milestone other) {
             int cmp = Integer.compare(this.pos, other.pos);
@@ -48,8 +50,8 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
      * @param docLengthTokens   the length of the document in tokens (used to create a fragment after the last fragment)
      * @return a list of non-overlapping fragments in document order, with combined metadata
      */
-    public static List<Fragment> chopOverlappingFragments(List<Fragment> fragments,
-            Map<String, Collection<String>> documentMetadata, int docLengthTokens) {
+    public static @NonNull List<Fragment> chopOverlappingFragments(@NonNull List<Fragment> fragments,
+            @NonNull Map<String, Collection<String>> documentMetadata, int docLengthTokens) {
         // Get a sorted list of milestones
         List<Milestone> milestones = new ArrayList<>(fragments.size() * 2);
         for (Fragment fragment: fragments) {
@@ -88,6 +90,30 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
         return choppedFrags;
     }
 
+    public static @NonNull List<Fragment> mergeFragmentsWithSameSpan(@NonNull List<Fragment> fragments) {
+        // Merge fragments with the same start and end positions, combining their metadata
+        Collections.sort(fragments);
+        List<Fragment> mergedFragments = new ArrayList<>();
+        Fragment current = null;
+        for (Fragment fragment : fragments) {
+            if (current == null || !current.span().equals(fragment.span())) {
+                // Not equal; add to results list.
+                if (current != null)
+                    mergedFragments.add(current);
+                current = fragment;
+            } else {
+                // Equal spans; merge metadata. Users should make sure they don't contain the same metadata keys, but
+                // if they do, the later fragment's values will override the earlier ones.
+                Map<String, Collection<String>> combinedMetadata = new HashMap<>(current.metadata());
+                combinedMetadata.putAll(fragment.metadata());
+                current = new Fragment(current.span(), combinedMetadata);
+            }
+        }
+        if (current != null)
+            mergedFragments.add(current);
+        return mergedFragments;
+    }
+
     /**
      * Determine the effective metadata from an ordered set of metadata overrides.
      * <p>
@@ -96,7 +122,7 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
      * @param openFragments the set of fragments whose metadata to apply
      * @return the effective metadata after applying all overrides
      */
-    private static Map<String, Collection<String>> metadataFrom(Set<Fragment> openFragments) {
+    private static @NonNull Map<String, Collection<String>> metadataFrom(@NonNull Set<Fragment> openFragments) {
         Map<String, Collection<String>> result = new HashMap<>();
         for (Fragment fragment: openFragments) {
             result.putAll(fragment.metadata());
@@ -108,12 +134,11 @@ record Fragment(Span span, Map<String, Collection<String>> metadata) implements 
      * Sort fragments by start position first, then endposition
      */
     @Override
-    public int compareTo(Fragment other) {
-        int cmp = Integer.compare(this.span().start(), other.span().start());
-        return cmp == 0 ? Integer.compare(this.span().end(), other.span().end()) : cmp;
+    public int compareTo(@NonNull Fragment other) {
+        return span.compareTo(other.span());
     }
 
-    public boolean contains(Fragment fragment) {
+    public boolean contains(@NonNull Fragment fragment) {
         return fragment.span.start() >= span().start() && fragment.span.end() <= span().end();
     }
 }

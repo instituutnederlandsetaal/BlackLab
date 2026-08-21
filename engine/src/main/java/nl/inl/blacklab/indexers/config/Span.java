@@ -10,7 +10,7 @@ import java.util.Objects;
  * we need a start and an end. This class is used for that, and it's mutable to avoid
  * creating instances for each position.
  */
-public class Span {
+public class Span implements Comparable<Span>{
     private int start;
     private int end;
 
@@ -86,5 +86,17 @@ public class Span {
 
     public Span copy() {
         return new Span(start, end);
+    }
+
+    /**
+     * Sort fragments by start position first, then endposition
+     *
+     * @param other the other span to compare to
+     * @return a negative integer, zero, or a positive integer as this span is less than, equal to, or greater than the specified span
+     */
+    @Override
+    public int compareTo(Span other) {
+        int cmp = Integer.compare(this.start, other.start);
+        return cmp == 0 ? Integer.compare(this.end, other.end) : cmp;
     }
 }
