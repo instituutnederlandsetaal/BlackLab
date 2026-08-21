@@ -687,20 +687,20 @@ public class WebserviceOperations {
         return new ResultIndexStatus(index, files, docs, tokens);
     }
 
-    public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
+    public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc) {
         long effectiveLimit = limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues;
-        String effectiveIndexName = indexName != null ? indexName : fieldDesc.index().name();
+        String indexName = fieldDesc.index().name();
         FreqListCache freqListCache = SearchManager.get().getFreqListCache();
 
         // Check the cache first; if it has a sufficiently large entry, truncate and use it.
-        TruncatableFreqList cached = freqListCache.get(effectiveIndexName, fieldDesc.name(), effectiveLimit);
+        TruncatableFreqList cached = freqListCache.get(indexName, fieldDesc.name(), effectiveLimit);
         MetadataFieldValues values;
         if (cached != null) {
             values = fieldDesc.valuesFromCache(cached);
         } else {
             values = fieldDesc.values(effectiveLimit);
             // Store the underlying list in the cache for future requests.
-            freqListCache.put(effectiveIndexName, fieldDesc.name(), values.valueList());
+            freqListCache.put(indexName, fieldDesc.name(), values.valueList());
         }
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
@@ -722,7 +722,7 @@ public class WebserviceOperations {
         afs.sort(ResultAnnotatedField::compare);
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
-            mfs.add(metadataField(req.limitValues(), f, null));
+            mfs.add(metadataField(req.limitValues(), f));
         }
 
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(index.blIndex());
