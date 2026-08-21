@@ -16,6 +16,7 @@ import org.apache.lucene.search.Query;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+import nl.inl.blacklab.indexers.config.InputFormatTypeBase;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.util.StringUtil;
@@ -60,13 +61,18 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     /** Get the PID for this document, if the index has a PID field.
      *
      * @param document the document
-     * @return the PID term, or null if no PID field is configured
+     * @return the PID term, or null if no PID field is configured or this is a fragment
      */
     private Term getPidTerm(BLInputDocument document) {
         String pidFieldName = getPidFieldName();
         if (pidFieldName == null)
             throw new ErrorIndexingFile("Missing pid field name");
         String pid = document.get(pidFieldName);
+        if (pid == null) {
+            String fragmentPid = document.get(
+                    InputFormatTypeBase.FRAG_FIELD_PID); // fragments index reference to their document in this field
+            return null;
+        }
         if (pid == null) {
             throw new ErrorIndexingFile("Document has no persistent identifier (pidField '" + pidFieldName +
                     "'). Document: " + document);
@@ -95,7 +101,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
      */
     private synchronized void addOrUpdate(Document doc, Term pidTerm,
             BlackLabIndexWriter.IfDocumentExists ifDocumentExists) throws IOException {
-        if (!addToPids(pidTerm.text())) {
+        if (pidTerm != null && !addToPids(pidTerm.text())) { // (pidTerm == null means no pid configured or this is a fragment)
             // Already exists; handle according to configuration
             switch (ifDocumentExists) {
             case UPSERT -> indexWriter.updateDocument(pidTerm, doc);

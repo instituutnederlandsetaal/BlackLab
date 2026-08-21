@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
@@ -106,6 +108,36 @@ public class ConfigMetadataField {
     /** Order in which to display the values (optional) */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<String> displayOrder = new ArrayList<>();
+
+    /** Different behaviours with respect to fragments for indexing metadata fields */
+    public enum FragmentBehaviour {
+        DEFAULT,   // if the field is present in a fragment, index it at fragment level; otherwise, index it at document level
+        SEPARATE,  // index at document level and fragment level separately
+        IGNORE;    // skip this field when gathering fragment metadata, only index at document-level
+
+        @JsonCreator
+        FragmentBehaviour forValue(String value) {
+            switch (value.toLowerCase()) {
+                case "default" -> { return DEFAULT; }
+                case "separate" -> { return SEPARATE; }
+                case "ignore" -> { return IGNORE; }
+                default -> throw new IllegalArgumentException("Unknown FragmentBehaviour value: " + value + "(valid values: default, separate or ignore)");
+            }
+        }
+
+        @JsonValue
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
+    }
+
+    public FragmentBehaviour getFragmentBehaviour() {
+        return fragmentBehaviour;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final FragmentBehaviour fragmentBehaviour = FragmentBehaviour.DEFAULT;
 
     /**
      * Whether to sort multiple value alphabetically or preserve them in document order

@@ -179,7 +179,8 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.spanEndPath = spanEndPath;
         // Used to be implicit for annotation/span, so maintain backward compatibility.
         // Type must be explicitly set for relations though.
-        setType(AnnotationType.SPAN);
+        if (type != AnnotationType.FRAGMENT)
+            setType(AnnotationType.SPAN);
     }
 
     // synonym for relation type

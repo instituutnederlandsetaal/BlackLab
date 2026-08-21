@@ -52,6 +52,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
     protected static final Logger logger = LogManager.getLogger(InputFormatTypeBase.class);
 
+    public static final String FRAG_PREFIX = "_frag_";
+
+    public static final String FRAG_FIELD_PID = FRAG_PREFIX + "doc";
+
     /** A document in this format currently being indexed. Contains all the variable state. */
     public interface Doc extends AutoCloseable {
         IndexerStats index();
@@ -665,7 +669,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                         // For each annotated field that has fragments...
                         MetadataField pidField = getDocWriter().metadata().metadataFields().pidField();
                         BLFieldType untokenizedFieldType = getDocWriter().metadataFieldType(false);
-                        final String FRAG_PREFIX = "_frag_";
                         if (pidField == null)
                             throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
                         String pid = currentDoc.get(pidField.name());
@@ -679,7 +682,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                             // Store each fragment in a separate Lucene document, with a reference to the main document
                             for (Fragment fragment: fragments) {
                                 currentDoc = createNewDocument();
-                                currentDoc.addField(FRAG_PREFIX + "doc", pid, untokenizedFieldType);
+                                currentDoc.addField(FRAG_FIELD_PID, pid, untokenizedFieldType);
                                 currentDoc.addField(FRAG_PREFIX + "annotatedField", annotatedFieldName, untokenizedFieldType);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
