@@ -5,14 +5,13 @@ import java.util.Map;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 
 public class ResultMetadataField {
-    @Deprecated
     private final String indexName;
     private final MetadataField fieldDesc;
     private final boolean listValues;
     private final Map<String, Long> fieldValues;
     private final boolean valueListComplete;
 
-    ResultMetadataField(@Deprecated String indexName, MetadataField fieldDesc, boolean listValues,
+    ResultMetadataField(String indexName, MetadataField fieldDesc, boolean listValues,
             Map<String, Long> fieldValues, boolean valueListComplete) {
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
@@ -21,8 +20,12 @@ public class ResultMetadataField {
         this.valueListComplete = valueListComplete;
     }
 
-    /** (used by APIv4, no longer needed for APIv5) */
-    @Deprecated
+    /** Get index name
+     *
+     * @return index name
+     * @deprecated used by APIv4, no longer needed for APIv5
+     */
+    @Deprecated(since = "5.0.0", forRemoval = true)
     public String getIndexName() {
         return indexName;
     }

@@ -29,7 +29,7 @@ public class FreqListCache {
     private static final Logger logger = LogManager.getLogger(FreqListCache.class);
 
     /** Default maximum number of cache entries (one per field/annotation). */
-    public static final int DEFAULT_MAX_ENTRIES = 100;
+    public static final int DEFAULT_MAX_ENTRIES = 200;
 
     /**
      * Default maximum number of values in a single cached entry.
