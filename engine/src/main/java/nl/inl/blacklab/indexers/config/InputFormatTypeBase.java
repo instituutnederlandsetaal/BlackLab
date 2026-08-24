@@ -104,9 +104,12 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             /** The list of fragments found for each annotated field, if any */
             Map<String, List<Fragment>> fragsPerField = new HashMap<>();
 
-            /** Metadata fields that occur in at least one fragment. We don't want to index these at the document level,
-             * because they don't apply to the whole document. */
-            Set<String> metadataFieldsThatOccurInFragments = new HashSet<>();
+            /** Behaviour of metadata fields that occur in at least one fragment.
+             * Depending on the behaviour, we may or may not want to index these at the document level,
+             * and we may or may not want to "inherit" from the document level to the fragment level.
+             * Fields that are not in this map are not indexed at the fragment level.
+             */
+            Map<String, ConfigMetadataField.FragmentBehaviour> metadataFieldsFragmentBehaviour = new HashMap<>();
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
@@ -205,8 +208,11 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * We do it this way because we don't want to add multiple values for a field (DocValues and
              * Document.get() only deal with the first value added), and we want to set an "unknown value"
              * in certain conditions, depending on the configuration.
+             *
+             * @param metadataFieldValues metadata to add
+             * @param atFragmentLevel whether we're adding metadata for a fragment (true) or the main document (false)
              */
-            private void addMetadataToDocument() {
+            private void addMetadataToDocument(Map<String, Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 // See what metadatafields are missing or empty and add unknown value if desired.
                 IndexMetadataWriter indexMetadata = getDocWriter().metadata();
                 Map<String, String> unknownValuesToUse = new HashMap<>();
@@ -261,13 +267,16 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 e -> e.getValue().stream().map(String::length).reduce(0, Integer::sum)))
                         .toList();
                 for (Map.Entry<String, Collection<String>> e: entries) {
-                    if (metadataFieldsThatOccurInFragments.contains(e.getKey())) {
-                        // Don't index this metadata field at the document level, because it occurs in a fragment
+                    // Determine fragment behaviour
+                    // (if this field did not occur in a fragment, just index at the document level, that is, IGNORE as the default)
+                    ConfigMetadataField.FragmentBehaviour fragBehaviour = metadataFieldsFragmentBehaviour.getOrDefault(
+                            e.getKey(), ConfigMetadataField.FragmentBehaviour.DOC_VALUE);
+                    if (!atFragmentLevel && !fragBehaviour.indexAtDocLevel()) {
+                        // Don't index this metadata field at the document level (because of configured fragment behaviour)
                         continue;
                     }
                     addMetadataFieldToDocument(e.getKey(), e.getValue());
                 }
-                metadataFieldValues.clear();
             }
 
             private void addMetadataFieldToDocument(String name, Collection<String> values) {
@@ -601,6 +610,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             // ------------------------------- Indexing process ----------------------------------
 
             protected void startDocument() {
+                metadataFieldValues.clear();
                 if (!indexingIntoExistingDoc) {
                     currentDoc = createNewDocument();
                     addMetadataField("fromInputFile", documentName);
@@ -657,7 +667,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     storeDocument();
                 }
 
-                addMetadataToDocument();
+                addMetadataToDocument(metadataFieldValues, false);
                 try {
                     // Add Lucene doc to indexer, if not existing already
                     if (getDocWriter() != null && !indexingIntoExistingDoc)
@@ -678,7 +688,17 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                             List<Fragment> fragments = entry.getValue();
                             fragments = Fragment.mergeFragmentsWithSameSpan(fragments);
                             int docLength = docLengthsPerField.get(annotatedFieldName);
-                            fragments = Fragment.chopOverlappingFragments(fragments, metadataFieldValues, docLength);
+                            Map<String, Collection<String>> valuesToInheritFromDoc = new HashMap<>();
+                            for (Map.Entry<String, Collection<String>> e: metadataFieldValues.entrySet()) {
+                                ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.getOrDefault(e.getKey(), ConfigMetadataField.FragmentBehaviour.DEFAULT);
+                                if (!b.inheritFromDocLevel()) {
+                                    // Should explicitly not inherit to document level (e.g. doc and fragment may each have a separate pid)
+                                    continue;
+                                }
+                                if (e.getValue() != null && !e.getValue().isEmpty())
+                                    valuesToInheritFromDoc.put(e.getKey(), e.getValue());
+                            }
+                            fragments = Fragment.chopOverlappingFragments(fragments, valuesToInheritFromDoc, docLength);
                             // Store each fragment in a separate Lucene document, with a reference to the main document
                             for (Fragment fragment: fragments) {
                                 currentDoc = createNewDocument();
@@ -686,11 +706,11 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 currentDoc.addField(FRAG_PREFIX + "annotatedField", annotatedFieldName, untokenizedFieldType);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
                                 currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
+                                addMetadataToDocument(fragment.metadata(), true);
                                 getDocWriter().add(currentDoc);
                             }
                         }
                     }
-
                 } catch (Exception e) {
                     throw BlackLabException.wrapRuntime(e);
                 }

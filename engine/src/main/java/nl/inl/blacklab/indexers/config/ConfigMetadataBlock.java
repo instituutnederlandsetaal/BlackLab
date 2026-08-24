@@ -99,6 +99,14 @@ public class ConfigMetadataBlock {
             fieldsByName.put(f.getName(), f);
     }
 
+    public void setFields(List<ConfigMetadataField> fields) {
+        this.fields.clear();
+        this.fieldsByName.clear();
+        for (ConfigMetadataField f : fields) {
+            addMetadataField(f);
+        }
+    }
+
     public String getAnalyzer() {
         return defaultAnalyzer;
     }

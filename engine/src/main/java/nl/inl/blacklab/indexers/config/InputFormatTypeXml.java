@@ -630,17 +630,26 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // (unknownValues are only applied just before saving to the index, so don't pose a problem here)
                     List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
                     for (ConfigMetadataBlock b: mainMetadataCfg) {
-                        processMetadataBlockContainer(fragmentNode, b, metadata);
+                        processMetadataBlockContainer(fragmentNode, b, metadata, true);
                     }
                 }
                 // Apply any custom metadata rules for this fragment
                 for (ConfigMetadataBlock b: metadataCfg) {
-                    processMetadataBlock(fragmentNode, b, metadata);
+                    processMetadataBlock(fragmentNode, b, metadata, true);
                 }
 
                 // Keep track of what metadata fields occur at the fragment level.
                 // We won't index these at the document level because they don't apply to the whole document.
-                this.metadataFieldsThatOccurInFragments.addAll(metadata.keySet());
+                for (String field: metadata.keySet()) {
+                    ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.get(field);
+                    if (b == null) {
+                        ConfigMetadataField c = config.getMetadataField(field);
+                        if (c != null) {
+                            b = c.getFragmentBehaviour();
+                            metadataFieldsFragmentBehaviour.put(field, b);
+                        }
+                    }
+                }
 
                 // Add to the list of fragments for this annotated field.
                 this.fragsPerField.compute(currentAnnotatedField.name(),
@@ -795,7 +804,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                 // For each configured metadata block..
                 for (ConfigMetadataBlock b : config.getMetadata()) {
-                    processMetadataBlock(doc, b);
+                    processMetadataBlock(doc, b, false);
                 }
 
                 // For each linked document...
@@ -839,22 +848,23 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 return getStats();
             }
 
-            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
-                processMetadataBlock(doc, metaBlock, metadataFieldValues);
+            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, boolean atFragmentLevel) {
+                processMetadataBlock(doc, metaBlock, metadataFieldValues, atFragmentLevel);
             }
 
-            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, Map<String, Collection<String>> metadataFieldValues) {
+            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, Map<String,
+                    Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 // For each instance of this metadata block...
                 finder.xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
-                    processMetadataBlockContainer(block, metaBlock, metadataFieldValues);
+                    processMetadataBlockContainer(block, metaBlock, metadataFieldValues, atFragmentLevel);
                 });
             }
 
             private void processMetadataBlockContainer(NodeInfo metadataContainer, ConfigMetadataBlock metaBlock,
-                    Map<String, Collection<String>> metadataFieldValues) {
+                    Map<String, Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 // For each subblock... (for multiple levels of containerPaths)
                 for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
-                    processMetadataBlock(metadataContainer, subBlock, metadataFieldValues);
+                    processMetadataBlock(metadataContainer, subBlock, metadataFieldValues, atFragmentLevel);
                 }
 
                 // For each configured metadata field...
@@ -869,11 +879,15 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     if (field.getValuePath() == null || field.getValuePath().isEmpty())
                         continue;
 
+                    // Should we even apply this rule at the fragment level?
+                    if (atFragmentLevel && !field.getFragmentBehaviour().applyRuleAtFragLevel())
+                        continue; // no
+
                     // Capture whatever this configured metadata field points to
                     if (field.isForEach()) {
                         // "forEach" metadata specification
                         // (allows us to capture many metadata fields with 3 XPath expressions)
-                        processMetaForEach(metaBlock, metadataContainer, field, metadataFieldValues);
+                        processMetaForEach(metaBlock, metadataContainer, field, metadataFieldValues, atFragmentLevel);
                     } else {
                         // Regular metadata field; just the fieldName and an XPath expression for the value
                         // Multiple matches will be indexed at the same position.
@@ -883,7 +897,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach,
-                    Map<String, Collection<String>> metadataFieldValues) {
+                    Map<String, Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 finder.xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
                     String fieldName = finder.xpathValue(forEach.getNamePath(), match);
@@ -901,6 +915,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // Note that we check whether there is any path at all: otherwise an identical path to the for-each would capture values twice.
                     if (indexAsField.getValuePath() != null && !indexAsField.getValuePath().isEmpty())
                         return;
+
+                    // Should we even apply this rule at the fragment level?
+                    if (atFragmentLevel && !indexAsField.getFragmentBehaviour().applyRuleAtFragLevel())
+                        return; // no
 
                     // Multiple matches will be indexed at the same position.
                     indexMetadataFieldMatches(match, forEach, fieldName, indexAsField, metadataFieldValues);
