@@ -52,10 +52,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
     protected static final Logger logger = LogManager.getLogger(InputFormatTypeBase.class);
 
-    public static final String FRAG_PREFIX = "_frag_";
-
-    public static final String FRAG_FIELD_PID = FRAG_PREFIX + "doc";
-
     /** A document in this format currently being indexed. Contains all the variable state. */
     public interface Doc extends AutoCloseable {
         IndexerStats index();
@@ -702,12 +698,16 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                             // Store each fragment in a separate Lucene document, with a reference to the main document
                             for (Fragment fragment: fragments) {
                                 currentDoc = createNewDocument();
-                                currentDoc.addField(FRAG_FIELD_PID, pid, untokenizedFieldType);
-                                currentDoc.addField(FRAG_PREFIX + "annotatedField", annotatedFieldName, untokenizedFieldType);
-                                currentDoc.addStoredNumericField(FRAG_PREFIX + "start", fragment.span().start(), true);
-                                currentDoc.addStoredNumericField(FRAG_PREFIX + "end", fragment.span().end(), true);
+                                currentDoc.addField(BLInputDocument.FRAG_FIELD_DOC, pid, untokenizedFieldType);
+                                currentDoc.addField(BLInputDocument.FRAG_PREFIX + "annotatedField", annotatedFieldName, untokenizedFieldType);
+                                currentDoc.addStoredNumericField(BLInputDocument.FRAG_PREFIX + "start", fragment.span().start(), true);
+                                currentDoc.addStoredNumericField(BLInputDocument.FRAG_PREFIX + "end", fragment.span().end(), true);
                                 addMetadataToDocument(fragment.metadata(), true);
                                 getDocWriter().add(currentDoc);
+                            }
+                            // Keep track of which metadata fields occur in fragments, so we can optimize queries on them
+                            for (String fragmentField: metadataFieldsFragmentBehaviour.keySet()) {
+                                getDocWriter().metadata().metadataFields().setOccursInFragment(fragmentField);
                             }
                         }
                     }

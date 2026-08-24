@@ -15,6 +15,12 @@ public interface BLInputDocument {
 
     int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
+    /** Prefix for special fields in fragment Lucene documents. */
+    String FRAG_PREFIX = "_frag_";
+
+    /** Field pointing to the document this is fragment of, referencing it by its pidField */
+    String FRAG_FIELD_DOC = FRAG_PREFIX + "doc";
+
     void addField(String name, String value, BLFieldType fieldType);
 
     void addStoredField(String name, String value);

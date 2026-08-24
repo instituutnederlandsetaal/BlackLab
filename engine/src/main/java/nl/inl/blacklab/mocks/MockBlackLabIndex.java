@@ -313,4 +313,5 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public LeafReaderLookup getLeafReaderLookup() {
         throw new UnsupportedOperationException();
     }
+
 }

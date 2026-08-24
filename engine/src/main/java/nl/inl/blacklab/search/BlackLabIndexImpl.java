@@ -257,5 +257,4 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
             throw new InvalidIndex(e);
         }
     }
-
 }

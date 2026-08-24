@@ -2,7 +2,9 @@ package nl.inl.blacklab.index;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -12,11 +14,16 @@ import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.TermQuery;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
-import nl.inl.blacklab.indexers.config.InputFormatTypeBase;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.util.StringUtil;
@@ -59,6 +66,8 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
     }
 
     /** Get the PID for this document, if the index has a PID field.
+     * <p>
+     * Used to check for duplicates when adding documents to the index.
      *
      * @param document the document
      * @return the PID term, or null if no PID field is configured or this is a fragment
@@ -70,8 +79,9 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
         String pid = document.get(pidFieldName);
         if (pid == null) {
             String fragmentPid = document.get(
-                    InputFormatTypeBase.FRAG_FIELD_PID); // fragments index reference to their document in this field
-            return null;
+                    BLInputDocument.FRAG_FIELD_DOC); // fragments index reference to their document in this field
+            if (fragmentPid != null)
+                return null; // this is a fragment, don't check for duplicates
         }
         if (pid == null) {
             throw new ErrorIndexingFile("Document has no persistent identifier (pidField '" + pidFieldName +
@@ -193,7 +203,49 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     @Override
     public void deleteDocuments(Query q) throws IOException {
-        indexWriter.deleteDocuments(q);
+        if (index.metadataFields().anyOccurInFragments()) {
+            // We have fragments in this index, so we need to delete all fragments of the matching documents as well.
+            // First, find all matching documents (not fragments)
+            if (getPidFieldName() == null) {
+                throw new IllegalStateException("Index contains fragments but no pid field is configured");
+            }
+            try (IndexReader reader = DirectoryReader.open(indexWriter)) {
+                // Find all the matching PIDs
+                IndexSearcher searcher = new IndexSearcher(reader);
+                List<String> pids = new ArrayList<>();
+                searcher.search(q, new SimpleCollector() {
+                    @Override
+                    public void collect(int doc) throws IOException {
+                        Document document = searcher.doc(doc);
+                        String pid = document.get(getPidFieldName());
+                        if (pid != null) { // i.e. skip any fragments we may have matched
+                            pid = StringUtil.desensitize(pid);
+                            pids.add(pid);
+                        }
+                    }
+
+                    @Override
+                    public ScoreMode scoreMode() {
+                        return ScoreMode.COMPLETE_NO_SCORES;
+                    }
+                });
+
+                // Create a query matching all fragments and documents with those PIDs, and delete them
+                BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+                for (String pid : pids) {
+                    Term fragPidTerm = new Term(BLInputDocument.FRAG_FIELD_DOC, pid);
+                    queryBuilder.add(new TermQuery(fragPidTerm), BooleanClause.Occur.SHOULD);
+                }
+                for (String pid : pids) {
+                    Term docPidTerm = new Term(getPidFieldName(), pid);
+                    queryBuilder.add(new TermQuery(docPidTerm), BooleanClause.Occur.SHOULD);
+                }
+                indexWriter.deleteDocuments((Query) queryBuilder.build());
+            }
+        } else {
+            // No need for fragment-aware deletion; just delete the document(s) matching the query
+            indexWriter.deleteDocuments(q);
+        }
     }
 
     @Override
