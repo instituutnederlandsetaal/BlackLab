@@ -61,7 +61,6 @@ record Fragment(Span span, @NonNull Map<String, Collection<String>> metadata) im
         Collections.sort(milestones);
 
         // Now iterate over the milestones, chopping into non-overlapping new fragments.
-        // TODO: create fragment before first and after last fragment
         List<Fragment> choppedFrags = new ArrayList<>();
         Set<Fragment> openFragments = new LinkedHashSet<>();
         if (!documentMetadata.isEmpty()) {

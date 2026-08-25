@@ -610,4 +610,11 @@ public interface BlackLabIndex extends AutoCloseable {
         }
         return docResults.get(0).identity().value();
     }
+
+    /**
+     * Can this query potentially match a fragment? (i.e. does it contain any clauses that can match a fragment?)
+     * @param query the query to check
+     * @return true if the query might match a fragment, false if it definitely cannot
+     */
+    boolean isFragmentQuery(Query query);
 }

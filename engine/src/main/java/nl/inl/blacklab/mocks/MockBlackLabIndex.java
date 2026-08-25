@@ -314,4 +314,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean isFragmentQuery(Query query) {
+        return false;
+    }
 }
