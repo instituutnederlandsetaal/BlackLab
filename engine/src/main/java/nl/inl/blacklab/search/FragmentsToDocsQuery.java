@@ -37,7 +37,7 @@ public class FragmentsToDocsQuery extends Query {
     private static final String DOC_TYPE_FIELD_NAME = BLInputDocument.DOC_TYPE_FIELD_NAME;
 
     /** Value that indicates a regular (full) document */
-    private static final String DOC_TYPE_FULL_DOCUMENT = BLInputDocument.DocTypes.DOCUMENT.getValue();
+    private static final String DOC_TYPE_FULL_DOCUMENT = BLInputDocument.DocType.DOCUMENT.getValue();
 
     /** Field that contains the full document's pid */
     private String pidField;

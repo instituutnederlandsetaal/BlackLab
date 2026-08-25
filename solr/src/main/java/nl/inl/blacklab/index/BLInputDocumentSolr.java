@@ -26,6 +26,11 @@ public class BLInputDocumentSolr implements BLInputDocument {
     }
 
     @Override
+    public void setType(DocType docType) {
+        document.addField(DOC_TYPE_FIELD_NAME, docType.getValue());
+    }
+
+    @Override
     public void addField(String name, String value, BLFieldType fieldType) {
         document.addField(name, value);
     }

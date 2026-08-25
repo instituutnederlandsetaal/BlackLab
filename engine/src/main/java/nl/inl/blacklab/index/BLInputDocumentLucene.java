@@ -5,6 +5,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
@@ -18,6 +19,12 @@ public class BLInputDocumentLucene implements BLInputDocument {
 
     public BLInputDocumentLucene() {
         document = new Document();
+    }
+
+    @Override
+    public void setType(DocType docType) {
+        document.add(new Field(DOC_TYPE_FIELD_NAME, docType.getValue(), BLFieldTypeLucene.METADATA_UNTOKENIZED.luceneType()));
+        document.add(new SortedDocValuesField(DOC_TYPE_FIELD_NAME, new BytesRef(docType.getValue().getBytes())));
     }
 
     @Override

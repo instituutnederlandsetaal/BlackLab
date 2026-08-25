@@ -22,15 +22,18 @@ public interface BLInputDocument {
      *  indexmetadata (special index metadata document) */
     String DOC_TYPE_FIELD_NAME = "_docType";
 
+    /** Set the document type */
+    void setType(DocType docType);
+
     /** The different document types in an index. */
-    enum DocTypes {
+    enum DocType {
         DOCUMENT("document"),
         FRAGMENT("fragment"),
         INDEXMETADATA("indexmetadata");
 
         private final String value;
 
-        DocTypes(String value) {
+        DocType(String value) {
             this.value = value;
         }
 
@@ -40,8 +43,8 @@ public interface BLInputDocument {
         }
 
         @JsonCreator
-        public static DocTypes forValue(String value) {
-            for (DocTypes type : DocTypes.values()) {
+        public static DocType forValue(String value) {
+            for (DocType type : DocType.values()) {
                 if (type.value.equals(value)) {
                     return type;
                 }

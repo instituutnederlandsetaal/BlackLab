@@ -667,8 +667,11 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 addMetadataToDocument(metadataFieldValues, false);
                 try {
                     // Add Lucene doc to indexer, if not existing already
-                    if (getDocWriter() != null && !indexingIntoExistingDoc)
+                    if (getDocWriter() != null && !indexingIntoExistingDoc) {
+                        // Set the doc type field so we know this is a regular full document (as opposed to a fragment)
+                        currentDoc.setType(BLInputDocument.DocType.DOCUMENT);
                         getDocWriter().add(currentDoc);
+                    }
 
                     // Are there document fragments to store as well?
                     // (each fragment is stored in a separate Lucene document that references the main document)
@@ -704,6 +707,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 currentDoc.addStoredNumericField(BLInputDocument.FRAG_PREFIX + "start", fragment.span().start(), true);
                                 currentDoc.addStoredNumericField(BLInputDocument.FRAG_PREFIX + "end", fragment.span().end(), true);
                                 addMetadataToDocument(fragment.metadata(), true);
+                                // Set the doc type field so we know this is a fragment, not a full document
+                                currentDoc.setType(BLInputDocument.DocType.FRAGMENT);
                                 getDocWriter().add(currentDoc);
                             }
                             // Keep track of which metadata fields occur in fragments, so we can optimize queries on them

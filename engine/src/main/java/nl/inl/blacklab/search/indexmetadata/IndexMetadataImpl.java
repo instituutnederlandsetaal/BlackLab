@@ -186,6 +186,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
             indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
             indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
+            indexmetadataDoc.setType(BLInputDocument.DocType.INDEXMETADATA);
             indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
         }
 
