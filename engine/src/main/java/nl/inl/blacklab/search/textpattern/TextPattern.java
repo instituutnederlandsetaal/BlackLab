@@ -246,8 +246,16 @@ public abstract class TextPattern implements TextPatternStruct {
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
-            if (filter != null)
-                spanQuery = new SpanQueryFiltered(spanQuery, filter);
+            if (filter != null) {
+                if (queryInfo.index().isFragmentQuery(filter)) {
+                    // TODO: adapt the filter query to a spanquery and use within
+                    // spanQuery = new SpanQueryPositionFilter(...)
+                    spanQuery = new SpanQueryFiltered(spanQuery, filter);
+                } else {
+                    // not a fragment query; use regular SpanQueryFiltered
+                    spanQuery = new SpanQueryFiltered(spanQuery, filter);
+                }
+            }
             return spanQuery;
         }
         throw new InvalidQuery("Expected a query, but pattern evaluated to a " + ExprType.of(result));
