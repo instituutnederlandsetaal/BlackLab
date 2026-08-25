@@ -93,15 +93,17 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     @Override
     public void addDocument(BLInputDocument document) throws IOException {
-        // Do we have a persistent identifier?
+        BLIndexWriterProxy.ensureDocTypeFieldSet(document);
         Document doc = luceneDoc(document);
+        // Do we have a doc type field?
+        // Do we have a persistent identifier (pid)? If yes, ensure it only occurs once in the corpus.
         if (getPidFieldName() != null) {
-            // We have a persistent identifier; ensure it only occurs once in the corpus.
+            // We have a pid; if it already exists in the index, update the document instead of adding.
             Term pidTerm = getPidTerm(document);
             BlackLabIndexWriter.IfDocumentExists ifDocumentExists = index.getIfDocumentExists();
             addOrUpdate(doc, pidTerm, ifDocumentExists);
         } else {
-            // We don't have persistent identifiers. Just add the document.
+            // We don't have a pid. Just add the document.
             indexWriter.addDocument(doc);
         }
     }

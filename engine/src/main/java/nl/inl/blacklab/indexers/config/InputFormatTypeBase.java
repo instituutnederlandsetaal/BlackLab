@@ -104,6 +104,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * Depending on the behaviour, we may or may not want to index these at the document level,
              * and we may or may not want to "inherit" from the document level to the fragment level.
              * Fields that are not in this map are not indexed at the fragment level.
+             * (so fields set to fragmentBehaviour: ignore never end up here)
              */
             Map<String, ConfigMetadataField.FragmentBehaviour> metadataFieldsFragmentBehaviour = new HashMap<>();
 

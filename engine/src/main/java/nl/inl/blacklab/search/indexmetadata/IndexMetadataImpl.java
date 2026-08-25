@@ -132,6 +132,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         /** Index metadata document gets a marker field so we can find it again (value same as field name) */
         private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
 
+        /** Query to find the metadata document in the index */
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {

@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+
 /**
  * Proxy for an IndexWriter object.
  *
@@ -14,6 +16,13 @@ import org.apache.lucene.search.Query;
  */
 public interface BLIndexWriterProxy {
     void addDocument(BLInputDocument document) throws IOException;
+
+    static void ensureDocTypeFieldSet(BLInputDocument document) {
+        if (document.get(BLInputDocument.DOC_TYPE_FIELD_NAME) == null) {
+            throw new ErrorIndexingFile("Document has no " + BLInputDocument.DOC_TYPE_FIELD_NAME +
+                    " field; cannot add it to the index.");
+        }
+    }
 
     void close() throws IOException;
 

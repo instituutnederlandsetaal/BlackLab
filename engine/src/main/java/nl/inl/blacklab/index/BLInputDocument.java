@@ -4,6 +4,9 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.lucene.analysis.TokenStream;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Generic interface for a BlackLab document being indexed.
  *
@@ -14,6 +17,38 @@ import org.apache.lucene.analysis.TokenStream;
 public interface BLInputDocument {
 
     int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
+
+    /** Document type: document (regular full document), fragment (part of document, refers to pid of full doc),
+     *  indexmetadata (special index metadata document) */
+    String DOC_TYPE_FIELD_NAME = "_docType";
+
+    /** The different document types in an index. */
+    enum DocTypes {
+        DOCUMENT("document"),
+        FRAGMENT("fragment"),
+        INDEXMETADATA("indexmetadata");
+
+        private final String value;
+
+        DocTypes(String value) {
+            this.value = value;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return value;
+        }
+
+        @JsonCreator
+        public static DocTypes forValue(String value) {
+            for (DocTypes type : DocTypes.values()) {
+                if (type.value.equals(value)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("Unknown LuceneDocumentTypes value: " + value);
+        }
+    }
 
     /** Prefix for special fields in fragment Lucene documents. */
     String FRAG_PREFIX = "_frag_";
