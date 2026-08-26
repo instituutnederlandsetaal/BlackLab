@@ -39,6 +39,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.lucene.QueryFullDocsFromFragments;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
@@ -283,8 +284,13 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     private DocResults(QueryInfo queryInfo, Query query) {
         this(queryInfo);
         this.query = query;
-        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
-        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+        if (queryInfo.index().isFragmentQuery(query)) {
+            // The query can yield fragments as well as full documents. "Upcast" to only full documents.
+            String pidField = queryInfo.index().metadataFields().pidField().name();
+            query = new QueryFullDocsFromFragments(query, pidField);
+        }
+        // (NOTE: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery)
         results = new ArrayList<>();
         try {
             queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo, stats));

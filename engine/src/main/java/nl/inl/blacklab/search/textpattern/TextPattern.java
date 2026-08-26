@@ -14,7 +14,10 @@ import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.lucene.SpanQueryFromFragments;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -247,12 +250,14 @@ public abstract class TextPattern implements TextPatternStruct {
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
             if (filter != null) {
+                // Can the filter yield fragments or only regular (full) documents?
                 if (queryInfo.index().isFragmentQuery(filter)) {
-                    // TODO: adapt the filter query to a spanquery and use within
-                    // spanQuery = new SpanQueryPositionFilter(...)
-                    spanQuery = new SpanQueryFiltered(spanQuery, filter);
+                    // Adapt the filter query to a spanquery and use within to find hits within documents/fragments
+                    String pidField = queryInfo.index().metadataFields().pidField().name();
+                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(queryInfo, filter, pidField);
+                    spanQuery = new SpanQueryPositionFilter(spanQuery, filterSpanQuery, SpanFilter.WITHIN, false);
                 } else {
-                    // not a fragment query; use regular SpanQueryFiltered
+                    // Not a fragment query; use regular SpanQueryFiltered
                     spanQuery = new SpanQueryFiltered(spanQuery, filter);
                 }
             }
