@@ -31,10 +31,10 @@ import nl.inl.blacklab.indexers.config.Span;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
- * Converts matching fragments to the documents they occur in.
+ * Converts documents and fragments results into spans.
  *
- * If the whole document also matches, or there are multiple fragments in a document,
- * the document will only be returned once.
+ * If the whole document matches, that's the only span that will be produced.
+ * Adjacent fragments will be combined into a single span.
  */
 public class SpanQueryFromFragments extends BLSpanQuery {
 
@@ -150,11 +150,11 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         private final StoredFields storedFields;
 
         /** Iterator over the matched index documents (full documents and/or fragments) */
-        private DocIdSetIterator fragmentIterator;
+        private final DocIdSetIterator fragmentIterator;
 
         // Iterate over all the docs in the segment that are full documents (not fragments)
         // (needed to find the full document for a fragment if the full document wasn't matched already)
-        private DocIdSetIterator fullDocsIterator;
+        private final DocIdSetIterator fullDocsIterator;
 
         /** Current matching document id (last returned from nextDoc) */
         private int currentDocId;
@@ -163,7 +163,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         private String currentDocPid;
 
         /** Spans we're producing from this document. */
-        private List<Span> spansInCurrentDoc = new ArrayList<>();
+        private final List<Span> spansInCurrentDoc = new ArrayList<>();
 
         /** Spans we're producing from this document. */
         private Iterator<Span> spansIt;
@@ -176,6 +176,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         int fragDocId;
         int fragStart;
         int fragEnd;
+        boolean fragIsFullDoc;
 
         public FragmentsToSpans(Scorer fragmentScorer, Scorer fullDocsScorer, IndexSearcher searcher) {
             super(SpanGuarantees.SORTED_UNIQUE);
@@ -258,12 +259,14 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                             BLInputDocument.FRAG_FIELD_START, BLInputDocument.FRAG_FIELD_END));
             if (document.get(DOC_TYPE_FIELD_NAME).equals(DOC_TYPE_FULL_DOCUMENT)) {
                 // This is a full document; remember its pid and yield the document
+                fragIsFullDoc = true;
                 fragDocPid = document.get(pidField);
                 fragDocId = fragmentIterator.docID();
                 fragStart = 0;
                 fragEnd = Integer.parseInt(document.get(tokenLengthField));
             } else {
                 // This is a fragment; check if it refers to the current document pid or to a new one.
+                fragIsFullDoc = false;
                 fragDocPid = document.get(BLInputDocument.FRAG_FIELD_DOC);
                 assert fragDocPid != null : "Fragment document missing " + BLInputDocument.FRAG_FIELD_DOC + " field";
                 fragStart = Integer.parseInt(document.get(BLInputDocument.FRAG_FIELD_START));
@@ -297,6 +300,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
             currentDocPid = fragDocPid;
             spansInCurrentDoc.clear();
             spansInCurrentDoc.add(Span.between(fragStart, fragEnd));
+            boolean collectFragments = !fragIsFullDoc; // if whole doc matches, don't also produce fragments
             while (true) {
                 if (fragmentIterator.nextDoc() == DocIdSetIterator.NO_MORE_DOCS) {
                     // No more fragments left
@@ -307,10 +311,25 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                     // This fragment is in a new document; we'll return it next time
                     break;
                 }
-                spansInCurrentDoc.add(Span.between(fragStart, fragEnd));
+                if (collectFragments) {
+                    addOrMergeSpan(spansInCurrentDoc, fragStart, fragEnd);
+                }
             }
             spansIt = spansInCurrentDoc.iterator();
             return currentDocId;
+        }
+
+        /** Add a span to the list, combining with the previous span if adjacent. */
+        private void addOrMergeSpan(List<Span> spansInCurrentDoc, int fragStart, int fragEnd) {
+            if (!spansInCurrentDoc.isEmpty()) {
+                Span lastSpan = spansInCurrentDoc.get(spansInCurrentDoc.size() - 1);
+                if (lastSpan.end() == fragStart) {
+                    // Adjacent fragment; combine with previous span
+                    spansInCurrentDoc.set(spansInCurrentDoc.size() - 1, Span.between(lastSpan.start(), fragEnd));
+                    return;
+                }
+            }
+            spansInCurrentDoc.add(Span.between(fragStart, fragEnd));
         }
 
         @Override
