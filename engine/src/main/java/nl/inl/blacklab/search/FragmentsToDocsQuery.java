@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
@@ -17,6 +18,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 
 /**
@@ -27,20 +29,20 @@ import nl.inl.blacklab.index.BLInputDocument;
  */
 public class FragmentsToDocsQuery extends Query {
 
-    /** A query yielding full documents and/or fragments */
-    private Query fragmentQuery;
-
-    /** A query yielding all full documents in the index */
-    private Query fullDocsQuery;
-
     /** Field that contains the index document type (document/fragment/indexmetadata) */
     private static final String DOC_TYPE_FIELD_NAME = BLInputDocument.DOC_TYPE_FIELD_NAME;
 
     /** Value that indicates a regular (full) document */
     private static final String DOC_TYPE_FULL_DOCUMENT = BLInputDocument.DocType.DOCUMENT.getValue();
 
+    /** A query yielding full documents and/or fragments */
+    private final Query fragmentQuery;
+
+    /** A query yielding all full documents in the index */
+    private final Query fullDocsQuery;
+
     /** Field that contains the full document's pid */
-    private String pidField;
+    private final String pidField;
 
     public FragmentsToDocsQuery(Query fragmentQuery, String pidField) {
         this.fragmentQuery = fragmentQuery;
@@ -122,10 +124,14 @@ public class FragmentsToDocsQuery extends Query {
     /** Iterate over all the full documents that match the document+fragments found by the query */
     private class FragmentsToDocsIterator extends DocIdSetIterator {
 
-        private final IndexSearcher searcher;
+        /** Where we retrieve stored fields from */
+        private final StoredFields storedFields;
+
+        /** Iterator over the matched index documents (full documents and/or fragments) */
         DocIdSetIterator fragmentIterator;
 
         // Iterate over all the docs in the segment that are full documents (not fragments)
+        // (needed to find the full document for a fragment if the full document wasn't matched already)
         DocIdSetIterator fullDocsIterator;
 
         /** Current matching document id (last returned from nextDoc) */
@@ -135,7 +141,11 @@ public class FragmentsToDocsQuery extends Query {
         String lastDocYieldedPid;
 
         public FragmentsToDocsIterator(Scorer fragmentScorer, Scorer fullDocsScorer, IndexSearcher searcher) {
-            this.searcher = searcher;
+            try {
+                this.storedFields = searcher.storedFields();
+            } catch (IOException e) {
+                throw new InvalidIndex(e);
+            }
             fragmentIterator = fragmentScorer.iterator();
             fullDocsIterator = fullDocsScorer.iterator();
             currentDocId = -1;
@@ -149,20 +159,39 @@ public class FragmentsToDocsQuery extends Query {
 
         @Override
         public int nextDoc() throws IOException {
+            // Find the next full document to return (we have to skip potential duplicates because of fragments)
+            fragmentIterator.nextDoc();
+            synchronizeDoc();
+            return currentDocId;
+        }
+
+        @Override
+        public int advance(int target) throws IOException {
+            fragmentIterator.advance(target);
+            synchronizeDoc();
+            return currentDocId;
+        }
+
+        /**
+         * From the current index document, find the next full document to return
+         * (we have to skip potential duplicates because of fragments).
+         */
+        private void synchronizeDoc() throws IOException {
+            // Find the next full document to return (we have to skip potential duplicates because of fragments)
             while (true) {
-                int docId = fragmentIterator.nextDoc();
-                if (docId == DocIdSetIterator.NO_MORE_DOCS) {
+                if (fragmentIterator.docID() == DocIdSetIterator.NO_MORE_DOCS) {
                     currentDocId = NO_MORE_DOCS;
-                    return NO_MORE_DOCS;
+                    return;
                 }
 
                 // Find the doc type and pid
-                Document document = searcher.getIndexReader().storedFields().document(docId,
+                // OPT: use docvalues?
+                Document document = storedFields.document(fragmentIterator.docID(),
                         Set.of(DOC_TYPE_FIELD_NAME, pidField, BLInputDocument.FRAG_FIELD_DOC));
                 if (document.get(DOC_TYPE_FIELD_NAME).equals(DOC_TYPE_FULL_DOCUMENT)) {
                     // This is a full document; remember its pid and yield the document
                     lastDocYieldedPid = document.get(pidField);
-                    currentDocId = docId;
+                    currentDocId = fragmentIterator.docID();
                     break;
                 } else {
                     // This is a fragment; check if it refers to the last full document pid
@@ -170,33 +199,30 @@ public class FragmentsToDocsQuery extends Query {
                     if (fragmentPid != null && fragmentPid.equals(lastDocYieldedPid)) {
                         // This fragment refers to the last full document we saw, skip it
                         // (we've already yielded that document, don't yield it again)
-                        continue;
-                    }
-                    // Find the full document for this fragment (by advancing our parallel iterator over all full docs)
-                    // (this should work because both iterators are in docId order)
-                    while (true) {
-                        int fullDocId = fullDocsIterator.nextDoc();
-                        if (fullDocId == DocIdSetIterator.NO_MORE_DOCS) {
-                            throw new IllegalStateException("Fragment found but cannot find full document, fragment pid: " + fragmentPid);
+                    } else {
+                        // Find the full document for this fragment (by advancing our parallel iterator over all full docs)
+                        // (this should work because both iterators are in docId order)
+                        while (true) {
+                            int fullDocId = fullDocsIterator.nextDoc();
+                            if (fullDocId == DocIdSetIterator.NO_MORE_DOCS) {
+                                throw new IllegalStateException(
+                                        "Fragment found but cannot find full document, fragment pid: " + fragmentPid);
+                            }
+                            // Check if this is the full document for this fragment (by comparing pids)
+                            Document fullDoc = storedFields.document(fullDocId, Set.of(pidField));
+                            if (fullDoc.get(pidField).equals(fragmentPid)) {
+                                // We found the full document for this fragment; yield it
+                                lastDocYieldedPid = fullDoc.get(pidField);
+                                currentDocId = fullDocId;
+                                break;
+                            }
                         }
-                        // Check if this is the full document for this fragment (by comparing pids)
-                        Document fullDoc = searcher.getIndexReader().storedFields().document(fullDocId, Set.of(pidField));
-                        if (fullDoc.get(pidField).equals(fragmentPid)) {
-                            // We found the full document for this fragment; yield it
-                            lastDocYieldedPid = fullDoc.get(pidField);
-                            currentDocId = fullDocId;
-                            break;
-                        }
                     }
+
+                    // Go to the next matched index document (full document or fragment)
+                    fragmentIterator.nextDoc();
                 }
             }
-            return currentDocId;
-        }
-
-        @Override
-        public int advance(int target) throws IOException {
-            // TODO: same as nextDoc(), but advance to the target doc id
-            return fragmentIterator.advance(target);
         }
 
         @Override
