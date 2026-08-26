@@ -26,6 +26,7 @@ import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -133,8 +134,12 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
                 if (!BLFieldTypeLucene.isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
 
-                // Ignore special fields that only exist in the metadata document
-                if (IndexMetadataImpl.isMetadataDocField(fi.name))
+                // Ignore:
+                // - special fields that only exist in the metadata document
+                // - the document type field (in every index document)
+                // - fragment fields (only exist in fragment documents)
+                if (IndexMetadataImpl.isMetadataDocField(fi.name) || fi.name.equals(BLInputDocument.DOC_TYPE_FIELD_NAME) ||
+                        fi.name.startsWith(BLInputDocument.FRAG_PREFIX))
                     continue;
                 anyFieldsFounds = true;
 
