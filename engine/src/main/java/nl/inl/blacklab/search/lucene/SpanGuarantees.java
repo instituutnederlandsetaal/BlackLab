@@ -69,7 +69,7 @@ public interface SpanGuarantees {
     };
 
     /**
-     * Guarantees that the hits are sorted by start point and are unique.
+     * Guarantees that the hits are unique.
      */
     SpanGuarantees UNIQUE = new SpanGuaranteesAdapter() {
         @Override
@@ -102,6 +102,8 @@ public interface SpanGuarantees {
 
     /**
      * Guarantees that the hits are sorted by start point and are unique.
+     *
+     * (normally true for regular Lucene queries, not always true in BlackLab)
      */
     SpanGuarantees SORTED_UNIQUE = new SpanGuaranteesAdapter(UNIQUE) {
         @Override
@@ -111,9 +113,7 @@ public interface SpanGuarantees {
     };
 
     /**
-     * Only guarantees that the hits are sorted by start point.
-     *
-     * (normally true for regular Lucene queries, not always true in BlackLab)
+     * Only guarantees that the hits are sorted by end point.
      */
     SpanGuarantees END_SORTED = new SpanGuaranteesAdapter(NONE) {
         @Override
@@ -123,9 +123,7 @@ public interface SpanGuarantees {
     };
 
     /**
-     * Only guarantees that the hits are sorted by start point.
-     *
-     * (normally true for regular Lucene queries, not always true in BlackLab)
+     * Guarantees that the hits are sorted by end point, and end points are unique.
      */
     SpanGuarantees END_SORTED_UNIQUE = new SpanGuaranteesAdapter(UNIQUE) {
         @Override

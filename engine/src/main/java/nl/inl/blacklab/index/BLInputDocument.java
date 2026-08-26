@@ -59,6 +59,15 @@ public interface BLInputDocument {
     /** Field pointing to the document this is fragment of, referencing it by its pidField */
     String FRAG_FIELD_DOC = FRAG_PREFIX + "doc";
 
+    /** Annotated field this fragment is from */
+    String FRAG_FIELD_ANNOTATED_FIELD = FRAG_PREFIX + "annotatedField";
+
+    /** Field pointing to the start of the fragment within the full document */
+    String FRAG_FIELD_START = FRAG_PREFIX + "start";
+
+    /** Field pointing to the end of the fragment within the full document */
+    String FRAG_FIELD_END = FRAG_PREFIX + "end";
+
     void addField(String name, String value, BLFieldType fieldType);
 
     void addStoredField(String name, String value);

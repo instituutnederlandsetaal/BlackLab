@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -8,6 +8,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.StoredFields;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
@@ -27,7 +28,7 @@ import nl.inl.blacklab.index.BLInputDocument;
  * If the whole document also matches, or there are multiple fragments in a document,
  * the document will only be returned once.
  */
-public class FragmentsToDocsQuery extends Query {
+public class QueryFullDocsFromFragments extends Query {
 
     /** Field that contains the index document type (document/fragment/indexmetadata) */
     private static final String DOC_TYPE_FIELD_NAME = BLInputDocument.DOC_TYPE_FIELD_NAME;
@@ -44,7 +45,7 @@ public class FragmentsToDocsQuery extends Query {
     /** Field that contains the full document's pid */
     private final String pidField;
 
-    public FragmentsToDocsQuery(Query fragmentQuery, String pidField) {
+    public QueryFullDocsFromFragments(Query fragmentQuery, String pidField) {
         this.fragmentQuery = fragmentQuery;
         this.pidField = pidField;
 
@@ -100,7 +101,7 @@ public class FragmentsToDocsQuery extends Query {
 
     @Override
     public void visit(QueryVisitor visitor) {
-        visitor.visitLeaf(this);
+        fragmentQuery.visit(visitor.getSubVisitor(BooleanClause.Occur.MUST, this));
     }
 
     @Override
@@ -112,7 +113,7 @@ public class FragmentsToDocsQuery extends Query {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass())
             return false;
-        FragmentsToDocsQuery that = (FragmentsToDocsQuery) o;
+        QueryFullDocsFromFragments that = (QueryFullDocsFromFragments) o;
         return Objects.equals(fragmentQuery, that.fragmentQuery);
     }
 
@@ -138,7 +139,7 @@ public class FragmentsToDocsQuery extends Query {
         int currentDocId;
 
         /** Last full document pid we saw. If we see a fragment that refers to this pid, we can skip it. */
-        String lastDocYieldedPid;
+        String currentDocPid;
 
         public FragmentsToDocsIterator(Scorer fragmentScorer, Scorer fullDocsScorer, IndexSearcher searcher) {
             try {
@@ -149,7 +150,7 @@ public class FragmentsToDocsQuery extends Query {
             fragmentIterator = fragmentScorer.iterator();
             fullDocsIterator = fullDocsScorer.iterator();
             currentDocId = -1;
-            lastDocYieldedPid = null;
+            currentDocPid = null;
         }
 
         @Override
@@ -190,13 +191,13 @@ public class FragmentsToDocsQuery extends Query {
                         Set.of(DOC_TYPE_FIELD_NAME, pidField, BLInputDocument.FRAG_FIELD_DOC));
                 if (document.get(DOC_TYPE_FIELD_NAME).equals(DOC_TYPE_FULL_DOCUMENT)) {
                     // This is a full document; remember its pid and yield the document
-                    lastDocYieldedPid = document.get(pidField);
+                    currentDocPid = document.get(pidField);
                     currentDocId = fragmentIterator.docID();
                     break;
                 } else {
                     // This is a fragment; check if it refers to the last full document pid
                     String fragmentPid = document.get(BLInputDocument.FRAG_FIELD_DOC);
-                    if (fragmentPid != null && fragmentPid.equals(lastDocYieldedPid)) {
+                    if (fragmentPid != null && fragmentPid.equals(currentDocPid)) {
                         // This fragment refers to the last full document we saw, skip it
                         // (we've already yielded that document, don't yield it again)
                     } else {
@@ -212,7 +213,7 @@ public class FragmentsToDocsQuery extends Query {
                             Document fullDoc = storedFields.document(fullDocId, Set.of(pidField));
                             if (fullDoc.get(pidField).equals(fragmentPid)) {
                                 // We found the full document for this fragment; yield it
-                                lastDocYieldedPid = fullDoc.get(pidField);
+                                currentDocPid = fullDoc.get(pidField);
                                 currentDocId = fullDocId;
                                 break;
                             }
