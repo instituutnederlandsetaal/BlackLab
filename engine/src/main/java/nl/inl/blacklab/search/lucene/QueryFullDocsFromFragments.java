@@ -24,7 +24,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 
 /**
  * Converts matching fragments to the documents they occur in.
- *
+ * <p>
  * If the whole document also matches, or there are multiple fragments in a document,
  * the document will only be returned once.
  */
@@ -81,7 +81,7 @@ public class QueryFullDocsFromFragments extends Query {
 
                     @Override
                     public DocIdSetIterator iterator() {
-                        return new FragmentsToDocsIterator(fragmentScorer, fullDocsScorer, searcher);
+                        return new FragmentsToDocsIterator(ctx, fragmentScorer, fullDocsScorer);
                     }
 
                     @Override
@@ -141,9 +141,13 @@ public class QueryFullDocsFromFragments extends Query {
         /** Last full document pid we saw. If we see a fragment that refers to this pid, we can skip it. */
         String currentDocPid;
 
-        public FragmentsToDocsIterator(Scorer fragmentScorer, Scorer fullDocsScorer, IndexSearcher searcher) {
+        public FragmentsToDocsIterator(LeafReaderContext ctx, Scorer fragmentScorer, Scorer fullDocsScorer) {
             try {
-                this.storedFields = searcher.storedFields();
+                this.storedFields = ctx.reader().storedFields();
+                // OPT: use docvalues?
+                //SortedSetDocValues dvType = ctx.reader().getSortedSetDocValues(DOC_TYPE_FIELD_NAME);
+                //SortedSetDocValues dvPid = ctx.reader().getSortedSetDocValues(pidField);
+                //BLInputDocument.FRAG_FIELD_DOC
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
@@ -186,7 +190,6 @@ public class QueryFullDocsFromFragments extends Query {
                 }
 
                 // Find the doc type and pid
-                // OPT: use docvalues?
                 Document document = storedFields.document(fragmentIterator.docID(),
                         Set.of(DOC_TYPE_FIELD_NAME, pidField, BLInputDocument.FRAG_FIELD_DOC));
                 if (document.get(DOC_TYPE_FIELD_NAME).equals(DOC_TYPE_FULL_DOCUMENT)) {
@@ -196,12 +199,11 @@ public class QueryFullDocsFromFragments extends Query {
                     break;
                 } else {
                     // This is a fragment; check if it refers to the last full document pid
+                    // (if it does, we can skip it)
                     String fragmentPid = document.get(BLInputDocument.FRAG_FIELD_DOC);
-                    if (fragmentPid != null && fragmentPid.equals(currentDocPid)) {
-                        // This fragment refers to the last full document we saw, skip it
-                        // (we've already yielded that document, don't yield it again)
-                    } else {
-                        // Find the full document for this fragment (by advancing our parallel iterator over all full docs)
+                    if (fragmentPid == null || !fragmentPid.equals(currentDocPid)) {
+                        // Different document pid.
+                        // Find the full document for this fragment (by advancing our full document iterator)
                         // (this should work because both iterators are in docId order)
                         while (true) {
                             int fullDocId = fullDocsIterator.nextDoc();

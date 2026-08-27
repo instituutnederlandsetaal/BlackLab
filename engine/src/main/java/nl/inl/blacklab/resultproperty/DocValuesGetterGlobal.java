@@ -19,12 +19,14 @@ class DocValuesGetterGlobal implements DocValuesGetter {
     private final BlackLabIndex index;
 
     /**
-     * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
+     * The DocValues per segment (keyed by docBase), or null if we don't have docValues.
+     * New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
      */
     private Map<LeafReaderContext, DocValuesRandomAccess<SortedDocValues, String>> sortedDocValues = null;
 
     /**
-     * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
+     * The DocValues per segment (keyed by docBase), or null if we don't have docValues.
+     * New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
      */
     private Map<LeafReaderContext, DocValuesRandomAccess<SortedSetDocValues, String[]>> sortedSetDocValues = null;
 
