@@ -71,7 +71,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
 
-        Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
+        Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(new IndexSearcher(reader));
         if (rewrittenFuzzyQuery instanceof BooleanQuery) {
             // BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
             List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
@@ -79,7 +79,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
             for (int i = 0; i < clauses.size(); i++) {
                 BooleanClause clause = clauses.get(i);
 
-                TermQuery termQuery = (TermQuery) clause.getQuery();
+                TermQuery termQuery = (TermQuery) clause.query();
 
                 // ONLY DIFFERENCE WITH SpanFuzzyQuery:
                 // Use a BLSpanTermQuery instead of default Lucene one.

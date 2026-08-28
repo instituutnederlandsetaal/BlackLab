@@ -10,7 +10,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -176,12 +175,12 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query) throws TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query) {
         throw new UnsupportedOperationException();
     }
 
@@ -285,7 +284,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         if (includeContentStores)
             throw new UnsupportedOperationException("Always skips content stores");
         try {
-            return reader().document(docId);
+            return reader().storedFields().document(docId);
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }

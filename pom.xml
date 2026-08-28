@@ -26,8 +26,9 @@
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
 
-        <!-- Solr integration (experimental) -->
-        <module>solr</module>
+        <!-- Solr integration (experimental)
+        DISABLED FOR LUCENE 10 / SOLR 10, see
+        <module>solr</module> -->
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
@@ -41,8 +42,8 @@
 
         <!-- Library versions -->
         <servlet.version>6.0.0</servlet.version>
-        <blacklab.luceneVersion>9.11.1</blacklab.luceneVersion>
-        <solr.version>9.8.1</solr.version>
+        <blacklab.luceneVersion>10.4.0</blacklab.luceneVersion>
+        <solr.version>10.0.0</solr.version>
         <log4j.version>2.25.4</log4j.version>
         <eclipse.collections.version>12.0.0.M3</eclipse.collections.version>
 
@@ -52,7 +53,7 @@
         <jaxb.version>4.0.4</jaxb.version>
 
         <!-- Java version -->
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
 
         <!-- Plugin versions -->
         <checkstyle.version>3.1.2</checkstyle.version>
