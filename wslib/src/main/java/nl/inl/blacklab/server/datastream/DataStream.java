@@ -417,8 +417,6 @@ public interface DataStream {
     }
 
     /** Type of data stream we're writing (json/xml/csv).
-     *
-     * (DataStreamSolr also says 'json')
      */
     String getType();
 }

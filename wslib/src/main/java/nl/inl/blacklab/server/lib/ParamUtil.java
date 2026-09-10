@@ -429,7 +429,7 @@ public class ParamUtil {
     public static Query filterQuery(QueryParams qpar) throws BlsException {
         return filterQuery(index(qpar.getCorpusName()), qpar.get(WsParam.FILTER_LANGUAGE),
                 qpar.get(WsParam.FILTER),
-                qpar.get(WsParam.DOC_PID), qpar.getFallbackFilterQuery());
+                qpar.get(WsParam.DOC_PID));
     }
 
     /**
@@ -441,11 +441,10 @@ public class ParamUtil {
      * @param filterLang filter query language (e.g. "lucene")
      * @param filterQuery filter query string
      * @param docPid filter on this specific document (ignore filterQuery)
-     * @param fallbackFilterQuery optional filter query to use if no filter query or docPid
-     * @return document filter query
+     * @return document filter query, or null if none specified
      */
-    public static Query filterQuery(BlackLabIndex index, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
-        Query result;
+    public static Query filterQuery(BlackLabIndex index, String filterLang, String filterQuery, String docPid) throws BlsException {
+        Query result = null;
         if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)
             int luceneDocId = index.getDocIdFromPid(docPid);
@@ -454,8 +453,7 @@ public class ParamUtil {
             result = new SingleDocIdFilter(luceneDocId);
         } else if (!StringUtils.isEmpty(filterQuery)) {
             result = BlsUtils.parseFilter(index, filterQuery, filterLang);
-        } else
-            result = fallbackFilterQuery;
+        }
         return result;
     }
 

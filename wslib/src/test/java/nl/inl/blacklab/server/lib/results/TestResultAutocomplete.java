@@ -42,7 +42,7 @@ public class TestResultAutocomplete {
     @Test
     public void testTokenizedAutocompleteParameterParsing() {
         Map<WsParam, String> parameterValues = Map.of();
-        QueryParamsMap paramsDefault = new QueryParamsMap("test-index", parameterValues, null, null,
+        QueryParamsMap paramsDefault = new QueryParamsMap("test-index", parameterValues, null,
                 Mockito.mock(BLSConfig.class), true);
         Assert.assertEquals("term", paramsDefault.get(WsParam.AUTOCOMPLETE_TYPE));
     }

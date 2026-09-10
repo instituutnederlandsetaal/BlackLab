@@ -23,7 +23,7 @@ import nl.inl.blacklab.codec.BlackLabPostingsFormat;
  * frequencies, offsets, payloads, etc.).
  *
  * This functions as an adapter that wraps a delegate
- * PostingsFormat (usually the default Solr PostingsFormat)
+ * PostingsFormat (usually the default Lucene PostingsFormat)
  * which is used to create adapted versions of e.g. FieldsConsumer.
  *
  * This class is declared in META-INF/services/org.apache.lucene.codecs.PostingsFormat

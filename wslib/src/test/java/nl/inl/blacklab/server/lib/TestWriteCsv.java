@@ -47,7 +47,7 @@ public class TestWriteCsv {
         Map<WsParam, Object> parameterValues = new EnumMap<>(WsParam.class);
         parameterValues.put(WsParam.CSV_DESCRIPTION, "Export for issue 655");
         parameterValues.put(WsParam.WAIT_FOR_TOTAL_COUNT, true);
-        QueryParamsMap params = new QueryParamsMap("test-index", null, parameterValues, null, null, true);
+        QueryParamsMap params = new QueryParamsMap("test-index", null, parameterValues, null, true);
         ResultSummaryNumHits summaryNumHits = new ResultSummaryNumHits(new ResultsStatsSaved(0), new ResultsStatsSaved(0),
                 true, null, null);
         ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(null, null, null, null, null, null,

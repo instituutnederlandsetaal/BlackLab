@@ -26,9 +26,6 @@
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
 
-        <!-- Solr integration (experimental) -->
-        <module>solr</module>
-
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
     </modules>
@@ -42,7 +39,6 @@
         <!-- Library versions -->
         <servlet.version>6.0.0</servlet.version>
         <blacklab.luceneVersion>9.11.1</blacklab.luceneVersion>
-        <solr.version>9.8.1</solr.version>
         <log4j.version>2.25.4</log4j.version>
         <eclipse.collections.version>12.0.0.M3</eclipse.collections.version>
 

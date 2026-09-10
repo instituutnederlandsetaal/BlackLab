@@ -44,7 +44,7 @@ import nl.inl.util.JsonSchemaUtil;
  * Handle all the different webservice requests, given the requested operation,
  * parameters and output stream.
  * <p>
- * This is used for both the BLS and Solr webservices.
+ * This is used for BLS.
  */
 public class WebserviceRequestHandler {
 

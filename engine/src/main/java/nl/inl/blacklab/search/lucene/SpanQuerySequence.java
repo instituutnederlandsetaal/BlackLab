@@ -369,7 +369,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
+        BlackLabIndex index = queryInfo.index();
         boolean anyRewritten = performQueryOptimizations(index, cl);
 
         // Optimize each clause, and flatten again if necessary
@@ -417,7 +417,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
+        BlackLabIndex index = queryInfo.index();
         boolean anyRewritten = performQueryOptimizations(index, cl);
 
         // Rewrite each clause, and flatten again if necessary

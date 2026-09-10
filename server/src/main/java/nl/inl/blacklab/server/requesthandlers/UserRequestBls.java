@@ -141,7 +141,7 @@ public class UserRequestBls implements UserRequest {
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                blsParams = QueryParams.fromJson(corpusName, operation, jsonRequest, null, blsConfig,
+                blsParams = QueryParams.fromJson(corpusName, operation, jsonRequest, blsConfig,
                         isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);

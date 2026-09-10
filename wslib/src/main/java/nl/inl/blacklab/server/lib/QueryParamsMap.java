@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.Query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,9 +29,6 @@ public class QueryParamsMap implements QueryParams {
 
     private final Map<WsParam, Object> typedParams = new EnumMap<>(WsParam.class);
 
-    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
-    private final Query fallbackFilterQuery;
-
     /** Config, for determining some default values */
     private final BLSConfig config;
 
@@ -40,10 +36,9 @@ public class QueryParamsMap implements QueryParams {
     boolean debugMode;
 
     public QueryParamsMap(String corpusName, Map<WsParam, String> params,
-            Map<WsParam, Object> typedParams, Query fallbackFilterQuery,
+            Map<WsParam, Object> typedParams,
             BLSConfig config, boolean debugMode) {
         this.corpusName = corpusName;
-        this.fallbackFilterQuery = fallbackFilterQuery;
         this.config = config;
         this.debugMode = debugMode;
         if (typedParams == null) {
@@ -67,11 +62,6 @@ public class QueryParamsMap implements QueryParams {
     @Override
     public Map<WsParam, Object> getTypedParameters() {
         return Collections.unmodifiableMap(typedParams);
-    }
-
-    @Override
-    public Query getFallbackFilterQuery() {
-        return fallbackFilterQuery;
     }
 
     /** Get config, for determining some default values */

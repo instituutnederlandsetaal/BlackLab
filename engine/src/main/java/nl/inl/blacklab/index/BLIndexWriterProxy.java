@@ -5,12 +5,10 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.ErrorIndexingFile;
-
 /**
  * Proxy for an IndexWriter object.
  *
- * This is necessary because in Solr mode, we don't directly write to the
+ * This was necessary because in Solr mode (now removed), we don't directly write to the
  * IndexWriter; the proxy implementation will simply collect any document(s)
  * to be added, and they will eventually be handed over to Solr to be processed.
  */
