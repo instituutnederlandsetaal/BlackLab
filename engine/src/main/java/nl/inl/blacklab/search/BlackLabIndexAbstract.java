@@ -188,8 +188,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      *
      * @param name name of the index
      * @param blackLab BlackLab engine
-     * @param reader if non-null: use this already-opened IndexReader. indexMode must be false in this case.
-     *               Used with Solr.
+     * @param reader if non-null: use this already-opened IndexReader. indexMode must be false in this case. Used with Solr (now removed).
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -202,7 +201,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     BlackLabIndexAbstract(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
-        this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr)
+        this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr, now removed)
         this.name = name;
         searchSettings = SearchSettings.DEFAULT;
         try {

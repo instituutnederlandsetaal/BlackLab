@@ -104,12 +104,10 @@ public class Index {
         if (!isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
 
-        if (!searchMan.config().isSolr()) {
-            if (dir == null || !dir.exists() || !dir.isDirectory())
-                throw new FileNotFoundException("Cannot find index directory " + dir + ".");
-            if (!dir.canRead() || !BlackLabIndex.isIndex(dir))
-                throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
-        }
+        if (dir == null || !dir.exists() || !dir.isDirectory())
+            throw new FileNotFoundException("Cannot find index directory " + dir + ".");
+        if (!dir.canRead() || !BlackLabIndex.isIndex(dir))
+            throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
 
         this.id = indexId;
         this.dir = dir;

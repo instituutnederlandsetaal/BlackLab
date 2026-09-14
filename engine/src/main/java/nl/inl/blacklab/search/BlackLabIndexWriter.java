@@ -67,7 +67,7 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
     /**
      * Return factory object for creating input documents, getting field types, etc.
      *
-     * This exists to support indexing both directly to Lucene and inside Solr.
+     * This was created to support indexing to Lucene and inside Solr; could be removed?
      *
      * @return index object factory
      */

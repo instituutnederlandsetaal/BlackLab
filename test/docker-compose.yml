@@ -39,38 +39,6 @@ services:
         - "${BLACKLAB_TEST_PORT:-8080}:8080"
       #  - "5005:5005"   # (JPDA port for connecting debugger)
 
-  # Proxy to Solr
-  proxy:
-
-    build:
-      context: ..
-      dockerfile: proxy/Dockerfile
-
-    volumes:
-      # Configuration file (pointing to solr and specifying a default corpus name)
-      - ../solr/proxy.yaml:/etc/blacklab/proxy.yaml
-
-    ports:
-      # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
-      - "8080:8080"
-
-  # Solr backend we're proxying for
-  # (already contains the test corpus)
-  solr:
-    build:
-      context: ..
-      dockerfile: solr/Dockerfile
-    environment:
-        # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
-        - "SOLR_SECURITY_MANAGER_ENABLED=false"
-        # Enable JDWP remote debugging on port 5005
-        - "SOLR_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
-    ports:
-      # Solr runs on this port
-      - "8983:8983"
-      # Allow us to attach to the JVM using JDWP for remote debugging
-      - "5005:5005"
-
   # Runs the tests
   test:
     build: .
@@ -78,7 +46,7 @@ services:
       - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
       - CORPUS_NAME=${CORPUS_NAME:-test}
       - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
-      - SKIP_INDEXING_TESTS=${SKIP_INDEXING_TESTS:-false} # Solr doesn't implement these ops yet
+      - SKIP_INDEXING_TESTS=${SKIP_INDEXING_TESTS:-false} # (not all targets may implement these ops)
       - INDEX_TYPE=${INDEX_TYPE:-}
 
       # If response file for a test does not exist, the test will FAIL.

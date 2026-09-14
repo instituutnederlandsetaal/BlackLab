@@ -145,8 +145,7 @@ public class IndexManager {
             }
         }
 
-        if (!blsConfig.isSolr())
-            checkAnyIndexesAvailable();
+        checkAnyIndexesAvailable();
         List<File> allDirs = new ArrayList<>(collectionsDirs);
         // Since userCollectionsDir is initialized as null, and might still be null here, check for nullity
         if (userCollectionsDir != null)

@@ -16,7 +16,7 @@
 
     <name>BlackLab Server Proxy</name>
     <description>A REST webservice that can proxy BlackLab webservice requests to a backend,
-        such as the Solr BlackLab API or BlackLab Server.
+        such as the Solr BlackLab API (now removed) or BlackLab Server.
 
         Can be used for security (e.g. don't expose Solr to the internet directly) and API compatibility
         (e.g. call older BLS endpoint using newer API version).

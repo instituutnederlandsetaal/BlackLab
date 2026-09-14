@@ -25,7 +25,7 @@ public class ProxyConfig {
         /** URL to proxy to */
         private String url;
 
-        /** What protocol does the proxy target speak? (for now, "BLS" or "Solr") */
+        /** What protocol does the proxy target speak? (for now, "BLS") */
         private String protocol;
 
         private String defaultCorpusName = "";

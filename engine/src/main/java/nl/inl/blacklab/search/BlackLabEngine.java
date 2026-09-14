@@ -3,9 +3,7 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,7 +16,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -226,21 +223,6 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     /**
-     * Get a BlackLabIndex instance from an already opened IndexReader.
-     *
-     * Used for Solr integration, where Solr manages IndexReader instances.
-     *
-     * CAUTION: this only works with the integrated index format.
-     *
-     * @param reader reader to wrap
-     * @return a BlackLabIndex instance with this reader
-     */
-    public BlackLabIndex wrapIndexReader(String indexName, IndexReader reader, boolean indexMode) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexName, this, reader, null, indexMode, false,
-                null);
-    }
-
-    /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
      * @param indexDir the index directory
@@ -332,10 +314,6 @@ public final class BlackLabEngine implements AutoCloseable {
         return numThreads >= 2
                 ? searchExecutorService()
                 : new CurrentThreadExecutorService();
-    }
-
-    synchronized  BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
-        return (BlackLabIndexWriter) wrapIndexReader(indexName, reader, true);
     }
 
     public int maxThreadsPerSearch() {

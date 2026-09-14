@@ -10,7 +10,7 @@
 		<Logger name="nl.inl" level="debug" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<!-- Suppress Lucene/Solr startup INFO messages that are routed here via log4j-jul -->
+		<!-- Suppress Lucene startup INFO messages that are routed here via log4j-jul -->
 		<Logger name="org.apache.lucene" level="warn" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>

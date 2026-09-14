@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.proxy.logic;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -10,14 +9,8 @@ import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.representation.EntityWithSummary;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
-import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
-import org.ivdnt.blacklab.proxy.representation.SolrResponse;
 import org.ivdnt.blacklab.proxy.resources.ProxyParamsUtil;
 import org.ivdnt.blacklab.proxy.resources.SimpleResponse;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.client.Client;
@@ -27,7 +20,6 @@ import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsParam;
-import nl.inl.util.Json;
 
 /** Performs requests to the BLS nodes we're proxying */
 public class Requests {
@@ -64,17 +56,7 @@ public class Requests {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
-        boolean isSolr = proxyTarget.getProtocol().equalsIgnoreCase("solr");
-        if (isSolr && !queryParams.containsKey(WsParam.CORPUS_NAME)) {
-            // Solr always needs a corpus name even for "server-wide" requests.
-            if (proxyTarget.getDefaultCorpusName().isEmpty())
-                throw new IllegalStateException("No corpus name. Please specify proxyTarget.defaultCorpusName in proxy config file");
-            queryParams = new HashMap<>(queryParams);
-            queryParams.put(WsParam.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
-        }
-        return isSolr ?
-                requestSolr(target, queryParams, method, entityTypes) :
-                requestBls(target, queryParams, method, entityTypes);
+        return requestBls(target, queryParams, method, entityTypes);
     }
 
     private static Object requestBls(WebTarget target, Map<WsParam, String> queryParams, String method, List<Class<?>> entityTypes) {
@@ -127,59 +109,6 @@ public class Requests {
      */
     private static String escapeBraces(String value) {
         return value.replaceAll("\\{", "%7B").replaceAll("\\}", "%7D");
-    }
-
-    private static Object requestSolr(WebTarget target, Map<WsParam, String> queryParams, String method, List<Class<?>> entityTypes) {
-        if (queryParams != null) {
-            String corpusName = queryParams.get(WsParam.CORPUS_NAME);
-            if (corpusName != null)
-                target = target.path(corpusName);
-            target = target.path("select");
-            for (Map.Entry<WsParam, String> e: queryParams.entrySet()) {
-                WsParam key = e.getKey();
-                if (key != WsParam.CORPUS_NAME) {
-                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, escapeBraces(e.getValue()));
-                }
-            }
-        }
-        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).method(method);
-        int status = response.getStatus();
-        response.bufferEntity(); // so we can call readEntity() again if first call fails
-        SolrResponse solrResponse = null;
-        try {
-            solrResponse = response.readEntity(SolrResponse.class);
-        } catch (Exception e) {
-            // Not a regular response; try to read error entity
-            SolrGeneralErrorResponse err = response.readEntity(SolrGeneralErrorResponse.class);
-            throw new BlsRequestException(Response.Status.fromStatusCode(status),
-                    new ErrorResponse(500, "INTERNAL_ERROR", "(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl(), ""));
-        }
-
-        JsonNode blacklab = solrResponse.getBlacklab();
-        ObjectMapper objectMapper = Json.getJsonObjectMapper();
-        for (int i = 0; i < entityTypes.size(); i++) {
-            Class<?> entityType = entityTypes.get(i);
-            try {
-                return objectMapper.treeToValue(blacklab, entityType);
-            } catch (JsonProcessingException e) {
-                if (i < entityTypes.size() - 1) {
-                    // Couldn't map to this class. Try the next one.
-                } else {
-                    // Couldn't map to any of the supplied classes. See if it's a BLS error.
-                    try {
-                        ErrorResponse err = objectMapper.treeToValue(blacklab, ErrorResponse.class);
-                        // Yes. Throw it so it will be handled by the GenericExceptionMapper.
-                        throw new BlsRequestException(Response.Status.fromStatusCode(err.getError().getHttpStatusCode()), err);
-                    } catch (JsonProcessingException e2) {
-                        // Error didn't work either. Fail.
-                        String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                        throw new ErrorReadingResponse(
-                                "Couldn't interpret the response as the given entity class(es): " + classes, e);
-                    }
-                }
-            }
-        }
-        throw new IllegalStateException("Code should never get here");
     }
 
     /**
