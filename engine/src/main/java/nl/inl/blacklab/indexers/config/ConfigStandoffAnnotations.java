@@ -55,6 +55,9 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      */
     private String valuePath;
 
+    /** containerPath for the metadata to capture, relative to current element (for type=FRAGMENT only!) */
+    private String metadataContainerPath = ".";
+
     /** Metadata (for type=FRAGMENT only!) */
     @JsonDeserialize(using = ConfigInputFormat.MetadataDeserializer.class)
     @JsonPropertyDescription("Block(s) that configure how to index metadata fields.")
@@ -303,5 +306,13 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public void setSpanNamePath(String v) {
         throw new InvalidInputFormatConfig("Encountered removed key 'spanNamePath' (rename to 'valuePath')");
+    }
+
+    public void setMetadataContainerPath(String v) {
+        this.metadataContainerPath = v;
+    }
+
+    public String getMetadataContainerPath() {
+        return metadataContainerPath;
     }
 }

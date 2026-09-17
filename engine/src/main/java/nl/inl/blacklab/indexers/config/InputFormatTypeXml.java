@@ -608,7 +608,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                                         // A fragment (or "subdocument") that can have its own metadata.
                                         // (note that fragments don't have annotations or a type)
                                         processFragment(standoffNode, position,
-                                                endOrTarget, standoff.getMetadata());
+                                                endOrTarget, standoff);
                                     } else {
                                         // A span (inline tag) or relation.
                                         processStandoffSpan(standoffNode, type, position,
@@ -621,7 +621,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 });
             }
 
-            void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, List<ConfigMetadataBlock> metadataCfg) {
+            void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, ConfigStandoffAnnotations standoff) {
                 // Collect metadata using the rules in the .blf.yaml file
                 // (from the document level and/or specific to this fragment)
                 Map<String, Collection<String>> metadata = new HashMap<>();
@@ -629,12 +629,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // Apply the regular document-level metadata rules.
                     // (unknownValues are only applied just before saving to the index, so don't pose a problem here)
                     List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
-                    for (ConfigMetadataBlock b: mainMetadataCfg) {
-                        processMetadataBlockContainer(fragmentNode, b, metadata, true);
-                    }
+                    finder.xpathForEach(standoff.getMetadataContainerPath(), fragmentNode, (metadataContainer) -> {
+                        for (ConfigMetadataBlock b: mainMetadataCfg) {
+                            processMetadataBlockContainer(metadataContainer, b, metadata, true);
+                        }
+                    });
                 }
                 // Apply any custom metadata rules for this fragment
-                for (ConfigMetadataBlock b: metadataCfg) {
+                for (ConfigMetadataBlock b: standoff.getMetadata()) {
                     processMetadataBlock(fragmentNode, b, metadata, true);
                 }
 

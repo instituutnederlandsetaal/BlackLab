@@ -469,6 +469,8 @@ annotatedFields:
       spanStartPath: "@from"
       spanEndPath: "@to"
       spanEndIsInclusive: false
+      # (optional) path to the actual metadata container (relative to the element matched by 'path')
+      #metadataContainerPath: .
 
 # How to index metadata for documents and fragments
 metadata:
@@ -514,6 +516,8 @@ For example, if the `author` field is stored in a different attribute at the fra
         spanStartPath: "@from"
         spanEndPath: "@to"
         spanEndIsInclusive: false
+        # (optional) path to the actual metadata container (relative to the element matched by 'path')
+        #metadataContainerPath: .
 
         # This section is entirely optional.
         # You may define additional metadata rules for fragments here if needed.
