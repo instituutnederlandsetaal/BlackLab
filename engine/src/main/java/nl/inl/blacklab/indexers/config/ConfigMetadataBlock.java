@@ -12,6 +12,9 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 /** Configuration for a block of metadata fields. */
 public class ConfigMetadataBlock {
 
+    /** (only for fragments) Whether to apply the regular document-level metadata rules */
+    private boolean applyDocRules = true;
+
     /** Where the block can be found */
     private String containerPath = ".";
 
@@ -46,10 +49,19 @@ public class ConfigMetadataBlock {
         ConfigMetadataBlock result = new ConfigMetadataBlock();
         result.setContainerPath(containerPath);
         result.setDefaultAnalyzer(defaultAnalyzer);
+        result.setApplyDocRules(applyDocRules);
         for (ConfigMetadataField f : fields) {
             result.addMetadataField(f.copy());
         }
         return result;
+    }
+
+    public boolean isApplyDocRules() {
+        return applyDocRules;
+    }
+
+    public void setApplyDocRules(boolean applyDocRules) {
+        this.applyDocRules = applyDocRules;
     }
 
     public String getContainerPath() {
@@ -85,6 +97,14 @@ public class ConfigMetadataBlock {
         fields.add(f);
         if (!f.isForEach())
             fieldsByName.put(f.getName(), f);
+    }
+
+    public void setFields(List<ConfigMetadataField> fields) {
+        this.fields.clear();
+        this.fieldsByName.clear();
+        for (ConfigMetadataField f : fields) {
+            addMetadataField(f);
+        }
     }
 
     public String getAnalyzer() {

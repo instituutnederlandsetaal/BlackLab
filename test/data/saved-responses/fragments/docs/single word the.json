@@ -1,0 +1,266 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "fragments1.xml"
+          ],
+          "pid": [
+            "doc-01"
+          ],
+          "title": [
+            "Test title"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 21
+          }
+        ]
+      },
+      "docPid": "doc-01",
+      "numberOfHits": 2,
+      "snippets": [
+        {
+          "after": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "quick",
+              "brown",
+              "fox",
+              "jumps",
+              "over"
+            ]
+          },
+          "before": {
+            "punct": [
+            ],
+            "word": [
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "punct": [
+              " ",
+              " ",
+              ". ",
+              " ",
+              " "
+            ],
+            "word": [
+              "lazy",
+              "dog",
+              "leentje",
+              "leerde",
+              "lotje"
+            ]
+          },
+          "before": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "quick",
+              "brown",
+              "fox",
+              "jumps",
+              "over"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "author": [
+            "Gene"
+          ],
+          "fromInputFile": [
+            "fragments2.xml"
+          ],
+          "pid": [
+            "doc-02"
+          ],
+          "title": [
+            "Another test doc"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 32
+          }
+        ]
+      },
+      "docPid": "doc-02",
+      "numberOfHits": 2,
+      "snippets": [
+        {
+          "after": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "voyages",
+              "of",
+              "the",
+              "starship",
+              "enterprise"
+            ]
+          },
+          "before": {
+            "punct": [
+              " ",
+              " "
+            ],
+            "word": [
+              "these",
+              "are"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        },
+        {
+          "after": {
+            "punct": [
+              " ",
+              " ",
+              ". ",
+              " ",
+              " "
+            ],
+            "word": [
+              "starship",
+              "enterprise",
+              "its",
+              "continuing",
+              "mission"
+            ]
+          },
+          "before": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "these",
+              "are",
+              "the",
+              "voyages",
+              "of"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "indexname": "fragments",
+      "op": "docs",
+      "patt": "\"the\"",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"the\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"the\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"the\"",
+            "type": "string",
+            "value": "the"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 2,
+          "hits": 4,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 2,
+          "hits": 4,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 2,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

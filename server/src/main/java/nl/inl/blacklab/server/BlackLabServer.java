@@ -12,6 +12,7 @@ import java.util.Calendar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.jul.Log4jBridgeHandler;
+import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
 
 import io.micrometer.core.instrument.Metrics;
@@ -224,10 +225,13 @@ public class BlackLabServer extends HttpServlet {
             ResponseStreamer dstream = ResponseStreamer.get(ds, api);
             httpCode = requestHandler.handle(dstream);
         } catch (IndexVersionMismatch e) {
+            String msg = e.getCause() == null ? e.getMessage() : e.getCause().getMessage();
             if (e.getCause() instanceof IndexFormatTooOldException)
-                httpCode = Response.error(errorWriter, "INDEX_TOO_OLD", "Index too old for this BlackLab version: " + e.getCause().getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                httpCode = Response.error(errorWriter, "INDEX_TOO_OLD", "Index too old for this BlackLab version: " + msg, null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            else if (e.getCause() instanceof IndexFormatTooNewException)
+                httpCode = Response.error(errorWriter, "INDEX_TOO_NEW", "Index was created with a newer BlackLab version: " + msg, null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             else
-                httpCode = Response.error(errorWriter, "INDEX_TOO_NEW", "Index was created with a newer BlackLab version: " + e.getCause().getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                httpCode = Response.error(errorWriter, "INDEX_VERSION_MISMATCH", "Index version mismatch: " + msg, null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
         } catch (ErrorOpeningIndex e) {
             httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "ERROR_OPENING_INDEX");
         } catch (InvalidQuery e) {

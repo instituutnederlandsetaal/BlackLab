@@ -2,6 +2,7 @@ package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -21,12 +22,14 @@ public interface DocWriter {
     BLIndexObjectFactory indexObjectFactory();
     
     /**
-     * Add a Lucene document to the index
+     * Add Lucene document(s) to the index.
      *
-     * @param document
-     *            the document to add
+     * If multiple documents are added, they are added as a block (i.e. kept in a single segment).
+     *
+     * @param documents
+     *            the documents to add
      */
-    void add(BLInputDocument document) throws IOException;
+    void addDocuments(List<BLInputDocument> documents) throws IOException;
 
     /**
      * Should we continue indexing or stop?

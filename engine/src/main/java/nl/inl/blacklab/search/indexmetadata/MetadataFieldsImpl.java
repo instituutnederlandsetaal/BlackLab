@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({ "defaultAnalyzer", SPECIAL_FIELD_SETTING_PID, "throwOnMissingField", "fields" })
-class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
+public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
 
@@ -84,6 +84,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
      */
     @XmlTransient
     private final ConcurrentMap<String, MetadataFieldImpl> implicitFields = new ConcurrentHashMap<>();
+
+    /** Are there metadata fields that occur in fragments? */
+    private boolean anyOccurInFragments = false;
 
     @Override
     public MetadataFieldImpl addFromConfig(ConfigMetadataField f) {
@@ -339,4 +342,22 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         this.topLevelCustom = topLevelCustom;
     }
 
+    @Override
+    public boolean anyOccurInFragments() {
+        return anyOccurInFragments;
+    }
+
+    @Override
+    public void setOccursInFragment(String fieldName) {
+        MetadataFieldImpl field = metadataFieldInfos.get(fieldName);
+        if (field != null) {
+            field.setOccursInFragments();
+            if (!anyOccurInFragments) {
+                anyOccurInFragments = true;
+                ensureNotFrozen();
+            }
+        } else {
+            throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+        }
+    }
 }

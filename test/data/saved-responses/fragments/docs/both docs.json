@@ -1,0 +1,88 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "fragments1.xml"
+          ],
+          "pid": [
+            "doc-01"
+          ],
+          "title": [
+            "Test title"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 21
+          }
+        ]
+      },
+      "docPid": "doc-01"
+    },
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "author": [
+            "Gene"
+          ],
+          "fromInputFile": [
+            "fragments2.xml"
+          ],
+          "pid": [
+            "doc-02"
+          ],
+          "title": [
+            "Another test doc"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 32
+          }
+        ]
+      },
+      "docPid": "doc-02"
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "author:Jan author:Gene",
+      "indexname": "fragments",
+      "op": "docs",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 2,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 2,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 2,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

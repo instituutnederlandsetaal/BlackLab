@@ -658,9 +658,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 @Override
                 public long cost() {
                     if (cost == -1) {
-                        cost = 0;
+                        cost = Long.MAX_VALUE;
                         for (Spans spans : subSpans) {
-                            cost += spans.cost();
+                            if (spans.cost() < cost)
+                                cost = spans.cost();
                         }
                     }
                     return cost;

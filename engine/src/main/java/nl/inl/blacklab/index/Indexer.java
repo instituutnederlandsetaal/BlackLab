@@ -122,10 +122,10 @@ public interface Indexer extends DocWriter {
     /**
      * Updates the specified Document in the index.
      *
-     * @param term how to find the document to update
-     * @param document the updated document
+     * @param terms how to find the documents to update (i.e. delete and replace)
+     * @param documents the updated documents
      */
-    void update(Term term, BLInputDocument document) throws IOException;
+    void update(List<Term> terms, List<BLInputDocument> documents) throws IOException;
 
     /**
      * Index files from a source.

@@ -1,9 +1,12 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -125,22 +128,35 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
     boolean isOpen();
 
     /**
-     * Add a document to the index.
+     * Add document(s) to the index.
      *
-     * @param document document to add
+     * Multiple documents are added as a block (i.e. kept in a single segment).
+     *
+     * @param documents document(s) to add
      */
-    default void addDocument(BLInputDocument document) throws IOException {
-        writer().addDocument(document);
+    default void addDocuments(List<BLInputDocument> documents) throws IOException {
+        writer().addDocuments(documents);
     }
 
     /**
      * Update a document in the index.
      *
-     * @param term term query to find the previous version for deletion
-     * @param document new version of the document
+     * @param terms term query to find the previous version for deletion
+     * @param documents new version of the document
      */
-    default void updateDocument(Term term, BLInputDocument document) throws IOException {
-        writer().updateDocument(term, document);
+    default void updateDocuments(List<Term> terms, List<BLInputDocument> documents) throws IOException {
+        // Build a BooleanQuery from the terms
+        Query docsToDelete;
+        if (terms.size() == 1) {
+            docsToDelete = new TermQuery(terms.get(0));
+        } else {
+            var bq = new BooleanQuery.Builder();
+            for (Term term : terms) {
+                bq.add(new TermQuery(term), BooleanClause.Occur.SHOULD);
+            }
+            docsToDelete = bq.build();
+        }
+        writer().updateDocuments(docsToDelete, documents, false);
     }
 
 

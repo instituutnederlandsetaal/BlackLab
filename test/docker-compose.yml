@@ -84,6 +84,9 @@ services:
       # If response file for a test does not exist, the test will FAIL.
       - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=${BLACKLAB_TEST_SAVE_MISSING_RESPONSES:-false}
 
+    # Run as the host user (or whatever was set) so we own the files created in mounted volumes.
+    user: "${UID}:${GID}"
+
     volumes:
       # We need access to the tests data, previous responses and be able to save responses for any new tests.
       - ./data:/app/data

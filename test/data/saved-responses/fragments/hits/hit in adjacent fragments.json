@@ -1,0 +1,135 @@
+{
+  "docInfos": {
+    "doc-01": {
+      "mayView": true,
+      "metadata": {
+        "fromInputFile": [
+          "fragments1.xml"
+        ],
+        "pid": [
+          "doc-01"
+        ],
+        "title": [
+          "Test title"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 21
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lange"
+        ]
+      },
+      "docPid": "doc-01",
+      "end": 18,
+      "match": {
+        "punct": [
+          " ",
+          ". "
+        ],
+        "word": [
+          "lindenlaan",
+          "this"
+        ]
+      },
+      "start": 16
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "year:1976 OR year:2026",
+      "indexname": "fragments",
+      "op": "hits",
+      "patt": "\"Lindenlaan\" \"this\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"Lindenlaan\" \"this\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"Lindenlaan\" \"this\"",
+        "clauses": [
+          {
+            "bcqlFragment": "\"Lindenlaan\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"Lindenlaan\"",
+                "type": "string",
+                "value": "Lindenlaan"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          },
+          {
+            "bcqlFragment": "\"this\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"this\"",
+                "type": "string",
+                "value": "this"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          }
+        ],
+        "type": "sequence"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

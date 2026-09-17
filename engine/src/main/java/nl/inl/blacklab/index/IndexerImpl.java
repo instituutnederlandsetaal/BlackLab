@@ -290,19 +290,22 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     /**
-     * Add a Lucene document to the index
+     * Add Lucene document(s) to the index.
      *
-     * @param document the document to add
+     * If multiple documents are given, they are added as a single block
+     * (i.e. they will be kept in the same segment, which is important for e.g. fragments and their parent documents).
+     *
+     * @param documents the document to add
      */
     @Override
-    public void add(BLInputDocument document) throws IOException {
-        indexWriter.addDocument(document);
+    public void addDocuments(List<BLInputDocument> documents) throws IOException {
+        indexWriter.addDocuments(documents);
         listener().documentAddedToIndex();
     }
 
     @Override
-    public void update(Term term, BLInputDocument document) throws IOException {
-        indexWriter.updateDocument(term, document);
+    public void update(List<Term> terms, List<BLInputDocument> documents) throws IOException {
+        indexWriter.updateDocuments(terms, documents);
         listener().documentAddedToIndex();
     }
 

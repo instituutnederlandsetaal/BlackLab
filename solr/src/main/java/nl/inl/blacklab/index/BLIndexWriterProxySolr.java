@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.ivdnt.blacklab.solr.BLSolrXMLLoader;
 
@@ -33,8 +32,10 @@ public class BLIndexWriterProxySolr implements BLIndexWriterProxy, Closeable {
 
 
     @Override
-    public synchronized void addDocument(BLInputDocument document) throws IOException {
-        pendingAddDocuments.add((BLInputDocumentSolr) document);
+    public synchronized void addDocuments(List<BLInputDocument> documents) {
+        for (BLInputDocument document : documents) {
+            pendingAddDocuments.add((BLInputDocumentSolr) document);
+        }
     }
 
     @Override
@@ -55,13 +56,15 @@ public class BLIndexWriterProxySolr implements BLIndexWriterProxy, Closeable {
     }
 
     @Override
-    public void deleteDocuments(Query q) throws IOException {
+    public void deleteDocuments(Query q) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public long updateDocument(Term term, BLInputDocument document) throws IOException {
-        pendingAddDocuments.add((BLInputDocumentSolr) document);
+    public long updateDocuments(Query q, List<BLInputDocument> documents, boolean ignoreFragments) {
+        for (BLInputDocument document : documents) {
+            pendingAddDocuments.add((BLInputDocumentSolr) document);
+        }
         return -1;
     }
 

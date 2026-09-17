@@ -54,7 +54,7 @@ public class SingleDocIdSet extends DocIdSet {
 
             @Override
             public long cost() {
-                return 100; // (we don't use this)
+                return 0; // (we don't use this)
             }
 
             @Override

@@ -175,14 +175,16 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
  * Either save this response if it's the first time we
  * run this test, or compare it to the previously saved version.
  *
+ * @param corpusName name of the corpus (e.g. "test")
  * @param category test category (e.g. "hits")
  * @param testName name of this test, and file name for the response
  * @param actualResponse webservice response we got (parsed JSON)
  */
-function expectUnchanged(category, testName, actualResponse) {
+function expectUnchanged(corpusName, category, testName, actualResponse) {
     if (Buffer.isBuffer(actualResponse))
         actualResponse = actualResponse.toString();
     const isJson = typeof actualResponse === 'object';
+    const sanCorpusName = sanitizeFileName(corpusName);
     const sanCategory = sanitizeFileName(category);
     const sanFileName = sanitizeFileName(testName);
 
@@ -197,22 +199,22 @@ function expectUnchanged(category, testName, actualResponse) {
 
         // Write to latest test path so we can compare (and easily update) in case of changes.
         if (!fs.existsSync(LATEST_TEST_OUTPUT_PATH))
-            fs.mkdirSync(LATEST_TEST_OUTPUT_PATH);
-        const categoryDir = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory);
+            fs.mkdirSync(LATEST_TEST_OUTPUT_PATH, { recursive: true });
+        const categoryDir = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCorpusName, sanCategory);
         if (!fs.existsSync(categoryDir))
-            fs.mkdirSync(categoryDir);
+            fs.mkdirSync(categoryDir, { recursive: true });
 
-        saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
+        saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCorpusName, sanCategory, `${sanFileName}.json`);
         fs.writeFileSync(saveTestOutputFile, toSave, {encoding: 'utf8'});
     }
 
     // Ensure category dir exists
-    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanCategory);
+    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanCorpusName, sanCategory);
     if (!fs.existsSync(categoryDir))
-        fs.mkdirSync(categoryDir);
+        fs.mkdirSync(categoryDir, { recursive: true });
 
     // Did we have a previous response?
-    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCategory, `${sanFileName}.json`);
+    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCorpusName, sanCategory, `${sanFileName}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
         const fileContents = fs.readFileSync(savedResponseFile, { encoding: 'utf8' });
@@ -237,14 +239,14 @@ function expectUnchanged(category, testName, actualResponse) {
             // Save this response for subsequent tests
             fs.writeFileSync(savedResponseFile, toSave, {encoding: 'utf8'});
         } else {
-            expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
+            expect.fail(`Response for ${corpusName}/${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
         }
     }
 }
 
-function expectUrlUnchanged(category, testName, url, expectedType = 'application/json') {
+function expectUrlUnchanged(corpusName, category, testName, url, expectedType = 'application/json') {
     const params = url.indexOf('api=') >= 0 ? undefined : { api: constants.TEST_API_VERSION };
-    describe(`${category}/${testName}`, () => {
+    describe(`${corpusName}/${category}/${testName}`, () => {
         it('response should match previous', done => {
             const get = chai
                     .request(constants.SERVER_URL)
@@ -258,7 +260,7 @@ function expectUrlUnchanged(category, testName, url, expectedType = 'application
                             done(err);
 
                         expect(res, 'response').to.have.status(200);
-                        expectUnchanged(category, testName, res.body);
+                        expectUnchanged(corpusName, category, testName, res.body);
                         done();
                     });
         });

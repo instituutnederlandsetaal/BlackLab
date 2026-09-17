@@ -1,0 +1,62 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "fragments1.xml"
+          ],
+          "pid": [
+            "doc-01"
+          ],
+          "title": [
+            "Test title"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 21
+          }
+        ]
+      },
+      "docPid": "doc-01"
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "pid:doc-01-frag-02",
+      "indexname": "fragments",
+      "op": "docs",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

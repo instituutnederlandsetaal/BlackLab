@@ -54,4 +54,9 @@ public record MockMetadataField(String name) implements MetadataField {
             return name().compareTo(field.name());
         return getClass().getName().compareTo(field.getClass().getName());
     }
+
+    @Override
+    public boolean occursInFragments() {
+        return false;
+    }
 }

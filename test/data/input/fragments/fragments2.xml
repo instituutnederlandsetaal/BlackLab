@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<doc>
+    <metadata title="Another test doc" id="doc-02" author="Gene" />
+    <text>
+        <metadata from="B" to="C" id="doc-02-frag-01" year="1987" />
+        <s>
+            <milestone id="A"/>
+            <w>These</w>
+            <w>are</w>
+            <w>the</w>
+            <w>voyages</w>
+            <w>of</w>
+            <w>the</w>
+            <w>starship</w>
+            <w>Enterprise</w>.
+        </s>
+        <s>
+            <milestone id="B"/>
+            <w>Its</w>
+            <w>continuing</w>
+            <w>mission</w>:
+            <w>to</w>
+            <w>explore</w>
+            <w>strange</w>
+            <w>worlds;</w>
+            <w>to</w>
+            <w>seek</w>
+            <w>out</w>
+            <w>new</w>
+            <w>life</w>
+            <w>and</w>
+            <w>new</w>
+            <w>civilizations;</w>
+            <w>to</w>
+            <w>boldly</w>
+            <w>go</w>
+            <w>where</w>
+            <w>no</w>
+            <w>one</w>
+            <w>has</w>
+            <w>gone</w>
+            <w>before</w>!
+        </s>
+        <milestone id="C"/>
+        <fanfare composer="Jerry Goldsmith" />
+    </text>
+</doc>

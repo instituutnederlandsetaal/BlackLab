@@ -16,18 +16,24 @@ import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.search.join.QueryBitSetProducer;
+import org.apache.lucene.search.join.ToParentBlockJoinQuery;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -283,14 +289,52 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     private DocResults(QueryInfo queryInfo, Query query) {
         this(queryInfo);
         this.query = query;
-        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
-        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+        if (queryInfo.index().isFragmentQuery(query)) {
+            // The query can yield fragments as well as full documents. "Upcast" to only full documents.
+            query = upcastFragmentsToFullDocuments(query);
+        }
+        // (NOTE: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery)
         results = new ArrayList<>();
         try {
             queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo, stats));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
+    }
+
+    /** If the query can yield fragments as well as full documents, "upcast" to only full documents.
+     *
+     * @param query the query
+     * @return a query that only yields full documents
+     */
+    private static Query upcastFragmentsToFullDocuments(Query query) {
+        // We do this by first separating into full documents and fragments. We upcast the fragments
+        // using ToParentBlockJoinQuery, then combine the results with the full documents.
+        Query parentFilter = BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT);
+        Query childFilter = BLInputDocument.docTypeQuery(BLInputDocument.DocType.FRAGMENT);
+        // Find the full documents that match the query (not fragments).
+        Query parentMetadataQuery =
+                new BooleanQuery.Builder()
+                        .add(query, BooleanClause.Occur.MUST)
+                        .add(parentFilter, BooleanClause.Occur.FILTER)
+                        .build();
+        // Find the fragments that match the query, then upcast to their parent documents.
+        Query childMetadataQuery =
+                new BooleanQuery.Builder()
+                        .add(query, BooleanClause.Occur.MUST)
+                        .add(childFilter, BooleanClause.Occur.FILTER)
+                        .build();
+        Query parentsFromChildren =
+                new ToParentBlockJoinQuery(
+                        childMetadataQuery,
+                        new QueryBitSetProducer(parentFilter),
+                        org.apache.lucene.search.join.ScoreMode.None);
+        // Combine the two with OR.
+        return new BooleanQuery.Builder()
+                        .add(parentMetadataQuery, BooleanClause.Occur.SHOULD)
+                        .add(parentsFromChildren, BooleanClause.Occur.SHOULD)
+                        .build();
     }
 
     @Override

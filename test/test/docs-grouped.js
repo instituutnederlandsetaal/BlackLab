@@ -19,7 +19,7 @@ function expectDocsGroupedUnchanged(testName, params) {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/docs')
+            .get(constants.URL_CORPUS_TEST + '/docs')
             .query({
                 api: constants.TEST_API_VERSION,
                 subcorpussize: true,
@@ -34,7 +34,7 @@ function expectDocsGroupedUnchanged(testName, params) {
                 expect(res).to.have.status(200);
                 // NOTE: we pass true to remove summary.searchParam, because we perform some different requests
                 //   that should produce the same response.
-                expectUnchanged('docs-grouped', testName, res.body, false);
+                expectUnchanged('test', 'docs-grouped', testName, res.body, false);
                 done();
             });
         });

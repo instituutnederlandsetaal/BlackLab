@@ -26,6 +26,9 @@ public class BLFieldTypeLucene implements BLFieldType {
     /** How to index metadata fields (untokenized) */
     public static BLFieldType METADATA_UNTOKENIZED;
 
+    /** (Untokenized) string, indexed and with docvalues, but not stored */
+    public static BLFieldType STRING_UNTOKENIZED_UNSTORED;
+
     private static final Map<String, BLFieldType> fieldTypeCache = new HashMap<>();
 
     static {
@@ -49,6 +52,14 @@ public class BLFieldTypeLucene implements BLFieldType {
         untokenized.setStoreTermVectorOffsets(false);
         untokenized.freeze();
         METADATA_UNTOKENIZED = new BLFieldTypeLucene(untokenized);
+
+        FieldType stringUntokenizedUnstored = new FieldType();
+        stringUntokenizedUnstored.setStored(false);
+        stringUntokenizedUnstored.setOmitNorms(true);
+        stringUntokenizedUnstored.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+        stringUntokenizedUnstored.setTokenized(false);
+        stringUntokenizedUnstored.freeze();
+        STRING_UNTOKENIZED_UNSTORED = new BLFieldTypeLucene(stringUntokenizedUnstored);
     }
 
     public static BLFieldType metadata(boolean tokenized) {

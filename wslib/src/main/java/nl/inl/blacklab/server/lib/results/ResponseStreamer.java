@@ -309,6 +309,7 @@ public class ResponseStreamer {
                 ds.startEntry("metadata").startMap();
                 documentMetadataEntries(docInfo);
                 ds.endMap().endEntry();
+                documentFragmentMetadata(docInfo);
             }
             ds.startEntry(KEY_TOKEN_COUNTS).startList();
             for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
@@ -330,7 +331,33 @@ public class ResponseStreamer {
     }
 
     private void documentMetadataEntries(ResultDocInfo docInfo) {
-        for (Map.Entry<String, List<String>> e: docInfo.getMetadata().entrySet()) {
+        metadataEntries(docInfo.getMetadata(), null);
+    }
+
+    private void documentFragmentMetadata(ResultDocInfo docInfo) {
+        List<ResultDocInfo.Fragment> fragments = docInfo.getFragments();
+        if (isNewApi && !fragments.isEmpty()) {
+            ds.startEntry("fragments").startList();
+            for (ResultDocInfo.Fragment fragment: fragments) {
+                ds.startItem("fragment").startMap();
+                {
+                    ds.entry(KEY_ANNOTATED_FIELD, fragment.getField());
+                    ds.entry(KEY_SPAN_START, fragment.getStart());
+                    ds.entry(KEY_SPAN_END, fragment.getEnd());
+                    ds.startEntry("metadata").startMap();
+                    metadataEntries(fragment.getMetadata(), docInfo.getMetadata());
+                    ds.endMap().endEntry();
+                }
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
+    }
+
+    private void metadataEntries(Map<String, List<String>> metadata, Map<String, List<String>> parentMetadata) {
+        for (Map.Entry<String, List<String>> e: metadata.entrySet()) {
+            if (parentMetadata != null && e.getValue().equals(parentMetadata.get(e.getKey())))
+                continue; // inherited from parent metadata, don't repeat
             ds.startDynEntry(e.getKey()).startList();
             {
                 for (String v: e.getValue()) {

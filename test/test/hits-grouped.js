@@ -7,6 +7,7 @@ chai.use(chaiHttp);
 
 const constants = require('./constants');
 const { expectUnchanged } = require("./compare-responses");
+const {corpusUrl} = require("./util");
 
 // Test that a hits search for a pattern returns the correct number of hits and docs,
 // and optionally test that the first hit matches (either JSON or text).
@@ -19,7 +20,7 @@ function expectHitsGroupedUnchanged(testName, params) {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/hits')
+            .get(corpusUrl('test') + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 subcorpussize: true,
@@ -34,7 +35,7 @@ function expectHitsGroupedUnchanged(testName, params) {
                 expect(res).to.have.status(200);
                 // NOTE: we pass true to remove summary.searchParam, because we perform some different requests
                 //   that should produce the same response.
-                expectUnchanged('hits-grouped', testName, res.body);
+                expectUnchanged('test', 'hits-grouped', testName, res.body);
                 done();
             });
         });

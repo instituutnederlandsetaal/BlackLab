@@ -14,8 +14,8 @@ public class BLIndexObjectFactorySolr implements BLIndexObjectFactory {
     private BLIndexObjectFactorySolr() {}
 
     @Override
-    public BLInputDocument createInputDocument() {
-        return new BLInputDocumentSolr();
+    public BLInputDocument createInputDocument(BLInputDocument.DocType type) {
+        return new BLInputDocumentSolr(type);
     }
 
     @Override

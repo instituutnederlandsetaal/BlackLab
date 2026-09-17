@@ -1,0 +1,129 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "mayView": true,
+        "metadata": {
+          "author": [
+            "Gene"
+          ],
+          "fromInputFile": [
+            "fragments2.xml"
+          ],
+          "pid": [
+            "doc-02"
+          ],
+          "title": [
+            "Another test doc"
+          ]
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 32
+          }
+        ]
+      },
+      "docPid": "doc-02",
+      "numberOfHits": 1,
+      "snippets": [
+        {
+          "after": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              ""
+            ],
+            "word": [
+              "has",
+              "gone",
+              "before",
+              ""
+            ]
+          },
+          "before": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "to",
+              "boldly",
+              "go",
+              "where",
+              "no"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "one"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "year:1987",
+      "indexname": "fragments",
+      "op": "docs",
+      "patt": "\"one\"",
+      "sort": "field:pid",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"one\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"one\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"one\"",
+            "type": "string",
+            "value": "one"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

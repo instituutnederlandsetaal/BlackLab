@@ -1,0 +1,111 @@
+{
+  "docInfos": {
+    "doc-01": {
+      "mayView": true,
+      "metadata": {
+        "fromInputFile": [
+          "fragments1.xml"
+        ],
+        "pid": [
+          "doc-01"
+        ],
+        "title": [
+          "Test title"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 21
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          ". "
+        ],
+        "word": [
+          "leentje"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lazy"
+        ]
+      },
+      "docPid": "doc-01",
+      "end": 9,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "dog"
+        ]
+      },
+      "start": 8
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "author:Piet",
+      "indexname": "fragments",
+      "op": "hits",
+      "patt": "\"dog\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"dog\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"dog\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"dog\"",
+            "type": "string",
+            "value": "dog"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

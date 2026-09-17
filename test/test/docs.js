@@ -6,33 +6,29 @@ chai.use(chaiHttp);
 
 const constants = require('./constants');
 const { expectUnchanged, expectUrlUnchanged } = require("./compare-responses");
+const {corpusUrl} = require("./util");
 
 
 /**
  * Test that a hits search for a pattern returns the correct number of hits and docs,
  * and optionally test that the first hit matches (either JSON or text).
  *
+ * @param corpusName name of the corpus
  * @param testName name of the test
  * @param params parameters to send, or single CQL pattern
  * @param filter (optional) if previous argument is a CQL pattern, this may be the document filter query
  */
-function expectDocsUnchanged(testName, params, filter) {
+function expectDocsUnchanged(corpusName, testName, params, filter) {
 
     if (typeof params === 'string')
         params = { patt: params };
     if (typeof filter === 'string')
         params.filter = filter;
 
-    const crit = [];
-    if (params.patt)
-        crit.push(`pattern ${params.patt}`);
-    if (params.filter)
-        crit.push(`filter ${params.filter}`);
-
-    describe(`docs/${testName}`, () => {
+    describe(`${corpusName}/docs/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/docs')
+            .get(corpusUrl(corpusName) + '/docs')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid",
@@ -45,42 +41,55 @@ function expectDocsUnchanged(testName, params, filter) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged('docs', testName, res.body);
+                expectUnchanged(corpusName, 'docs', testName, res.body);
                 done();
             });
         });
     });
 }
 
+let corpus = 'test';
+
 // Test that all hits are fetched before the document result is created!
-expectDocsUnchanged('any token', '[]');
-expectDocsUnchanged('single word she', '"she"');
+expectDocsUnchanged(corpus, 'any token', '[]');
+expectDocsUnchanged(corpus, 'single word she', '"she"');
 
 // Pattern-only docs search
-expectDocsUnchanged('single word they', '"they"');
+expectDocsUnchanged(corpus, 'single word they', '"they"');
 
 // Filter-only docs search
-expectDocsUnchanged('filter only', { filter: 'pid:PBsve435' });
+expectDocsUnchanged(corpus, 'filter only', { filter: 'pid:PBsve435' });
 
 // Combined docs search
-expectDocsUnchanged('pattern and filter', '"the"', 'pid:PBsve435');
+expectDocsUnchanged(corpus, 'pattern and filter', '"the"', 'pid:PBsve435');
 
 // Doc metadata, contents
-expectUrlUnchanged('docs', 'document metadata',
-        constants.URL_PREFIX + '/docs/PBsve430');
-expectUrlUnchanged('docs', 'document contents',
-        constants.URL_PREFIX + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+let corpUrl = corpusUrl(corpus);
+expectUrlUnchanged(corpus, 'docs', 'document metadata',
+        corpUrl + '/docs/PBsve430');
+expectUrlUnchanged(corpus, 'docs', 'document contents',
+        corpUrl + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
 
 // Doc snippet
-expectUrlUnchanged('docs', 'document snippet wordstart',
-        constants.URL_PREFIX + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
-expectUrlUnchanged('docs', 'document snippet hitstart',
-        constants.URL_PREFIX + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
+expectUrlUnchanged(corpus, 'docs', 'document snippet wordstart',
+        corpUrl + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
+expectUrlUnchanged(corpus, 'docs', 'document snippet hitstart',
+        corpUrl + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
-expectUrlUnchanged('docs', 'document facets',
-        constants.URL_PREFIX + '/docs/?number=0&facets=field:title');
+expectUrlUnchanged(corpus, 'docs', 'document facets',
+        corpUrl + '/docs/?number=0&facets=field:title');
 
 // Docs CSV
-expectUrlUnchanged('docs', 'CSV results',
-        constants.URL_PREFIX + '/docs/', 'text/csv');
+expectUrlUnchanged(corpus, 'docs', 'CSV results',
+        corpUrl + '/docs/', 'text/csv');
+
+// Some tests on the corpus with fragment metadata (should return full docs)
+
+corpus = 'fragments';
+expectDocsUnchanged(corpus, 'single word the', '"the"');
+expectDocsUnchanged(corpus, 'both docs', { filter: 'author:Jan author:Gene' });
+expectDocsUnchanged(corpus, 'frag by field', { filter: 'author:Jan' });
+expectDocsUnchanged(corpus, 'frag by id', { filter: 'pid:doc-01-frag-02' });
+
+expectDocsUnchanged(corpus, 'pattern and filter', '"one"', 'year:1987');

@@ -7,14 +7,16 @@ chai.use(chaiHttp);
 
 const constants = require('./constants');
 const { expectUnchanged, expectUrlUnchanged, sanitizeResponse} = require("./compare-responses");
+const { corpusUrl } = require("./util");
 
 /**
  * Test that a hits search returns the same response as before.
  *
- * @param testName The name of the test (and file name of the expected response).
- * @param params The search parameters.
+ * @param corpusName name of the corpus.
+ * @param testName name of the test (and file name of the expected response).
+ * @param params search parameters.
  */
-function expectHitsUnchanged(testName, params) {
+function expectHitsUnchanged(corpusName, testName, params) {
 
     // You can call this function with one string parameter, which is then used
     // as both the name and the CQL pattern.
@@ -25,10 +27,10 @@ function expectHitsUnchanged(testName, params) {
     if (typeof params === 'string')
         params = { patt: params };
 
-    describe(`hits/${testName}`, () => {
+    describe(`${corpusName}/hits/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get(constants.URL_PREFIX + '/hits')
+            .get(corpusUrl(corpusName) + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
@@ -41,7 +43,7 @@ function expectHitsUnchanged(testName, params) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged('hits', testName, res.body);
+                expectUnchanged(corpusName, 'hits', testName, res.body);
                 done();
             });
         });
@@ -49,42 +51,49 @@ function expectHitsUnchanged(testName, params) {
 }
 
 // Single word
-expectHitsUnchanged("single word the", '"the"');
-expectHitsUnchanged("simple phrase a succesful", '"a" [lemma="successful"]');
+expectHitsUnchanged("test", "single word the", '"the"');
+expectHitsUnchanged("test", "pattern and filter", { patt: '"the"', filter: 'pid:PBsve430' });
+expectHitsUnchanged("test", "simple phrase a succesful", '"a" [lemma="successful"]');
 // Also test that forward index matching either the first or the second clause produces the same results
-expectHitsUnchanged("phrase a succesful with fimatch 1st", '_fimatch("a", [lemma="successful"], 0)');
-expectHitsUnchanged("phrase a succesful with fimatch 2nd", '_fimatch("a", [lemma="successful"], 1)');
+expectHitsUnchanged("test", "phrase a succesful with fimatch 1st", '_fimatch("a", [lemma="successful"], 0)');
+expectHitsUnchanged("test", "phrase a succesful with fimatch 2nd", '_fimatch("a", [lemma="successful"], 1)');
 
 // Simple capture group
-expectHitsUnchanged("simple capture group", '"one" A:[]');
-expectHitsUnchanged("same hit, different captures", '"one" A:([]{1,2}) []{1,2}');
+expectHitsUnchanged("test", "simple capture group", '"one" A:[]');
+expectHitsUnchanged("test", "same hit, different captures", '"one" A:([]{1,2}) []{1,2}');
 
 // A few simpler tests, just checking matching text
-expectHitsUnchanged("any token", '[]');
-expectHitsUnchanged("two-four-single-regex", '"two|four"');
-expectHitsUnchanged("two-four-separate", '"two"|"four"');
-expectHitsUnchanged("token level AND", '[lemma="be" & word="are"]');
-expectHitsUnchanged("token level AND NOT", '[lemma="be" & word!="are"]');
-expectHitsUnchanged("containing", '<u/> containing "good"');
-expectHitsUnchanged("within", '[word="very"] [word="good"] within <u/>');
+expectHitsUnchanged("test", "any token", '[]');
+expectHitsUnchanged("test", "two-four-single-regex", '"two|four"');
+expectHitsUnchanged("test", "two-four-separate", '"two"|"four"');
+expectHitsUnchanged("test", "token level AND", '[lemma="be" & word="are"]');
+expectHitsUnchanged("test", "token level AND NOT", '[lemma="be" & word!="are"]');
+expectHitsUnchanged("test", "containing", '<u/> containing "good"');
+expectHitsUnchanged("test", "within", '[word="very"] [word="good"] within <u/>');
 
 // View a single group from grouped hits
-expectHitsUnchanged('view single group', {
+expectHitsUnchanged('test', 'view single group', {
     patt: '"a"',
     group: 'field:title',
     viewgroup: 'str:service encounter about visa application for family members',
 });
 
 // Matching doc facets
-expectUrlUnchanged('hits', 'document facets',
-        constants.URL_PREFIX + '/hits/?patt=%22the%22&number=0&facets=field:pid');
+expectUrlUnchanged('test', 'hits', 'document facets',
+        corpusUrl('test') + '/hits/?patt=%22the%22&number=0&facets=field:pid');
 
 // Hits CSV
-expectUrlUnchanged('hits', 'CSV results',
-        constants.URL_PREFIX + '/hits/?patt=%22the%22', 'text/csv');
+expectUrlUnchanged('test', 'hits', 'CSV results',
+        corpusUrl('test') + '/hits/?patt=%22the%22', 'text/csv');
 
 // /termfreq operation
-expectUrlUnchanged('hits', 'Termfreq word sensitive',
-        constants.URL_PREFIX + '/termfreq/?annotation=word&sensitive=true');
-expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
-        constants.URL_PREFIX + '/termfreq/?annotation=lemma');
+expectUrlUnchanged('test', 'hits', 'Termfreq word sensitive',
+        corpusUrl('test') + '/termfreq/?annotation=word&sensitive=true');
+expectUrlUnchanged('test', 'hits', 'Termfreq lemma insensitive',
+        corpusUrl('test') + '/termfreq/?annotation=lemma');
+
+
+expectHitsUnchanged("fragments", "hits in fragments", { patt: '"the"', filter: 'year:1900' });
+expectHitsUnchanged("fragments", "hit in adjacent fragments", { patt: '"Lindenlaan" "this"', filter: 'year:1976 OR year:2026' });
+expectHitsUnchanged("fragments", "hit beyond matching fragment", { patt: '"Lindenlaan" "this"', filter: 'year:1976' });
+expectHitsUnchanged("fragments", "inherited metadata", { patt: '"dog"', filter: 'author:Piet' });
