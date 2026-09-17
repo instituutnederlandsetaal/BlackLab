@@ -173,7 +173,6 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         return this; // by default, don't do any optimization
     }
 
-    @Override
     public abstract BLSpanQuery rewrite(IndexReader reader) throws IOException;
 
     @Override

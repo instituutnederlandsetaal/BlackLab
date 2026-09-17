@@ -45,7 +45,7 @@ public class GetFieldValues {
 
             int numDocs = r.numDocs();
             for (int i = 1; i < numDocs; i++) {
-                r.document(i, fieldVisitor);
+                r.storedFields().document(i, fieldVisitor);
                 Document d = fieldVisitor.getDocument();
                 for (String fieldName : fieldNames) {
                     String value = d.get(fieldName);

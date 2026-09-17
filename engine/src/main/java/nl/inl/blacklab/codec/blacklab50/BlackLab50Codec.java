@@ -1,6 +1,6 @@
 package nl.inl.blacklab.codec.blacklab50;
 
-import org.apache.lucene.codecs.lucene99.Lucene99Codec;
+import org.apache.lucene.backward_codecs.lucene99.Lucene99Codec;
 
 import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.BlackLabPostingsFormat;

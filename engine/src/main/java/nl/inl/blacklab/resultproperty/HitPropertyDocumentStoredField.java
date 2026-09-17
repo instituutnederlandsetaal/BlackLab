@@ -147,7 +147,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
             return IntPoint.newSetQuery(fieldName, List.of(Integer.parseInt(value)));
         } else {
             // https://github.com/apache/lucene/commit/0bc41356955cbf0144aa37203c6269256cf62555#diff-8d710e550a9661ad8a40b284a1f2ddc26a3b58477bf55d52eeed3f2f0576385cL169
-            return SortedDocValuesField.newSlowSetQuery(fieldName, new BytesRef(value));
+            return SortedDocValuesField.newSlowSetQuery(fieldName, List.of(new BytesRef(value)));
             // TermQuery doesn't work here! Why!?
             // (tested with field authorCombined in CHN;
             //  if that field is not indexed but does have docvalues,

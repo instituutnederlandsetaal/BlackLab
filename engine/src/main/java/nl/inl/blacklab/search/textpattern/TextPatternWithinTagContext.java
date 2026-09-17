@@ -59,8 +59,8 @@ public class TextPatternWithinTagContext extends TextPattern {
             }
             return resultQuery;
         } else {
-            throw new InvalidQuery("Right-hand side of 'within tag context' filter must be a query or list of queries: "
-                    + result);
+            throw new InvalidQuery("Right-hand side of 'within tag context' filter must be a query or list of queries, not a "
+                    + EvalResult.describe(result));
         }
     }
 

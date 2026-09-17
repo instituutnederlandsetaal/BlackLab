@@ -49,14 +49,13 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     private IndexInput _termOrderFile;
 
     public BLTerms(ForwardIndexField forwardIndexField, Collators collators, org.apache.lucene.index.Terms terms,
-            BlackLabPostingsReader postingsReader, boolean fixTermSortOrder) throws IOException {
+            BlackLabPostingsReader postingsReader) throws IOException {
         this.forwardIndexField = forwardIndexField;
         this.collators = collators;
         this.terms = terms;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
         this._termsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
         this._termOrderFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);
-        this.fixTermSortOrder = fixTermSortOrder;
     }
 
     public Collators getCollators() {
@@ -68,8 +67,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             org.apache.lucene.index.Terms delegateTerms = postingsReader.delegateFieldsProducer.terms(fieldName);
             if (delegateTerms != null) {
                 Collators collators = BLFieldTypeLucene.getFieldCollators(postingsReader.state.fieldInfos.fieldInfo(fieldName));
-                boolean fixTermSortOrder = postingsReader instanceof BlackLab40PostingsReader;
-                return new BLTerms(field, collators, delegateTerms, postingsReader, fixTermSortOrder);
+                return new BLTerms(field, collators, delegateTerms, postingsReader);
             }
             return null;
         } catch (IOException e) {
@@ -164,11 +162,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** For looking up term id for a sort position (insensitive) */
     private int[] insensitivePosToTermId;
 
-    /** Should we re-sort the term sort order arrays when we read them from the index?
-     * Necessary if index was created using BL4, which used a subtly different collator.
-     */
-    private boolean fixTermSortOrder;
-
     public synchronized Terms reader() { // synchronized because the first one loads term data
         if (forwardIndexField == null)
             throw new InvalidIndex("No forward index field specified for this terms reader");
@@ -214,7 +207,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                             forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
                     termStrings = _termsFile.clone();
 
-                    if (termStringsArr == null && (KEEP_TERM_STRINGS_IN_MEMORY || fixTermSortOrder)) {
+                    if (termStringsArr == null && (KEEP_TERM_STRINGS_IN_MEMORY)) {
                         // Read all term strings into memory for fast access
                         termStringsArr = new String[numberOfTerms];
                         long firstTermStringOffset = termStringOffsets.readLong(0);
@@ -222,14 +215,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                         for (int i = 0; i < numberOfTerms; i++) {
                             String term = termStrings.readString();
                             termStringsArr[i] = term;
-                        }
-                        if (fixTermSortOrder) {
-                            fixTermSortOrder = false; // do this only once
-                            // Re-sort terms because of BL4/5 collator difference
-                            // (BL4 uses built-in Java collators; BL5 uses ICU4J's, which are better but subtly incompatible)
-                            TermAccessorTerms termAccessor = new TermAccessorTerms(this);
-                            fixTermSortArrays(termIdToInsensitivePos, insensitivePosToTermId, termAccessor, collators.get(MatchSensitivity.INSENSITIVE));
-                            fixTermSortArrays(termIdToSensitivePos, sensitivePosToTermId, termAccessor, collators.get(MatchSensitivity.SENSITIVE));
                         }
                         if (KEEP_TERM_STRINGS_IN_MEMORY) {
                             // We don't need to access the files anymore

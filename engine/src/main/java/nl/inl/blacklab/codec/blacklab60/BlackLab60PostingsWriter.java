@@ -1,7 +1,9 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab60;
 
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.index.SegmentWriteState;
+
+import nl.inl.blacklab.codec.BlackLabPostingsWriter;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -10,7 +12,7 @@ import org.apache.lucene.index.SegmentWriteState;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
+public class BlackLab60PostingsWriter extends BlackLabPostingsWriter {
 
     /**
      * Instantiates a fields consumer.
@@ -20,10 +22,10 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
      * @param delegatePostingsFormatName name of the delegate postings format
      *                                   (the one our PostingsFormat class adapts)
      */
-    public BlackLab40PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
+    public BlackLab60PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
             String delegatePostingsFormatName) {
-        super(BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START, BlackLab40PostingsFormat.VERSION_CURRENT,
-                delegateFieldsConsumer, state, delegatePostingsFormatName, true);
+        super(BlackLab60PostingsFormat.NAME, BlackLab60PostingsFormat.VERSION_START, BlackLab60PostingsFormat.VERSION_CURRENT,
+                delegateFieldsConsumer, state, delegatePostingsFormatName, false);
     }
 
 }

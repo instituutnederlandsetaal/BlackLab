@@ -226,7 +226,7 @@ public final class LuceneUtil {
         // NOTE: might be faster to retrieve all term vectors at once
 
         try {
-            Terms terms = reader.getTermVector(doc, luceneName);
+            Terms terms = reader.termVectors().get(doc, luceneName);
             if (terms == null) {
                 throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
             }
@@ -299,7 +299,7 @@ public final class LuceneUtil {
         for (int n = 0; n < reader.maxDoc(); n++) {
             if (liveDocs == null || liveDocs.get(n)) {
                 try {
-                    Terms terms = reader.getTermVector(n, fieldName);
+                    Terms terms = reader.termVectors().get(n, fieldName);
                     if (terms == null) {
                         // No term vector; probably not stored in this document.
                         continue;
@@ -471,7 +471,7 @@ public final class LuceneUtil {
                     DocIdSetIterator documentIterator = scorer.iterator();
                     int doc;
                     while ((doc = documentIterator.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
-                        Terms terms = reader.getTermVector(doc, field);
+                        Terms terms = reader.termVectors().get(doc, field);
                         if (terms == null) {
                             throw new IllegalArgumentException("Field " + field + " has no Terms");
                         }

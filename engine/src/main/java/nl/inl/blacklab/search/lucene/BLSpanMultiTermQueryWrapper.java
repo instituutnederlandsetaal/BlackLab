@@ -83,7 +83,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        Query q = query.rewrite(reader);
+        Query q = query.rewrite(new IndexSearcher(reader));
         if (!(q instanceof SpanQuery))
             throw new UnsupportedOperationException(
                     "You can only use BLSpanMultiTermQueryWrapper with a suitable SpanRewriteMethod.");

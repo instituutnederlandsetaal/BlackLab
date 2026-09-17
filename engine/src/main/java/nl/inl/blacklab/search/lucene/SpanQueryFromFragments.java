@@ -82,7 +82,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        Query frRewr = fragmentQuery.rewrite(reader);
+        Query frRewr = fragmentQuery.rewrite(new IndexSearcher(reader));
         BLSpanQuery hitsRewr = hitsInFragments == null ? null : hitsInFragments.rewrite(reader);
         if (frRewr != fragmentQuery || hitsRewr != hitsInFragments) {
             return new SpanQueryFromFragments(queryInfo, frRewr, hitsRewr, behaviour);

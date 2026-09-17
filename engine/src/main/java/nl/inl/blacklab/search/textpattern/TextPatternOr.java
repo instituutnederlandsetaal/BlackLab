@@ -45,7 +45,7 @@ public class TextPatternOr extends TextPattern {
         if (context.isInConstraint()) {
             // We're in the constraint part of the query; create MatchFilter
             if (clauses.size() != 2)
-                throw new InvalidQuery("OR in constraint context requires exactly two clauses");
+                throw new IllegalStateException("OR in constraint context requires exactly two clauses");
             MatchFilter a = clauses.get(0).toMatchFilter(context);
             MatchFilter b = clauses.get(1).toMatchFilter(context);
             return new MatchFilterOr(a, b);

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab60;
 
 import java.io.IOException;
 
@@ -8,6 +8,8 @@ import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.SegmentWriteState;
+
+import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 
 /**
  * The custom postings format that BlackLab uses.
@@ -28,10 +30,10 @@ import org.apache.lucene.index.SegmentWriteState;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
+public class BlackLab60PostingsFormat extends BlackLabPostingsFormat {
 
     /** Name of this codec. Written to the files and checked on reading. */
-    static final String NAME = "BlackLab40Postings";
+    static final String NAME = "BlackLab60Postings";
 
     /** Oldest version still supported */
     static final int VERSION_START = 1;
@@ -44,13 +46,13 @@ public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
 
     // Used when opening index (see corresponding PostingsReader constructor)
     @SuppressWarnings("unused")
-    public BlackLab40PostingsFormat() {
+    public BlackLab60PostingsFormat() {
         super(NAME);
-        BlackLabPostingsFormat pf = (BlackLabPostingsFormat)(Codec.forName(BlackLab40Codec.NAME)).postingsFormat();
+        BlackLabPostingsFormat pf = (BlackLabPostingsFormat)(Codec.forName(BlackLab60Codec.NAME)).postingsFormat();
         delegatePostingsFormat = pf.getDelegatePostingsFormat();
     }
 
-    public BlackLab40PostingsFormat(PostingsFormat delegate) {
+    public BlackLab60PostingsFormat(PostingsFormat delegate) {
         super(NAME);
         delegatePostingsFormat = delegate;
     }
@@ -62,12 +64,12 @@ public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
 
     @Override
     public final FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
-        return new BlackLab40PostingsReader(state);
+        return new BlackLab60PostingsReader(state);
     }
 
     @Override
     public final FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
-        return new BlackLab40PostingsWriter(delegatePostingsFormat.fieldsConsumer(state), state,
+        return new BlackLab60PostingsWriter(delegatePostingsFormat.fieldsConsumer(state), state,
                 delegatePostingsFormat.getName());
     }
 

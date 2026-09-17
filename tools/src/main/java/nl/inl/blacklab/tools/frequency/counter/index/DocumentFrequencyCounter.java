@@ -50,7 +50,7 @@ final public class DocumentFrequencyCounter {
         fieldsToLoad.add(docLengthField);
         final var metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
         fieldsToLoad.addAll(metaFieldNames);
-        return index.reader().document(docId, fieldsToLoad);
+        return index.reader().storedFields().document(docId, fieldsToLoad);
     }
 
     /**
