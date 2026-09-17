@@ -610,10 +610,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     @Override
     public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         String fieldName = fieldWriter.name();
-        AnnotatedFieldImpl cf;
-        if (annotatedFields.exists(fieldName)) {
-            cf = annotatedFields.get(fieldName);
-        } else {
+        AnnotatedFieldImpl cf = annotatedFields.get(fieldName);
+        if (cf == null) {
             ensureNotFrozen();
 
             // Not registered yet; do so now. Note that we only add the main annotation,

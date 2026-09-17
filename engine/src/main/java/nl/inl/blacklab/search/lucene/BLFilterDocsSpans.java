@@ -20,10 +20,10 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 
 /**
  * A {@link Spans} implementation wrapping another spans instance (or any doc iterator, such as SpansInBuckets),
@@ -42,8 +42,14 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
      * Wrap the given {@link T}.
      */
     protected BLFilterDocsSpans(T in, SpanGuarantees guarantees) {
-        super(guarantees == null ? SpanGuarantees.from(in) : guarantees);
+        super(determineGuarantees(in, guarantees));
         this.in = Objects.requireNonNull(in);
+    }
+
+    private static <T extends DocIdSetIterator> SpanGuarantees determineGuarantees(T in, SpanGuarantees guarantees) {
+        guarantees = guarantees == null ? SpanGuarantees.from(in) : guarantees;
+        assert guarantees != null;
+        return guarantees;
     }
 
     @Override

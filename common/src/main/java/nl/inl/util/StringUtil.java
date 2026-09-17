@@ -135,10 +135,9 @@ public final class StringUtil {
      * For instance, '&agrave;' will be replaced by 'a'. Note that ligatures will be left as is.
      *
      * <pre>
-     * StringUtils.stripAccents(null)                = null
-     * StringUtils.stripAccents("")                  = ""
-     * StringUtils.stripAccents("control")           = "control"
-     * StringUtils.stripAccents("&eacute;clair")     = "eclair"
+     * StringUtil.stripAccents("")                  = ""
+     * StringUtil.stripAccents("control")           = "control"
+     * StringUtil.stripAccents("&eacute;clair")     = "eclair"
      * </pre>
      *
      * NOTE: this method was copied from Apache StringUtils. Changes:
@@ -151,9 +150,7 @@ public final class StringUtil {
      */
     // See also Lucene's ASCIIFoldingFilter (Lucene 2.9) that replaces accented characters by their unaccented equivalent (and uncommitted bug fix: https://issues.apache.org/jira/browse/LUCENE-1343?focusedCommentId=12858907&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_12858907).
     public static String stripAccents(final String input) {
-        if (input == null) {
-            return null;
-        }
+        assert input != null;
         final StringBuilder decomposed = new StringBuilder(Normalizer2.getNFDInstance().normalize(input));
 
         // Note that this doesn't correctly remove ligatures...
@@ -269,6 +266,8 @@ public final class StringUtil {
 
     /**
      * Lowercase string and remove any diacritics.
+     *
+     * Returns null if input is null.
      *
      * @param str string to desensitize
      * @return desensitized string

@@ -18,6 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
+import org.jspecify.annotations.Nullable;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -183,16 +184,23 @@ public class SpanQueryAndNot extends BLSpanQuery {
     private SpansAndFilterFactory filterFactory = null;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
-        super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
+        super(determineQueryInfo(include, exclude));
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
-        if (this.include.isEmpty() && this.exclude.isEmpty())
-            throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
+        assert !(this.include.isEmpty() && this.exclude.isEmpty());
         checkAllCompatibleFields(this.include);
         checkAllCompatibleFields(this.exclude);
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
+    }
+
+    private static @Nullable QueryInfo determineQueryInfo(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
+        if (include != null && !include.isEmpty())
+            return include.get(0).queryInfo;
+        if (exclude != null && !exclude.isEmpty())
+            return exclude.get(0).queryInfo;
+        throw new IllegalStateException("AND(NOT)/RSPAN query without clauses");
     }
 
     /**

@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
@@ -124,7 +123,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String relClass = RelationUtil.classFromFullType(relationType);
         boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
-        AnnotatedField targetField = StringUtils.isEmpty(version) ? sourceField :
+        AnnotatedField targetField = version.isEmpty() ? sourceField :
                 context.index().annotatedField(AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField().name(), version));
 
         // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.

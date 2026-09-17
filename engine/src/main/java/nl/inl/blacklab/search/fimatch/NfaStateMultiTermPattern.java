@@ -141,6 +141,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public void lookupAnnotationIndexesInternal(ForwardIndexAccessor fiAccessor) {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
+        assert comp.length > 1;
         String annotationName = comp[1];
         annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
     }

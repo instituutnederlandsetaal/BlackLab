@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -20,7 +19,6 @@ import com.ibm.icu.text.Collator;
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
@@ -35,13 +33,13 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
@@ -282,13 +280,14 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public Document luceneDoc(int docId, boolean includeContentStores) {
-        if (includeContentStores)
-            throw new UnsupportedOperationException("Always skips content stores");
-        try {
-            return reader().document(docId);
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
+        throw new IllegalStateException("luceneDoc is not supported in MockBlackLabIndex");
+//        if (includeContentStores)
+//            throw new UnsupportedOperationException("Always skips content stores");
+//        try {
+//            return reader().document(docId);
+//        } catch (IOException e) {
+//            throw new InvalidIndex(e);
+//        }
     }
 
     @Override

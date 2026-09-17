@@ -86,8 +86,6 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
     @Override
     public AnnotatedFieldImpl get(String fieldName) {
-        if (!annotatedFields.containsKey(fieldName))
-            return null;
         return annotatedFields.get(fieldName);
     }
 
@@ -143,6 +141,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
         Map<String, List<Map<String, Object>>> groups = topLevelCustom.computeIfAbsent(IndexMetadataImpl.KEY_CUSTOM_ANNOTATION_GROUPS,
                 __ -> new LinkedHashMap<>());
+        assert groups != null;
         groups.put(fieldName, annotationGroups.toCustom());
     }
     

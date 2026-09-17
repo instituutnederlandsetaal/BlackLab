@@ -19,6 +19,7 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -314,8 +315,9 @@ class IndexerImpl implements DocWriter, Indexer {
             String contentStoreName) {
         // Store as a field in the document (codec makes sure random access is possible)
         AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
-        if (annotatedFields.exists(contentStoreName)) {
-            annotatedFields.get(contentStoreName).setContentStore(true);
+        AnnotatedFieldImpl annotatedField = annotatedFields.get(contentStoreName);
+        if (annotatedField != null) {
+            annotatedField.setContentStore(true);
         }
 
         String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);

@@ -46,6 +46,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -617,7 +618,9 @@ public interface BlackLabIndex extends AutoCloseable {
                 break;
             }
         }
-        return docResults.get(0).identity().value();
+        DocResult docResult = docResults.get(0);
+        assert docResult != null; // we just checked that size() == 1
+        return docResult.identity().value();
     }
 
     /**

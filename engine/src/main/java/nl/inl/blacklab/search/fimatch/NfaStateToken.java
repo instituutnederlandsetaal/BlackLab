@@ -183,6 +183,7 @@ public class NfaStateToken extends NfaState {
     public void lookupAnnotationIndexesInternal(ForwardIndexAccessor fiAccessor) {
         this.fiAccessor = fiAccessor;
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
+        assert comp.length > 1;
         String annotationName = comp[1];
         annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
     }
