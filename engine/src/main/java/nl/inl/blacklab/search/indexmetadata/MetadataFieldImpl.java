@@ -15,8 +15,6 @@ import nl.inl.blacklab.webservice.WsParam;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataFieldImpl extends FieldImpl implements MetadataField {
-    
-//    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
     public static MetadataFieldImpl fromConfig(ConfigMetadataField config,
             MetadataFieldsImpl metadataFields) {
@@ -52,6 +50,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      */
     private String analyzer = "DEFAULT";
 
+    /** Does this field occur at the fragment level? Used for optimization. */
+    private boolean occursInFragments = false;
+
     /**
      * Values for this field and their frequencies.
      */
@@ -85,11 +86,19 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
 
     @Override
     public MetadataFieldValues values(long maxValues) {
+        if (index != null) {
+            // Check the per-index FreqListCache first to avoid re-reading from Lucene.
+            TruncatableFreqList cached = index.freqListCache().get(name(), maxValues);
+            if (cached != null)
+                return new MetadataFieldValuesFromIndex(name(), type == FieldType.NUMERIC, cached);
+        }
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);
+        if (index != null)
+            index.freqListCache().put(name(), values.valueList());
         return values.truncated(maxValues);
     }
-    
+
     @Override
     public String offsetsField() {
         return name();
@@ -137,5 +146,23 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         if (field instanceof MetadataFieldImpl)
             return name().compareTo(field.name());
         return getClass().getName().compareTo(field.getClass().getName());
+    }
+
+    @Override
+    public boolean occursInFragments() {
+        return occursInFragments;
+    }
+
+    /**
+     * Indicate that this field occurs in fragments (used for optimization).
+     * <p>
+     * Don't call this directly; use MetadataFieldsImpl.setOccursInFragments() instead, which will call this method and
+     * update its own internal state as well.
+     */
+    void setOccursInFragments() {
+        if (!occursInFragments) {
+            ensureNotFrozen();
+            occursInFragments = true;
+        }
     }
 }

@@ -1,0 +1,52 @@
+# For displaying in user interface (optional)
+displayName: "Test fragments"
+
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /doc
+
+# Annotated, CQL-searchable fields.
+# We usually have just one, named "contents".
+annotatedFields:
+
+  contents:
+    containerPath: text
+    wordPath: .//w
+    punctPath: .//text()[not(ancestor::w)]
+
+    annotations:
+    - name: word
+      valuePath: .
+
+    inlineTags:
+    - path: .//s
+    - path: .//milestone
+      tokenIdPath: "@id"
+
+    standoffAnnotations:
+      - path: metadata
+        type: fragment
+        spanStartPath: "@from"
+        spanEndPath: "@to"
+        spanEndIsInclusive: false
+
+corpusConfig:
+  specialFields:
+    pidField: pid
+
+  contentViewable: true
+
+
+metadata:
+  containerPath: metadata
+  fields:
+  - name: pid
+    valuePath: "@id"
+    type: untokenized
+    fragments: separate
+  - name: title
+    valuePath: "@title"
+  - name: author
+    valuePath: "@author"
+  - name: year
+    valuePath: "@year"

@@ -153,6 +153,8 @@ public class ExportMetadata implements AutoCloseable {
         }
     }
 
+    final int MAX_VALUE_LENGTH = 1000;
+
     /**
      * Export the corpus metadata.
      */
@@ -177,8 +179,8 @@ public class ExportMetadata implements AutoCloseable {
                             }
                             String value = f.stringValue();
                             if (value != null) {
-                                if (value.length() > 400)
-                                    value = StringUtils.abbreviate(value, 300);
+                                if (value.length() > MAX_VALUE_LENGTH)
+                                    value = StringUtils.abbreviate(value, MAX_VALUE_LENGTH);
                                 metadata.put(f.name(), escapeProblemChars(value));
                             } else if (f.numericValue() != null)
                                 metadata.put(f.name(), escapeProblemChars(f.numericValue().toString()));

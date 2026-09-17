@@ -6,6 +6,21 @@ This is the index format introduced with BlackLab v4 that integrates all previou
 
 BlackLab indexes have a codec name `BlackLab40Codec` and version of 1. (Additional versions or codecs may be added in the future)
 
+## Fragments
+
+Document fragments refer to the ability to tag parts of a document (from a starting token position to an ending token position) with metadata, not just the whole document. Most corpora in BlackLab won't use this feature, but for certain (e.g. historical) data sets, it is invaluable to tag part of the text as being written by a different author or in a different year.
+
+To enable this feature, a `_doc_type` field was added to each Lucene document in the index. Regular full documents have `_doc_type` set to `document`, fragments use `fragment` and the index metadata document uses `indexmetadata` (this will replace the current index metadata marker at some future point).
+
+Fragment documents have special fields `_frag_annotatedField` (the annotated field this is a fragment from, usually just `contents`), `_frag_start` and `frag_end` (the part of the document this metadata applies to; end is exclusive).
+
+Fragment documents index all the same metadata fields and values as the full document, except where the value from the document level has been overridden, or where an extra field that wasn't indexed at the document level was added.
+
+A document and its fragments are indexed together as a block (meaning Lucene will not put them in different segments). The relation between a "parent" document and its "children" (fragments) is encoded in the order they are indexed. The fragments come first, followed by the parent document. We use `lucene-join`'s  `ToParentBlockJoinQuery` and `ToChildBlockJoinQuery` as well as a custom operation, `SpanQueryFromFragments`. These use `BitSetProducer` and the `doc_type` field to find the parent/children.
+
+BlackLab has to do some extra work to deal with fragments, but we try to avoid this if we know the index doesn't contain fragments, or your query cannot have matched any fragments.
+
+
 ## Index metadata
 
 The index metadata (the equivalent to the `indexmetadata.yaml` file from the classic index format) is not written to a segment file (like information related to a document), but instead it is written to a special document in the Lucene index.
@@ -13,6 +28,25 @@ The index metadata (the equivalent to the `indexmetadata.yaml` file from the cla
 The document can be found by searching for a field with the name and value `__index_metadata_marker__`. The metadata is stored, in JSON form, in the field `__index_metadata__`. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataImpl` class.
 
 You can export the index metadata to a file using `IndexTool`. Use the `--help` option to learn more. It is even possible to change and re-import the file, although this can be risky.
+
+## Lucene document structure
+
+(TODO: describe how each field type is indexed in Lucene)
+
+| field name                  | indexed? | docvalues? | stored? |
+|-----------------------------|---------:|-----------:|--------:|
+| `_doc_type`                 |        Y |          Y |         |
+| `_frag_annotatedField`      |        Y |          Y |         |
+| `_frag_start/_frag_end`     |          |          Y |         |
+| `__index_metadata__`        |          |            |       Y |
+| `__index_metadata_marker__` |        Y |            |         |
+| (textual metadata fields)   |        Y |          Y |       Y |
+| (numeric metadata fields)   |        Y |          Y |       Y |
+| (annotation fields)         |        Y |            |      Y* |
+
+*) uses custom stored field type (block-based content store to enable random access to parts of the original document)
+
+Note that the `frag_*` fields only occur in fragments, and the `__index_metadata_*` fields only occur in the index metadata document.
 
 ## Annotated fields
 

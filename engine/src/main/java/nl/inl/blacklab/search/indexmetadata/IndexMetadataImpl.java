@@ -132,6 +132,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         /** Index metadata document gets a marker field so we can find it again (value same as field name) */
         private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
 
+        /** Query to find the metadata document in the index */
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
@@ -182,10 +183,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         private void updateMetadataDoc(BlackLabIndexWriter indexWriter, String metadataJson) throws IOException {
             // Create a metadata document with the metadata JSON, config format file,
             // and a marker field to we can find it again
-            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
+            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument(BLInputDocument.DocType.INDEXMETADATA);
             indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
             indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
-            indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
+            TermQuery query = new TermQuery(METADATA_DOC_QUERY.getTerm());
+            indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc), true);
         }
 
         private String serializeToJson(IndexMetadataImpl metadata) {

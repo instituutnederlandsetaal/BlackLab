@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -498,6 +499,14 @@ public interface BlackLabIndex extends AutoCloseable {
     SearchCache cache();
 
     /**
+     * Get the cache for annotation and metadata field value lists.
+     * Each index instance has its own cache.
+     *
+     * @return the freq-list cache for this index
+     */
+    FreqListCache freqListCache();
+
+    /**
      * Get the BlackLab instance that created us.
      * @return BlackLab instance
      */
@@ -610,4 +619,11 @@ public interface BlackLabIndex extends AutoCloseable {
         }
         return docResults.get(0).identity().value();
     }
+
+    /**
+     * Can this query potentially match a fragment? (i.e. does it contain any clauses that can match a fragment?)
+     * @param query the query to check
+     * @return true if the query might match a fragment, false if it definitely cannot
+     */
+    boolean isFragmentQuery(Query query);
 }

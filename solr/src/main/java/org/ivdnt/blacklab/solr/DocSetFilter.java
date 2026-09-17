@@ -90,7 +90,7 @@ public class DocSetFilter extends Query {
                         long end;
                         if (nextSegment.isPresent()) {
                             // Find index of first doc in next segment
-                            int startOfNextSegment = nextSegment.get().docBase;
+                            int startOfNextSegment = nextSegment.get().docBase; // OPT: why not use ctx.reader().maxDoc()?
                             end = IntBigArrays.binarySearch(acceptedDocs.elements(), start, acceptedDocs.size64(), startOfNextSegment);
                             if (end < 0) {
                                 // Value not found; determine "insertion point" (index of first higher id) instead

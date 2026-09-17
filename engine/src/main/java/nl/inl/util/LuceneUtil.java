@@ -87,11 +87,11 @@ public final class LuceneUtil {
             try {
                 Scorer scorer = docFilter == null ? null :
                         filterWeight.scorer(index.searcher().getLeafContexts().get(0));
-                DocIdSetIterator docIt = docFilter == null ? null : scorer.iterator();
+                DocIdSetIterator docIt = scorer == null ? null : scorer.iterator();
                 TermVectors termVectors = lrc.reader().termVectors();
                 return docId -> {
                     try {
-                        int matchingDocId = docFilter == null ? docId :
+                        int matchingDocId = scorer == null ? docId :
                                 docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId);
                         if (matchingDocId == docId) {
                             // This doc matches the filter.

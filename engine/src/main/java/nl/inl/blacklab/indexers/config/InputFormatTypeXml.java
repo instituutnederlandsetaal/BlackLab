@@ -338,6 +338,13 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     handlePunct(currentPunct);
                     currentPunct = punctIt.hasNext() ? punctIt.next() : null;
                 }
+
+                // Index any inline open tags after the last word
+                while (currentInline != null) {
+                    handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, null, tokenPositionsMap);
+                    currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+                }
+
                 return tokenPosition.start();
             }
 
@@ -382,69 +389,72 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 - index closing tags(s) at the right position
                  */
 
-                // Check if this word is within the inline, if so this word will always be the first word in
-                // the inline because we only process each inline once.
+                // Check if this word is a descendant of the inline. If not, this is a self-closing inline tag;
+                // if yes, it is an open tag and a close tag will follow later.
                 NodeInfo nodeInfo = currentInline.nodeInfo();
-                boolean isDescendant = false;
+                boolean isSelfClosing = true;
                 NodeInfo next;
-                try (AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber())) {
-                    while ((next = descendants.next()) != null) {
-                        if (next.equals(word)) {
-                            isDescendant = true;
-                            break;
-                        }
-                    }
-                }
-                int firstWordOutsideInline;
-                if (isDescendant) {
-                    // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
-                    // Find the attributes and index the tag.
-                    Map<String, List<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
-                    try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
-                        while ((next = attributes.next()) != null) {
-                            if (currentInline.indexAttribute(next.getDisplayName())) {
-                                atts.put(next.getLocalPart(), List.of(next.getStringValue()));
+                if (word != null) { // (if word is null, this inline tag occurs after the last word, so it must be self-closing)
+                    try (AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber())) {
+                        while ((next = descendants.next()) != null) {
+                            if (next.equals(word)) {
+                                isSelfClosing = false;
+                                break;
                             }
                         }
                     }
-                    // Index any extra attributes using the provided XPath expressions.
-                    for (ConfigAttribute attribute: currentInline.config.getAttributes().values()) {
-                        if (attribute.isExclude())
-                            continue;
-                        List<String> values = new ArrayList<>();
-                        ProcessingStep processSteps = attribute.getCompiledProcessSteps();
-                        if (atts.containsKey(attribute.getName())) {
-                            // Actual attribute on tag. Apply any processing steps now.
-                            String attributeValue = atts.get(attribute.getName()).get(0);
-                            values.addAll(processStringMultipleValues(attributeValue, processSteps));
-                        } else {
-                            // Extra attribute, not on tag. Evaluate XPath expression.
-                            finder.xpathForEachStringValue(attribute.getValuePath(), nodeInfo, matchedValue -> {
-                                values.addAll(processStringMultipleValues(matchedValue, processSteps));
-                            });
-                        }
-                        if (!values.isEmpty()) {
-                            atts.put(attribute.getName(), values);
-                        } else {
-                            // Remove attribute if it was already present but now has no values.
-                            atts.remove(attribute.getName());
+                }
+
+                // Find the attributes and index the tag.
+                Map<String, List<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
+                try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
+                    while ((next = attributes.next()) != null) {
+                        if (currentInline.indexAttribute(next.getDisplayName())) {
+                            atts.put(next.getLocalPart(), List.of(next.getStringValue()));
                         }
                     }
-                    inlineTag(nodeInfo.getDisplayName(), true, atts);
+                }
+                // Index any extra attributes using the provided XPath expressions.
+                for (ConfigAttribute attribute: currentInline.config.getAttributes().values()) {
+                    if (attribute.isExclude())
+                        continue;
+                    List<String> values = new ArrayList<>();
+                    ProcessingStep processSteps = attribute.getCompiledProcessSteps();
+                    if (atts.containsKey(attribute.getName())) {
+                        // Actual attribute on tag. Apply any processing steps now.
+                        String attributeValue = atts.get(attribute.getName()).get(0);
+                        values.addAll(processStringMultipleValues(attributeValue, processSteps));
+                    } else {
+                        // Extra attribute, not on tag. Evaluate XPath expression.
+                        finder.xpathForEachStringValue(attribute.getValuePath(), nodeInfo, matchedValue -> {
+                            values.addAll(processStringMultipleValues(matchedValue, processSteps));
+                        });
+                    }
+                    if (!values.isEmpty()) {
+                        atts.put(attribute.getName(), values);
+                    } else {
+                        // Remove attribute if it was already present but now has no values.
+                        atts.remove(attribute.getName());
+                    }
+                }
+                inlineTag(nodeInfo.getDisplayName(), true, atts);
 
+                int numberOfWordsInsideTag = 0;
+                if (!isSelfClosing) {
                     // Add tag to the list of tags to close at the correct position.
                     // (calculate word position by determining the number of word tags inside this element)
                     String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordPath() + ")";
-                    int numberOfWordsInsideTag = Integer.parseInt(finder.xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
+                    numberOfWordsInsideTag = Integer.parseInt(
+                            finder.xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
                     // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
                     inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
                                     k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
                             .add(nodeInfo);
-                    firstWordOutsideInline = position.start() + numberOfWordsInsideTag;
-                } else {
-                    // Word is not a descendant, so this inline must be self-closing.
-                    // In other words, the length of the inline is 0.
-                    firstWordOutsideInline = position.start();
+                }
+                int firstWordOutsideInline = position.start() + numberOfWordsInsideTag;
+                if (isSelfClosing) {
+                    // There's no explicit close tag, so immediately close inline tag now
+                    inlineTag(nodeInfo.getDisplayName(), false, null);
                 }
 
                 if (currentInline.tokenId() != null)
@@ -572,7 +582,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             }
 
                             // type
-                            String spanOrRelType = finder.xpathValue(standoff.getValuePath(), standoffNode);
+                            String spanOrRelType = type == AnnotationType.FRAGMENT ? null : finder.xpathValue(standoff.getValuePath(), standoffNode);
                             if (type == AnnotationType.RELATION && !spanOrRelType.contains(RelationUtil.CLASS_TYPE_SEPARATOR)) {
                                 // If no relation class specified, prepend the configured default relation class.
                                 String targetVersion = standoff.getTargetVersionPath().isEmpty() ? "" :
@@ -594,13 +604,59 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             } else {
                                 // Standoff annotation to index a relation (or inline tag).
                                 for (Span position: indexAtPositions) {
-                                    processStandoffSpan(standoffNode, type, position, endOrTarget,
-                                            standoffAnnotations,
-                                            spanOrRelType);
+                                    if (type == AnnotationType.FRAGMENT) {
+                                        // A fragment (or "subdocument") that can have its own metadata.
+                                        // (note that fragments don't have annotations or a type)
+                                        processFragment(standoffNode, position,
+                                                endOrTarget, standoff.getMetadata());
+                                    } else {
+                                        // A span (inline tag) or relation.
+                                        processStandoffSpan(standoffNode, type, position,
+                                                endOrTarget, standoffAnnotations, spanOrRelType);
+                                    }
                                 }
                             }
                         }
                     }
+                });
+            }
+
+            void processFragment(NodeInfo fragmentNode, Span fragStart, Span fragEnd, List<ConfigMetadataBlock> metadataCfg) {
+                // Collect metadata using the rules in the .blf.yaml file
+                // (from the document level and/or specific to this fragment)
+                Map<String, Collection<String>> metadata = new HashMap<>();
+                if (config.getMetadata().iterator().next().isApplyDocRules()) {
+                    // Apply the regular document-level metadata rules.
+                    // (unknownValues are only applied just before saving to the index, so don't pose a problem here)
+                    List<ConfigMetadataBlock> mainMetadataCfg = config.getMetadata();
+                    for (ConfigMetadataBlock b: mainMetadataCfg) {
+                        processMetadataBlockContainer(fragmentNode, b, metadata, true);
+                    }
+                }
+                // Apply any custom metadata rules for this fragment
+                for (ConfigMetadataBlock b: metadataCfg) {
+                    processMetadataBlock(fragmentNode, b, metadata, true);
+                }
+
+                // Keep track of what metadata fields occur at the fragment level.
+                // We won't index these at the document level because they don't apply to the whole document.
+                for (String field: metadata.keySet()) {
+                    ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.get(field);
+                    if (b == null) {
+                        ConfigMetadataField c = config.getMetadataField(field);
+                        if (c != null) {
+                            b = c.getFragments();
+                            metadataFieldsFragmentBehaviour.put(field, b);
+                        }
+                    }
+                }
+
+                // Add to the list of fragments for this annotated field.
+                this.fragsPerField.compute(currentAnnotatedField.name(),
+                        (k, v) -> {
+                            List<Fragment> fragments = v == null ? new ArrayList<>() : v;
+                            fragments.add(new Fragment(Span.between(fragStart.start(), fragEnd.start()), metadata));
+                            return fragments;
                 });
             }
 
@@ -748,7 +804,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                 // For each configured metadata block..
                 for (ConfigMetadataBlock b : config.getMetadata()) {
-                    processMetadataBlock(doc, b);
+                    processMetadataBlock(doc, b, false);
                 }
 
                 // For each linked document...
@@ -792,41 +848,56 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 return getStats();
             }
 
-            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
+            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, boolean atFragmentLevel) {
+                processMetadataBlock(doc, metaBlock, metadataFieldValues, atFragmentLevel);
+            }
+
+            protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock, Map<String,
+                    Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 // For each instance of this metadata block...
                 finder.xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
-                    // For each subblock... (for multiple levels of containerPaths)
-                    for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
-                        processMetadataBlock(block, subBlock);
-                    }
-
-                    // For each configured metadata field...
-                    List<ConfigMetadataField> fields = metaBlock.getFields();
-                    //noinspection ForLoopReplaceableByForEach
-                    for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
-                        ConfigMetadataField field = fields.get(i);
-
-                        // Metadata field configs without a valuePath are just for
-                        // adding information about fields captured in forEach's,
-                        // such as extra processing steps
-                        if (field.getValuePath() == null || field.getValuePath().isEmpty())
-                            continue;
-
-                        // Capture whatever this configured metadata field points to
-                        if (field.isForEach()) {
-                            // "forEach" metadata specification
-                            // (allows us to capture many metadata fields with 3 XPath expressions)
-                            processMetaForEach(metaBlock, block, field);
-                        } else {
-                            // Regular metadata field; just the fieldName and an XPath expression for the value
-                            // Multiple matches will be indexed at the same position.
-                            indexMetadataFieldMatches(block, field, field.getName(), null);
-                        }
-                    }
+                    processMetadataBlockContainer(block, metaBlock, metadataFieldValues, atFragmentLevel);
                 });
             }
 
-            protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach) {
+            private void processMetadataBlockContainer(NodeInfo metadataContainer, ConfigMetadataBlock metaBlock,
+                    Map<String, Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
+                // For each subblock... (for multiple levels of containerPaths)
+                for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
+                    processMetadataBlock(metadataContainer, subBlock, metadataFieldValues, atFragmentLevel);
+                }
+
+                // For each configured metadata field...
+                List<ConfigMetadataField> fields = metaBlock.getFields();
+                //noinspection ForLoopReplaceableByForEach
+                for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
+                    ConfigMetadataField field = fields.get(i);
+
+                    // Metadata field configs without a valuePath are just for
+                    // adding information about fields captured in forEach's,
+                    // such as extra processing steps
+                    if (field.getValuePath() == null || field.getValuePath().isEmpty())
+                        continue;
+
+                    // Should we even apply this rule at the fragment level?
+                    if (atFragmentLevel && !field.getFragments().applyRuleAtFragLevel())
+                        continue; // no
+
+                    // Capture whatever this configured metadata field points to
+                    if (field.isForEach()) {
+                        // "forEach" metadata specification
+                        // (allows us to capture many metadata fields with 3 XPath expressions)
+                        processMetaForEach(metaBlock, metadataContainer, field, metadataFieldValues, atFragmentLevel);
+                    } else {
+                        // Regular metadata field; just the fieldName and an XPath expression for the value
+                        // Multiple matches will be indexed at the same position.
+                        indexMetadataFieldMatches(metadataContainer, field, field.getName(), null, metadataFieldValues);
+                    }
+                }
+            }
+
+            protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach,
+                    Map<String, Collection<String>> metadataFieldValues, boolean atFragmentLevel) {
                 finder.xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
                     String fieldName = finder.xpathValue(forEach.getNamePath(), match);
@@ -845,24 +916,28 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     if (indexAsField.getValuePath() != null && !indexAsField.getValuePath().isEmpty())
                         return;
 
+                    // Should we even apply this rule at the fragment level?
+                    if (atFragmentLevel && !indexAsField.getFragments().applyRuleAtFragLevel())
+                        return; // no
+
                     // Multiple matches will be indexed at the same position.
-                    indexMetadataFieldMatches(match, forEach, fieldName, indexAsField);
+                    indexMetadataFieldMatches(match, forEach, fieldName, indexAsField, metadataFieldValues);
                 });
             }
 
             protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
-                    String indexAsFieldName, ConfigMetadataField indexAsFieldConfig) {
+                    String indexAsFieldName, ConfigMetadataField indexAsFieldConfig, Map<String, Collection<String>> metadataFieldValues) {
                 // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
                 finder.xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                     for (String value: processStringMultipleValues(unprocessedValue, field.getCompiledProcessSteps())) {
                         if (indexAsFieldConfig == null) {
-                            addMetadataField(indexAsFieldName, value);
+                            addMetadataField(indexAsFieldName, value, metadataFieldValues);
                         } else {
                             // Also execute process defined for named metadata field, if any
                             for (String processedValue: processStringMultipleValues(value,
                                     indexAsFieldConfig.getCompiledProcessSteps())) {
-                                addMetadataField(indexAsFieldName, processedValue);
+                                addMetadataField(indexAsFieldName, processedValue, metadataFieldValues);
                             }
                         }
                     }
@@ -953,5 +1028,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
             }
         }
+
     }
+
 }

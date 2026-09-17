@@ -304,7 +304,7 @@ metadata:
 Again, note that these properties may be removed from the `.blf.yaml` file specification in the future. It makes more sense to configure the frontend directly, for example using a custom script. See [Customizing the interface](https://blacklab-frontend.ivdnt.org/customizing_the_interface/intro.html).
 
 
-## Add a fixed metadata value to each document
+## Fixed metadata value
 
 You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name. To do this, simply specify `value` instead of `valuePath`.
 
@@ -367,3 +367,181 @@ There's also a complete [annotated index metadata file](full-example.md) if you 
 
 There are also (hacky) ways to make changes to the corpus metadata after it was indexed: you can export the metadata to a file and re-import it later (older corpora had an external `indexmetadata.yaml` file that could be edited directly). Start the `IndexTool` with `--help` to learn more, but be careful, as it is easy to make the index unusable this way. 
 
+## Metadata on fragments
+
+<!-- @include: ../../_from_v5.md -->
+
+::: tip Advanced feature
+
+This is an advanced feature that is probably not needed for most corpora.
+
+:::
+
+It is possible to annotate and index parts of your documents with metadata. In BlackLab, we call these parts "(document) fragments". A fragment inherits the document metadata but can also add its own or override values.
+
+This can be useful if, for example, your historical corpus contains documents where different parts of it were written by different authors or in different years. In this case, you want to be able to search for text written by a specific author or in a specific year, but you don't want to split the document into multiple documents, because that would lose the context of the text. Fragments make this possible.
+
+<h3>Differences from spans</h3>
+
+Fragments differ from spans (inline tags such as `<s/>` or `<p/>` in a few ways:
+
+- spans have a type (e.g. `s` or `p`), fragments do not.
+- spans can have textual attributes that you can search on using regular expressions, but these cannot be tokenized. fragment metadata works the same as document metadata, so it can be tokenized and searched using the same syntax (Lucene query language). It also supports numeric fields.
+- when indexing fragments normally inherit document metadata, and nested fragments inherit metadata from their parent fragment. Spans do not inherit anything.
+
+<h3>Fragments and search</h3>
+
+If you search for a word in text written by a specific author, that word will only be found in matching fragments. The match will not indicate the fragment in any way though, only the document it was found in. If you want to know which fragment it was found in, you should index fragments as both fragment and span (configure both separately), so you can use `within <frag />` to find the fragment that contains the match.
+
+When searching for documents (e.g. `/docs` operation in BlackLab Server), only full documents will be returned, even if you filtered by fragment metadata.
+
+Note that if your metadata filter matches two adjacent fragments, you will also find matches that cross the fragment boundary. This is unlikely to be a major issue, but if you want to make sure this cannot happen, you can again index the fragment as a span as well and use the `within` operator to restrict your search to a single fragment.
+
+<h3>Example</h3>
+
+The input XML for a document with fragments might for example look like this:
+
+```xml
+<?xml version="1.0" ?>
+<doc>
+    <metadata title="Test title" id="doc-01" author="Katrien" />
+    <text>
+        <metadata from="A" to="B" id="doc-01-frag-01" year="2025" />
+        <metadata from="B" to="C" id="doc-01-frag-02" year="2026" author="Jesse" />
+        <s>
+            <milestone id="A"/>
+            <w>This</w>
+            <w>is</w>
+            <w>a</w>
+            <w>fragment</w>.
+        </s>
+        <s>
+            <milestone id="B"/>
+            <w>Here's</w>
+            <w>another</w>
+            <w>one</w>.
+        </s>
+        <s>
+            <milestone id="C"/>
+            <w>One</w>
+            <w>more</w>!
+        </s>
+        <milestone id="D"/>
+    </text>
+</doc>
+```
+
+As you can see, the `<metadata/>` elements are used to mark fragments of the document. The `from` and `to` attributes indicate the start and end of the fragment (referring to `<milestone/>` tags), and the `id`, `year`, and `author` attributes are metadata for that fragment.
+
+::: details Missing fragment?
+
+Notice that two fragments are defined, from `A` to `B` and from `B` to `C`. But from milestone `C` to `D` there is no fragment defined. In this case, BlackLab will automatically create a fragment for that part of the text, and it will inherit the document metadata.
+
+:::
+
+To index the fragments in the XML above, you need to use the `standoffAnnotations` section in your format configuration file:
+
+```yaml
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /doc
+
+# Annotated, CQL-searchable fields.
+# We usually have just one, named "contents".
+annotatedFields:
+  contents:
+    containerPath: text # containerPath for the contents field (relative to documentPath)
+    wordPath: .//w
+    annotations:
+    - name: word
+      valuePath: .
+
+    inlineTags:
+    - path: .//s
+    # Capture the milestone ids so we can use them to mark fragment boundaries
+    - path: .//milestone
+      tokenIdPath: "@id"
+
+    # Define the fragments and their metadata
+    standoffAnnotations:
+    - path: metadata  # (relative to containerPath, the text element in our case)
+      type: fragment
+      spanStartPath: "@from"
+      spanEndPath: "@to"
+      spanEndIsInclusive: false
+
+# How to index metadata for documents and fragments
+metadata:
+
+  # (this is the document-level metadata container, relative to documentPath.
+  #  this is ignored for fragments: the fragment is its own metadata container)
+  containerPath: metadata
+  
+  fields:
+  - name: id
+    valuePath: "@id"
+    type: untokenized
+    fragments: separate   # documents and fragments each have their own unique id; index separately
+  - name: title
+    valuePath: "@title"
+  - name: author
+    valuePath: "@author"
+  - name: year
+    valuePath: "@year"
+```
+
+<h3>Metadata field behavior</h3>
+
+A metadata field is normally inherited from the document level in each fragment, unless the fragment overrides its value, of course. However, you can change this for a metadata field using the `fragments` setting. The possible values are:
+
+- `default` (or omit the setting): fields that occur at the fragment level will ONLY be indexed in fragments. If the field also occurs at the document level in the input file (such as `author` in the example above), it will NOT be indexed at the document level, but instead the value specified there will inherit to any fragment that doesn't define its own `author`. In other words: in the example doc, each fragment without an `author` will index `Katrien` as its author. Searching for an author will only find fragment(s), never the full document.
+- `separate`: with this behavior, document level and fragment level don't affect each other at all. The field will simply be indexed where it occurs in the input file. In the example, values for `id` are indexed at both the document level and at the fragment level, with each fragment having a unique id. The (automatically created) fragment from milestone `C` to `D` will not get the field `id` at all.
+- `docvalue`: fields with this behavior will index at the document level and index the exact same value at the fragment level, ignoring the possibility of overriding it with a different value. Slightly speeds up indexing because we have fewer field rules to apply for each fragment.
+
+Mostly, you should only specify `fragments: separate` for a few fields (such as `id`) and leave the rest at the default behavior.
+
+<h3>Fragment metadata rules</h3>
+
+Generally, it's best if documents and fragments have the same metadata structure in your input files, but that may not always be possible. You can deal with this by defining additional metadata rules for fragments. 
+
+For example, if the `author` field is stored in a different attribute at the fragment level (e.g. not `author` but `frag-author`), you could specify that as shown below.
+
+```yaml
+    # Define the fragments and their metadata
+    standoffAnnotations:
+      - path: metadata  # (relative to containerPath, the text element in our case)
+        type: fragment
+        spanStartPath: "@from"
+        spanEndPath: "@to"
+        spanEndIsInclusive: false
+
+        # This section is entirely optional.
+        # You may define additional metadata rules for fragments here if needed.
+        # The document level rules are always applied, unless you set applyDocRules: false.
+        metadata:
+          - applyDocRules: true # (default value, can be omitted)
+            containerPath: .    # (default value, can be omitted)
+            fields:
+              - name: author
+                valuePath: "@frag-author"
+```
+
+<h3>Inline tags as fragments?</h3>
+
+It is currently NOT possible to define fragments using inlineTags, so for example this XML:
+
+```xml
+<block author="Koen"><!-- not yet possible to index fragments this way -->
+    <s><w>Some</w> <w>text</w></s>
+</block>
+```
+
+could NOT be indexed using:
+
+```yaml
+inlineTags:
+- path: block
+  type: fragment
+```
+
+We might add something like this if there is a need for it.

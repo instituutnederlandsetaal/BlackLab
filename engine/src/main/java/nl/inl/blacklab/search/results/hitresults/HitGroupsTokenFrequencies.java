@@ -79,7 +79,7 @@ public class HitGroupsTokenFrequencies {
          * @param metadataValues relevant metadatavalues
          * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
          */
-        public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, PropertyValue[] metadataValues, int metadataValuesHash) {
+        GroupIdHash(int[] tokenIds, int[] tokenSortPositions, PropertyValue[] metadataValues, int metadataValuesHash) {
             this.tokenIds = tokenIds;
             this.tokenSortPositions = tokenSortPositions;
             this.metadataValues = metadataValues;
@@ -102,7 +102,7 @@ public class HitGroupsTokenFrequencies {
             return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
         }
 
-        public GroupIdHash toGlobalTermIds(LeafReaderContext lrc, List<AnnotInfo> hitProperties) {
+        GroupIdHash toGlobalTermIds(LeafReaderContext lrc, List<AnnotInfo> hitProperties) {
             int[] globalTermIds = new int[tokenIds.length];
             int[] globalSortPositions = new int[tokenIds.length];
             for (int i = 0; i < tokenIds.length; i++) {
@@ -137,10 +137,10 @@ public class HitGroupsTokenFrequencies {
     /** Counts of hits and docs while grouping. */
     private static final class OccurrenceCounts {
         // volatile just to be safe, as these objects are at times added together from different threads.
-        public volatile long hits;
-        public volatile int docs;
+        volatile long hits;
+        volatile int docs;
 
-        public OccurrenceCounts(long hits, int docs) {
+        OccurrenceCounts(long hits, int docs) {
             this.hits = hits;
             this.docs = docs;
         }
@@ -150,10 +150,10 @@ public class HitGroupsTokenFrequencies {
      * Info about doc and hit properties while grouping.
      */
     private record PropInfo(boolean docProperty, int indexInList) {
-        public static PropInfo doc(int index) {
+        static PropInfo doc(int index) {
             return new PropInfo(true, index);
         }
-        public static PropInfo hit(int index) {
+        static PropInfo hit(int index) {
             return new PropInfo(false, index);
         }
     }
@@ -166,19 +166,19 @@ public class HitGroupsTokenFrequencies {
 
         private final Terms terms;
 
-        public Annotation getAnnotation() {
+        Annotation getAnnotation() {
             return annotation;
         }
 
-        public MatchSensitivity getMatchSensitivity() {
+        MatchSensitivity getMatchSensitivity() {
             return matchSensitivity;
         }
 
-        public Terms getTerms() {
+        Terms getTerms() {
             return terms;
         }
 
-        public AnnotInfo(Annotation annotation, MatchSensitivity matchSensitivity, Terms terms) {
+        AnnotInfo(Annotation annotation, MatchSensitivity matchSensitivity, Terms terms) {
             this.annotation = annotation;
             this.matchSensitivity = matchSensitivity;
             this.terms = terms;
@@ -551,11 +551,11 @@ public class HitGroupsTokenFrequencies {
                     PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
 
                     CompleteQuery completeQuery = new CompleteQuery(new TextPatternAnyToken(1), source.getFilterQuery());
-                    if (!requestedGroupingProperty.canRefineQuery())
-                        throw new IllegalArgumentException("Group without hits must be able to find them by refining query!");
-                    CompleteQuery hitsInGroupQuery = requestedGroupingProperty.refine(queryInfo.index(), completeQuery, groupId).orElseThrow();
+                    // NOTE: we're only calculating stats here, never storing hits, and we cannot store a query for
+                    // each group that will yield the hits (because of e.g. NO_TERM groups), so we never store a query
+                    // either.
                     return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
-                            groupSizeDocs, MaxStats.NOT_EXCEEDED, hitsInGroupQuery, scorer);
+                            groupSizeDocs, MaxStats.NOT_EXCEEDED, null, scorer);
                 }).toList();
             }
             logger.debug("fast path used for grouping");

@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
  * Currently the FieldType and IndexWriter (which is responsible for saving the documents to lucene/solr).
  */
 public interface BLIndexObjectFactory {
-    BLInputDocument createInputDocument();
+    BLInputDocument createInputDocument(BLInputDocument.DocType type);
 
     BLFieldType fieldTypeMetadata(boolean tokenized);
 

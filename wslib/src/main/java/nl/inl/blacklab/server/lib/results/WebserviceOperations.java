@@ -52,6 +52,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocGroup;
@@ -378,7 +379,15 @@ public class WebserviceOperations {
      * @return values for this annotation
      */
     public static TruncatableFreqList getAnnotationValues(BlackLabIndex index, Annotation annotation, long limitValues) {
-        final TruncatableFreqList terms = new TruncatableFreqList(limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues);
+        long effectiveLimit = limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues;
+
+        // Check cache first
+        FreqListCache freqListCache = index.freqListCache();
+        TruncatableFreqList cached = freqListCache.get(annotation.name(), effectiveLimit);
+        if (cached != null)
+            return cached;
+
+        final TruncatableFreqList terms = new TruncatableFreqList(effectiveLimit);
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
                 MatchSensitivity.INSENSITIVE :
                 MatchSensitivity.SENSITIVE;
@@ -393,6 +402,10 @@ public class WebserviceOperations {
                 return true;
             });
         }
+
+        // Store in cache for future requests
+        freqListCache.put(annotation.name(), terms);
+
         return terms;
     }
 
@@ -674,8 +687,10 @@ public class WebserviceOperations {
         return new ResultIndexStatus(index, files, docs, tokens);
     }
 
-    public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
-        MetadataFieldValues values = fieldDesc.values(limitValues);
+    public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc) {
+        long effectiveLimit = limitValues < 0 ? MAX_FIELD_VALUES_TO_RETURN : limitValues;
+        String indexName = fieldDesc.index().name();
+        MetadataFieldValues values = fieldDesc.values(effectiveLimit);
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
                 !values.valueList().isTruncated());
@@ -696,7 +711,7 @@ public class WebserviceOperations {
         afs.sort(ResultAnnotatedField::compare);
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
-            mfs.add(metadataField(req.limitValues(), f, null));
+            mfs.add(metadataField(req.limitValues(), f));
         }
 
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(index.blIndex());

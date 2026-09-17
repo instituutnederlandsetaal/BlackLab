@@ -7,7 +7,7 @@
 	</Appenders>
 	<Loggers>
 		<!-- BlackLab's own code: keep at INFO so any issues are visible -->
-		<Logger name="nl.inl" level="info" additivity="false">
+		<Logger name="nl.inl" level="debug" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
 		<!-- Suppress Lucene/Solr startup INFO messages that are routed here via log4j-jul -->

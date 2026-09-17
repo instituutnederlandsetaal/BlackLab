@@ -24,4 +24,7 @@ public interface MetadataFieldsWriter extends MetadataFields {
     void clearSpecialFields();
 
     MetadataFieldImpl addFromConfig(ConfigMetadataField metaPidConfig);
+
+    /** Indicate that the specified metadata field occurs in fragments. Used for optimization. */
+    void setOccursInFragment(String fieldName);
 }

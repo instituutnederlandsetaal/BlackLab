@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<doc>
+    <metadata title="Test title" id="doc-01" author="Piet" />
+    <text>
+        <metadata from="A" to="B" id="doc-01-frag-01" year="1900" />
+        <metadata from="B" to="D" id="doc-01-frag-02" author="Jan" />
+        <metadata from="B" to="C" id="doc-01-frag-03" year="1976" />
+        <metadata from="C" to="D" id="doc-01-frag-04" year="2026" />
+        <s>
+            <milestone id="A"/>
+            <w>The</w>
+            <w>quick</w>
+            <w>brown</w>
+            <w>fox</w>
+            <w>jumps</w>
+            <w>over</w>
+            <w>the</w>
+            <w>lazy</w>
+            <w>dog</w>.
+        </s>
+        <s>
+            <milestone id="B"/>
+            <w>Leentje</w>
+            <w>leerde</w>
+            <w>Lotje</w>
+            <w>lopen</w>
+            <w>langs</w>
+            <w>de</w>
+            <w>lange</w>
+            <w>Lindenlaan</w>.
+        </s>
+        <s>
+            <milestone id="C"/>
+            <w>This</w>
+            <w>is</w>
+            <w>a</w>
+            <w>test</w>.
+        </s>
+        <milestone id="D"/>
+    </text>
+</doc>

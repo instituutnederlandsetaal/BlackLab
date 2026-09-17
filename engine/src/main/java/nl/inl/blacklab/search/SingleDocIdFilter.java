@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSet;
@@ -39,16 +38,6 @@ public class SingleDocIdFilter extends Query {
                 return null;
             }
 
-            /*zyw @Override
-            public float getValueForNormalization() throws IOException {
-                return 1.0f;
-            }
-
-            @Override
-            public void normalize(float norm, float boost) {
-                // NOP
-            }*/
-
             @Override
             public ScorerSupplier scorerSupplier(final LeafReaderContext ctx) {
                 return new ScorerSupplier() {
@@ -69,12 +58,8 @@ public class SingleDocIdFilter extends Query {
                             public DocIdSetIterator iterator() {
                                 // Check that id could be in this segment, and bits allows this doc id
                                 if (luceneDocId >= ctx.docBase) {
-
                                     // Check that the id is really in this segment by looking at the next segment
-                                    Optional<LeafReaderContext> nextSegment = ctx.parent.leaves().stream()
-                                            .filter(l -> l.docBase > ctx.docBase)
-                                            .findFirst();
-                                    if (nextSegment.isEmpty() || nextSegment.get().docBase > luceneDocId) {
+                                    if (ctx.reader().maxDoc() > luceneDocId) {
                                         // Doc occurs in this segment.
                                         return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
                                     }
@@ -103,8 +88,7 @@ public class SingleDocIdFilter extends Query {
 
             @Override
             public boolean isCacheable(LeafReaderContext ctx) {
-                // OPT: Look in to isCacheable() and implement properly
-                return false;
+                return true;
             }
 
         };

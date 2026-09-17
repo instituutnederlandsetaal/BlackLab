@@ -334,6 +334,20 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
              */
             @Override
             public void addMetadataField(String name, String value) {
+                addMetadataField(name, value, metadataFieldValues);
+            }
+
+            /**
+             * Add metadata field value.
+             * We first collect all metadata values before processing to ensure we have all of them
+             * in the case of fields with multiple values and to be able to sort them so sorting/grouping
+             * works correctly on these fields as well.
+             *
+             * @param name  field name
+             * @param value value to add
+             * @param metadataFieldValues where to add value
+             */
+            public void addMetadataField(String name, String value, Map<String, Collection<String>> metadataFieldValues) {
                 assert name != null;
                 assert value != null;
                 if (name.isEmpty()) {

@@ -33,8 +33,8 @@ public class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
     private BLIndexObjectFactoryLucene() {}
 
     @Override
-    public BLInputDocument createInputDocument() {
-        return new BLInputDocumentLucene();
+    public BLInputDocument createInputDocument(BLInputDocument.DocType type) {
+        return new BLInputDocumentLucene(type);
     }
 
     @Override

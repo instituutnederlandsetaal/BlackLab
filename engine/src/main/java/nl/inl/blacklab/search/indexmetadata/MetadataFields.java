@@ -40,4 +40,7 @@ public interface MetadataFields extends Iterable<MetadataField> {
     List<String> names();
 
     List<MetadataField> toList();
+
+    /** Are there any metadata fields occurring in fragments? (i.e. does the index use fragments at all?) */
+    boolean anyOccurInFragments();
 }

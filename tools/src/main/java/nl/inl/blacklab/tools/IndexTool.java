@@ -84,12 +84,12 @@ public class IndexTool {
                             System.err.println(
                                     "--index-type only supports 'integrated' (the default); don't use this option.");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         if (args[i + 1].equalsIgnoreCase("external")) {
                             System.err.println("The 'external' index type is no longer supported.");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         i++;
                     }
@@ -111,7 +111,7 @@ public class IndexTool {
                         if (i + 1 == args.length) {
                             System.err.println("--format-dir option needs argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         DocumentFormats.addConfigFormatsInDirectories(List.of(new File(args[i + 1])));
                         i++;
@@ -120,7 +120,7 @@ public class IndexTool {
                         if (i + 1 == args.length) {
                             System.err.println("--linked-file-dir option needs argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         linkedFileDirs.add(new File(args[i + 1]));
                         i++;
@@ -129,7 +129,7 @@ public class IndexTool {
                         if (i + 1 == args.length) {
                             System.err.println("--file-glob option needs argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         fileNameGlobGlobal = args[i + 1];
                         i++;
@@ -138,7 +138,7 @@ public class IndexTool {
                         if (i + 1 == args.length) {
                             System.err.println("--maxdocs option needs argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         try {
                             maxDocsToIndex = Integer.parseInt(args[i + 1]);
@@ -146,14 +146,14 @@ public class IndexTool {
                         } catch (NumberFormatException e) {
                             System.err.println("--maxdocs option needs integer argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                     }
                     case "ifexists" -> {
                         if (i + 1 == args.length) {
                             System.err.println("--ifexists option needs argument");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                         try {
                             BlackLabIndexWriter.IfDocumentExists ifExists = BlackLabIndexWriter.IfDocumentExists.forValue(
@@ -163,17 +163,17 @@ public class IndexTool {
                         } catch (IllegalArgumentException e) {
                             System.err.println("--ifexists option needs valid argument (fail, replace or skip)");
                             usage();
-                            return;
+                            System.exit(1);
                         }
                     }
                     case "help" -> {
                         usage();
-                        return;
+                        System.exit(0);
                     }
                     default -> {
                         System.err.println("Unknown option --" + name);
                         usage();
-                        return;
+                        System.exit(1);
                     }
                 }
             } else {
@@ -199,7 +199,7 @@ public class IndexTool {
                     else {
                         if (!arg.contains("=")) {
                             System.err.println("Argument to doctask must have the form KEY=VALUE");
-                            return;
+                            System.exit(1);
                         }
                         String[] parts = arg.split("=", 2);
                         docTaskArgs.put(parts[0], parts[1]);
@@ -207,54 +207,57 @@ public class IndexTool {
                 } else {
                     System.err.println("Too many arguments!");
                     usage();
-                    return;
+                    System.exit(1);
                 }
             }
         }
         if (indexDir == null) {
             System.err.println("No index dir given.");
             usage();
-            return;
+            System.exit(1);
         }
         if (formatIdentifier == null  && addingFiles) {
             System.err.println("No format identifier given.");
             usage();
-            return;
+            System.exit(1);
         }
         if (command.isEmpty()) {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
-            return;
+            System.exit(1);
         }
         switch (command) {
-        case "add":
-            break;
-        case "create":
-            forceCreateNew = true;
-            break;
-        case "delete":
-            deleteDocuments(indexDir, deleteQuery);
-            return;
-        case "doctask":
-            runDocTask(indexDir, docTaskPluginName, docTaskArgs);
-            return;
-        case "indexinfo":
-            exportIndexInfo(indexDir);
-            return;
-        case "import-indexinfo":
-            importIndexInfo(indexDir);
-            return;
-        default:
-            System.err.println("Unknown command: " + command + ". (--help for details)");
-            usage();
-            return;
+            case "add" -> {
+            }
+            case "create" -> forceCreateNew = true;
+            case "delete" -> {
+                int deleteExitCode = deleteDocuments(indexDir, deleteQuery) ? 0 : 1;
+                System.exit(deleteExitCode);
+            }
+            case "doctask" -> {
+                int docTaskExitCode = runDocTask(indexDir, docTaskPluginName, docTaskArgs) ? 0 : 1;
+                System.exit(docTaskExitCode);
+            }
+            case "indexinfo" -> {
+                exportIndexInfo(indexDir);
+                System.exit(0);
+            }
+            case "import-indexinfo" -> {
+                importIndexInfo(indexDir);
+                System.exit(0);
+            }
+            default -> {
+                System.err.println("Unknown command: " + command + ". (--help for details)");
+                usage();
+                System.exit(1);
+            }
         }
 
         // We're adding files. Do we have an input dir/file and file format name?
         if (indexSource == null) {
             System.err.println("No input dir given.");
             usage();
-            return;
+            System.exit(1);
         }
         indexSource.setFileIteratorSettings(new FileIterator.FileIteratorSettings(true, true,
                 fileNameGlobGlobal));
@@ -294,7 +297,7 @@ public class IndexTool {
                 if (FileUtil.isBrokenLink(maybeFormatFile)) {
                     System.err.println("Format file " + maybeFormatFile + " is a broken symlink.");
                     usage();
-                    return;
+                    System.exit(1);
                 }
                 try {
                     ConfigInputFormat format = ConfigInputFormat.read(maybeFormatFile);
@@ -303,23 +306,23 @@ public class IndexTool {
                 } catch (InvalidInputFormatConfig e) {
                     System.err.println("Error(s) in format " + formatIdentifier + ": " + e.getMessage());
                     usage();
-                    return;
+                    System.exit(1);
                 }
             }
         }
 
-        Indexer indexer;
+        Indexer indexer = null;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew, formatIdentifier);
             indexer = Indexer.create(indexWriter, formatIdentifier);
         } catch (InvalidInputFormatConfig e) {
             System.err.println("ERROR in input format '" + formatIdentifier + "':");
             System.err.println(e.getMessage());
-            return;
+            System.exit(1);
         } catch (DocumentFormatNotFound e) {
             System.err.println(e.getMessage());
             usage();
-            return;
+            System.exit(1);
         }
 
         indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
@@ -385,28 +388,30 @@ public class IndexTool {
         }
     }
 
-    private static void deleteDocuments(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
+    private static boolean deleteDocuments(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
         if (deleteQuery == null) {
             System.err.println("No delete query given.");
             usage();
-            return;
+            return false;
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
             indexWriter.delete(LuceneUtil.parseLuceneQuery(null, deleteQuery, indexWriter.analyzer(), "nonExistentDefaultField"));
+            return true;
         }
     }
 
-    private static void runDocTask(File indexDir, String docTaskPluginName, Map<String, String> args) {
+    private static boolean runDocTask(File indexDir, String docTaskPluginName, Map<String, String> args) {
         if (StringUtils.isEmpty(docTaskPluginName)) {
             System.err.println("No doc task plugin name given.");
             usage();
-            return;
+            return false;
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             DocTaskType docTaskType = PluginManager.type(DocTaskType.class).get(docTaskPluginName);
             PluginParams validated = docTaskType.descriptor().validate(args);
             indexWriter.forEachDocument(docTaskType.docTask(indexWriter, validated));
+            return true;
         }
     }
 

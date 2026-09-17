@@ -29,11 +29,12 @@
 **/*.log
 
 # Test defines its own container and doesn't need to be included in the main container context
-# (BUT: a unit test uses files from /test/data/input, so we need to make sure those are included)
 /test
-!/test/data/voice-tei.blf.yaml
-!/test/data/input
-!/test/config
+# (BUT: a unit test used files from /test/data/input, so we need to make sure those are included)
+# (now just copied these two files - config not needed(?))
+#!/test/data/voice-tei.blf.yaml
+#!/test/data/input
+#!/test/config
 
 /test/node_modules
 

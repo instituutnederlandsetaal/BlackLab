@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.Constants;
@@ -31,7 +33,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     /**
      * Chunks of the document from the forward index, for each of the annotations.
      */
-    private final List<List<int[]>> allAnnotChunksSegment = new ArrayList<>();
+    private final List<int[]>[] allAnnotChunksSegment;
 
     /**
      * Construct a token reader for one or more annotations from one forward index document.
@@ -44,10 +46,9 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
         this.segmentDocId = segmentDocId;
         this.docLengthTokens = fiAccessor.getDocLength(segmentDocId);
 
-        // Create empty lists of chunks for each annotation
-        for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
-            allAnnotChunksSegment.add(new ArrayList<>());
-        }
+        // Lists of chunks for each annotation; initialize to null and only create when needed
+        allAnnotChunksSegment = new List[fiAccessor.getNumberOfAnnotations()];
+        Arrays.fill(allAnnotChunksSegment, null);
     }
 
     @Override
@@ -71,13 +72,18 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
         if (pos < 0 || pos >= docLengthTokens)
             return Constants.NO_TERM;
 
-        // Get the list of chunks for the annotation we're interested in,
-        // and the forward index object to get more.
-        List<int[]> chunks = allAnnotChunksSegment.get(annotIndex);
-
         // Where can our token be found?
         int whichChunk = pos / CHUNK_SIZE;
         int posWithinChunk = pos % CHUNK_SIZE;
+
+        // Get the list of chunks for the annotation we're interested in,
+        // and the forward index object to get more.
+        List<int[]> chunks = allAnnotChunksSegment[annotIndex];
+        if (chunks == null) {
+            chunks = new ArrayList<>(whichChunk + 1);
+            Collections.fill(chunks, null);
+            allAnnotChunksSegment[annotIndex] = chunks;
+        }
 
         // Make sure we have the chunk we need:
         // First, make sure the list is long enough.

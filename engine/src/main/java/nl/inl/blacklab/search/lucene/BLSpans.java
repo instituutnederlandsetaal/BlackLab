@@ -209,7 +209,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     public long cost() {
         // returns a completely arbitrary constant value, but it's for
         // optimizing scoring and we don't generally use that
-        return 100;
+        return 0;
     }
 
     /**

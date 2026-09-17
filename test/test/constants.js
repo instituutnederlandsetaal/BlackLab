@@ -7,8 +7,8 @@ const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
 
 // Determine where test responses are saved
 // NOTE: if we're testing another index type, e.g. integrated, use responses from corresponding subdir
-const INDEX_TYPE = process.env.INDEX_TYPE || "classic-external"; // what index type are we testing? (separate responses)
-const OPT_INDEX_TYPE_PATH = INDEX_TYPE === "classic-external" ? "" : `-${INDEX_TYPE}`;
+const INDEX_TYPE = process.env.INDEX_TYPE || "default"; // what index type are we testing? (separate responses)
+const OPT_INDEX_TYPE_PATH = INDEX_TYPE === "default" ? "" : `-${INDEX_TYPE}`;
 
 // Where are the "gold standard" test responses saved?
 const SAVED_RESPONSES_BASE_PATH = process.env.SAVED_RESPONSES_PATH || `${TEST_DATA_ROOT}/saved-responses`;
@@ -21,8 +21,11 @@ const LATEST_TEST_OUTPUT_PATH = `${LATEST_TEST_OUTPUT_BASE_PATH}${OPT_INDEX_TYPE
 
 const TEST_API_VERSION = undefined; // (if undefined, automatically uses current stable version)
 
-const URL_PREFIX = '/corpora/test';
-const PARALLEL_URL_PREFIX = '/corpora/parallel';
+const URL_PREFIX = '/corpora';
+const CORPUS_TEST = 'test';
+const CORPUS_PARALLEL = 'parallel';
+const URL_CORPUS_TEST = `${URL_PREFIX}/${CORPUS_TEST}`;
+const URL_CORPUS_PARALLEL = `${URL_PREFIX}/${CORPUS_PARALLEL}`;
 
 module.exports = {
     SERVER_URL,
@@ -34,5 +37,8 @@ module.exports = {
     LATEST_TEST_OUTPUT_PATH,
     TEST_API_VERSION,
     URL_PREFIX,
-    PARALLEL_URL_PREFIX
+    CORPUS_TEST,
+    CORPUS_PARALLEL,
+    URL_CORPUS_TEST,
+    URL_CORPUS_PARALLEL
 };

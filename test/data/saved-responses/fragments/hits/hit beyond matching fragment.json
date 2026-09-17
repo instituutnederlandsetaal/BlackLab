@@ -1,0 +1,84 @@
+{
+  "docInfos": {
+  },
+  "hits": [
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "year:1976",
+      "indexname": "fragments",
+      "op": "hits",
+      "patt": "\"Lindenlaan\" \"this\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"Lindenlaan\" \"this\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"Lindenlaan\" \"this\"",
+        "clauses": [
+          {
+            "bcqlFragment": "\"Lindenlaan\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"Lindenlaan\"",
+                "type": "string",
+                "value": "Lindenlaan"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          },
+          {
+            "bcqlFragment": "\"this\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"this\"",
+                "type": "string",
+                "value": "this"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          }
+        ],
+        "type": "sequence"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 0,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 0,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 0,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

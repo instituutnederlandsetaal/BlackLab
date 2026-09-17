@@ -11,7 +11,7 @@
 set -o errexit  # Exit on error (set -e)
 
 # Get the servicename (or default to "test", the regular CI test)
-SERVICE_NAME=test
+SERVICE_NAME="test"
 
 if [ "$1" = "test-local" ]; then
     export BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
@@ -40,6 +40,8 @@ COMPOSE="docker compose"
 # Re-run to test the other index format as well
 echo '=== Testing integrated index format...'
 $COMPOSE build testserver "$SERVICE_NAME"
+export UID
+export GID=$(id -g)
 $COMPOSE up -d --force-recreate testserver # (--force-recreate to avoid error 'network not found')
 $COMPOSE run --rm "$SERVICE_NAME"
 $COMPOSE stop testserver # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)

@@ -18,7 +18,7 @@ import nl.inl.util.PropertySerializeUtil;
 public class PropertyValueContextWords extends PropertyValueContext {
 
     /** Segment our term ids came from (will be null if this is a global value, or if arrays are length 0) */
-    private LeafReaderContext lrc;
+    private final LeafReaderContext lrc;
 
     /** Term ids for this value */
     int[] valueTokenId;
@@ -27,7 +27,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueSortOrder;
 
     /** Sensitivity to use for comparisons */
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     /**
      * With context before of the match, sorting/grouping occurs from

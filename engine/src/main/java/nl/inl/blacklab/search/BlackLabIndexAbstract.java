@@ -26,9 +26,11 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.NoMergePolicy;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
@@ -58,6 +60,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -165,6 +168,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     /** Search cache to use */
     private SearchCache cache = new SearchCacheDummy();
+
+    /** Cache for annotation and metadata field value lists */
+    private final FreqListCache freqListCache = new FreqListCache();
 
     /** Was this index closed? */
     private boolean closed;
@@ -763,6 +769,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
+    public FreqListCache freqListCache() {
+        return freqListCache;
+    }
+
+    @Override
     public String toString() {
         return this.getClass().getSimpleName() + "(" + (indexLocation != null ? indexLocation : name()) + ")";
     }
@@ -780,5 +791,46 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         return field.getRelationsStats(limitValues);
+    }
+
+    @Override
+    public boolean isFragmentQuery(Query query) {
+        if (!metadata().metadataFields().anyOccurInFragments())
+            return false; // index contains no fragments
+        // Use QueryVisitor to walk positive clauses of the query tree.
+        //
+        // - BooleanQuery.visit() calls getSubVisitor(occur, parent) per clause.
+        //   The default implementation returns EMPTY_VISITOR for MUST_NOT and
+        //   `this` for MUST/SHOULD, so negative clauses are automatically skipped.
+        //
+        // - Field-bearing leaf queries (TermQuery, WildcardQuery, TermInSetQuery, …)
+        //   call acceptField(field) before visitLeaf(). We return true only for
+        //   fields that occur in fragments, so visitLeaf() is called only for those.
+        //
+        // - Field-less leaf queries (e.g. MatchAllDocsQuery) call visitLeaf()
+        //   directly without going through acceptField(), so they are treated
+        //   conservatively as potential fragment matches.
+        boolean[] result = { false };
+        QueryVisitor isFragmentQueryVisitor = new QueryVisitor() {
+            @Override
+            public boolean acceptField(String field) {
+                MetadataField mf = metadata().metadataFields().get(field);
+                // Return true only for fragment fields so visitLeaf() is called for them;
+                // return false for all other fields so visitLeaf() is suppressed.
+                return mf != null && mf.occursInFragments();
+            }
+
+            @Override
+            public void consumeTerms(Query query, Term... terms) {
+                result[0] = true;
+            }
+
+            @Override
+            public void visitLeaf(Query query) {
+                result[0] = true;
+            }
+        };
+        query.visit(isFragmentQueryVisitor);
+        return result[0];
     }
 }

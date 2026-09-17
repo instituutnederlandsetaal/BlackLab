@@ -26,7 +26,9 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     }
 
     @Override
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
+    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+            long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
+            String relationType) {
         return new HitGroupCollocationScorer(collocateAnnotation, filter) {
             @Override
             public HitGroupScorerType getType() {
@@ -35,7 +37,7 @@ public class HitGroupScorerDice extends HitGroupScorerType {
 
             @Override
             public double score(PropertyValue identity, long size) {
-                long collocateFrequency = getCollocateFrequency(identity);
+                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType);
                 long divisor = collocateFrequency + wordFrequency;
                 if (divisor == 0)
                     divisor = 1;

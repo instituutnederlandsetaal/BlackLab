@@ -46,7 +46,7 @@ public class TestIndexComponent {
     static final String CORE_NAME = "test";
 
     public static final String DOCUMENT_FORMAT = "voice-tei";
-    public static final String[] INPUT_FILE_PATH = new String[] {"..", "test", "data", "input", "PBsve430.xml"};
+    public static final String[] INPUT_FILE_PATH = new String[] {"src", "test", "resources", "PBsve430.xml"};
 
     @BeforeClass
     public static void prepareClass() throws Exception {
@@ -70,7 +70,7 @@ public class TestIndexComponent {
 
     @Test
     public void testAddData() throws SolrServerException, IOException {
-        File file = Paths.get("..", "test", "data", DOCUMENT_FORMAT + ".blf.yaml").toFile();
+        File file = Paths.get("src", "test", "resources", DOCUMENT_FORMAT + ".blf.yaml").toFile();
         String configFileContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
@@ -82,7 +82,7 @@ public class TestIndexComponent {
         String urlPath = "/update";
         GenericSolrRequest r = new GenericSolrRequest(SolrRequest.METHOD.POST, urlPath, solrParams);
 
-        Path path = Paths.get("..", "test", "data", "input", "PBsve430.xml");
+        Path path = Paths.get("src", "test", "resources", "PBsve430.xml");
         path = path.toAbsolutePath();
         String content = Files.readString(path);
         r.setContentWriter(new RequestWriter.StringPayloadContentWriter(content, "application/xml"));

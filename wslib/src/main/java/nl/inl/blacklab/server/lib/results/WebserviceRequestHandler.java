@@ -74,8 +74,7 @@ public class WebserviceRequestHandler {
         } else if (indexMetadata.metadataFields().exists(fieldName)) {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            ResultMetadataField metadataField = WebserviceOperations.metadataField(limitValues, fieldDesc,
-                    fieldDesc.index().name());
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(limitValues, fieldDesc);
             rs.metadataField(metadataField, includeCustomInfo);
         } else {
             // Unknown field

@@ -48,6 +48,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-join</artifactId> <!-- Block join API (fragments) -->
+            <version>${blacklab.luceneVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analysis-common</artifactId>
             <version>${blacklab.luceneVersion}</version>
         </dependency>
