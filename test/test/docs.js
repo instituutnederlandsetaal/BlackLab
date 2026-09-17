@@ -5,7 +5,7 @@ const expect = chai.expect;
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged, expectUrlUnchanged } = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged, expectCorpusUrlUnchanged} = require("./compare-responses");
 const {corpusUrl} = require("./util");
 
 
@@ -64,25 +64,22 @@ expectDocsUnchanged(corpus, 'filter only', { filter: 'pid:PBsve435' });
 expectDocsUnchanged(corpus, 'pattern and filter', '"the"', 'pid:PBsve435');
 
 // Doc metadata, contents
-let corpUrl = corpusUrl(corpus);
-expectUrlUnchanged(corpus, 'docs', 'document metadata',
-        corpUrl + '/docs/PBsve430');
-expectUrlUnchanged(corpus, 'docs', 'document contents',
-        corpUrl + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document metadata',
+        '/docs/PBsve430');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document contents',
+        '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
 
 // Doc snippet
-expectUrlUnchanged(corpus, 'docs', 'document snippet wordstart',
-        corpUrl + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
-expectUrlUnchanged(corpus, 'docs', 'document snippet hitstart',
-        corpUrl + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document snippet wordstart',
+        '/docs/PBsve430/snippet?wordstart=5&wordend=15');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document snippet hitstart',
+        '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
-expectUrlUnchanged(corpus, 'docs', 'document facets',
-        corpUrl + '/docs/?number=0&facets=field:title');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document facets', '/docs/?number=0&facets=field:title');
 
 // Docs CSV
-expectUrlUnchanged(corpus, 'docs', 'CSV results',
-        corpUrl + '/docs/', 'text/csv');
+expectCorpusUrlUnchanged(corpus, 'docs', 'CSV results', '/docs/', 'text/csv');
 
 // Some tests on the corpus with fragment metadata (should return full docs)
 
@@ -93,3 +90,5 @@ expectDocsUnchanged(corpus, 'frag by field', { filter: 'author:Jan' });
 expectDocsUnchanged(corpus, 'frag by id', { filter: 'pid:doc-01-frag-02' });
 
 expectDocsUnchanged(corpus, 'pattern and filter', '"one"', 'year:1987');
+
+expectCorpusUrlUnchanged(corpus, 'docs', 'document metadata (fragments1)', '/docs/doc-01');

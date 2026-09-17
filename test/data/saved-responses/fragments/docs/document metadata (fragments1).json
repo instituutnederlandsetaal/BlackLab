@@ -1,0 +1,72 @@
+{
+  "docInfo": {
+    "fragments": {
+      "contents": [
+        {
+          "end": 9,
+          "metadata": {
+            "author": [
+              "Piet"
+            ],
+            "pid": [
+              "doc-01-frag-01"
+            ],
+            "year": [
+              "1900"
+            ]
+          },
+          "start": 0
+        },
+        {
+          "end": 17,
+          "metadata": {
+            "author": [
+              "Jan"
+            ],
+            "pid": [
+              "doc-01-frag-02"
+            ],
+            "year": [
+              "1976"
+            ]
+          },
+          "start": 9
+        },
+        {
+          "end": 21,
+          "metadata": {
+            "author": [
+              "Jan"
+            ],
+            "pid": [
+              "doc-01-frag-04"
+            ],
+            "year": [
+              "2026"
+            ]
+          },
+          "start": 17
+        }
+      ]
+    },
+    "mayView": true,
+    "metadata": {
+      "fromInputFile": [
+        "fragments1.xml"
+      ],
+      "pid": [
+        "doc-01"
+      ],
+      "title": [
+        "Test title"
+      ]
+    },
+    "tokenCounts": [
+      {
+        "fieldName": "contents",
+        "tokens": 21
+      }
+    ]
+  },
+  "docPid": "doc-01"
+}

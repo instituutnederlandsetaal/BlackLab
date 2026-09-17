@@ -7,6 +7,7 @@ const sanitizeFileName = require("sanitize-filename");
 const stableStringify = require('json-stable-stringify'); // for diffable output
 
 const constants = require('./constants');
+const {corpusUrl} = require("./util");
 const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
 const LATEST_TEST_OUTPUT_PATH = constants.LATEST_TEST_OUTPUT_PATH;
 
@@ -267,9 +268,14 @@ function expectUrlUnchanged(corpusName, category, testName, url, expectedType = 
     });
 }
 
+function expectCorpusUrlUnchanged(corpusName, category, testName, url, expectedType = 'application/json') {
+    expectUrlUnchanged(corpusName, category, testName, corpusUrl(corpusName) + url, expectedType);
+}
+
 module.exports = {
     sanitizeResponse,
     sanitizeBlsResponse,
     expectUnchanged,
     expectUrlUnchanged,
+    expectCorpusUrlUnchanged,
 };

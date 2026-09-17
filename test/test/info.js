@@ -4,7 +4,7 @@ const chaiHttp = require("chai-http");
 const expect = chai.expect;
 chai.use(chaiHttp);
 
-const { expectUnchanged, expectUrlUnchanged} = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged, expectCorpusUrlUnchanged} = require("./compare-responses");
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
@@ -31,20 +31,20 @@ expectUrlUnchanged('test', 'info', 'server', '/'); // ?api=exp&custom=true
 expectUrlUnchanged('test', 'info', 'input formats', '/input-formats');
 
 // Corpus info
-expectUrlUnchanged('test', 'info', 'corpus', constants.URL_CORPUS_TEST + '/');
-expectUrlUnchanged('test', 'info', 'corpus status', constants.URL_CORPUS_TEST + '/status');
+expectCorpusUrlUnchanged('test', 'info', 'corpus', '/');
+expectCorpusUrlUnchanged('test', 'info', 'corpus status', '/status');
 
 // Relations
-expectUrlUnchanged('test', 'info', 'relations', constants.URL_CORPUS_TEST + '/relations');
+expectCorpusUrlUnchanged('test', 'info', 'relations', '/relations');
 
 // Field info with list of values
-expectUrlUnchanged('test', 'info', 'annotated field info with values',
-        constants.URL_CORPUS_TEST + '/fields/contents?listvalues=lemma');
-expectUrlUnchanged('test', 'info', 'metadata field info with values',
-        constants.URL_CORPUS_TEST + '/fields/title');
+expectCorpusUrlUnchanged('test', 'info', 'annotated field info with values',
+        '/fields/contents?listvalues=lemma');
+expectCorpusUrlUnchanged('test', 'info', 'metadata field info with values',
+        '/fields/title');
 
 // Autocomplete
-expectUrlUnchanged('test', 'info', 'autocomplete metadata field',
-        constants.URL_CORPUS_TEST + '/autocomplete/title?term=a');
-expectUrlUnchanged('test', 'info', 'autocomplete annotated field',
-        constants.URL_CORPUS_TEST + '/autocomplete/contents/lemma?term=b');
+expectCorpusUrlUnchanged('test', 'info', 'autocomplete metadata field',
+        '/autocomplete/title?term=a');
+expectCorpusUrlUnchanged('test', 'info', 'autocomplete annotated field',
+        '/autocomplete/contents/lemma?term=b');

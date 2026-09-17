@@ -335,22 +335,25 @@ public class ResponseStreamer {
     }
 
     private void documentFragmentMetadata(ResultDocInfo docInfo) {
-        List<ResultDocInfo.Fragment> fragments = docInfo.getFragments();
+        Map<String, List<ResultDocInfo.Fragment>> fragments = docInfo.getFragments();
         if (isNewApi && !fragments.isEmpty()) {
-            ds.startEntry("fragments").startList();
-            for (ResultDocInfo.Fragment fragment: fragments) {
-                ds.startItem("fragment").startMap();
-                {
-                    ds.entry(KEY_ANNOTATED_FIELD, fragment.getField());
-                    ds.entry(KEY_SPAN_START, fragment.getStart());
-                    ds.entry(KEY_SPAN_END, fragment.getEnd());
-                    ds.startEntry("metadata").startMap();
-                    metadataEntries(fragment.getMetadata(), docInfo.getMetadata());
-                    ds.endMap().endEntry();
+            ds.startEntry("fragments").startMap();
+            for (Map.Entry<String, List<ResultDocInfo.Fragment>> entry: fragments.entrySet()) {
+                ds.startDynEntry(entry.getKey()).startList();
+                for (ResultDocInfo.Fragment fragment: entry.getValue()) {
+                    ds.startItem("fragment").startMap();
+                    {
+                        ds.entry(KEY_SPAN_START, fragment.getStart());
+                        ds.entry(KEY_SPAN_END, fragment.getEnd());
+                        ds.startEntry("metadata").startMap();
+                        metadataEntries(fragment.getMetadata(), docInfo.getMetadata());
+                        ds.endMap().endEntry();
+                    }
+                    ds.endMap().endItem();
                 }
-                ds.endMap().endItem();
+                ds.endList().endDynEntry();
             }
-            ds.endList().endEntry();
+            ds.endMap().endEntry();
         }
     }
 
