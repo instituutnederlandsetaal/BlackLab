@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -208,6 +206,11 @@ public class XmlHighlighter {
      * @return the highlighted XML content.
      */
     private String highlightInternal(String xmlContent, List<TagLocation> tags, int stopAfterChars) {
+        return highlightInternal(xmlContent, tags, stopAfterChars, true);
+    }
+
+    private String highlightInternal(String xmlContent, List<TagLocation> tags, int stopAfterChars,
+            boolean trimWhitespace) {
         if (stopAfterChars < 0)
             stopAfterChars = xmlContent.length();
         int positionInContent = 0;
@@ -243,7 +246,8 @@ public class XmlHighlighter {
             highlightsJustOpened.clear();
         }
         final String optionalEllipsis = wasCut ? "..." : "";
-        return StringUtil.trimWhitespace(b.toString()) + optionalEllipsis;
+        String result = b.toString();
+        return (trimWhitespace ? StringUtil.trimWhitespace(result) : result) + optionalEllipsis;
     }
 
     /**
@@ -432,36 +436,22 @@ public class XmlHighlighter {
      */
     private List<TagLocation> makeTagList(String elementContent) {
         List<TagLocation> tags = new ArrayList<>();
-
-        // Regex for finding all XML tags and comments.
-        // Group 1 indicates if this is an open or close tag
-        // Group 2 is the tag name
-        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->");
-        // NOTE below is the version that actually includes CDATA as well, but this leads to a StackOverflowError on some
-        // (large) documents contents requests, e.g.
-        // /bls/opensonar/docs/WR-P-E-C-0000000129/contents?query=%5Bword%3D%22schip%22%5D&wordstart=7000
-        //Pattern xmlTagsCommentsAndCdatas = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->|<!\\[CDATA\\[([^]]|][^]])+]]>");
-
-        Matcher matcher = xmlTagsAndComments.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
         int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
-        int findFrom = 0;
-        while (matcher.find(findFrom)) {
-            findFrom = matcher.end();
-            if (matcher.group(0).startsWith("<!")) {
-                // This is a comment or CDATA section. Skip it, so we don't match something that looks like a tag inside it.
-                continue;
-            }
-            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, matcher.start(), matcher.end());
+        int position = 0;
+        XmlTag xmlTag;
+        while ((xmlTag = findNextXmlTag(elementContent, position)) != null) {
+            position = xmlTag.end();
+            TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, xmlTag.start(), xmlTag.end());
 
             // Keep track of open tags, so we know if the tags are matched
-            boolean isOpenTag = matcher.group(1).isEmpty();
-            boolean isSelfClosing = isOpenTag && isSelfClosing(matcher.group());
+            boolean isOpenTag = !xmlTag.closing();
+            boolean isSelfClosing = isOpenTag && xmlTag.selfClosing();
             if (isOpenTag) {
                 if (!isSelfClosing) {
                     // Open tag. Add to the stack.
                     openTagStack.add(tagLocation);
-                    tagLocation.name = matcher.group(2); // remember in case there's no close tag
+                    tagLocation.name = xmlTag.name(); // remember in case there's no close tag
                 } else {
                     // Self-closing tag. Don't add to stack, link to self
                     tagLocation.matchingTag = tagLocation;
@@ -482,7 +472,7 @@ public class XmlHighlighter {
                         // Insert a dummy open tag at the start
                         // of the content to maintain well-formedness
                         openTag = new TagLocation(TagType.FIX_START, 0, 0);
-                        openTag.name = matcher.group(2); // we need to know what tag to insert
+                        openTag.name = xmlTag.name(); // we need to know what tag to insert
                         openTag.objectNum = fixStartTagObjectNum; // to fix sorting
                         fixStartTagObjectNum--;
                         tags.add(openTag);
@@ -514,31 +504,99 @@ public class XmlHighlighter {
         return tags;
     }
 
-    /**
-     * Determines if a tag is a self-closing tag (ends with "/&gt;")
-     * 
-     * @param tag the tag
-     * @return true iff it is self-closing
-     */
-    private static boolean isSelfClosing(String tag) {
-        // Start at the second to last character (skip the '>') and look for slash.
-        for (int i = tag.length() - 2; i >= 0; i--) {
-            switch (tag.charAt(i)) {
-            case '/':
-                // Yes, self-closing tag
-                return true;
-            case ' ':
-            case '\t':
-            case '\n':
-            case '\r':
-                // Whitespace; continue
-                break;
-            default:
-                // We found an attribute or the tag name before encountering a slash, so it's not self-closing.
-                return false;
+    private record XmlTag(int start, int end, String name, boolean closing, boolean selfClosing) {}
+
+    /** Find the next actual element tag, skipping comments, CDATA, processing instructions and declarations. */
+    private static XmlTag findNextXmlTag(String content, int fromIndex) {
+        int start = content.indexOf('<', fromIndex);
+        while (start >= 0) {
+            if (content.startsWith("<!--", start)) {
+                start = afterDelimitedSection(content, start, "-->");
+            } else if (content.startsWith("<![CDATA[", start)) {
+                start = afterDelimitedSection(content, start, "]]>");
+            } else if (content.startsWith("<?", start)) {
+                start = afterDelimitedSection(content, start, "?>");
+            } else if (content.startsWith("<!", start)) {
+                start = afterDeclaration(content, start);
+            } else {
+                XmlTag tag = parseElementTag(content, start);
+                if (tag != null)
+                    return tag;
+                start++;
+            }
+            if (start < 0)
+                return null;
+            start = content.indexOf('<', start);
+        }
+        return null;
+    }
+
+    private static int afterDelimitedSection(String content, int start, String terminator) {
+        int end = content.indexOf(terminator, start + 2);
+        return end < 0 ? -1 : end + terminator.length();
+    }
+
+    private static int afterDeclaration(String content, int start) {
+        int subsetDepth = 0;
+        char quote = 0;
+        for (int i = start + 2; i < content.length(); i++) {
+            String terminator = quote == 0 && content.startsWith("<!--", i) ? "-->" :
+                    quote == 0 && content.startsWith("<?", i) ? "?>" : null;
+            if (terminator != null) {
+                int afterSection = afterDelimitedSection(content, i, terminator);
+                if (afterSection < 0)
+                    return -1;
+                i = afterSection - 1;
+                continue;
+            }
+            char c = content.charAt(i);
+            if (quote != 0) {
+                if (c == quote)
+                    quote = 0;
+            } else if (c == '\'' || c == '"') {
+                quote = c;
+            } else if (c == '[') {
+                subsetDepth++;
+            } else if (c == ']') {
+                subsetDepth--;
+            } else if (c == '>' && subsetDepth == 0) {
+                return i + 1;
             }
         }
-        return false;
+        return -1;
+    }
+
+    private static XmlTag parseElementTag(String content, int start) {
+        int i = start + 1;
+        boolean closing = i < content.length() && content.charAt(i) == '/';
+        if (closing)
+            i++;
+        while (i < content.length() && Character.isWhitespace(content.charAt(i)))
+            i++;
+        int nameStart = i;
+        while (i < content.length() && !Character.isWhitespace(content.charAt(i)) &&
+                content.charAt(i) != '/' && content.charAt(i) != '>') {
+            i++;
+        }
+        if (i == nameStart)
+            return null;
+        String name = content.substring(nameStart, i);
+        char quote = 0;
+        for (; i < content.length(); i++) {
+            char c = content.charAt(i);
+            if (quote != 0) {
+                if (c == quote)
+                    quote = 0;
+            } else if (c == '\'' || c == '"') {
+                quote = c;
+            } else if (c == '>') {
+                int beforeEnd = i - 1;
+                while (beforeEnd > nameStart && Character.isWhitespace(content.charAt(beforeEnd)))
+                    beforeEnd--;
+                return new XmlTag(start, i + 1, name, closing, !closing && content.charAt(beforeEnd) == '/');
+            }
+        }
+        return null;
     }
 
     /**
@@ -582,6 +640,15 @@ public class XmlHighlighter {
         // Add all the highlight tags in the list into the content,
         // taking care to mainting well-formedness around existing tags
         return highlightInternal(partialContent, tags, -1);
+    }
+
+    /** Add highlight tags to literal text without interpreting any of it as XML. */
+    public String highlightPlainText(String content, List<HitCharSpan> hits, int offset) {
+        List<TagLocation> tags = new ArrayList<>();
+        addHitPositionsToTagList(tags,
+                hits.stream().filter(hit -> hit.startChar() < hit.endChar()).toList(), offset, content.length());
+        tags.sort(Comparator.naturalOrder());
+        return highlightInternal(content, tags, -1, false);
     }
 
     /**
