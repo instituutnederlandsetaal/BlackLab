@@ -6,6 +6,7 @@
   A simple example showing how to configure an input format for indexing data.
 - Much more about input format configuration:
   - [Annotations](./annotations.md)
+  - [Token order and original XML](./source-ranges.md)
   - [Spans](./spans.md)
   - [Metadata](./metadata.md)
   - [Processing values](./processing-values.md)
