@@ -42,19 +42,17 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        String inputFormat = qpar.opt(WsParam.INPUT_FORMAT).orElse(null);
-        if (urlResource != null && !urlResource.isEmpty() && isXsltRequest) {
+        if (urlResource != null && !urlResource.isEmpty()) {
+            // Specific input format: either format information or XSLT request
             qpar = qpar.withOverrides(Map.of(WsParam.INPUT_FORMAT, urlResource));
-            WebserviceRequestHandler.opInputFormatXslt(inputFormat, rs);
-        } else {
-            if (urlResource != null && !urlResource.isEmpty()) {
-                // Specific input format: either format information or XSLT request
-                qpar = qpar.withOverrides(Map.of(WsParam.INPUT_FORMAT, urlResource));
+            String inputFormat = qpar.opt(WsParam.INPUT_FORMAT).orElse(null);
+            if (isXsltRequest)
+                WebserviceRequestHandler.opInputFormatXslt(inputFormat, rs);
+            else
                 WebserviceRequestHandler.opInputFormatInfo(inputFormat, rs);
-            } else {
-                // Show list of supported input formats (for current user)
-                WebserviceRequestHandler.opListInputFormats(user, indexMan, getClientIp(), rs, debugMode);
-            }
+        } else {
+            // Show list of supported input formats (for current user)
+            WebserviceRequestHandler.opListInputFormats(user, indexMan, getClientIp(), rs, debugMode);
         }
         return HTTP_OK;
     }
