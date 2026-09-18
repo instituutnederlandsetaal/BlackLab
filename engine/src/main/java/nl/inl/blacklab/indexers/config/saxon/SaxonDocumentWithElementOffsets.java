@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.BitSet;
+import java.util.Objects;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
@@ -26,6 +28,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
+import org.codehaus.stax2.XMLStreamReader2;
 
 /**
  * <pre>
@@ -39,24 +42,16 @@ import net.sf.saxon.trans.XPathException;
  * We use Woodstox as the StAX parser because it reports accurate character offsets in its Location object.
  * (The default JDK StAX implementation has bugs in offset reporting, and working around these proved troublesome.)
  *
- * For START_ELEMENT events, Woodstox reports the offset at the exact position of the opening '&lt;'.
- * For END_ELEMENT events, Woodstox reports the offset at the '&lt;' of the closing tag, so we still need to
- * track '&gt;' positions in the document to find the actual end position.
+ * For START_ELEMENT events, Woodstox reports the offset at the exact position of the opening '&lt;'. Its StAX2
+ * location information also reports the position immediately after an END_ELEMENT event, which is the exclusive
+ * source end needed here.
  * </pre>
  */
 public class SaxonDocumentWithElementOffsets {
     @FunctionalInterface
     interface StaxEventCallback {
-        int apply(int value, Location context);
+        int apply(int value, Location context, XMLStreamReader2 reader) throws XMLStreamException;
     }
-
-    /** Positions of all '>' characters in the document (position AFTER the '>').
-     *  We store the position after so it can be used as an exclusive end offset directly. */
-    private LongList closeBracketPositions = new LongArrayList();
-
-    /** Index of the next close bracket to consider. Since END_ELEMENT events come in
-     *  document order (offsets always increase), we can skip already-processed brackets. */
-    private int nextCloseBracketIndex = 0;
 
     /** Start offsets of elements, indexed by element index. */
     private LongList elementStartOffsets = new LongArrayList();
@@ -67,14 +62,27 @@ public class SaxonDocumentWithElementOffsets {
     /** Stack of indices into elementStartOffsets/elementEndOffsets for currently open elements. */
     private IntList openElementStack;
 
+    /** Greatest reliable descendant end seen for each open element. */
+    private LongList openElementMaxEnd;
+
     /** Contains the starting [line, col] of elements mapped to their index in elementStartOffsets/elementEndOffsets. */
     private final Long2IntMap elementLocationToIndex = new Long2IntOpenHashMap();
+
+    /** Elements whose parser locations describe literal markup in the main source. */
+    private final BitSet materialElements = new BitSet();
+
+    /** The system ID of the document entity, captured from its necessarily literal root element. */
+    private String documentSystemId;
+
+    /** Last accepted source start; literal start tags occur in strictly increasing order. */
+    private long previousMaterialStart = -1;
 
     private final TreeInfo document;
 
     public SaxonDocumentWithElementOffsets(Reader source, Configuration configuration) throws XMLStreamException, XPathException, IOException {
+        elementLocationToIndex.defaultReturnValue(-1);
         openElementStack = new IntArrayList();
-        source = wrapReaderAndTrackCloseBrackets(source, closeBracketPositions::add);
+        openElementMaxEnd = new LongArrayList();
         StAXSource staxSource = wrapStaxSourceAndAttachCallbackOnElementEncountered(source, this::handleEvent);
 
         this.document = configuration.buildDocumentTree(staxSource);
@@ -83,7 +91,7 @@ public class SaxonDocumentWithElementOffsets {
         staxSource.getXMLStreamReader().close();
         source.close();
         openElementStack = null;
-        closeBracketPositions = null;
+        openElementMaxEnd = null;
     }
 
 
@@ -93,13 +101,26 @@ public class SaxonDocumentWithElementOffsets {
 
     /** Return the inclusive start offset of the element in the document. */
     public long getElementStartCharOffset(NodeInfo node) {
-        int index = elementLocationToIndex.get(encodeElementLocation(node));
-        return elementStartOffsets.getLong(index);
+        return elementStartOffsets.getLong(requireElementOrdinal(node));
     }
     /** Return the exclusive end offset of the element in the document. */
     public long getElementEndCharOffset(NodeInfo node) {
-        int index = elementLocationToIndex.get(encodeElementLocation(node));
-        return elementEndOffsets.getLong(index);
+        return elementEndOffsets.getLong(requireElementOrdinal(node));
+    }
+
+    /** Return this parsed tree's stable start-tag ordinal, or -1 if this is not one of its material elements. */
+    public int getElementOrdinal(NodeInfo node) {
+        if (node == null || node.getNodeKind() != net.sf.saxon.type.Type.ELEMENT || node.getTreeInfo() != document)
+            return -1;
+        int ordinal = elementLocationToIndex.get(encodeElementLocation(node));
+        return ordinal >= 0 && materialElements.get(ordinal) ? ordinal : -1;
+    }
+
+    private int requireElementOrdinal(NodeInfo node) {
+        int ordinal = getElementOrdinal(node);
+        if (ordinal < 0)
+            throw new IllegalArgumentException("Node is not a material element from this parsed XML tree");
+        return ordinal;
     }
 
 
@@ -107,15 +128,15 @@ public class SaxonDocumentWithElementOffsets {
     /// Tracking logic
     /// ===========
 
-    private int handleEvent(int evt, Location loc) {
+    private int handleEvent(int evt, Location loc, XMLStreamReader2 reader) throws XMLStreamException {
         if (evt == XMLStreamReader.START_ELEMENT)
-            this.trackElementStart(loc);
+            this.trackElementStart(loc, reader.getLocationInfo().getEndingCharOffset());
         else if (evt == XMLStreamReader.END_ELEMENT)
-            this.trackElementEnd(loc);
+            this.trackElementEnd(reader.getLocationInfo().getEndingCharOffset());
         return evt;
     }
 
-    private void trackElementStart(Location loc) {
+    private void trackElementStart(Location loc, long startTagEndPosition) {
         // Woodstox reports the offset at the exact position of the opening '<'
         long startPosition = loc.getCharacterOffset();
         long encodedElementLocation = this.encodeElementLocation(loc.getLineNumber(), loc.getColumnNumber());
@@ -124,17 +145,39 @@ public class SaxonDocumentWithElementOffsets {
         elementStartOffsets.add(startPosition);
         elementEndOffsets.add(-1L); // placeholder, will be filled in trackElementEnd
 
+        if (documentSystemId == null)
+            documentSystemId = loc.getSystemId();
+        boolean parentIsMaterial = openElementStack.isEmpty()
+                || materialElements.get(openElementStack.getInt(openElementStack.size() - 1));
+        boolean isMaterial = parentIsMaterial
+                && Objects.equals(documentSystemId, loc.getSystemId())
+                && startPosition >= 0
+                && startTagEndPosition > startPosition
+                && startPosition > previousMaterialStart;
+        if (isMaterial) {
+            materialElements.set(index);
+            previousMaterialStart = startPosition;
+        }
+
         this.openElementStack.add(index);
-        this.elementLocationToIndex.put(encodedElementLocation, index);
+        this.openElementMaxEnd.add(-1L);
+        int previousIndex = this.elementLocationToIndex.putIfAbsent(encodedElementLocation, index);
+        if (previousIndex >= 0)
+            this.elementLocationToIndex.put(encodedElementLocation, -1);
     }
 
-    private void trackElementEnd(Location loc) {
+    private void trackElementEnd(long endPosition) {
         int index = this.openElementStack.removeInt(this.openElementStack.size() - 1);
-        // closeBracketPositions stores positions AFTER the '>', so we can use them as exclusive end offsets directly.
-        // Woodstox reports END_ELEMENT offset at the '<' of the closing tag, so we need to find
-        // the next '>' after that position.
-        long endPosition = findNearestCloseBracketAfter(loc.getCharacterOffset());
+        long maxDescendantEnd = this.openElementMaxEnd.removeLong(this.openElementMaxEnd.size() - 1);
         elementEndOffsets.set(index, endPosition);
+        if (materialElements.get(index)
+                && (endPosition <= elementStartOffsets.getLong(index) || endPosition < maxDescendantEnd)) {
+            materialElements.clear(index, elementStartOffsets.size());
+        } else if (materialElements.get(index) && !openElementMaxEnd.isEmpty()) {
+            int parentStackIndex = openElementMaxEnd.size() - 1;
+            openElementMaxEnd.set(parentStackIndex,
+                    Math.max(openElementMaxEnd.getLong(parentStackIndex), endPosition));
+        }
     }
 
     private long encodeElementLocation(NodeInfo node) {
@@ -145,83 +188,28 @@ public class SaxonDocumentWithElementOffsets {
         return (line << 32) | col;
     }
 
-    /**
-     * Find the first '>' position after the given offset.
-     * Since END_ELEMENT events come in document order (offsets always increase),
-     * we track our position and skip already-processed brackets for O(1) amortized lookup.
-     */
-    private long findNearestCloseBracketAfter(long charOffset) {
-        // Skip brackets that are at or before the current offset
-        while (nextCloseBracketIndex < closeBracketPositions.size()) {
-            long position = closeBracketPositions.getLong(nextCloseBracketIndex);
-            if (position > charOffset) {
-                return position;
-            }
-            nextCloseBracketIndex++;
-        }
-        throw new IllegalStateException("No close bracket found after the given character offset: " + charOffset);
-    }
-
-
-
     /// ========
     /// Setup logic/wrappers to enable tracking
     /// ========
 
-
-    private static Reader wrapReaderAndTrackCloseBrackets(Reader source, java.util.function.LongConsumer trackCloseBracket) {
-        return new Reader() {
-            long charsRead = 0;
-
-            @Override
-            public int read(char[] cbuf, int off, int len) throws IOException {
-                int n = source.read(cbuf, off, len);
-                if (n > 0) {
-                    for (int i = off; i < off + n; ++i) {
-                        if (cbuf[i] == '>') {
-                            // store position AFTER '>'
-                            trackCloseBracket.accept(charsRead + i - off + 1);
-                        }
-                    }
-                    charsRead += n;
-                }
-                return n;
-            }
-
-            @Override
-            public int read() throws IOException {
-                int ch = source.read();
-                if (ch == '>') {
-                    trackCloseBracket.accept(charsRead + 1); // store position AFTER '>'
-                }
-                if (ch != -1)
-                    charsRead += 1;
-                return ch;
-            }
-
-            @Override
-            public void close() throws IOException {
-                source.close();
-            }
-        };
-    }
-
     private static StAXSource wrapStaxSourceAndAttachCallbackOnElementEncountered(Reader source, StaxEventCallback handler) throws XMLStreamException {
-        XMLStreamReader streamReaderImpl = createXmlStreamReader(source);
+        XMLStreamReader2 streamReaderImpl = createXmlStreamReader(source);
         XMLStreamReader wrapper = new StreamReaderDelegate(streamReaderImpl) {
             @Override
             public int next() throws XMLStreamException {
-                return handler.apply(super.next(), this.getLocation());
+                int event = super.next();
+                return handler.apply(event, this.getLocation(), streamReaderImpl);
             }
             @Override
             public int nextTag() throws XMLStreamException {
-                return handler.apply(super.nextTag(), this.getLocation());
+                int event = super.nextTag();
+                return handler.apply(event, this.getLocation(), streamReaderImpl);
             }
         };
         return new StAXSource(wrapper);
     }
 
-    private static XMLStreamReader createXmlStreamReader(Reader source) throws XMLStreamException {
+    private static XMLStreamReader2 createXmlStreamReader(Reader source) throws XMLStreamException {
         // Use Woodstox explicitly - the default JDK StAX implementation has bugs
         // in character offset reporting when elements are directly nested without
         // whitespace between them (e.g., <parent><child>).
@@ -241,6 +229,6 @@ public class SaxonDocumentWithElementOffsets {
         };
         fac.setProperty(XMLInputFactory.RESOLVER, dummyResolver);
 
-        return fac.createXMLStreamReader(new StreamSource(source, "file:///unknown"));
+        return (XMLStreamReader2) fac.createXMLStreamReader(new StreamSource(source, "file:///unknown"));
     }
 }

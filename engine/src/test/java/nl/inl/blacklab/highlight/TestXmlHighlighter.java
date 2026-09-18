@@ -1,11 +1,14 @@
 package nl.inl.blacklab.highlight;
 
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.util.XmlHighlighter;
@@ -153,12 +156,75 @@ public class TestXmlHighlighter {
         Assert.assertEquals("The fox jumps over", hl.makeWellFormed(xmlContent));
     }
 
-    @Ignore // Fix exists, but causes StackOverflowError for large docs, see commented out code in XmlHighlighter
     @Test
-    public void testMakeWellFormedIgnoreTagsInCdata() {
+    public void testMakeWellFormedIgnoreTagsInCdata() throws Exception {
         String xmlContent = "The fox<![CDATA[  </word>\n<test>  ]]> jumps <bla>over";
-        Assert.assertEquals("The fox<![CDATA[  </word>\n<test>  ]]> jumps <bla>over</bla>",
-                hl.makeWellFormed(xmlContent));
+        String actual = hl.makeWellFormed(xmlContent);
+        Assert.assertEquals("The fox<![CDATA[  </word>\n<test>  ]]> jumps <bla>over</bla>", actual);
+        assertParsesAsFragment(actual);
+    }
+
+    @Test
+    public void testMakeWellFormedHandlesQuotedGtInSelfClosingTag() throws Exception {
+        for (String xmlContent: List.of("<w a=\"x>y\"/>", "<w a='x>y'/>")) {
+            String actual = hl.makeWellFormed(xmlContent);
+            Assert.assertEquals(xmlContent, actual);
+            assertParsesAsFragment(actual);
+        }
+    }
+
+    @Test
+    public void testMakeWellFormedIgnoresMarkupInsideCommentsAndProcessingInstructions() throws Exception {
+        String xmlContent = "<!-- </fake> --><w><?pi test=\"<fake>\"?>word";
+        String actual = hl.makeWellFormed(xmlContent);
+        Assert.assertEquals("<!-- </fake> --><w><?pi test=\"<fake>\"?>word</w>", actual);
+        assertParsesAsFragment(actual);
+    }
+
+    @Test
+    public void testMakeWellFormedIgnoresBracketsInDoctypeCommentsAndProcessingInstructions() throws Exception {
+        String xmlContent = "<!DOCTYPE root [<!-- [ --><?pi [?><!ELEMENT root ANY>]><root>";
+        String actual = hl.makeWellFormed(xmlContent);
+        Assert.assertEquals(xmlContent + "</root>", actual);
+        assertParses(actual);
+    }
+
+    @Test
+    public void testMakeWellFormedIgnoresDelimitersInQuotedDoctypeValues() throws Exception {
+        String xmlContent = "<!DOCTYPE root [<!ENTITY a '<!--'><!ENTITY b '<?'>]><root>";
+        String actual = hl.makeWellFormed(xmlContent);
+        Assert.assertEquals(xmlContent + "</root>", actual);
+        assertParses(actual);
+    }
+
+    @Test
+    public void testMakeWellFormedRepairsCrossBranchFragmentByAddingTags() throws Exception {
+        String actual = hl.makeWellFormed("<container/></a><b><token/>");
+        Assert.assertEquals("<a><container/></a><b><token/></b>", actual);
+        assertParsesAsFragment(actual);
+    }
+
+    @Test
+    public void testMakeWellFormedRepairsCrossBranchFragmentByRemovingTags() throws Exception {
+        hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
+        String actual = hl.makeWellFormed("<container/></a><b><token/>");
+        Assert.assertEquals("<container/><token/>", actual);
+        assertParsesAsFragment(actual);
+    }
+
+    private static void assertParsesAsFragment(String fragment) throws Exception {
+        assertParses("<wrapper>" + fragment + "</wrapper>");
+    }
+
+    private static void assertParses(String xml) throws Exception {
+        XMLStreamReader reader = XMLInputFactory.newFactory()
+                .createXMLStreamReader(new StringReader(xml));
+        try {
+            while (reader.hasNext())
+                reader.next();
+        } finally {
+            reader.close();
+        }
     }
 
 }

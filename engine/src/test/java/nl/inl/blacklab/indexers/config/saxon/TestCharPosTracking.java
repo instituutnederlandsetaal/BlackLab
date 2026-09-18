@@ -51,6 +51,8 @@ public class TestCharPosTracking {
     @Parameters(name = "{index}: {0}")
     public static Collection<Object[]> data() {
         List<Object[]> testCases = new ArrayList<>();
+        // Prefix of the scraped-social-media fixture in TestCollatorsZalgo.
+        String zalgo = "\u0337\u0300\u0331\u031f\u0329\u0320\u0321\u0353t\u0334\u0340\u0310\u035b\u030b\u0358\u030a\u0304\u034a\u034a\u035d";
 
         // Test cases with expected offset values
         List<TestCase> cases = List.of(
@@ -152,6 +154,24 @@ public class TestCharPosTracking {
                                 new ExpectedElementOffset("root", 0, 43),
                                 new ExpectedElementOffset("child", 17, 36))),
 
+                new TestCase("gt-in-double-quoted-attribute-with-utf16-offsets",
+                        "<root>😀<w a=\"x>y\"/>😀</root>",
+                        List.of(
+                                new ExpectedElementOffset("root", 0, 29),
+                                new ExpectedElementOffset("w", 8, 20))),
+
+                new TestCase("gt-in-single-quoted-self-closing-attribute",
+                        "<root><w a='x>y'/></root>",
+                        List.of(
+                                new ExpectedElementOffset("root", 0, 25),
+                                new ExpectedElementOffset("w", 6, 18))),
+
+                new TestCase("combining-mark-heavy-text",
+                        "<root>" + zalgo + "<w/>" + zalgo + "</root>",
+                        List.of(
+                                new ExpectedElementOffset("root", 0, 57),
+                                new ExpectedElementOffset("w", 26, 30))),
+
                 // Replicates the failing CI test scenario: element followed by newline and spaces
                 // This tests the StAX parser buffer boundary issue where getCharacterOffset() drifts
                 new TestCase("element-followed-by-newline",
@@ -183,10 +203,12 @@ public class TestCharPosTracking {
         
         // Build a map from element name to offsets for comparison
         Map<String, long[]> actualOffsets = new LinkedHashMap<>();
-        for (NodeInfo elem : elements) {
+        for (int ordinal = 0; ordinal < elements.size(); ordinal++) {
+            NodeInfo elem = elements.get(ordinal);
             long startOffset = doc.getElementStartCharOffset(elem);
             long endOffset = doc.getElementEndCharOffset(elem);
             actualOffsets.put(elem.getLocalPart(), new long[] { startOffset, endOffset });
+            assertEquals("Element ordinal should follow parser start-tag order", ordinal, doc.getElementOrdinal(elem));
             
             // Verify the start offset points to a '<'
             if (startOffset >= 0 && startOffset < xmlInput.length()) {
