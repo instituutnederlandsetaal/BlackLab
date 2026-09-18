@@ -422,11 +422,11 @@ public interface Hits extends Iterable<EphemeralHit> {
     }
 
     /**
-     * Perform an operation per-segment if possible, using HitSubscribers.
+     * Perform an operation per-segment if possible, using a HitSubscriber for each segment.
      * If we don't have per-segment publishers, we will just use a the "global"
      * publisher() for the whole hits object.
      *
-     * @param subscriberSupplier supplier of HitSubscribers to use for each segment
+     * @param subscriberSupplier supplier of HitSubscriber instances to use for each segment
      * @param prefetchAll
      */
     void performPerSegment(Supplier<HitSubscriber> subscriberSupplier, boolean prefetchAll);

@@ -2,16 +2,9 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -37,9 +30,6 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
  * and provides a stable combined view.
  */
 public class HitsFromPublishers extends HitsAbstract {
-
-    /** If lock hasn't been signalled after this time, continue anyway (and check for thread errors) */
-    private static final long HITS_ADDED_TIMEOUT_MS = 100;
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -78,33 +68,28 @@ public class HitsFromPublishers extends HitsAbstract {
      */
     private static final int STRETCH_SIZE_DIVIDER = 10;
 
-    /** If one of the publishers threw an exception, we save it here
-     * (Throwable because we catch Exception and AssertionError)
-     */
-    private final Map<LeafReaderContext, Throwable> exceptionThrown = new HashMap<>();
-
     /** A stretch of hits from a segment.
      * <p>
      * We use these to construct the global view.
      */
     static class HitsStretch {
         /** Stretch index, for finding next stretch quickly. */
-        int stretchIndex;
+        final int stretchIndex;
 
         /** This segment's docBase, for converting from segment to global doc ids. */
-        int docBase;
+        final int docBase;
 
         /** Segment this stretch is from. */
-        Hits segmentHits;
+        final Hits segmentHits;
 
         /** Start index in the segment hits. */
-        long firstHitSegment;
+        final long firstHitSegment;
 
         /** Start index in the global hits view. */
-        long firstHitGlobal;
+        final long firstHitGlobal;
 
         /** Length of this stretch. */
-        long stretchLength;
+        final long stretchLength;
 
         public HitsStretch(int stretchIndex, int docBase, Hits segmentHits, long firstHitSegment,
                 long firstHitGlobal, long stretchLength) {
@@ -157,19 +142,7 @@ public class HitsFromPublishers extends HitsAbstract {
     /** Publishers we're collecting hits from */
     private final List<HitPublisher> publishers;
 
-    /** Stores the persistent Hits object for each segment (by docBase).
-     * This is a non-lazy, locking implementation of Hits.
-     * Contrast that with the Hits object passed to the HitSubscriber.hits()
-     * method, which is temporary and nonlocking for better performance.
-     *
-     * If lrc is null (i.e. this operation is not per-segment but global), we store it under key -1.
-     */
-    private final Map<Integer, Hits> hitsObjPerSegment = new ConcurrentHashMap<>();
-
-    /** Hits that have been fetched.
-     * CAUTION: Might be a bit larger than numHitsGlobalView because hits are added to that in batches!
-     * When all hits have been fetched, the numbers will be the same.
-     */
+    /** Statistics for processed hits in the global view and additional count-only hits. */
     private final ResultsStatsPassive hitsStats;
 
     /**
@@ -177,16 +150,14 @@ public class HitsFromPublishers extends HitsAbstract {
      */
     private final ResultsStatsPassive docsStats;
 
-//    private final AtomicLong count = new AtomicLong(0);
-
     /** How many publishers are still sending us hits/counts. When this hits 0, we're done. */
-    private final AtomicInteger publishersActive = new AtomicInteger(0);
+    private int publishersActive;
 
-    /** Number of hits in the global view. Might lag behind hitsStats because hits are added to
-     * the view in batches. */
-    private long numHitsGlobalView = 0;
+    /** First publisher failure, if any. Guarded by {@link #lock}. */
+    private Throwable firstFailure;
 
-    private final LongAdder numHitsCounted = new LongAdder();
+    /** Number of processed hits in the global view. */
+    private volatile long numHitsGlobalView = 0;
 
     /** The stretches that make up our global hits view, in order */
     private final ObjectList<HitsStretch> stretches = new ObjectArrayList<>();
@@ -219,14 +190,16 @@ public class HitsFromPublishers extends HitsAbstract {
     /** Lock for waiting for hits to be available */
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    /** Signalled whenever hits are added */
-    private final Condition hitsAdded = lock.writeLock().newCondition();
+    /** Signalled whenever progress changes a predicate observed by ensureResultsRead(). */
+    private final Condition resultsChanged = lock.writeLock().newCondition();
 
     public HitsFromPublishers(List<? extends HitPublisher> publishers, SearchSettings searchSettings) {
         if (publishers.isEmpty())
             throw new IllegalArgumentException("No publishers given");
         this.publishers = new ArrayList<>(publishers);
         this.context = publishers.get(0).context().withoutLeafReaderContext();
+        maxHitsToProcess = searchSettings.maxHitsToProcess();
+        maxHitsToCount = searchSettings.maxHitsToCount();
         // Keep track of hits
         hitsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
             @Override
@@ -242,16 +215,17 @@ public class HitsFromPublishers extends HitsAbstract {
             @Override
             public long allCounted() {
                 ensureResultsRead(-1);
-                return numHitsCounted.sum();
+                return hitsStats.countedSoFar();
             }
         }, searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
         // Keep track of documents
         docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
             @Override
             public boolean processedAtLeast(long lowerBound) {
-                // There's no ensureDocsRead() method, so loop until the requested number of docs have been read
-                // TODO: avoid busy-waiting, use lock/latch?
-                while (!hitsStats.done() && docsStats.processedSoFar() < lowerBound) {
+                // Ask for hits one at a time until enough documents are represented. Once the processing limit is
+                // reached, no future count-only progress can add a processed document, so don't spin while counting.
+                while (!hitsStats.done() && docsStats.processedSoFar() < lowerBound &&
+                        hitsStats.processedSoFar() < maxHitsToProcess) {
                     hitsStats.processedAtLeast(hitsStats.processedSoFar() + 1);
                 }
                 return docsStats.processedSoFar() >= lowerBound;
@@ -273,19 +247,17 @@ public class HitsFromPublishers extends HitsAbstract {
                 return docsStats.countedSoFar();
             }
         });
-        maxHitsToProcess = searchSettings.maxHitsToProcess();
-        maxHitsToCount = searchSettings.maxHitsToCount();
-
-        // Subscribe to all the publishers
-        publishersActive.updateAndGet(c -> c + this.publishers.size());
-
-        // While we're in the process of adding subscribers, don't call hitsStats.setDone() yet,
-        // because even if the current subscribers are all done, we might still be adding more subscribers that aren't
-        // done yet.
-        AtomicBoolean stillAddingSubscribers = new AtomicBoolean(true);
+        // Set this before subscribing: subscribe() may synchronously replay a publisher's terminal state.
+        publishersActive = this.publishers.size();
 
         publishers.forEach(publisher -> {
             publisher.subscribe(new HitSubscriber() {
+
+                /** Persistent, locking hits object owned by this publisher. */
+                Hits segmentHits;
+
+                /** docBase for converting this publisher's segment-local document ids. */
+                int docBase;
 
                 /** Next hit index (from this publisher, i.e. index segment) that still needs to be added to the
                  *  global view. */
@@ -293,68 +265,81 @@ public class HitsFromPublishers extends HitsAbstract {
 
                 @Override
                 public void start(LeafReaderContext lrc, Hits results) {
-                    // Save persistent hits object for this segment.
-                    // We'll refer to this from the stretches that make up our global view.
                     if (results == null) {
                         // Some publishers (such as for grouping without storing hits) don't save their hits.
                         // This saves time and memory, but such publishers cannot be used with this class.
                         throw new IllegalStateException("start() called without a persistent Hits object! " +
                                 "We need a publisher that saves its hits!");
                     }
-                    hitsObjPerSegment.put(lrc == null ? -1 : lrc.docBase, results);
+                    lock.writeLock().lock();
+                    try {
+                        segmentHits = results;
+                        docBase = lrc == null ? 0 : lrc.docBase;
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
                 }
 
                 @Override
                 public boolean needsMoreHits() {
                     boolean continueProcessing = sizeSoFar() < requestedHitsToProcess.get();
-                    boolean continueCounting = numHitsCounted.sum() < requestedHitsToCount.get();
+                    boolean continueCounting = hitsStats.countedSoFar() < requestedHitsToCount.get();
                     return continueProcessing || continueCounting;
                 }
 
                 @Override
                 public void counted(long hitsCounted, int docsCounted) {
-                    numHitsCounted.add(hitsCounted);
-                    docsStats.add(0, docsCounted);
-                    hitsStats.add(0, hitsCounted);
+                    lock.writeLock().lock();
+                    try {
+                        docsStats.add(0, docsCounted);
+                        hitsStats.add(0, hitsCounted);
+                        resultsChanged.signalAll();
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
                 }
 
                 @Override
                 public void hits(LeafReaderContext lrc, Hits batchHits, long batchStart, long batchEnd, int batchNumDocs,
                         long batchOffsetInTotal) {
-                    // Add them to the global view?
-
-                    // Note that we add small stretches at first, so the first page of hits is
-                    // available quickly. Later, we add them in larger batches to reduce overhead.
-                    // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
-                    //  out of date (i.e. too small) value here)
-                    long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
-                            Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
-                    long stretchEndIndex = batchOffsetInTotal + batchEnd;
-                    addStretchIfLargeEnough(lrc, stretchEndIndex, addHitsToGlobalThreshold);
-                    if (batchEnd > batchStart) {
-                        docsStats.add(batchNumDocs, batchNumDocs);
+                    lock.writeLock().lock();
+                    try {
+                        // Add small stretches first for low first-page latency. Grow them as the result grows
+                        // to keep global-view bookkeeping cheap for large result sets.
+                        long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
+                                Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
+                        addStretchIfLargeEnough(batchOffsetInTotal + batchEnd, addHitsToGlobalThreshold);
+                        if (batchEnd > batchStart)
+                            docsStats.add(batchNumDocs, batchNumDocs);
+                        resultsChanged.signalAll();
+                    } finally {
+                        lock.writeLock().unlock();
                     }
                 }
 
                 @Override
                 public void flush(LeafReaderContext lrc, long numPublished) {
-                    // Add the final batch of hits to the segment results.
-                    addStretchIfLargeEnough(lrc, numPublished, 0);
+                    lock.writeLock().lock();
+                    try {
+                        addStretchIfLargeEnough(numPublished, 0);
+                        resultsChanged.signalAll();
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
                 }
 
                 /** If we have enough, add the latest stretch of hits we've found to the global view.
                  *
-                 * @param lrc index segment our hits are from
                  * @param stretchEndIndex end of the current stretch of hits (exclusive) we may want to add to the global view.
                  *           Note that this is an index for the current publisher's hits, i.e. the segment index, not
                  *           the global index.
-                 * @param stretchLengthTreshold if the stretch we have is larger than this, add it to the global view.
+                 * @param stretchLengthThreshold if the stretch we have is larger than this, add it to the global view.
                  */
-                private void addStretchIfLargeEnough(LeafReaderContext lrc, long stretchEndIndex, long stretchLengthTreshold) {
+                private void addStretchIfLargeEnough(long stretchEndIndex, long stretchLengthThreshold) {
                     long stretchStartIndex = nextIndexToAddToGlobal;
                     long stretchLength = stretchEndIndex - stretchStartIndex;
-                    if (stretchLength > stretchLengthTreshold) {
-                        addStretchFromSegment(lrc, stretchStartIndex, stretchEndIndex);
+                    if (stretchLength > stretchLengthThreshold) {
+                        addStretchFromSegment(segmentHits, docBase, stretchStartIndex, stretchEndIndex);
                         hitsStats.add(stretchLength, stretchLength);
                         nextIndexToAddToGlobal = stretchEndIndex;
                     }
@@ -364,13 +349,11 @@ public class HitsFromPublishers extends HitsAbstract {
                 public void done(LeafReaderContext lrc) {
                     lock.writeLock().lock();
                     try {
-                        int activePubs = publishersActive.decrementAndGet();
-                        if (activePubs < 0)
+                        if (--publishersActive < 0)
                             throw new IllegalStateException("Received more 'done' messages than publishers");
-                        if (activePubs == 0 && !stillAddingSubscribers.get())
+                        if (publishersActive == 0)
                             hitsStats.setDone();
-                        // If we were waiting for more hits: wake up and see that we're done
-                        hitsAdded.signalAll();
+                        resultsChanged.signalAll();
                     } finally {
                         lock.writeLock().unlock();
                     }
@@ -378,24 +361,17 @@ public class HitsFromPublishers extends HitsAbstract {
 
                 @Override
                 public void error(LeafReaderContext lrc, Throwable exception) {
-                    exceptionThrown.put(lrc, exception);
                     lock.writeLock().lock();
                     try {
-                        hitsAdded.signalAll();
+                        if (firstFailure == null)
+                            firstFailure = exception;
+                        resultsChanged.signalAll();
                     } finally {
                         lock.writeLock().unlock();
                     }
                 }
             });
         });
-
-        // We're done adding subscribers.
-        // We prevented the HitsSubscriber instances from calling hitsStats.setDone() until now,
-        // so we should check if it needs to be called.
-        stillAddingSubscribers.set(false);
-        if (publishersActive.get() == 0)
-            hitsStats.setDone();
-
     }
 
     /** Return publishers per segment (if available) */
@@ -509,15 +485,13 @@ public class HitsFromPublishers extends HitsAbstract {
         lock.readLock().lock();
         try {
             long end = start + length;
-            synchronized (this) {
-                if (end > numHitsGlobalView)
-                    end = numHitsGlobalView;
-            }
+            if (end > numHitsGlobalView)
+                end = numHitsGlobalView;
             if (start == end)
                 return Hits.empty(context());
             if (start < 0 || end < 0 || start > end)
                 throw new IndexOutOfBoundsException("Sub-list start " + start + " with length " + length +
-                        " is out of bounds (size: " + size() + ")");
+                        " is out of bounds (size: " + numHitsGlobalView + ")");
 
             HitsMutable sublist = HitsMutable.create(context(),
                     end - start, false, false);
@@ -547,9 +521,7 @@ public class HitsFromPublishers extends HitsAbstract {
                 // If we reached the end of the current stretch, go to the next stretch.
                 hitsLeftInStretch--;
                 if (hitsLeftInStretch == 0) {
-                    synchronized (this) {
-                        currentStretch = stretches.get(currentStretch.stretchIndex + 1);
-                    }
+                    currentStretch = stretches.get(currentStretch.stretchIndex + 1);
                     indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
                     hitsLeftInStretch = currentStretch.stretchLength - (globalIndex - currentStretch.firstHitGlobal);
                 }
@@ -610,42 +582,36 @@ public class HitsFromPublishers extends HitsAbstract {
         };
     }
 
-    private void addStretchFromSegment(LeafReaderContext lrc, long from, long to) {
-        lock.writeLock().lock();
-        try {
-            // Create a new stretch for the global hits view.
-            // Start where the last stretch in this segment ended.
-            long stretchLength = to - from;
-            assert stretchLength > 0;
-            Hits segmentHits2 = hitsObjPerSegment.get(lrc == null ? -1 : lrc.docBase);
-            HitsStretch stretch = new HitsStretch(
-                    stretches.size(), lrc == null ? 0 : lrc.docBase,
-                    segmentHits2, from, numHitsGlobalView, stretchLength);
-            stretches.add(stretch);
-            numHitsGlobalView += stretchLength;
+    /** Add a segment stretch. Caller holds the view write lock. */
+    private void addStretchFromSegment(Hits segmentHits, int docBase, long from, long to) {
+        long stretchLength = to - from;
+        assert stretchLength > 0;
+        HitsStretch stretch = new HitsStretch(
+                stretches.size(), docBase, segmentHits, from, numHitsGlobalView, stretchLength);
+        stretches.add(stretch);
+        numHitsGlobalView += stretchLength;
 
-            // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
-            // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
-            long hitsSinceLastMapping = stretch.firstHitGlobal % HIT_INDEX_TO_STRETCH_STEP;
-            if (hitsSinceLastMapping == 0)
-                hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
-            long nextMappingIndex = stretch.firstHitGlobal + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
-            while (nextMappingIndex < stretch.firstHitGlobal + stretchLength) {
-                // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
-                hitToStretchMapping.add(stretches.size() - 1);
-                nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
-            }
-            hitsAdded.signalAll();
-        } finally {
-            lock.writeLock().unlock();
+        // Record a mapping every HIT_INDEX_TO_STRETCH_STEP hits for fast global-index lookup.
+        long hitsSinceLastMapping = stretch.firstHitGlobal % HIT_INDEX_TO_STRETCH_STEP;
+        if (hitsSinceLastMapping == 0)
+            hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
+        long nextMappingIndex = stretch.firstHitGlobal + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
+        while (nextMappingIndex < stretch.firstHitGlobal + stretchLength) {
+            hitToStretchMapping.add(stretches.size() - 1);
+            nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
         }
     }
 
-    @SuppressWarnings("java:S899") // we don't check hitsAdded.await() return value, see below
     private boolean ensureResultsRead(long number) {
-        checkException();
-        if (number == 0)
-            return true;
+        // Reading an available prefix must not restart paused publishers or increase their demand.
+        lock.readLock().lock();
+        try {
+            checkExceptionLocked();
+            if (publishersActive == 0 || number >= 0 && numHitsGlobalView >= number)
+                return number < 0 || numHitsGlobalView >= number;
+        } finally {
+            lock.readLock().unlock();
+        }
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
         final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
@@ -656,21 +622,17 @@ public class HitsFromPublishers extends HitsAbstract {
                 c -> Math.max(Math.min(clampedNumber, maxHitsToProcess), c)); // update process
         requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
+        // Activating may invoke callbacks synchronously. Do it outside the view lock, then inspect all progress under
+        // that lock; this makes progress-before-wait just as safe as progress after await() starts.
+        publishers.forEach(HitPublisher::activate);
+
         try {
             lock.writeLock().lock();
             try {
-                while (exceptionThrown.isEmpty() && !hitsStats.done() && (sizeSoFar() < requestedHitsToProcess.get() || hitsStats.countedSoFar() < requestedHitsToCount.get())) {
-
-                    // Make sure publishers are running
-                    publishers.forEach(HitPublisher::activate);
-
-                    // Wait until some hits are added to check again
-                    // We don't check the return value because we intend to do the same thing regardless of the outcome.
-                    // (write lock is automatically released while waiting)
-                    hitsAdded.await(HITS_ADDED_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-                }
-                checkException();
-                return hitsStats.processedSoFar() >= number;
+                while (firstFailure == null && publishersActive > 0 && needsMoreResults())
+                    resultsChanged.await();
+                checkExceptionLocked();
+                return number < 0 || numHitsGlobalView >= number;
             } finally {
                 lock.writeLock().unlock();
             }
@@ -680,9 +642,16 @@ public class HitsFromPublishers extends HitsAbstract {
         }
     }
 
-    private void checkException() {
-        if (!exceptionThrown.isEmpty())
-            throw new RuntimeException("One of the hit publishers failed", exceptionThrown.values().iterator().next());
+    /** Caller holds the view write lock. */
+    private boolean needsMoreResults() {
+        return numHitsGlobalView < requestedHitsToProcess.get() ||
+                hitsStats.countedSoFar() < requestedHitsToCount.get();
+    }
+
+    /** Caller holds a view lock. */
+    private void checkExceptionLocked() {
+        if (firstFailure != null)
+            throw new RuntimeException("One of the hit publishers failed", firstFailure);
     }
 
     public ResultsStats resultsStats() {
