@@ -32,4 +32,44 @@ public class TestAnnotatedFieldNameUtil {
         String tagName = RelationUtil.typeFromFullType(rt);
         Assert.assertEquals("word", tagName);
     }
+
+    @Test
+    public void testSourceBookkeepingFieldsAreNotRelations() {
+        Assert.assertEquals("contents#source_ranges", AnnotatedFieldNameUtil.sourceRangesField("contents"));
+        Assert.assertEquals("contents#source_status", AnnotatedFieldNameUtil.sourceStatusField("contents__nl"));
+        Assert.assertEquals("contents#source_units", AnnotatedFieldNameUtil.sourceUnitsField("contents"));
+
+        String[][] sourceFields = {
+                { "contents#source_ranges", "source_ranges" },
+                { "contents#source_status", "source_status" },
+                { "contents#source_units", "source_units" }
+        };
+        for (String[] field: sourceFields) {
+            Assert.assertArrayEquals(new String[] { "contents", null, null, field[1] },
+                    AnnotatedFieldNameUtil.getNameComponents(field[0]));
+            Assert.assertTrue(AnnotatedFieldNameUtil.isSourceBookkeepingField(field[0]));
+            Assert.assertFalse(AnnotatedFieldNameUtil.isRelationsField(field[0]));
+        }
+        for (String field: new String[] { "contents#cs", "contents#length_tokens", "_relation",
+                AnnotatedFieldNameUtil.bookkeepingField("contents", "word", "fiid") }) {
+            Assert.assertFalse(AnnotatedFieldNameUtil.isSourceBookkeepingField(field));
+            Assert.assertFalse(AnnotatedFieldNameUtil.isRelationsField(field));
+        }
+        Assert.assertFalse(AnnotatedFieldNameUtil.isSourceBookkeepingField("email@domain"));
+        Assert.assertTrue(AnnotatedFieldNameUtil.isSourceBookkeepingField("contents%word#source_ranges"));
+        Assert.assertTrue(AnnotatedFieldNameUtil.isRelationsField(
+                AnnotatedFieldNameUtil.bookkeepingField("contents",
+                        AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME, "fiid")));
+        Assert.assertTrue(AnnotatedFieldNameUtil.isRelationsField(
+                AnnotatedFieldNameUtil.annotationField("contents", AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME,
+                        MatchSensitivity.SENSITIVE.luceneFieldSuffix())));
+    }
+
+    @Test
+    public void testSourceUnitsField() {
+        Assert.assertTrue(AnnotatedFieldNameUtil.isSourceUnitsField("contents#source_units"));
+        Assert.assertTrue(AnnotatedFieldNameUtil.isSourceUnitsField("contents__nl#source_units"));
+        Assert.assertFalse(AnnotatedFieldNameUtil.isSourceUnitsField("contents#source_status"));
+        Assert.assertFalse(AnnotatedFieldNameUtil.isSourceUnitsField("contents#source_units_extra"));
+    }
 }

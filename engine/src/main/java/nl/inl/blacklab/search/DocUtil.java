@@ -45,8 +45,13 @@ public class DocUtil {
      *                                 instead of throwing an exception?
      */
     public static void characterOffsets(BlackLabIndex index, int docId, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
-        if (startsOfWords.length == 0)
+        if (startsOfWords.length == 0 && endsOfWords.length == 0)
             return; // nothing to do
+        if (index.metadata().usesSourceRangeVectors() && field instanceof AnnotatedField annotatedField) {
+            SourceRangeReader.characterOffsets(index, docId, annotatedField, startsOfWords, endsOfWords,
+                    fillInDefaultsIfNotFound);
+            return;
+        }
         try {
             // Determine lowest and highest word position we'd like to know something about.
             // This saves a bit of time for large result sets.

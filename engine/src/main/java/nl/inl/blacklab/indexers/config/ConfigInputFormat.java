@@ -39,6 +39,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.plugins.FileConverter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -388,6 +389,7 @@ public class ConfigInputFormat {
         messages.mustHave(t, documentPath, "documentPath");
         for (ConfigMetadataBlock b : metadata)
             b.validate(messages);
+        validateReservedMetadataNames(messages, metadata);
         for (ConfigAnnotatedField af : annotatedFields.values()) {
             if (fileType != FileType.XML) {
                 if (af.hasXmlOnlyOptions())
@@ -408,6 +410,20 @@ public class ConfigInputFormat {
             messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata)");
         if (!indexFieldAs.isEmpty())
             messages.warning("'indexFieldAs' mapping is deprecated; use forEach with nameProcess (action 'map') instead (see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
+    }
+
+    private void validateReservedMetadataNames(InputFormatMessages messages, List<ConfigMetadataBlock> blocks) {
+        for (ConfigMetadataBlock block: blocks) {
+            for (ConfigMetadataField field: block.getFields()) {
+                if (!field.isForEach()) {
+                    String name = indexFieldAs.getOrDefault(field.getName(), field.getName());
+                    if (AnnotatedFieldNameUtil.isSourceBookkeepingField(name)) {
+                        messages.error("metadata field name is reserved by BlackLab: " + name);
+                    }
+                }
+            }
+            validateReservedMetadataNames(messages, block.getBlocks());
+        }
     }
 
     public String getName() {

@@ -54,6 +54,16 @@ public class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
     }
 
     @Override
+    public boolean supportsSourceRangeVectors() {
+        return true;
+    }
+
+    @Override
+    public BLFieldType fieldTypeSourceRanges() {
+        return BLFieldTypeLucene.sourceRanges();
+    }
+
+    @Override
     public BLFieldType fieldTypeIndexMetadataMarker() {
         return indexMetadataMarkerFieldType;
     }

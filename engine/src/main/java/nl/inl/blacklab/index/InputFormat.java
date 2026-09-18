@@ -13,6 +13,17 @@ import nl.inl.util.fileprocessor.FileReference;
 public interface InputFormat {
 
     /**
+     * Whether this format writes source-range vectors and document syntax/status bookkeeping.
+     * XML requires exact element ranges; non-XML retains its existing range semantics,
+     * including zero-length ranges.
+     * Direct plugin implementations must opt in after implementing that codec contract;
+     * extending InputFormatTypeBase supplies the standard document finalization.
+     */
+    default boolean supportsSourceRangeVectors() {
+        return false;
+    }
+
+    /**
      * Index documents contained in a file.
      *
      * @param docWriter where to write the documents

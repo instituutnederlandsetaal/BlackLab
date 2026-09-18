@@ -249,4 +249,32 @@ public class TestConfigAnnotatedField {
         }
     }
 
+    @Test
+    public void testSourceBookkeepingMetadataNamesAreReserved() {
+        String template = """
+                    version: 2
+                    fileType: xml
+                    annotatedFields:
+                      contents:
+                        wordPath: .//w
+                    metadata:
+                      containerPath: .
+                      fields:
+                        - name: %s
+                          valuePath: .
+                    %s
+                    """;
+        for (String yaml: List.of(
+                template.formatted("contents#source_ranges", ""),
+                template.formatted("title", "indexFieldAs:\n  title: contents#source_units"))) {
+            try {
+                ConfigInputFormat.read(yaml, false, "test", null);
+                Assert.fail("Expected reserved metadata name to be rejected");
+            } catch (InvalidInputFormatConfig e) {
+                Assert.assertTrue(e.getMessage().contains("metadata field name is reserved by BlackLab"));
+            }
+        }
+
+        ConfigInputFormat.read(template.formatted("email@domain", ""), false, "test", null);
+    }
 }

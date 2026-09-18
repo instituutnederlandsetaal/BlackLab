@@ -29,6 +29,9 @@ public class BLFieldTypeLucene implements BLFieldType {
     /** (Untokenized) string, indexed and with docvalues, but not stored */
     public static BLFieldType STRING_UNTOKENIZED_UNSTORED;
 
+    /** Internal constant-term vectors carrying exact source ranges as payloads. */
+    private static final BLFieldType SOURCE_RANGES;
+
     private static final Map<String, BLFieldType> fieldTypeCache = new HashMap<>();
 
     static {
@@ -60,6 +63,16 @@ public class BLFieldTypeLucene implements BLFieldType {
         stringUntokenizedUnstored.setTokenized(false);
         stringUntokenizedUnstored.freeze();
         STRING_UNTOKENIZED_UNSTORED = new BLFieldTypeLucene(stringUntokenizedUnstored);
+
+        FieldType sourceRanges = new FieldType();
+        sourceRanges.setIndexOptions(IndexOptions.DOCS);
+        sourceRanges.setTokenized(true);
+        sourceRanges.setOmitNorms(true);
+        sourceRanges.setStoreTermVectors(true);
+        sourceRanges.setStoreTermVectorPositions(true);
+        sourceRanges.setStoreTermVectorPayloads(true);
+        sourceRanges.freeze();
+        SOURCE_RANGES = new BLFieldTypeLucene(sourceRanges);
     }
 
     public static BLFieldType metadata(boolean tokenized) {
@@ -73,6 +86,10 @@ public class BLFieldTypeLucene implements BLFieldType {
     public static synchronized BLFieldType annotationSensitivity(boolean offsets, boolean forwardIndex,
             RelationsStrategy relationsStrategy) {
         return getFieldType(offsets, forwardIndex, false, relationsStrategy);
+    }
+
+    static BLFieldType sourceRanges() {
+        return SOURCE_RANGES;
     }
 
     /**

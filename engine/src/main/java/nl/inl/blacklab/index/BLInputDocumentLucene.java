@@ -30,6 +30,11 @@ public class BLInputDocumentLucene implements BLInputDocument {
         this.docType = type;
     }
 
+    @Override
+    public void addStoredField(String name, byte[] value) {
+        document.add(new StoredField(name, value));
+    }
+
     public Document getDocument() {
         return document;
     }
