@@ -47,6 +47,14 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String punctPath = null;
 
+    /** Explicit punctuation to emit immediately before each selected word. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String punctBeforePath = null;
+
+    /** Explicit punctuation to emit after the last selected word. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String punctAfterLastWordPath = null;
+
     /** Main annotation (i.e. the one containing the words from the text). Defaults to the first one defined. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String mainAnnotation = null;
@@ -145,12 +153,28 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     }
 
     void validate(InputFormatMessages messages) {
+        validate(messages, true);
+    }
+
+    void validate(InputFormatMessages messages, boolean requireXmlPaths) {
         String t = "annotated field";
         messages.mustHave(t, name, "name");
         if (dummyForStoringLinkedDocument)
             return; // dummy doesn't need anything other than a name
-        messages.mustHave(t, containerPath, "containerPath");
-        messages.mustHave(t, wordPath, "wordPath");
+        if (requireXmlPaths) {
+            messages.mustHave(t, getContainerPath(), "containerPath");
+            messages.mustHave(t, wordPath, "wordPath");
+        }
+        if (tokenIdPath != null && tokenIdPath.isEmpty())
+            messages.error(t + " " + name + " has an empty tokenIdPath");
+        if (punctPath != null && punctPath.isEmpty())
+            messages.error(t + " " + name + " has an empty punctPath");
+        if (punctBeforePath != null && punctBeforePath.isEmpty())
+            messages.error(t + " " + name + " has an empty punctBeforePath");
+        if (punctAfterLastWordPath != null && punctAfterLastWordPath.isEmpty())
+            messages.error(t + " " + name + " has an empty punctAfterLastWordPath");
+        if (punctPath != null && (punctBeforePath != null || punctAfterLastWordPath != null))
+            messages.error(t + " " + name + " cannot combine punctPath with explicit punctuation paths");
         for (ConfigAnnotation a: annotations)
             a.validate(messages, false);
         for (ConfigStandoffAnnotations s: standoffAnnotations)
@@ -164,10 +188,12 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         result.dummyForStoringLinkedDocument = dummyForStoringLinkedDocument;
         result.setDisplayName(displayName);
         result.setDescription(description);
-        result.setContainerPath(containerPath);
+        result.containerPath = containerPath;
         result.setWordPath(wordPath);
         result.setTokenIdPath(tokenIdPath);
         result.setPunctPath(punctPath);
+        result.setPunctBeforePath(punctBeforePath);
+        result.setPunctAfterLastWordPath(punctAfterLastWordPath);
         result.setDefaultSearchAnnotation(defaultSearchAnnotation);
         result.setMainAnnotation(mainAnnotation);
         for (ConfigAnnotation a: annotations)
@@ -184,6 +210,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     }
 
     public void setContainerPath(String containerPath) {
+        if (containerPath == null)
+            throw new InvalidInputFormatConfig("containerPath may not be null");
         this.containerPath = containerPath;
     }
 
@@ -197,6 +225,14 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public void setPunctPath(String punctPath) {
         this.punctPath = punctPath;
+    }
+
+    public void setPunctBeforePath(String punctBeforePath) {
+        this.punctBeforePath = punctBeforePath;
+    }
+
+    public void setPunctAfterLastWordPath(String punctAfterLastWordPath) {
+        this.punctAfterLastWordPath = punctAfterLastWordPath;
     }
 
     public void setMainAnnotation(String mainAnnotation) {
@@ -241,6 +277,25 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public String getPunctPath() {
         return punctPath;
+    }
+
+    public String getPunctBeforePath() {
+        return punctBeforePath;
+    }
+
+    public String getPunctAfterLastWordPath() {
+        return punctAfterLastWordPath;
+    }
+
+    @JsonIgnore
+    public boolean hasExplicitPunctuation() {
+        return punctBeforePath != null || punctAfterLastWordPath != null;
+    }
+
+    @JsonIgnore
+    public boolean hasXmlOnlyOptions() {
+        return !containerPath.equals(".") || wordPath != null || tokenIdPath != null || punctPath != null ||
+                hasExplicitPunctuation() || !inlineTags.isEmpty() || !standoffAnnotations.isEmpty();
     }
 
     public String getMainAnnotation() {
@@ -296,7 +351,9 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
                 that.name) && Objects.equals(displayName, that.displayName) && Objects.equals(
                 description, that.description) && Objects.equals(containerPath, that.containerPath)
                 && Objects.equals(wordPath, that.wordPath) && Objects.equals(tokenIdPath,
-                that.tokenIdPath) && Objects.equals(punctPath, that.punctPath) &&
+                that.tokenIdPath) && Objects.equals(punctPath, that.punctPath) && Objects.equals(
+                punctBeforePath, that.punctBeforePath) && Objects.equals(punctAfterLastWordPath,
+                that.punctAfterLastWordPath) &&
                 Objects.equals(mainAnnotation, that.mainAnnotation) &&
                 Objects.equals(defaultSearchAnnotation, that.defaultSearchAnnotation) &&
                 Objects.equals(annotations,
@@ -307,8 +364,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     @Override
     public int hashCode() {
         return Objects.hash(name, displayName, description, containerPath, wordPath, tokenIdPath, punctPath,
-                mainAnnotation, defaultSearchAnnotation, annotations, standoffAnnotations, inlineTags,
-                dummyForStoringLinkedDocument);
+                punctBeforePath, punctAfterLastWordPath, mainAnnotation,
+                defaultSearchAnnotation, annotations, standoffAnnotations, inlineTags, dummyForStoringLinkedDocument);
     }
 
     public void setTokenPositionIdPath(String tokenPositionIdPath) {

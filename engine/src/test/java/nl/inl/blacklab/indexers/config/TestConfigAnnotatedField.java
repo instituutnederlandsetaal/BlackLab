@@ -13,6 +13,45 @@ import nl.inl.util.Json;
 public class TestConfigAnnotatedField {
 
     @Test
+    public void testDefaultAndExplicitDocumentContainerAreEquivalent() {
+        ConfigAnnotatedField omitted = new ConfigAnnotatedField("contents");
+        omitted.setWordPath(".//w");
+        Assert.assertEquals(".", omitted.getContainerPath());
+        Assert.assertEquals(omitted, omitted.copy());
+        Assert.assertEquals(".", omitted.copy().getContainerPath());
+
+        ConfigAnnotatedField explicit = omitted.copy();
+        explicit.setContainerPath(".");
+        Assert.assertEquals(omitted, explicit);
+        Assert.assertEquals(omitted, explicit.copy());
+    }
+
+    @Test
+    public void testDocumentContainerSerializationUsesDefault() {
+        ConfigAnnotatedField omitted = new ConfigAnnotatedField("contents");
+        JsonNode omittedJson = Json.getJsonObjectMapper().valueToTree(omitted);
+        Assert.assertEquals(".", omittedJson.path("containerPath").asText());
+
+        ConfigAnnotatedField explicit = new ConfigAnnotatedField("contents");
+        explicit.setContainerPath(".");
+        JsonNode explicitJson = Json.getJsonObjectMapper().valueToTree(explicit);
+        Assert.assertEquals(omittedJson, explicitJson);
+    }
+
+    @Test
+    public void testExplicitPunctuationSurvivesCopy() {
+        ConfigAnnotatedField field = new ConfigAnnotatedField("contents");
+        field.setWordPath(".//w");
+        field.setPunctBeforePath("''");
+        field.setPunctAfterLastWordPath("following-sibling::text()[1]");
+
+        ConfigAnnotatedField copy = field.copy();
+        Assert.assertEquals(field, copy);
+        Assert.assertEquals("''", copy.getPunctBeforePath());
+        Assert.assertEquals("following-sibling::text()[1]", copy.getPunctAfterLastWordPath());
+    }
+
+    @Test
     public void testInlineTagConfigurationSurvivesCopy() {
         ConfigProcessStep replace = new ConfigProcessStep();
         replace.setAction("replace");
@@ -109,6 +148,105 @@ public class TestConfigAnnotatedField {
         Assert.assertNotSame(values, copiedValues);
         copiedValues.add("two");
         Assert.assertEquals(List.of("one"), values);
+    }
+
+    @Test
+    public void testPunctuationModesCannotBeCombined() {
+        ConfigAnnotatedField field = new ConfigAnnotatedField("contents");
+        field.setWordPath(".//w");
+        field.setPunctPath(".//text()");
+        field.setPunctBeforePath("''");
+
+        InputFormatMessages messages = new InputFormatMessages();
+        field.validate(messages);
+        Assert.assertEquals(List.of("annotated field contents cannot combine punctPath with explicit punctuation paths"),
+                messages.getErrors());
+    }
+
+    @Test
+    public void testEmptyOptionalXPathIsRejectedButEmptyStringExpressionIsAllowed() {
+        ConfigAnnotatedField field = new ConfigAnnotatedField("contents");
+        field.setWordPath(".//w");
+        field.setPunctBeforePath("");
+
+        InputFormatMessages messages = new InputFormatMessages();
+        field.validate(messages);
+        Assert.assertEquals(List.of("annotated field contents has an empty punctBeforePath"), messages.getErrors());
+
+        field.setPunctBeforePath("''");
+        messages = new InputFormatMessages();
+        field.validate(messages);
+        Assert.assertTrue(messages.getErrors().isEmpty());
+    }
+
+    @Test
+    public void testXmlOptionsRejectedForNonXmlFormats() {
+        String yaml = """
+                version: 2
+                fileType: text
+                annotatedFields:
+                  contents:
+                    punctBeforePath: "''"
+                    annotations:
+                      - name: word
+                        valuePath: .
+                """;
+        try {
+            ConfigInputFormat.read(yaml, false, "test", null);
+            Assert.fail("Expected XML-specific option to be rejected");
+        } catch (InvalidInputFormatConfig e) {
+            Assert.assertTrue(e.getMessage().contains("uses XML-specific options with file type text"));
+        }
+    }
+
+    @Test
+    public void testNonXmlFormatSurvivesRoundTrip() throws Exception {
+        String yaml = """
+                version: 2
+                fileType: text
+                annotatedFields:
+                  contents:
+                    annotations:
+                      - name: word
+                        valuePath: .
+                """;
+        ConfigInputFormat original = ConfigInputFormat.read(yaml, false, "test", null);
+        String json = Json.getJsonObjectMapper().writeValueAsString(original);
+
+        ConfigInputFormat roundTripped = ConfigInputFormat.read(json, true, "test", null);
+
+        Assert.assertNull(roundTripped.getAnnotatedField("contents").getWordPath());
+        Assert.assertEquals(".", roundTripped.getAnnotatedField("contents").getContainerPath());
+        Assert.assertFalse(roundTripped.getAnnotatedField("contents").hasXmlOnlyOptions());
+    }
+
+    @Test
+    public void testNullContainerPathIsRejectedInYamlAndJson() {
+        List<String> configs = List.of("""
+                version: 2
+                fileType: xml
+                annotatedFields:
+                  contents:
+                    containerPath: null
+                    wordPath: .//w
+                """, """
+                {
+                  "version": 2,
+                  "fileType": "xml",
+                  "annotatedFields": {
+                    "contents": { "containerPath": null, "wordPath": ".//w" }
+                  }
+                }
+                """);
+
+        for (int i = 0; i < configs.size(); i++) {
+            try {
+                ConfigInputFormat.read(configs.get(i), i == 1, "test", null);
+                Assert.fail("Expected null containerPath to be rejected");
+            } catch (InvalidInputFormatConfig e) {
+                Assert.assertTrue(e.getMessage().contains("containerPath may not be null"));
+            }
+        }
     }
 
 }

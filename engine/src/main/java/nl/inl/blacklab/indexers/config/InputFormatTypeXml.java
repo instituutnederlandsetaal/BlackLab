@@ -20,6 +20,7 @@ import org.apache.lucene.util.BytesRef;
 
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.XdmEmptySequence;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
@@ -254,7 +255,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected int processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
-                    Map<String, Span> tokenPositionsMap, int firstTokenPosition) {
+                    Map<String, Span> tokenPositionsMap, int firstTokenPosition,
+                    StringBuilder explicitPunctuation) {
 
                 // Is this a parallel corpus annotated field?
                 docVersionStartPos = 0;
@@ -287,7 +289,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 Span tokenPosition = Span.token(firstTokenPosition);
                 List<NodeInfo> words = finder.findNodes(annotatedField.getWordPath(), container);
                 words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
-                for (NodeInfo word: words) {
+                for (int wordIndex = 0; wordIndex < words.size(); wordIndex++) {
+                    NodeInfo word = words.get(wordIndex);
                     // Index any punctuation occurring before this word
                     while (currentPunct != null) {
                         if (currentPunct.compareOrder(word) != -1)
@@ -308,13 +311,27 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     charPos = parsedDocument.getElementStartCharOffset(word) - docStartPos;
                     beginWord();
 
+                    String explicitGap = null;
+                    if (explicitPunctuation != null) {
+                        String before = explicitPunctuationBefore(annotatedField, container, words, wordIndex);
+                        if (explicitPunctuation.isEmpty()) {
+                            explicitGap = before;
+                        } else {
+                            explicitGap = explicitPunctuation.append(before).toString();
+                        }
+                        explicitPunctuation.setLength(0);
+                    }
+
                     // For each configured annotation...
                     for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
                         processAnnotation(annotation, XdmValue.wrap(word), tokenPosition);
                     }
 
                     charPos = parsedDocument.getElementEndCharOffset(word) - docStartPos;
-                    endWord();
+                    if (explicitPunctuation == null)
+                        endWord();
+                    else
+                        endWordWithPunctuation(explicitGap);
 
                     // Make sure we close inline tags at the correct position
                     List<ToCloseInfo> closeHere = inlinesToClose.getOrDefault(tokenPosition, Collections.emptyList());
@@ -332,6 +349,13 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     }
 
                     tokenPosition.increment();
+                }
+                if (explicitPunctuation != null && !words.isEmpty() &&
+                        annotatedField.getPunctAfterLastWordPath() != null) {
+                    explicitPunctuation.append(explicitPunctuationValue(annotatedField,
+                            "punctAfterLastWordPath", annotatedField.getPunctAfterLastWordPath(), container,
+                            words.get(words.size() - 1),
+                            words.size() == 1 ? null : words.get(words.size() - 2), null));
                 }
                 if (!inlinesToClose.isEmpty()) {
                     throw new IllegalStateException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
@@ -353,6 +377,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
             private List<NodeInfo> collectPunctuation(NodeInfo container, ConfigAnnotatedField annotatedField) {
                 setAddDefaultPunctuation(true);
+                if (annotatedField.hasExplicitPunctuation()) {
+                    setAddDefaultPunctuation(false);
+                    return Collections.emptyList();
+                }
                 if (annotatedField.getPunctPath() != null) {
                     // We have punctuation occurring between word tags (as opposed to
                     // punctuation that is tagged as a word itself). Collect this punctuation.
@@ -362,6 +390,31 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     return puncts;
                 }
                 return Collections.emptyList();
+            }
+
+            private String explicitPunctuationBefore(ConfigAnnotatedField field, NodeInfo container,
+                    List<NodeInfo> words, int wordIndex) {
+                String expression = field.getPunctBeforePath();
+                if (expression == null)
+                    return " ";
+                return explicitPunctuationValue(field, "punctBeforePath", expression, container,
+                        words.get(wordIndex), wordIndex == 0 ? null : words.get(wordIndex - 1),
+                        wordIndex + 1 == words.size() ? null : words.get(wordIndex + 1));
+            }
+
+            private String explicitPunctuationValue(ConfigAnnotatedField field, String property, String expression,
+                    NodeInfo container, NodeInfo word, NodeInfo previousWord, NodeInfo nextWord) {
+                try {
+                    return finder.xpathValue(expression, XdmValue.wrap(word), Map.of(
+                            "container", XdmValue.wrap(container),
+                            "previousWord", previousWord == null ? XdmEmptySequence.getInstance() :
+                                    XdmValue.wrap(previousWord),
+                            "nextWord", nextWord == null ? XdmEmptySequence.getInstance() : XdmValue.wrap(nextWord)));
+                } catch (RuntimeException e) {
+                    throw new InvalidConfiguration("Error evaluating " + property + " '" + expression + "' for format " +
+                            config.getName() + ", field " + field.getName() + ", document " + documentName +
+                            ", container " + container.getDisplayName() + " at line " + container.getLineNumber(), e);
+                }
             }
 
             private List<InlineInfo> collectInlineTags(NodeInfo container, ConfigAnnotatedField annotatedField) {
@@ -970,14 +1023,20 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Determine some useful stuff about the field we're processing
                 // and store in instance variables so our methods can access them
                 setCurrentAnnotatedFieldName(annotatedField.getName());
+                startPunctuationField();
+                StringBuilder explicitPunctuation = annotatedField.hasExplicitPunctuation() ? new StringBuilder() : null;
 
                 // For each container (e.g. "text" or "body" element) ...
                 int[] firstTokenPosition = new int[] { 0 };
                 finder.xpathForEach(annotatedField.getContainerPath(), document,
                         (container) -> {
                             firstTokenPosition[0] = processAnnotatedFieldContainer(container, annotatedField,
-                                    tokenPositionsMap, firstTokenPosition[0]);
+                                    tokenPositionsMap, firstTokenPosition[0], explicitPunctuation);
                         });
+                if (explicitPunctuation != null && firstTokenPosition[0] > 0)
+                    trailingPunctuation(explicitPunctuation.toString());
+                else if (explicitPunctuation == null && annotatedField.getPunctPath() != null)
+                    trailingLegacyPunctuation();
             }
 
             protected void processAnnotatedFieldStandoff(NodeInfo document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {

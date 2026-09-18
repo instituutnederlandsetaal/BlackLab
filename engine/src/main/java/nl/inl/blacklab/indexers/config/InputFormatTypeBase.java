@@ -806,6 +806,12 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 punctuation.append(punct);
             }
 
+            /** Start punctuation accumulation for a field, discarding state from any previous field. */
+            protected void startPunctuationField() {
+                punctuation.setLength(0);
+                preventNextDefaultPunctuation = false;
+            }
+
             /**
              * calls {@link #getCharacterPositionWithinVersion()}
              */
@@ -825,7 +831,17 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
                 preventNextDefaultPunctuation = false;
                 // Normalize once more in case we hit more than one adjacent punctuation
-                punctAnnotation().addValue(StringUtil.normalizeWhitespace(punct));
+                finishWord(StringUtil.normalizeWhitespace(punct));
+            }
+
+            /** Finish a word with an exact, already-determined punctuation value. */
+            protected void endWordWithPunctuation(String punct) {
+                preventNextDefaultPunctuation = false;
+                finishWord(punct);
+            }
+
+            private void finishWord(String punct) {
+                punctAnnotation().addValue(punct);
                 addEndChar(getCharacterPositionWithinVersion());
                 wordsDoneNotYetReported++;
                 if (wordsDoneNotYetReported >= 5000) {
@@ -835,6 +851,17 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     punctuation = new StringBuilder(); // let's not hold on to this much memory
                 else
                     punctuation.setLength(0);
+            }
+
+            /** Add the exact punctuation value at the field's extra closing position. */
+            protected void trailingPunctuation(String punct) {
+                punctAnnotation().addValue(punct);
+            }
+
+            /** Store accumulated legacy punctuation at the extra closing position. */
+            protected void trailingLegacyPunctuation() {
+                trailingPunctuation(StringUtil.normalizeWhitespace(punctuation.toString()));
+                punctuation.setLength(0);
             }
 
             protected void annotationValueAppend(String name, String value, int increment) {
