@@ -62,7 +62,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
 
         ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
+        HitQueryContext hitQueryContext = new HitQueryContext(index, null, sourceQuery.getAnnotatedField());
         for (LeafReaderContext lrc: index.reader().leaves()) {
             publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats, true));
         }
