@@ -8,6 +8,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.exceptions.UnsupportedConcordanceRepresentation;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.DocUtil;
@@ -82,6 +83,8 @@ public class Concordances {
         if (hits.isEmpty())
             return;
         int docId = hits.get(0).doc();
+        if (DocUtil.hasStructuralSource(hits.index(), docId, hits.field()))
+            throw new UnsupportedConcordanceRepresentation(hits.field().name());
         long arrayLength = hits.size() * 2;
         if (arrayLength > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");

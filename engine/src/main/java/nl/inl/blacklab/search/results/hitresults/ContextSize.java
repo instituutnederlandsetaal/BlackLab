@@ -207,7 +207,7 @@ public class ContextSize {
             end--;
         }
 
-        assert start <= end;
+        assert lastWordInclusive ? start <= (long) end + 1 : start <= end;
 
         // Write results into output arrays
         startArr[startIndex] = start;

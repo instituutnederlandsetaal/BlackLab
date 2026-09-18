@@ -17,6 +17,8 @@ public class Concordance {
     /** Where in content the match ends */
     private final int matchEnd;
 
+    private final boolean xml;
+
     /**
      * Construct a concordance.
      *
@@ -24,9 +26,15 @@ public class Concordance {
      *            concordance
      */
     public Concordance(String[] conc) {
+        this(conc, true);
+    }
+
+    /** Construct fragments with their declared syntax; legacy callers retain XML behavior. */
+    public Concordance(String[] conc, boolean xml) {
         fragment = conc[0] + conc[1] + conc[2];
         matchStart = conc[0].length();
         matchEnd = matchStart + conc[1].length();
+        this.xml = xml;
     }
 
     /**
@@ -43,6 +51,11 @@ public class Concordance {
         fragment = contents;
         this.matchStart = matchStart;
         this.matchEnd = matchEnd;
+        xml = true;
+    }
+
+    public boolean isXml() {
+        return xml;
     }
 
     @Override
@@ -93,6 +106,8 @@ public class Concordance {
      *         the right context.
      */
     public String[] partsNoXml() {
+        if (!xml)
+            return parts();
         String leftContext = XmlUtil.xmlToPlainText(left());
         String matchedWords = XmlUtil.xmlToPlainText(match());
         String rightContext = XmlUtil.xmlToPlainText(right());

@@ -3,6 +3,8 @@ package nl.inl.blacklab.search;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -17,9 +19,12 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.SourceRangeEncoding;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 
@@ -29,6 +34,13 @@ import nl.inl.util.XmlHighlighter.HitCharSpan;
 public class DocUtil {
 
     private DocUtil() {
+    }
+
+    /** Does this document use element ranges for its original XML content? Legacy syntax is unknown. */
+    public static boolean hasStructuralSource(BlackLabIndex index, int docId, AnnotatedField field) {
+        return index.metadata().usesSourceRangeVectors() &&
+                (SourceRangeReader.documentInfo(index, docId, field, null).flags() &
+                        SourceRangeEncoding.DOC_FLAG_XML) != 0;
     }
 
     /**
@@ -252,6 +264,105 @@ public class DocUtil {
     }
 
     /**
+     * Retrieve complete XML containers in source order, or the document when no containers are configured.
+     * Exact element boundaries let us insert highlights without scanning or repairing the source XML.
+     * Multiple containers are returned as siblings; the contents response supplies their common wrapper.
+     */
+    public static String xmlContents(BlackLabIndex index, int docId, AnnotatedField field,
+            int startAtWord, int endAtWord, Hits hits) {
+        List<SourceRangeReader.SourceWindow> containers =
+                SourceUnitReader.sourceRanges(index, docId, field, startAtWord, endAtWord);
+        List<HitCharSpan> tokens = highlightedXmlTokens(index, docId, field, hits, containers);
+        StringBuilder result = new StringBuilder();
+        XmlHighlighter highlighter = new XmlHighlighter();
+        int token = 0;
+        for (SourceRangeReader.SourceWindow container: containers) {
+            String content = contentsByCharPos(index, docId, null, field, container.start(), container.end());
+            int sourceStart = Math.max(0, container.start());
+            int sourceEnd = sourceStart + content.length();
+            int first = token;
+            while (token < tokens.size() && tokens.get(token).startChar() < sourceEnd)
+                token++;
+            result.append(first == token ? content :
+                    highlighter.highlightPlainText(content, tokens.subList(first, token), sourceStart));
+        }
+        return result.toString();
+    }
+
+    /** One source span per matching token, regardless of how many overlapping hits contain it. */
+    private static List<HitCharSpan> highlightedXmlTokens(BlackLabIndex index, int docId,
+            AnnotatedField field, Hits hits, List<SourceRangeReader.SourceWindow> containers) {
+        if (hits == null || hits.isEmpty())
+            return List.of();
+        if (!hits.field().name().equals(field.name()))
+            throw new IllegalArgumentException("XML highlights belong to a different annotated field");
+        BitSet selected = new BitSet();
+        for (EphemeralHit hit: hits) {
+            if (hit.doc() != docId)
+                throw new IllegalArgumentException("XML highlights must belong to document " + docId);
+            selected.set(hit.start(), hit.end());
+        }
+        if (selected.isEmpty())
+            return List.of();
+        int tokenCount = SourceRangeReader.documentInfo(index, docId, field, null).realTokenCount();
+        List<HitCharSpan> tokens = new ArrayList<>();
+        SourceRangeReader.scanPrefix(index.reader(), docId, AnnotatedFieldNameUtil.sourceRangesField(field.name()),
+                tokenCount, selected.length() - 1, (position, start, end) -> {
+                    if (selected.get(position) && withinSourceContainers(containers, start, end))
+                        tokens.add(new HitCharSpan(start, end, position, position + 1));
+                });
+        tokens.sort(Comparator.comparingInt(HitCharSpan::startChar));
+        return tokens;
+    }
+
+    /** Containers are disjoint and sorted; allocate highlights only for returned source. */
+    private static boolean withinSourceContainers(List<SourceRangeReader.SourceWindow> containers, int start, int end) {
+        if (containers.get(0).start() == -1)
+            return true; // Whole document.
+        int low = 0, high = containers.size() - 1;
+        while (low <= high) {
+            int middle = (low + high) >>> 1;
+            SourceRangeReader.SourceWindow container = containers.get(middle);
+            if (start < container.start())
+                high = middle - 1;
+            else if (start >= container.end())
+                low = middle + 1;
+            else
+                return end <= container.end();
+        }
+        return false;
+    }
+
+    /** Retrieve and highlight literal text without interpreting XML-looking characters as markup. */
+    public static String highlightTextContent(BlackLabIndex index, int docId, Hits hits,
+            int startAtWord, int endAtWord) {
+        int sourceStart = -1, sourceEnd = -1;
+        if (startAtWord != -1 || endAtWord != -1) {
+            int count = SourceRangeReader.documentInfo(index, docId, hits.field(), null).realTokenCount();
+            int start = startAtWord == -1 ? 0 : startAtWord;
+            int end = endAtWord == -1 ? count : endAtWord;
+            if (start < 0 || end < start || end > count || start == end && count > 0)
+                throw new IllegalArgumentException("Invalid token range " + startAtWord + ".." + endAtWord);
+            if (count > 0) {
+                SourceRangeReader.SourceWindow window = SourceRangeReader.sourceWindow(index.reader(), docId,
+                        AnnotatedFieldNameUtil.sourceRangesField(hits.field().name()),
+                        count, start, end);
+                sourceStart = startAtWord == -1 ? -1 : window.start();
+                sourceEnd = endAtWord == -1 ? -1 : window.end();
+            }
+        }
+        String content = contentsByCharPos(index, docId, null, hits.field(), sourceStart, sourceEnd);
+        // Empty hits have no visible source span and must not address the extra closing token.
+        HitsMutable nonEmptyHits = HitsMutable.create(hits.context(), -1, false, false);
+        for (EphemeralHit hit: hits) {
+            if (hit.start() < hit.end())
+                nonEmptyHits.add(hit);
+        }
+        return nonEmptyHits.isEmpty() ? content : new XmlHighlighter().highlightPlainText(content,
+                getCharacterOffsets(index, docId, nonEmptyHits), Math.max(0, sourceStart));
+    }
+
+    /**
      * Highlight hits in (part of) a field's contents.
      *
      * @param index our index
@@ -262,6 +373,11 @@ public class DocUtil {
      * @return (part of) the content with highlighting.
      */
     public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
+        if (index.metadata().usesSourceRangeVectors()) {
+            return hasStructuralSource(index, docId, hits.field()) ?
+                    xmlContents(index, docId, hits.field(), startAtWord, endAtWord, hits) :
+                    highlightTextContent(index, docId, hits, startAtWord, endAtWord);
+        }
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
         AnnotatedField field = hits.field();
@@ -304,6 +420,11 @@ public class DocUtil {
      * @return document with highlighting
      */
     public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
+        if (index.metadata().usesSourceRangeVectors()) {
+            return hasStructuralSource(index, docId, contentsField) ?
+                    xmlContents(index, docId, contentsField, -1, -1, hits) :
+                    highlightTextContent(index, docId, hits, -1, -1);
+        }
         ContentStore contentAccessor = index.contentStore(contentsField);
         String contents = contentAccessor.retrieveParts(docId, new int[] { -1 }, new int[] { -1 })[0];
         return highlightContent(index, docId, hits, false, 0, contents);
@@ -350,6 +471,7 @@ public class DocUtil {
      */
     public static List<Concordance> makeConcordancesFromContentStore(BlackLabIndex index, int docId,
             AnnotatedField field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
+        boolean plainText = index.metadata().usesSourceRangeVectors() && !hasStructuralSource(index, docId, field);
         // Determine starts and ends
         int n = startsOfWords.length / 2;
         int[] starts = new int[n];
@@ -357,6 +479,8 @@ public class DocUtil {
         for (int i = 0, j = 0; i < startsOfWords.length; i += 2, j++) {
             starts[j] = startsOfWords[i];
             ends[j] = endsOfWords[i + 1];
+            if (plainText)
+                ends[j] = Math.max(starts[j], ends[j]); // Empty context between tokens has no source span.
         }
 
         // Retrieve 'em all
@@ -371,6 +495,13 @@ public class DocUtil {
             int relHitLeft = startsOfWords[i + 1] - absLeft;
             int relHitRight = endsOfWords[i] - absLeft;
             String currentContent = content[j];
+            if (plainText) {
+                // The existing snippet cap can end inside the hit. Clip to the fetched window;
+                // an empty hit between tokens must not duplicate the intervening punctuation.
+                relHitLeft = Math.max(0, Math.min(currentContent.length(), relHitLeft));
+                relHitRight = Math.max(relHitLeft, Math.min(currentContent.length(), relHitRight));
+                absRight = absLeft + currentContent.length();
+            }
 
             // Determine context and build concordance.
             // Note that hit text may be empty for hits of length zero,
@@ -383,11 +514,13 @@ public class DocUtil {
             String rightContext = currentContent.substring(relHitRight, absRight - absLeft);
 
             // Make each fragment well-formed
-            hitText = hl.makeWellFormed(hitText);
-            leftContext = hl.makeWellFormed(leftContext);
-            rightContext = hl.makeWellFormed(rightContext);
+            if (!plainText) {
+                hitText = hl.makeWellFormed(hitText);
+                leftContext = hl.makeWellFormed(leftContext);
+                rightContext = hl.makeWellFormed(rightContext);
+            }
 
-            rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }));
+            rv.add(new Concordance(new String[] { leftContext, hitText, rightContext }, !plainText));
         }
         return rv;
     }
