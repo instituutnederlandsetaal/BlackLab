@@ -6,6 +6,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.requests.RequestDocContents;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.ResultDocContents;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
@@ -19,8 +20,8 @@ public class RequestHandlerDocContents extends RequestHandler {
 
     @Override
     public DataFormat getOverrideType() {
-        // Application expects this MIME type, don't disappoint
-        return DataFormat.XML;
+        // Existing XSLT clients expect XML unless they explicitly request another format.
+        return ServletUtil.getOutputType(request) == null ? DataFormat.XML : null;
     }
 
     @Override

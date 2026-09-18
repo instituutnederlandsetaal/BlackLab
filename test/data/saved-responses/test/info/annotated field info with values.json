@@ -188,7 +188,7 @@
     "word": {
       "hasForwardIndex": true,
       "isInternal": false,
-      "offsetsAlternative": "s",
+      "offsetsAlternative": "",
       "sensitivity": "SENSITIVE_AND_INSENSITIVE"
     }
   },

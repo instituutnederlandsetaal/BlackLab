@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.requests.RequestDocs;
 
 public class ResultDocResult {
@@ -49,7 +50,7 @@ public class ResultDocResult {
             Kwics theKwics = null;
             Hits hitsList = hitResults.getHits();
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-                theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
+                theConcordances = ConcordanceContext.contentStoreConcordances(hitsList, contextSettings.size());
             else
                 theKwics = hitsList.kwics(index.defaultContextSize());
             for (EphemeralHit hit: hitsList) {
