@@ -32,7 +32,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     private final AnnotatedField targetField;
 
     public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField) {
-        super(clause.queryInfo);
+        super(clause.queryInfo, targetField);
         this.clause = clause;
         this.targetField = targetField;
 
