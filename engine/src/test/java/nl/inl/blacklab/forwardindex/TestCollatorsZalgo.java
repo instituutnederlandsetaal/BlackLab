@@ -21,6 +21,12 @@ public class TestCollatorsZalgo {
     /** A "Zalgo" text string, containing lots of combining diacritics marks. */
     private static String zalgo2;
 
+    /** Reuse the original scraped-text fixtures in source-range and indexing regressions. */
+    public static List<String> examples() {
+        setUp();
+        return List.of(zalgo1, zalgo2);
+    }
+
     private static String fromIntArrayOfByteNumbers(int[] ax) {
         List<Byte> l = new ArrayList<>();
         for (int i: ax) {

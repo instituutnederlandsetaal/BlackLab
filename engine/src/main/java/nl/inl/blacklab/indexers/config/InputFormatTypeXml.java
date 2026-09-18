@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +18,9 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.util.BytesRef;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.s9api.Axis;
@@ -256,59 +260,115 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
             protected int processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
                     Map<String, Span> tokenPositionsMap, int firstTokenPosition,
-                    StringBuilder explicitPunctuation) {
+                    StringBuilder explicitPunctuation, MutableIntSet selectedWordOrdinals,
+                    InlineOrderState inlineOrderState) {
 
                 // Is this a parallel corpus annotated field?
                 docVersionStartPos = 0;
-                if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
+                boolean sourceRangeVectors = usesSourceRangeVectors();
+                boolean parallel = AnnotatedFieldNameUtil.isParallelField(annotatedField.getName());
+                long nodeStart = 0;
+                long nodeEnd = 0;
+                if (sourceRangeVectors || parallel) {
+                    if (sourceRangeVectors) {
+                        int containerOrdinal = parsedDocument.getElementOrdinal(container);
+                        if (containerOrdinal < 0)
+                            throw new InvalidConfiguration("Container from path '" +
+                                    annotatedField.getContainerPath() + "' for field " +
+                                    annotatedField.getName() + " is not a material element from document " +
+                                    documentName);
+                    }
+                    nodeStart = parsedDocument.getElementStartCharOffset(container);
+                    nodeEnd = parsedDocument.getElementEndCharOffset(container);
+                }
+                if (sourceRangeVectors &&
+                        (nodeStart < docStartPos || nodeEnd > docEndPos || nodeStart >= nodeEnd)) {
+                    throw new InvalidConfiguration("Container from path '" + annotatedField.getContainerPath() +
+                            "' for field " + annotatedField.getName() + " is outside document " + documentName);
+                }
+                if (parallel) {
                     // Yes; determine boundaries of this annotated field container so we can later store
                     // this version of the document in the field's content store.
                     // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-                    long nodeStart = parsedDocument.getElementStartCharOffset(container);
-                    long nodeEnd = parsedDocument.getElementEndCharOffset(container);
-                    
+                    if (sourceRangeVectors && docStartEndOffsetsPerField.containsKey(annotatedField)) {
+                        throw invalidParallelContainerCount(annotatedField);
+                    }
                     docVersionStartPos = nodeStart - docStartPos;
                     long docVersionEndPos = nodeEnd - docStartPos;
                     docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
                 }
 
+                List<NodeInfo> words = sourceRangeVectors ?
+                        finder.findNodesStrict(annotatedField.getWordPath(), container) :
+                        finder.findNodes(annotatedField.getWordPath(), container);
+                if (sourceRangeVectors)
+                    validateSelectedWords(words, annotatedField, selectedWordOrdinals);
+                else
+                    words.sort(NodeInfo::compareOrder);
+
                 // Collect information outside word tags:
 
                 // - Punctuation may occur between word tags, which we want to capture
-                Iterator<NodeInfo> punctIt = collectPunctuation(container, annotatedField).iterator();
+                List<NodeInfo> puncts = collectPunctuation(container, annotatedField);
+                LegacyPunctuation legacyPunctuation = sourceRangeVectors && annotatedField.getPunctPath() != null ?
+                        puncts.isEmpty() ? null : associateLegacyPunctuation(words, puncts) : null;
+                Iterator<NodeInfo> punctIt = legacyPunctuation == null ? puncts.iterator() : Collections.emptyIterator();
                 NodeInfo currentPunct = punctIt.hasNext() ? punctIt.next() : null;
 
                 // - "inline tags" (e.g. b, i, named-entity) can occur between words
-                Iterator<InlineInfo> inlineIt = collectInlineTags(container, annotatedField).iterator();
+                List<InlineInfo> inlines = collectInlineTags(container, annotatedField, nodeStart, nodeEnd,
+                        inlineOrderState);
+                Iterator<InlineInfo> inlineIt = sourceRangeVectors ? Collections.emptyIterator() : inlines.iterator();
                 InlineInfo currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+                List<InlineInfo> openInlines = sourceRangeVectors && !inlines.isEmpty() ?
+                        new ArrayList<>() : Collections.emptyList();
+                int inlineIndex = 0;
 
                 // Keep track of where we need to close inline tags we've opened.
-                Map<Span, List<ToCloseInfo>> inlinesToClose = new HashMap<>();
+                Map<Span, List<ToCloseInfo>> inlinesToClose = currentInline == null ?
+                        Collections.emptyMap() : new HashMap<>();
 
                 // For each word...
                 Span tokenPosition = Span.token(firstTokenPosition);
-                List<NodeInfo> words = finder.findNodes(annotatedField.getWordPath(), container);
-                words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
                 for (int wordIndex = 0; wordIndex < words.size(); wordIndex++) {
                     NodeInfo word = words.get(wordIndex);
+                    long wordStart = parsedDocument.getElementStartCharOffset(word);
+                    long wordEnd = parsedDocument.getElementEndCharOffset(word);
+                    if (sourceRangeVectors &&
+                            (wordStart < nodeStart || wordEnd > nodeEnd || wordStart >= wordEnd)) {
+                        throw new InvalidConfiguration("Word from path '" + annotatedField.getWordPath() +
+                                "' for field " + annotatedField.getName() + " is outside container '" +
+                                annotatedField.getContainerPath() + "' in document " + documentName);
+                    }
                     // Index any punctuation occurring before this word
-                    while (currentPunct != null) {
-                        if (currentPunct.compareOrder(word) != -1)
-                            break; // follows word, we'll index it later
-                        handlePunct(currentPunct);
-                        currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+                    if (legacyPunctuation == null) {
+                        while (currentPunct != null) {
+                            if (currentPunct.compareOrder(word) != -1)
+                                break; // follows word, we'll index it later
+                            handlePunct(currentPunct);
+                            currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+                        }
+                    } else if (legacyPunctuation.beforeWords()[wordIndex] != null) {
+                        punctuation(legacyPunctuation.beforeWords()[wordIndex]);
                     }
 
-                    // Index any inline open tags occurring before this word
-                    while (currentInline != null) {
-                        if (currentInline.compareOrder(word) != -1)
-                            break; // follows word, we'll index it later
-                        handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, word, tokenPositionsMap);
-                        currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+                    if (sourceRangeVectors && inlineOrderState != null) {
+                        inlineIndex = processVectorInlinesBeforeWord(inlines, inlineIndex, openInlines,
+                                inlineOrderState, annotatedField, tokenPositionsMap, tokenPosition.start(), word,
+                                wordStart);
+                    } else if (!sourceRangeVectors) {
+                        // Index any inline open tags occurring before this word
+                        while (currentInline != null) {
+                            if (currentInline.compareOrder(word) != -1)
+                                break; // follows word, we'll index it later
+                            handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, word,
+                                    tokenPositionsMap);
+                            currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+                        }
                     }
 
                     // Index our word
-                    charPos = parsedDocument.getElementStartCharOffset(word) - docStartPos;
+                    charPos = wordStart - docStartPos;
                     beginWord();
 
                     String explicitGap = null;
@@ -327,25 +387,28 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         processAnnotation(annotation, XdmValue.wrap(word), tokenPosition);
                     }
 
-                    charPos = parsedDocument.getElementEndCharOffset(word) - docStartPos;
+                    charPos = wordEnd - docStartPos;
                     if (explicitPunctuation == null)
                         endWord();
                     else
                         endWordWithPunctuation(explicitGap);
 
-                    // Make sure we close inline tags at the correct position
-                    List<ToCloseInfo> closeHere = inlinesToClose.getOrDefault(tokenPosition, Collections.emptyList());
-                    for (int i = closeHere.size() - 1; i >= 0; i--) {
-                        ToCloseInfo inlineTag = closeHere.get(i);
-                        inlineTag(inlineTag.tagName(), false, null, inlineTag.type());
+                    if (!sourceRangeVectors) {
+                        // Make sure we close inline tags at the correct position
+                        List<ToCloseInfo> closeHere = inlinesToClose.getOrDefault(tokenPosition, Collections.emptyList());
+                        if (!closeHere.isEmpty()) {
+                            for (int i = closeHere.size() - 1; i >= 0; i--) {
+                                ToCloseInfo inlineTag = closeHere.get(i);
+                                inlineTag(inlineTag.tagName(), false, null, inlineTag.type());
+                            }
+                            inlinesToClose.remove(tokenPosition);
+                        }
                     }
-                    inlinesToClose.remove(tokenPosition);
 
                     // Capture token id if needed (for standoff annotations)
                     if (annotatedField.getTokenIdPath() != null) {
                         String tokenId = finder.xpathValue(annotatedField.getTokenIdPath(), word);
-                        if (tokenId != null)
-                            tokenPositionsMap.put(tokenId, tokenPosition.copy());
+                        captureTokenPosition(annotatedField, tokenPositionsMap, tokenId, tokenPosition.copy());
                     }
 
                     tokenPosition.increment();
@@ -357,22 +420,56 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             words.get(words.size() - 1),
                             words.size() == 1 ? null : words.get(words.size() - 2), null));
                 }
-                if (!inlinesToClose.isEmpty()) {
+                if (sourceRangeVectors && inlineOrderState != null) {
+                    finishVectorInlines(inlines, inlineIndex, openInlines, inlineOrderState, annotatedField,
+                            tokenPositionsMap, tokenPosition.start());
+                } else if (!inlinesToClose.isEmpty()) {
                     throw new IllegalStateException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
                 }
                 // Index any punctuation occurring after last word
-                while (currentPunct != null) {
-                    handlePunct(currentPunct);
-                    currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+                if (legacyPunctuation == null) {
+                    while (currentPunct != null) {
+                        handlePunct(currentPunct);
+                        currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+                    }
+                } else if (!legacyPunctuation.afterWords().isEmpty()) {
+                    punctuation(legacyPunctuation.afterWords());
                 }
-
-                // Index any inline open tags after the last word
+                // Native-offset indexes also need to capture milestones after their last word.
                 while (currentInline != null) {
-                    handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, null, tokenPositionsMap);
+                    handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, null,
+                            tokenPositionsMap);
                     currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
                 }
+                int endTokenPosition = tokenPosition.start();
+                if (sourceRangeVectors && !annotatedField.getContainerPath().equals(".") &&
+                        endTokenPosition > firstTokenPosition) {
+                    long sourceBase = docStartPos + docVersionStartPos;
+                    currentAnnotatedField.addSourceUnit(Math.toIntExact(nodeStart - sourceBase),
+                            Math.toIntExact(nodeEnd - sourceBase), endTokenPosition);
+                }
+                return endTokenPosition;
+            }
 
-                return tokenPosition.start();
+            private void validateSelectedWords(List<NodeInfo> words, ConfigAnnotatedField annotatedField,
+                    MutableIntSet selectedWordOrdinals) {
+                for (NodeInfo word: words) {
+                    int wordOrdinal = parsedDocument.getElementOrdinal(word);
+                    if (wordOrdinal < 0)
+                        throw new InvalidConfiguration("Word from path '" + annotatedField.getWordPath() +
+                                "' for field " + annotatedField.getName() +
+                                " is not a material element from document " + documentName);
+                    if (!selectedWordOrdinals.add(wordOrdinal))
+                        throw new InvalidConfiguration("Word path '" + annotatedField.getWordPath() +
+                                "' for field " + annotatedField.getName() +
+                                " selects the same element more than once in document " + documentName);
+                }
+            }
+
+            private InvalidConfiguration invalidParallelContainerCount(ConfigAnnotatedField annotatedField) {
+                return new InvalidConfiguration("Parallel field " + annotatedField.getName() +
+                        " must select exactly one container using path '" +
+                        annotatedField.getContainerPath() + "'");
             }
 
             private List<NodeInfo> collectPunctuation(NodeInfo container, ConfigAnnotatedField annotatedField) {
@@ -417,14 +514,40 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
             }
 
-            private List<InlineInfo> collectInlineTags(NodeInfo container, ConfigAnnotatedField annotatedField) {
+            private List<InlineInfo> collectInlineTags(NodeInfo container, ConfigAnnotatedField annotatedField,
+                    long containerStart, long containerEnd, InlineOrderState inlineOrderState) {
+                if (annotatedField.getInlineTags().isEmpty())
+                    return Collections.emptyList();
                 List<InlineInfo> inlines = new ArrayList<>(INITIAL_LIST_SIZE_INLINE_TAGS);
                 for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
                     String tokenIdXPath = inlineTag.getTokenIdPath();
-                    finder.xpathForEach(inlineTag.getPath(), container, (tag) -> {
+                    NodeHandler collect = tag -> {
                         String tokenId = tokenIdXPath == null ? null : finder.xpathValue(tokenIdXPath, tag);
-                        inlines.add(new InlineInfo(tag, tokenId, inlineTag));
-                    });
+                        if (inlineOrderState == null) {
+                            inlines.add(new InlineInfo(tag, tokenId, inlineTag));
+                            return;
+                        }
+                        int ordinal = parsedDocument.getElementOrdinal(tag);
+                        if (ordinal < 0)
+                            throw new InvalidConfiguration("Inline path '" + inlineTag.getPath() + "' for field " +
+                                    annotatedField.getName() +
+                                    " selected a non-material element in document " + documentName);
+                        if (!inlineOrderState.selectedOrdinals.computeIfAbsent(inlineTag.getType(),
+                                __ -> new IntHashSet()).add(ordinal))
+                            throw new InvalidConfiguration("Inline paths for field " + annotatedField.getName() +
+                                    " select the same element more than once in document " + documentName);
+                        long start = parsedDocument.getElementStartCharOffset(tag);
+                        long end = parsedDocument.getElementEndCharOffset(tag);
+                        if (start < containerStart || end > containerEnd || start >= end)
+                            throw new InvalidConfiguration("Inline path '" + inlineTag.getPath() + "' for field " +
+                                    annotatedField.getName() + " selects an element outside container '" +
+                                    annotatedField.getContainerPath() + "' in document " + documentName);
+                        inlines.add(new InlineInfo(tag, tokenId, inlineTag, start, end));
+                    };
+                    if (inlineOrderState == null)
+                        finder.xpathForEach(inlineTag.getPath(), container, collect);
+                    else
+                        finder.xpathForEachNodeStrict(inlineTag.getPath(), container, collect);
                 }
                 Collections.sort(inlines);
                 return inlines;
@@ -434,6 +557,95 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Punct precedes word
                 String punct = currentPunct.getStringValue();
                 punctuation(punct == null ? " " : punct);
+            }
+
+            private LegacyPunctuation associateLegacyPunctuation(List<NodeInfo> words, List<NodeInfo> puncts) {
+                List<NodeInfo> sourceOrder = new ArrayList<>(words);
+                sourceOrder.sort(NodeInfo::compareOrder);
+                IntIntHashMap yieldPositions = new IntIntHashMap(words.size());
+                for (int i = 0; i < words.size(); i++)
+                    yieldPositions.put(parsedDocument.getElementOrdinal(words.get(i)), i);
+                String[] beforeWords = new String[words.size()];
+                StringBuilder gap = new StringBuilder();
+                int punctIndex = 0;
+                for (NodeInfo word: sourceOrder) {
+                    while (punctIndex < puncts.size() && puncts.get(punctIndex).compareOrder(word) == -1)
+                        appendPunctuation(gap, puncts.get(punctIndex++));
+                    if (!gap.isEmpty())
+                        beforeWords[yieldPositions.getOrThrow(parsedDocument.getElementOrdinal(word))] = gap.toString();
+                    gap.setLength(0);
+                }
+                while (punctIndex < puncts.size())
+                    appendPunctuation(gap, puncts.get(punctIndex++));
+                return new LegacyPunctuation(beforeWords, gap.toString());
+            }
+
+            private void appendPunctuation(StringBuilder target, NodeInfo node) {
+                String value = node.getStringValue();
+                target.append(value == null ? " " : value);
+            }
+
+            private record LegacyPunctuation(String[] beforeWords, String afterWords) {}
+
+            private int processVectorInlinesBeforeWord(List<InlineInfo> inlines, int inlineIndex,
+                    List<InlineInfo> openInlines, InlineOrderState state, ConfigAnnotatedField annotatedField,
+                    Map<String, Span> tokenPositionsMap, int tokenPosition, NodeInfo word, long wordStart) {
+                while (!openInlines.isEmpty() && openInlines.get(openInlines.size() - 1).sourceStart > wordStart)
+                    closeVectorInline(openInlines, state, annotatedField, tokenPositionsMap, tokenPosition);
+                while (inlineIndex < inlines.size() && inlines.get(inlineIndex).sourceStart <= wordStart) {
+                    InlineInfo next = inlines.get(inlineIndex++);
+                    closeVectorInlinesEndingBefore(openInlines, state, annotatedField, tokenPositionsMap,
+                            tokenPosition, next.sourceStart);
+                    next.tokenStart = tokenPosition;
+                    openInline(next);
+                    openInlines.add(next);
+                }
+                closeVectorInlinesEndingBefore(openInlines, state, annotatedField, tokenPositionsMap,
+                        tokenPosition, wordStart);
+                if (wordStart < state.maxClosedSpanEnd) {
+                    throw new InvalidConfiguration("Word " + word.getDisplayName() + " at source offset " +
+                            wordStart + " from path '" + annotatedField.getWordPath() + "' for field " +
+                            annotatedField.getName() + " moves behind closed inline " +
+                            state.maxClosedSpan.nodeInfo.getDisplayName() + " ending at source offset " +
+                            state.maxClosedSpanEnd + " in document " + documentName);
+                }
+                return inlineIndex;
+            }
+
+            private void finishVectorInlines(List<InlineInfo> inlines, int inlineIndex,
+                    List<InlineInfo> openInlines, InlineOrderState state, ConfigAnnotatedField annotatedField,
+                    Map<String, Span> tokenPositionsMap, int tokenPosition) {
+                while (inlineIndex < inlines.size()) {
+                    InlineInfo next = inlines.get(inlineIndex++);
+                    closeVectorInlinesEndingBefore(openInlines, state, annotatedField, tokenPositionsMap,
+                            tokenPosition, next.sourceStart);
+                    next.tokenStart = tokenPosition;
+                    openInline(next);
+                    openInlines.add(next);
+                }
+                while (!openInlines.isEmpty())
+                    closeVectorInline(openInlines, state, annotatedField, tokenPositionsMap, tokenPosition);
+            }
+
+            private void closeVectorInlinesEndingBefore(List<InlineInfo> openInlines, InlineOrderState state,
+                    ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap, int tokenPosition,
+                    long sourcePosition) {
+                while (!openInlines.isEmpty() &&
+                        openInlines.get(openInlines.size() - 1).sourceEnd <= sourcePosition) {
+                    closeVectorInline(openInlines, state, annotatedField, tokenPositionsMap, tokenPosition);
+                }
+            }
+
+            private void closeVectorInline(List<InlineInfo> openInlines, InlineOrderState state,
+                    ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap, int tokenPosition) {
+                InlineInfo inline = openInlines.remove(openInlines.size() - 1);
+                inlineTag(inline.nodeInfo.getDisplayName(), false, null, inline.config.getType());
+                captureTokenPosition(annotatedField, tokenPositionsMap, inline.tokenId,
+                        Span.between(inline.tokenStart, tokenPosition));
+                if (inline.sourceEnd > state.maxClosedSpanEnd) {
+                    state.maxClosedSpanEnd = inline.sourceEnd;
+                    state.maxClosedSpan = inline;
+                }
             }
 
             record ToCloseInfo(String tagName, AnnotationType type) {}
@@ -449,7 +661,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                 // Check if this word is a descendant of the inline. If not, this is a self-closing inline tag;
                 // if yes, it is an open tag and a close tag will follow later.
-                NodeInfo nodeInfo = currentInline.nodeInfo();
+                NodeInfo nodeInfo = currentInline.nodeInfo;
                 boolean isSelfClosing = true;
                 NodeInfo next;
                 if (word != null) { // (if word is null, this inline tag occurs after the last word, so it must be self-closing)
@@ -463,55 +675,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     }
                 }
 
-                // Find the attributes and index the span.
-                Map<String, Collection<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
-                ConfigInlineTag cfgInline = currentInline.config;
-                AnnotationType inlineType = cfgInline.getType();
-                switch (inlineType) {
-                    case SPAN -> {
-                        // Index all attributes on the tag by default.
-                        try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
-                            while ((next = attributes.next()) != null) {
-                                if (currentInline.indexAttribute(next.getDisplayName())) {
-                                    atts.put(next.getLocalPart(), List.of(next.getStringValue()));
-                                }
-                            }
-                        }
-                        // Index any extra attributes using the provided XPath expressions.
-                        for (ConfigAttribute attribute: cfgInline.getAttributes().values()) {
-                            if (attribute.isExclude())
-                                continue;
-                            List<String> values = new ArrayList<>();
-                            ProcessingStep processSteps = attribute.getCompiledProcessSteps();
-                            if (atts.containsKey(attribute.getName())) {
-                                // Actual attribute on tag. Apply any processing steps now.
-                                for (String attributeValue: atts.get(attribute.getName())) {
-                                    values.addAll(processStringMultipleValues(attributeValue, processSteps));
-                                }
-                            } else {
-                                // Extra attribute, not on tag. Evaluate XPath expression.
-                                finder.xpathForEachStringValue(attribute.getValuePath(), nodeInfo, matchedValue -> {
-                                    values.addAll(processStringMultipleValues(matchedValue, processSteps));
-                                });
-                            }
-                            if (!values.isEmpty()) {
-                                atts.put(attribute.getName(), values);
-                            } else {
-                                // Remove attribute if it was already present but now has no values.
-                                atts.remove(attribute.getName());
-                            }
-                        }
-                    }
-                    case FRAGMENT -> {
-                        // Collect metadata for this fragment
-                        String metadataContainerPath = cfgInline.getMetadataContainerPath();
-                        List<ConfigMetadataBlock> fragMetadata = cfgInline.getMetadata();
-                        atts = getFragmentMetadata(nodeInfo, metadataContainerPath, fragMetadata);
-                    }
-                    default ->
-                            throw new InvalidConfiguration("Unexpected inline tag type: " + inlineType);
-                }
-                inlineTag(nodeInfo.getDisplayName(), true, atts, inlineType);
+                AnnotationType inlineType = currentInline.config.getType();
+                openInline(currentInline);
 
                 int numberOfWordsInsideTag = 0;
                 if (!isSelfClosing) {
@@ -531,8 +696,58 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     inlineTag(nodeInfo.getDisplayName(), false, null, inlineType);
                 }
 
-                if (currentInline.tokenId() != null)
-                    tokenPositionsMap.put(currentInline.tokenId(), Span.between(position.start(), firstWordOutsideInline));
+                captureTokenPosition(annotatedField, tokenPositionsMap, currentInline.tokenId,
+                        Span.between(position.start(), firstWordOutsideInline));
+            }
+
+            private void openInline(InlineInfo inline) {
+                NodeInfo nodeInfo = inline.nodeInfo;
+                ConfigInlineTag config = inline.config;
+                if (config.getType() == AnnotationType.FRAGMENT) {
+                    inlineTag(nodeInfo.getDisplayName(), true,
+                            getFragmentMetadata(nodeInfo, config.getMetadataContainerPath(), config.getMetadata()),
+                            AnnotationType.FRAGMENT);
+                    return;
+                }
+                Map<String, Collection<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
+                NodeInfo next;
+                try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
+                    while ((next = attributes.next()) != null) {
+                        if (inline.indexAttribute(next.getDisplayName()))
+                            atts.put(next.getLocalPart(), List.of(next.getStringValue()));
+                    }
+                }
+                for (ConfigAttribute attribute: config.getAttributes().values()) {
+                    if (attribute.isExclude())
+                        continue;
+                    List<String> values = new ArrayList<>();
+                    ProcessingStep processSteps = attribute.getCompiledProcessSteps();
+                    if (atts.containsKey(attribute.getName())) {
+                        for (String attributeValue: atts.get(attribute.getName()))
+                            values.addAll(processStringMultipleValues(attributeValue, processSteps));
+                    } else {
+                        finder.xpathForEachStringValue(attribute.getValuePath(), nodeInfo,
+                                matchedValue -> values.addAll(processStringMultipleValues(matchedValue, processSteps)));
+                    }
+                    if (values.isEmpty())
+                        atts.remove(attribute.getName());
+                    else
+                        atts.put(attribute.getName(), values);
+                }
+                inlineTag(nodeInfo.getDisplayName(), true, atts, AnnotationType.SPAN);
+            }
+
+            private void captureTokenPosition(ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap,
+                    String tokenId, Span position) {
+                boolean sourceRangeVectors = usesSourceRangeVectors();
+                if (tokenId == null || sourceRangeVectors && tokenId.isEmpty())
+                    return;
+                if (!sourceRangeVectors) {
+                    tokenPositionsMap.put(tokenId, position);
+                } else if (tokenPositionsMap.putIfAbsent(tokenId, position) != null) {
+                    throw new InvalidConfiguration("Duplicate token ID '" + tokenId + "' for field " +
+                            annotatedField.getName() + " in document " + documentName);
+                }
             }
 
             /**
@@ -1023,16 +1238,28 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Determine some useful stuff about the field we're processing
                 // and store in instance variables so our methods can access them
                 setCurrentAnnotatedFieldName(annotatedField.getName());
+                if (usesSourceRangeVectors() && !annotatedField.getContainerPath().equals("."))
+                    currentAnnotatedField.enableSourceUnits();
                 startPunctuationField();
                 StringBuilder explicitPunctuation = annotatedField.hasExplicitPunctuation() ? new StringBuilder() : null;
+                boolean sourceRangeVectors = usesSourceRangeVectors();
+                MutableIntSet selectedWordOrdinals = sourceRangeVectors ? new IntHashSet() : null;
+                InlineOrderState inlineOrderState = sourceRangeVectors && !annotatedField.getInlineTags().isEmpty() ?
+                        new InlineOrderState() : null;
 
                 // For each container (e.g. "text" or "body" element) ...
                 int[] firstTokenPosition = new int[] { 0 };
-                finder.xpathForEach(annotatedField.getContainerPath(), document,
-                        (container) -> {
-                            firstTokenPosition[0] = processAnnotatedFieldContainer(container, annotatedField,
-                                    tokenPositionsMap, firstTokenPosition[0], explicitPunctuation);
-                        });
+                NodeHandler processContainer = container ->
+                        firstTokenPosition[0] = processAnnotatedFieldContainer(container, annotatedField,
+                                tokenPositionsMap, firstTokenPosition[0], explicitPunctuation,
+                                selectedWordOrdinals, inlineOrderState);
+                if (sourceRangeVectors)
+                    finder.xpathForEachNodeStrict(annotatedField.getContainerPath(), document, processContainer);
+                else
+                    finder.xpathForEach(annotatedField.getContainerPath(), document, processContainer);
+                if (usesSourceRangeVectors() && AnnotatedFieldNameUtil.isParallelField(annotatedField.getName()) &&
+                        !docStartEndOffsetsPerField.containsKey(annotatedField))
+                    throw invalidParallelContainerCount(annotatedField);
                 if (explicitPunctuation != null && firstTokenPosition[0] > 0)
                     trailingPunctuation(explicitPunctuation.toString());
                 else if (explicitPunctuation == null && annotatedField.getPunctPath() != null)
@@ -1089,8 +1316,32 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             /**
              * How we collect inline tags and (optionally) their token ids (for standoff annotations)
              */
-            private record InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config)
-                implements Comparable<InlineInfo> {
+            private class InlineOrderState {
+                final Map<AnnotationType, MutableIntSet> selectedOrdinals = new EnumMap<>(AnnotationType.class);
+                long maxClosedSpanEnd = -1;
+                InlineInfo maxClosedSpan;
+            }
+
+            private class InlineInfo implements Comparable<InlineInfo> {
+                final NodeInfo nodeInfo;
+                final String tokenId;
+                final ConfigInlineTag config;
+                final long sourceStart;
+                final long sourceEnd;
+                int tokenStart = -1;
+
+                InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config) {
+                    this(nodeInfo, tokenId, config, -1, -1);
+                }
+
+                InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config, long sourceStart,
+                        long sourceEnd) {
+                    this.nodeInfo = nodeInfo;
+                    this.tokenId = tokenId;
+                    this.config = config;
+                    this.sourceStart = sourceStart;
+                    this.sourceEnd = sourceEnd;
+                }
 
                 @Override
                 public int compareTo(InlineInfo o) {
