@@ -97,3 +97,5 @@ expectHitsUnchanged("fragments", "hits in fragments", { patt: '"the"', filter: '
 expectHitsUnchanged("fragments", "hit in adjacent fragments", { patt: '"Lindenlaan" "this"', filter: 'year:1976 OR year:2026' });
 expectHitsUnchanged("fragments", "hit beyond matching fragment", { patt: '"Lindenlaan" "this"', filter: 'year:1976' });
 expectHitsUnchanged("fragments", "inherited metadata", { patt: '"dog"', filter: 'author:Piet' });
+expectHitsUnchanged("fragments", "inline tag fragment 1", { patt: '"jumps"', filter: 'ftype:inline' });
+expectHitsUnchanged("fragments", "inline tag fragment 2", { patt: '"starship"', filter: 'author:majel' });

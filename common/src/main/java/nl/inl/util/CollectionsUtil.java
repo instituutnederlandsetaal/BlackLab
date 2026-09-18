@@ -2,6 +2,7 @@ package nl.inl.util;
 
 import java.util.AbstractList;
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -78,6 +79,25 @@ public class CollectionsUtil {
         if (map == null)
             return null;
         Map<String, List<T>> atts = new LinkedHashMap<>();
+        for (Map.Entry<String, T> e : map.entrySet()) {
+            atts.put(e.getKey(), Collections.singletonList(e.getValue()));
+        }
+        return atts;
+    }
+
+    /**
+     * Convert a map of values to a map of collections of values.
+     *
+     * Each list will be length 1.
+     *
+     * @param map map to convert, or null
+     * @return resulting map of collections, or null if input was null
+     * @param <T> type of values
+     */
+    public static <T> Map<String, Collection<T>> toMapOfCollections(Map<String, T> map) {
+        if (map == null)
+            return null;
+        Map<String, Collection<T>> atts = new LinkedHashMap<>();
         for (Map.Entry<String, T> e : map.entrySet()) {
             atts.put(e.getKey(), Collections.singletonList(e.getValue()));
         }

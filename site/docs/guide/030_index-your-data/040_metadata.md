@@ -399,7 +399,90 @@ Note that if your metadata filter matches two adjacent fragments, you will also 
 
 <h3>Example</h3>
 
-The input XML for a document with fragments might for example look like this:
+Let's look at how to configure indexing fragments.
+
+Below are two examples of a different style of defining fragments: using inline tags, and using standoff annotations.
+
+::: tabs
+=== Inline
+An example of using inline tags to define fragments. The `<metadata/>` elements are used to mark fragments of the document. The `id`, `year`, and `author` attributes are metadata for that fragment.
+
+The input document:
+```xml
+<?xml version="1.0" ?>
+<doc>
+    <metadata title="Test title" id="doc-01" author="Katrien" />
+    <text>
+        <metadata id="doc-01-frag-01" year="2025">
+            <s>
+                <w>This</w>
+                <w>is</w>
+                <w>a</w>
+                <w>fragment</w>.
+            </s>
+        </metadata>
+        <metadata id="doc-01-frag-02" year="2026" author="Jesse">
+            <s>
+                <w>Here's</w>
+                <w>another</w>
+                <w>one</w>.
+            </s>
+        </metadata>
+        <s>
+            <w>One</w>
+            <w>more</w>!
+        </s>
+    </text>
+</doc>
+```
+
+To index this input document, use `type: fragment` for the `inlineTags` entry:
+
+```yaml
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /doc
+
+# Annotated, CQL-searchable fields.
+# We usually have just one, named "contents".
+annotatedFields:
+    contents:
+        containerPath: text # containerPath for the contents field (relative to documentPath)
+        wordPath: .//w
+        annotations:
+            - name: word
+              valuePath: .
+
+        inlineTags:
+            - path: .//s
+            - path: .//metadata
+              type: fragment
+              # (optional) path to the actual metadata container (relative to the element matched by 'path')
+              #metadataContainerPath: .
+
+# How to index metadata for documents and fragments
+metadata:
+
+    # (this is the document-level metadata container, relative to documentPath.
+    #  this is ignored for fragments: the fragment is its own metadata container)
+    containerPath: metadata
+
+    fields:
+        - name: id
+          valuePath: "@id"
+          type: untokenized
+          fragments: separate   # documents and fragments each have their own unique id; index separately
+        - name: title
+          valuePath: "@title"
+        - name: author
+          valuePath: "@author"
+        - name: year
+          valuePath: "@year"
+```
+=== Standoff
+An example of using standoff annotations to define fragments. The `<metadata/>` elements are used to mark fragments of the document. The `from` and `to` attributes indicate the start and end of the fragment (referring to `<milestone/>` tags), and the `id`, `year`, and `author` attributes are metadata for that fragment.
+
+The input document:
 
 ```xml
 <?xml version="1.0" ?>
@@ -431,15 +514,7 @@ The input XML for a document with fragments might for example look like this:
 </doc>
 ```
 
-As you can see, the `<metadata/>` elements are used to mark fragments of the document. The `from` and `to` attributes indicate the start and end of the fragment (referring to `<milestone/>` tags), and the `id`, `year`, and `author` attributes are metadata for that fragment.
-
-::: details Missing fragment?
-
-Notice that two fragments are defined, from `A` to `B` and from `B` to `C`. But from milestone `C` to `D` there is no fragment defined. In this case, BlackLab will automatically create a fragment for that part of the text, and it will inherit the document metadata.
-
-:::
-
-To index the fragments in the XML above, you need to use the `standoffAnnotations` section in your format configuration file:
+To index this data, you need to use the `standoffAnnotations` section in your format configuration file, referring to the `id`s of the `<milestone>` elements:
 
 ```yaml
 # What element starts a new document?
@@ -491,6 +566,13 @@ metadata:
   - name: year
     valuePath: "@year"
 ```
+:::
+
+::: details Missing fragment?
+
+Notice that in the examples above, two fragments are defined, from `A` to `B` and from `B` to `C`. But from milestone `C` to `D` there is no fragment defined. In this case, BlackLab will automatically create a fragment for that part of the text, and it will inherit the document metadata.
+
+:::
 
 <h3>Metadata field behavior</h3>
 
@@ -508,6 +590,27 @@ Generally, it's best if documents and fragments have the same metadata structure
 
 For example, if the `author` field is stored in a different attribute at the fragment level (e.g. not `author` but `frag-author`), you could specify that as shown below.
 
+::: tabs
+=== Inline
+```yaml
+    # Define the fragments and their metadata
+    inlineTags:
+      - path: .//metadata
+        type: fragment
+        # (optional) path to the actual metadata container (relative to the element matched by 'path')
+        #metadataContainerPath: .
+
+        # This section is entirely optional.
+        # You may define additional metadata rules for fragments here if needed.
+        # The document level rules are always applied, unless you set applyDocRules: false.
+        metadata:
+          - applyDocRules: true # (default value, can be omitted)
+            containerPath: .    # (default value, can be omitted)
+            fields:
+              - name: author
+                valuePath: "@frag-author"
+```
+=== Standoff
 ```yaml
     # Define the fragments and their metadata
     standoffAnnotations:
@@ -529,23 +632,4 @@ For example, if the `author` field is stored in a different attribute at the fra
               - name: author
                 valuePath: "@frag-author"
 ```
-
-<h3>Inline tags as fragments?</h3>
-
-It is currently NOT possible to define fragments using inlineTags, so for example this XML:
-
-```xml
-<block author="Koen"><!-- not yet possible to index fragments this way -->
-    <s><w>Some</w> <w>text</w></s>
-</block>
-```
-
-could NOT be indexed using:
-
-```yaml
-inlineTags:
-- path: block
-  type: fragment
-```
-
-We might add something like this if there is a need for it.
+:::

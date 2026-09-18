@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -70,7 +71,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param attributes       any attributes for this relation
      * @return term to index in Lucene
      */
-    private static List<String> indexTerms(String fullRelationType, Map<String, List<String>> attributes) {
+    private static List<String> indexTerms(String fullRelationType, Map<String, Collection<String>> attributes) {
         // Add a special term not used for searching, only to write the relation index
         // It consists of the relation type and the attributes and their values, all unprocessed
         // (i.e. not lowercased, etc.)
@@ -279,7 +280,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         List<String> terms = indexTerms(fullType, attributes);
         indexTermFunc.accept(terms.get(0), payload);
 
@@ -294,7 +295,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, Collection<String>> attributes) {
         // Always assign a relation id, because we need it to match tags to attributes,
         // even if there's no extra information stored in the relation index (which there should be
         // if there's attributes, but ok).

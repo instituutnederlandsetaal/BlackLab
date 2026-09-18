@@ -22,6 +22,12 @@ annotatedFields:
     - path: .//s
     - path: .//milestone
       tokenIdPath: "@id"
+    - path: .//frag
+      type: fragment
+      metadata:
+        fields:
+        - name: ftype
+          valuePath: "@ftype"
 
     standoffAnnotations:
       - path: metadata
@@ -50,3 +56,5 @@ metadata:
     valuePath: "@author"
   - name: year
     valuePath: "@year"
+  - name: ftype
+    value: ""

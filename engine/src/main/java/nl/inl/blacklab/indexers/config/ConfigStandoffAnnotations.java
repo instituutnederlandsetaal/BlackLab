@@ -20,7 +20,7 @@ import nl.inl.util.XPathUtil;
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     /**
-     * The type of standoff annotation (e.g. "token" (default), "span" or "relation")
+     * The type of standoff annotation (e.g. "token" (default), "span", "relation" or "fragment")
      */
     private AnnotationType type = AnnotationType.TOKEN;
 
@@ -33,7 +33,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /**
      * Unique id of the token position(s) to index these values at. A uniqueId must
      * be defined for words.
-     * If this is a span (that is, spanEndPath is not empty), this refers to the start of
+     * If this is a span or fragment, this refers to the start of
      * the span.
      */
     private String tokenRefPath;
@@ -44,7 +44,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String spanEndPath = "";
 
     /**
-     * If this is a span, does spanEndPath refer to the last token inside the span (inclusive)
+     * If this is a span or fragment, does spanEndPath refer to the last token inside the span (inclusive)
      * or the first token outside the span (exclusive)?
      */
     private boolean spanEndIsInclusive = true;
@@ -126,12 +126,39 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         messages.mustHave(t, tokenRefPath, "tokenRefPath");
         for (ConfigAnnotation a : annotations)
             a.validate(messages, false);
-        if (type == AnnotationType.FRAGMENT) {
-            if (!annotations.isEmpty())
-                messages.error("Fragments cannot have annotations.");
-        } else {
+        switch (type) {
+            case TOKEN -> {
+                if (spanEndPath != null && !spanEndPath.isEmpty())
+                    messages.error("Token annotations cannot have a spanEndPath.");
+                if (valuePath != null && !valuePath.isEmpty())
+                    messages.error("Token annotations cannot have a valuePath.");
+            }
+            case FRAGMENT -> {
+                if (!annotations.isEmpty())
+                    messages.error("Fragments cannot have annotations.");
+                if (valuePath != null && !valuePath.isEmpty())
+                    messages.error("Fragments cannot have a valuePath.");
+            }
+            case SPAN, RELATION -> {
+                if (valuePath.isEmpty())
+                    messages.error("Spans and relations must have a valuePath.");
+                if (spanEndPath.isEmpty())
+                    messages.error("Relations must have a spanEndPath.");
+            }
+        }
+        if (type != AnnotationType.RELATION) {
+            if (relationClass != null)
+                messages.error("Standoff annotations of type " + type + " cannot have a relationClass.");
+            if (targetField != null && !targetField.isEmpty())
+                messages.error("Standoff annotations of type " + type + " cannot have a targetField.");
+            if (targetVersionPath != null && !targetVersionPath.isEmpty())
+                messages.error("Standoff annotations of type " + type + " cannot have a targetVersionPath.");
+        }
+        if (type != AnnotationType.FRAGMENT) {
             if (!metadata.isEmpty())
                 messages.error("Standoff annotations of type " + type + " cannot have metadata blocks.");
+            if (!metadataContainerPath.equals("."))
+                messages.error("Standoff annotations of type " + type + " cannot have metadataContainerPath");
         }
         for (ConfigMetadataBlock m : metadata)
             m.validate(messages);

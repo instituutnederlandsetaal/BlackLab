@@ -457,7 +457,7 @@ public class AnnotationWriter {
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, List<String>> attributes) {
+            Map<String, Collection<String>> attributes) {
 
         // NOTE: for single-term strategy, we only create a relationId if we know the end position. If we don't,
         // the payload will be added later (when the closing tag is encountered) with
@@ -473,7 +473,7 @@ public class AnnotationWriter {
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
-            int targetStart, int targetEnd, Map<String, List<String>> attributes) {
+            int targetStart, int targetEnd, Map<String, Collection<String>> attributes) {
         int relationId = relationsStrategy.getRelationId(this, targetStart, attributes);
           //getNextRelationId(attributes != null && !attributes.isEmpty());
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
@@ -488,7 +488,7 @@ public class AnnotationWriter {
         indexRelation(fullRelationType, attributes, relationInfo);
     }
 
-    private int indexRelation(String fullRelationType, Map<String, List<String>> attributes, RelationInfo relationInfo) {
+    private int indexRelation(String fullRelationType, Map<String, Collection<String>> attributes, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
         // integrated index; everything is indexed as a single term

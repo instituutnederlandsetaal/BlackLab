@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -98,7 +99,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             protected Map<String, Collection<String>> metadataFieldValues = new HashMap<>();
 
             /** The list of fragments found for each annotated field, if any */
-            Map<String, List<Fragment>> fragsPerField = new HashMap<>();
+            private final Map<String, List<Fragment>> fragsPerField = new HashMap<>();
 
             /** Behaviour of metadata fields that occur in at least one fragment.
              * Depending on the behaviour, we may or may not want to index these at the document level,
@@ -106,7 +107,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * Fields that are not in this map are not indexed at the fragment level.
              * (so fields set to fragments: ignore never end up here)
              */
-            Map<String, ConfigMetadataField.FragmentBehaviour> metadataFieldsFragmentBehaviour = new HashMap<>();
+            private final Map<String, FragmentBehaviour> metadataFieldsFragmentBehaviour = new HashMap<>();
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
@@ -266,8 +267,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 for (Map.Entry<String, Collection<String>> e: entries) {
                     // Determine fragment behaviour
                     // (if this field did not occur in a fragment, just index at the document level, that is, IGNORE as the default)
-                    ConfigMetadataField.FragmentBehaviour fragBehaviour = metadataFieldsFragmentBehaviour.getOrDefault(
-                            e.getKey(), ConfigMetadataField.FragmentBehaviour.DOC_VALUE);
+                    FragmentBehaviour fragBehaviour = metadataFieldsFragmentBehaviour.getOrDefault(
+                            e.getKey(), FragmentBehaviour.DOC_VALUE);
                     if (!atFragmentLevel && !fragBehaviour.indexAtDocLevel()) {
                         // Don't index this metadata field at the document level (because of configured fragment behaviour)
                         continue;
@@ -365,7 +366,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * payload when we find the end tags
              */
             private record OpenTagInfo(String name, int index, int position, int relationId,
-                                       Map<String, List<String>> attributes) {
+                                       Map<String, Collection<String>> attributes) {
             }
 
             /**
@@ -567,6 +568,20 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 inputFormat.indexSpecificDocument(getDocWriter(), data, documentPath, this, storeWithName);
             }
 
+            protected void indexFragment(int start, int end, Map<String, Collection<String>> metadata) {
+                // Add to the list of fragments for this annotated field.
+                this.fragsPerField.compute(currentAnnotatedField.name(),
+                        (k, v) -> {
+                            List<Fragment> fragments = v == null ? new ArrayList<>() : v;
+                            fragments.add(new Fragment(Span.between(start, end), metadata));
+                            return fragments;
+                });
+            }
+
+            protected void ensureFragmentBehaviour(String field, Function<String, FragmentBehaviour> defaultValueProvider) {
+                metadataFieldsFragmentBehaviour.computeIfAbsent(field, defaultValueProvider);
+            }
+
             /**
              * Index a specific document.
              *
@@ -687,7 +702,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                                 int docLength = docLengthsPerField.get(annotatedFieldName);
                                 Map<String, Collection<String>> valuesToInheritFromDoc = new HashMap<>();
                                 for (Map.Entry<String, Collection<String>> e: metadataFieldValues.entrySet()) {
-                                    ConfigMetadataField.FragmentBehaviour b = metadataFieldsFragmentBehaviour.getOrDefault(e.getKey(), ConfigMetadataField.FragmentBehaviour.DEFAULT);
+                                    FragmentBehaviour b = metadataFieldsFragmentBehaviour.getOrDefault(e.getKey(), FragmentBehaviour.DEFAULT);
                                     if (!b.inheritFromDocLevel()) {
                                         // Should explicitly not inherit to document level (e.g. doc and fragment may each have a separate pid)
                                         continue;
@@ -741,16 +756,20 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 }
             }
 
-            protected void inlineTag(String tagName, boolean isOpenTag, Map<String, List<String>> attributes) {
+            protected void inlineTag(String tagName, boolean isOpenTag, Map<String, Collection<String>> attributes,
+                    AnnotationType type) {
                 int currentPos = getCurrentTokenPosition();
                 AnnotationWriter relationsAnnot = tagsAnnotation();
                 if (isOpenTag) {
-                    int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes);
-                    // We'll remember the relationId assigned above, even though the payload will updated later, when we encounter
-                    // the closing tag. We have to use the same relationId in the updated payload, or it won't match the relationId
-                    // stored in the attribute terms (which get a payload that only contains the relation id, so we can match them
-                    // to their tag).
-                    int relationId = relationsAnnot.getRelationIdAtIndex(tagIndex < 0 ? -tagIndex : tagIndex);
+                    int tagIndex = -1, relationId = -1;
+                    if (type == AnnotationType.SPAN) {
+                        // We'll remember the relationId assigned above, even though the payload will updated later, when we encounter
+                        // the closing tag. We have to use the same relationId in the updated payload, or it won't match the relationId
+                        // stored in the attribute terms (which get a payload that only contains the relation id, so we can match them
+                        // to their tag).
+                        tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes);
+                        relationId = relationsAnnot.getRelationIdAtIndex(tagIndex < 0 ? -tagIndex : tagIndex);
+                    }
                     openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos, relationId, attributes));
                 } else {
                     // Add payload to start tag annotation indicating end position
@@ -760,18 +779,26 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     if (!openTag.name.equals(tagName))
                         throw new MalformedInputFile(
                                 "Close tag " + tagName + " found, but " + openTag.name + " expected");
-                    attributes = openTag.attributes;
-                    boolean maybeExtraInfo = attributes != null && !attributes.isEmpty();
-                    BytesRef payload = getPayloadCodec().inlineTagPayload(openTag.position, currentPos,
-                            openTag.relationId, maybeExtraInfo);
-                    int index = openTag.index;
-                    if (index < 0) {
-                        // Negative value means two terms were indexed (one with, one without attributes, for search performance)
-                        // and this is the index of the last term. Make sure we update both payloads.
-                        index = -index;
-                        relationsAnnot.setPayloadAtIndex(index - 1, payload);
+                    switch (type) {
+                        case SPAN -> {
+                            attributes = openTag.attributes;
+                            boolean maybeExtraInfo = attributes != null && !attributes.isEmpty();
+                            BytesRef payload = getPayloadCodec().inlineTagPayload(openTag.position, currentPos,
+                                    openTag.relationId, maybeExtraInfo);
+                            int index = openTag.index;
+                            if (index < 0) {
+                                // Negative value means two terms were indexed (one with, one without attributes, for search performance)
+                                // and this is the index of the last term. Make sure we update both payloads.
+                                index = -index;
+                                relationsAnnot.setPayloadAtIndex(index - 1, payload);
+                            }
+                            relationsAnnot.setPayloadAtIndex(index, payload);
+                        }
+                        case FRAGMENT -> {
+                            indexFragment(openTag.position, currentPos, openTag.attributes);
+                        }
+                        default -> throw new IllegalStateException("Inline tag " + tagName + " cannot have type " + type);
                     }
-                    relationsAnnot.setPayloadAtIndex(index, payload);
                 }
             }
 

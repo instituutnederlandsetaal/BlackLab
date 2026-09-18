@@ -3,7 +3,7 @@
     "fragments": {
       "contents": [
         {
-          "end": 9,
+          "end": 3,
           "metadata": {
             "author": [
               "Piet"
@@ -16,6 +16,39 @@
             ]
           },
           "start": 0
+        },
+        {
+          "end": 6,
+          "metadata": {
+            "author": [
+              "Piet"
+            ],
+            "ftype": [
+              "inline"
+            ],
+            "pid": [
+              "doc-01-frag-01"
+            ],
+            "year": [
+              "1900"
+            ]
+          },
+          "start": 3
+        },
+        {
+          "end": 9,
+          "metadata": {
+            "author": [
+              "Piet"
+            ],
+            "pid": [
+              "doc-01-frag-01"
+            ],
+            "year": [
+              "1900"
+            ]
+          },
+          "start": 6
         },
         {
           "end": 17,

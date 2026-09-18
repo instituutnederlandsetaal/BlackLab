@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,7 @@ public class InputFormatTypeCoNLLU extends InputFormatTypeTabularBase {
                 boolean inSentence = false;
 
                 // For each token position
-                Map<String, List<String>> sentenceAttr = new LinkedHashMap<>();
+                Map<String, Collection<String>> sentenceAttr = new LinkedHashMap<>();
                 int sentenceStartPosition = -1;
                 lineNumber = COL_ID;
                 while (true) {
@@ -160,7 +161,7 @@ public class InputFormatTypeCoNLLU extends InputFormatTypeTabularBase {
                     if (line.isEmpty()) {
                         if (inSentence) {
                             // Empty line ends sentence
-                            inlineTag("s", false, null);
+                            inlineTag("s", false, null, AnnotationType.SPAN);
                             inSentence = false;
                         }
                         continue; // skip empty lines
@@ -195,7 +196,7 @@ public class InputFormatTypeCoNLLU extends InputFormatTypeTabularBase {
 
                     if (!inSentence) {
                         // We're not in a sentence yet and encountered a value line; start the sentence now.
-                        inlineTag("s", true, sentenceAttr);
+                        inlineTag("s", true, sentenceAttr, AnnotationType.SPAN);
                         sentenceAttr.clear();
                         inSentence = true;
                         sentenceStartPosition = getCurrentTokenPosition();

@@ -320,7 +320,7 @@ public class InputFormatTypeExample extends InputFormatTypeBase {
                     String spanType = parameters[0];
                     int spanStart = Integer.parseInt(parameters[1]);
                     int spanEnd = Integer.parseInt(parameters[2]);   // end position (exclusive)
-                    Map<String, List<String>> spanAttributes = new HashMap<>();
+                    Map<String, Collection<String>> spanAttributes = new HashMap<>();
                     for (int i = 3; i < parameters.length; i += 2) {
                         String attName = parameters[i];
                         String attValue = parameters[i + 1];

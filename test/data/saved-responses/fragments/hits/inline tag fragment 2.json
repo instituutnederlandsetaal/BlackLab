@@ -1,0 +1,111 @@
+{
+  "docInfos": {
+    "doc-02": {
+      "mayView": true,
+      "metadata": {
+        "fromInputFile": [
+          "fragments2.xml"
+        ],
+        "pid": [
+          "doc-02"
+        ],
+        "title": [
+          "Another test doc"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 32
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "enterprise"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "docPid": "doc-02",
+      "end": 7,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "starship"
+        ]
+      },
+      "start": 6
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "filter": "author:majel",
+      "indexname": "fragments",
+      "op": "hits",
+      "patt": "\"starship\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"starship\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"starship\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"starship\"",
+            "type": "string",
+            "value": "starship"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

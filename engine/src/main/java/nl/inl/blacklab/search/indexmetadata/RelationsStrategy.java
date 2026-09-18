@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -50,7 +51,7 @@ public interface RelationsStrategy {
         };
     }
 
-    int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes);
+    int getRelationId(AnnotationWriter writer, int endPos, Map<String, Collection<String>> attributes);
 
     /**
      * Get a query to match the given relation type and attributes.
@@ -123,7 +124,7 @@ public interface RelationsStrategy {
      *
      * (used in AnnotationWriter)
      */
-    void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
+    void indexRelationTerms(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
 
 
     // SEARCH

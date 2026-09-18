@@ -1,5 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
@@ -15,6 +18,11 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
  * Configuration for an XML element occurring in an annotated field.
  */
 public class ConfigInlineTag {
+
+    /**
+     * The type of inline tag (e.g. "span" or "fragment", other values are errors)
+     */
+    private AnnotationType type = AnnotationType.SPAN;
 
     /** XPath to the inline tag, relative to the container element */
     private String path;
@@ -46,6 +54,14 @@ public class ConfigInlineTag {
     @JsonIgnore
     private boolean defaultIndexAttributes = true;
 
+    /** containerPath for the metadata to capture, relative to current element (for type=FRAGMENT only!) */
+    private String metadataContainerPath = ".";
+
+    /** Metadata (for type=FRAGMENT only!) */
+    @JsonDeserialize(using = ConfigInputFormat.MetadataDeserializer.class)
+    @JsonPropertyDescription("Block(s) that configure how to index metadata fields.")
+    private final List<ConfigMetadataBlock> metadata = new ArrayList<>();
+
     public ConfigInlineTag() {
     }
 
@@ -55,6 +71,18 @@ public class ConfigInlineTag {
     }
 
     void validate(InputFormatMessages messages) {
+        if (type != AnnotationType.SPAN && type != AnnotationType.FRAGMENT)
+            messages.error("inline tag type must be 'span' or 'fragment'");
+        if (type == AnnotationType.FRAGMENT) {
+            if (!attributes.isEmpty())
+                messages.error("Fragments cannot have attributes.");
+        } else {
+            // Span
+            if (!metadata.isEmpty())
+                messages.error("metadata can only be used for inline tags of type 'fragment'");
+            if (!metadataContainerPath.equals("."))
+                messages.error("metadataContainerPath can only be used for inline tags of type 'fragment'");
+        }
         messages.mustHave("inline tag", path, "path");
         for (ConfigAttribute ea: attributes.values()) {
             ea.validate(messages);
@@ -63,6 +91,14 @@ public class ConfigInlineTag {
 
     public ConfigInlineTag copy() {
         return new ConfigInlineTag(path, displayAs);
+    }
+
+    public AnnotationType getType() {
+        return type;
+    }
+
+    public void setType(AnnotationType type) {
+        this.type = type;
     }
 
     public String getPath() {
@@ -129,5 +165,17 @@ public class ConfigInlineTag {
 
     public void setExtraAttributes(Object v) {
         throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
+    }
+
+    public List<ConfigMetadataBlock> getMetadata() {
+        return metadata;
+    }
+
+    public String getMetadataContainerPath() {
+        return metadataContainerPath;
+    }
+
+    public void setMetadataContainerPath(String metadataContainerPath) {
+        this.metadataContainerPath = metadataContainerPath;
     }
 }

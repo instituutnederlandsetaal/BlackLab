@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,12 +72,12 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
      * @param group the attributes part of the tag
      * @return attributes map
      */
-    private static Map<String, List<String>> getAttr(String group) {
+    private static Map<String, Collection<String>> getAttr(String group) {
         if (group == null)
             return Collections.emptyMap();
         String strAttrDef = StringUtil.trimWhitespace(group);
         Matcher m = REGEX_ATTR.matcher(strAttrDef);
-        Map<String, List<String>> attributes = new LinkedHashMap<>();
+        Map<String, Collection<String>> attributes = new LinkedHashMap<>();
         while (m.find()) {
             String key = m.group(1);
             String value = m.group(2);
@@ -231,7 +232,7 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
                                         throw new MalformedInputFile("Close tag must not also end with /: " + tagName);
                                     if (selfClosing)
                                         rest = rest.substring(0, rest.length() - 1);
-                                    Map<String, List<String>> attributes = getAttr(rest);
+                                    Map<String, Collection<String>> attributes = getAttr(rest);
 
                                     if (lookForDocumentTags && tagName.equals(config.getDocumentPath())) {
                                         // Document tag.
@@ -244,7 +245,7 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
                                             // Start a new document and add attributes as metadata fields
                                             inDocument = true;
                                             startDocument();
-                                            for (Map.Entry<String, List<String>> e : attributes.entrySet()) {
+                                            for (Map.Entry<String, Collection<String>> e : attributes.entrySet()) {
                                                 for (String value: e.getValue()) {
                                                     value = processMetadataValue(e.getKey(), value);
                                                     addMetadataField(e.getKey(), value);
@@ -260,9 +261,9 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
                                             warn("Glue tag has attributes: " + attributes);
                                         setPreventNextDefaultPunctuation();
                                     } else if (inDocument) {
-                                        inlineTag(tagName, isOpenTag, attributes);
+                                        inlineTag(tagName, isOpenTag, attributes, AnnotationType.SPAN);
                                         if (selfClosing)
-                                            inlineTag(tagName, false, null);
+                                            inlineTag(tagName, false, null, AnnotationType.SPAN);
                                     }
                                     continue;
                                 }
