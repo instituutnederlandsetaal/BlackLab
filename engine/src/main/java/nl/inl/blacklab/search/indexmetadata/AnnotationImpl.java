@@ -250,8 +250,8 @@ public class AnnotationImpl implements Annotation, Freezable {
     }
 
     public void setOffsetsMatchSensitivity(MatchSensitivity offsetsAlternative) {
-        AnnotationSensitivity newValue = sensitivity(offsetsAlternative);
-        if (offsetsSensitivity == null || !offsetsSensitivity.equals(newValue)) {
+        AnnotationSensitivity newValue = offsetsAlternative == null ? null : sensitivity(offsetsAlternative);
+        if (!Objects.equals(offsetsSensitivity, newValue)) {
             ensureNotFrozen();
             offsetsSensitivity = newValue;
             offsetsMatchSensitivity = offsetsAlternative;

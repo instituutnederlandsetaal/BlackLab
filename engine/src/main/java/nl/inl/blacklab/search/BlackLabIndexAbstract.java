@@ -59,6 +59,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.FreqListCache;
@@ -218,6 +219,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (!indexMode && createNewIndex)
                 throw new IllegalArgumentException("Cannot create new index, not in index mode");
 
+            // CREATE_OR_APPEND can also create an index when no previous index exists.
+            if (reader == null && indexMode && !createNewIndex && !BlackLabIndex.isIndex(indexDir))
+                createNewIndex = true;
+            if (createNewIndex && !indexObjectFactory().supportsSourceRangeVectors())
+                throw new InvalidIndex("Index backend does not support source-range index creation");
+
             if (reader != null) {
                 // Only create analyzer if not in solr mode.
                 // indexModule == true && indexReader != null only ever happens in solr mode
@@ -236,7 +243,24 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = getIndexMetadata(createNewIndex, config);
+            try {
+                indexMetadata = getIndexMetadata(createNewIndex, config);
+            } catch (RuntimeException e) {
+                // Metadata rejection occurs before registration. Release only resources we opened.
+                if (shouldCloseIndex) {
+                    try {
+                        try {
+                            this.reader.close();
+                        } finally {
+                            if (indexWriter != null)
+                                indexWriter.rollback();
+                        }
+                    } catch (IOException closeError) {
+                        e.addSuppressed(closeError);
+                    }
+                }
+                throw e;
+            }
             if (!indexMode)
                 indexMetadata.freeze();
             if (traceIndexOpening())
@@ -272,6 +296,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
         if (indexMode) {
+            if (!createNewIndex) {
+                try (IndexReader existing = openIndexForReading(indexLocation, false)) {
+                    IndexMetadataImpl.validateSourceRangeEncoding(existing);
+                }
+            }
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
             IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);

@@ -21,6 +21,14 @@ public interface BLIndexObjectFactory {
     BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex,
             RelationsStrategy relationsStrategy);
 
+    default boolean supportsSourceRangeVectors() {
+        return false;
+    }
+
+    default BLFieldType fieldTypeSourceRanges() {
+        throw new UnsupportedOperationException("Source-range vectors are not supported by this index backend");
+    }
+
     BLFieldType fieldTypeIndexMetadataMarker();
 
     BLIndexWriterProxy indexWriterProxy(IndexWriter luceneIndexWriter, BlackLabIndexWriter indexWriter);

@@ -58,13 +58,11 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
      * @return true if it's a relations field
      */
     public static boolean isRelationsField(FieldInfo fieldInfo) {
-        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
-        return nameComponents.length > 1 && nameComponents[1] != null && nameComponents[1].equals(
-                AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
+        return AnnotatedFieldNameUtil.isRelationsField(fieldInfo.name);
     }
 
-    /** A list of stored fields that doesn't include content store fields. */
-    private final Set<String> allExceptContentStoreFields;
+    /** Small stored fields included in ordinary document loads. */
+    private final Set<String> ordinaryStoredFields;
 
     /** Relation index/search strategy for this index.
      * ("all encoded into one term" / "type and attributes in separate terms" / ...)
@@ -120,19 +118,17 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
             }
         }
 
-        // Determine the list of all fields in the index, but skip fields that
-        // represent a content store as they contain very large values (i.e. the
-        // whole input document) we don't generally want returned when requesting
-        // a Document)
-        allExceptContentStoreFields = new HashSet<>();
+        // Avoid loading large stored values unless their specialized reader requests them.
+        ordinaryStoredFields = new HashSet<>();
         boolean anyFieldsFounds = false; // is this a completely empty index..? (except for the metadata doc)
         for (LeafReaderContext lrc: reader().leaves()) {
             boolean relStratSet = false;
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
 
-                // Keep a list of non-content store fields
-                if (!BLFieldTypeLucene.isContentStoreField(fi))
-                    allExceptContentStoreFields.add(fi.name);
+                // Keep a list of fields suitable for ordinary document loads.
+                if (!BLFieldTypeLucene.isContentStoreField(fi) &&
+                        !AnnotatedFieldNameUtil.isSourceUnitsField(fi.name))
+                    ordinaryStoredFields.add(fi.name);
 
                 // Ignore:
                 // - special fields that only exist in the metadata document
@@ -244,7 +240,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
             if (includeContentStores) {
                 return reader().storedFields().document(docId);
             } else {
-                return reader().storedFields().document(docId, allExceptContentStoreFields);
+                return reader().storedFields().document(docId, ordinaryStoredFields);
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);

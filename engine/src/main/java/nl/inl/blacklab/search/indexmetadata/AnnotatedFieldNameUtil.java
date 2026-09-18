@@ -15,6 +15,12 @@ public final class AnnotatedFieldNameUtil {
      */
     public static final String BOOKKEEP_LENGTH_TOKENS = "length_tokens";
 
+    public static final String BOOKKEEP_SOURCE_RANGES = "source_ranges";
+
+    public static final String BOOKKEEP_SOURCE_STATUS = "source_status";
+
+    public static final String BOOKKEEP_SOURCE_UNITS = "source_units";
+
     public static final String RELATIONS_ANNOT_NAME = "_relation";
 
     /** Annotation name for the spaces and punctuation between words */
@@ -68,6 +74,38 @@ public final class AnnotatedFieldNameUtil {
 
     public static String lengthTokensField(String fieldName) {
         return bookkeepingField(fieldName, BOOKKEEP_LENGTH_TOKENS);
+    }
+
+    public static String sourceRangesField(String fieldName) {
+        return bookkeepingField(fieldName, BOOKKEEP_SOURCE_RANGES);
+    }
+
+    /** Source status is shared by all parallel versions of a document. */
+    public static String sourceStatusField(String fieldName) {
+        return bookkeepingField(baseFromParallelFieldName(fieldName), BOOKKEEP_SOURCE_STATUS);
+    }
+
+    public static String sourceUnitsField(String fieldName) {
+        return bookkeepingField(fieldName, BOOKKEEP_SOURCE_UNITS);
+    }
+
+    public static boolean isSourceUnitsField(String luceneFieldName) {
+        return luceneFieldName.endsWith(BOOKKEEPING_SEP + BOOKKEEP_SOURCE_UNITS);
+    }
+
+    public static boolean isRelationsField(String luceneFieldName) {
+        String[] nameComponents = getNameComponents(luceneFieldName);
+        return nameComponents.length > 1 && RELATIONS_ANNOT_NAME.equals(nameComponents[1]);
+    }
+
+    public static boolean isSourceBookkeepingField(String luceneFieldName) {
+        int separator = luceneFieldName.lastIndexOf(BOOKKEEPING_SEP);
+        if (separator < 0)
+            return false;
+        String bookkeepingName = luceneFieldName.substring(separator + BOOKKEEPING_SEP_LEN);
+        return BOOKKEEP_SOURCE_RANGES.equals(bookkeepingName) ||
+                BOOKKEEP_SOURCE_STATUS.equals(bookkeepingName) ||
+                BOOKKEEP_SOURCE_UNITS.equals(bookkeepingName);
     }
 
     /**

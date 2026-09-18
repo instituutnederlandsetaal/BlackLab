@@ -3,8 +3,10 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +18,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -129,6 +132,7 @@ class IndexerImpl implements DocWriter, Indexer {
         // Make sure we have a supported format, and make sure a default format is recorded in the metadata.
         try {
             this.formatIdentifier = determineFormat(indexWriter.name(), formatIdentifier, indexWriter.metadata().documentFormat());
+            validateIndexFormat(this.formatIdentifier);
             BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
         } catch (DocumentFormatNotFound e) {
             indexWriter.close();
@@ -136,6 +140,30 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         initMetadataFieldTypes();
+    }
+
+    /** Check once when selecting a format, before files or document metadata are written. */
+    private void validateIndexFormat(String formatIdentifier) {
+        boolean sourceRanges = indexWriter.metadata().usesSourceRangeVectors();
+        if (sourceRanges && !indexWriter.indexObjectFactory().supportsSourceRangeVectors())
+            throw new InvalidInputFormatConfig("Index backend does not support source-range vectors");
+        validateFormatGraph(formatIdentifier, sourceRanges, new HashSet<>());
+    }
+
+    private static void validateFormatGraph(String formatIdentifier, boolean sourceRanges, Set<String> visited) {
+        if (!visited.add(formatIdentifier))
+            return;
+        InputFormatInfo format = DocumentFormats.getFormat(formatIdentifier).orElseThrow(() ->
+                new InvalidInputFormatConfig("Unknown linked input format " + formatIdentifier));
+        if (sourceRanges && !format.getInputFormat().supportsSourceRangeVectors())
+            throw new InvalidInputFormatConfig("Input format " + formatIdentifier +
+                    " does not support source-range storage and document status; migrate the input-format plugin " +
+                    "before using it with a new index");
+        ConfigInputFormat config = format.getConfig();
+        if (config == null)
+            return;
+        for (var linked: config.getLinkedDocuments().values())
+            validateFormatGraph(linked.getInputFormat(), sourceRanges, visited);
     }
 
     /**
@@ -218,7 +246,9 @@ class IndexerImpl implements DocWriter, Indexer {
             throw new DocumentFormatNotFound("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
                     + this.indexWriter.name() + "; " + formatError(formatIdentifier));
 
+        validateIndexFormat(formatIdentifier);
         this.formatIdentifier = formatIdentifier;
+        inputFormat = null;
     }
 
     @Override

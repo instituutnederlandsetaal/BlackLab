@@ -516,7 +516,7 @@ public interface BlackLabIndex extends AutoCloseable {
     /**
      * Get the Lucene document from the index.
      *
-     * Skips content store fields.
+     * Skips large internal stored fields such as content stores and source-unit records.
      *
      * @param docId document id
      * @return Lucene document
@@ -529,7 +529,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * Get the Lucene document from the index.
      *
      * @param docId document id
-     * @param includeContentStores include content store fields or not?
+     * @param includeContentStores include all stored fields, including content stores and source-unit records?
      * @return Lucene document
      */
     Document luceneDoc(int docId, boolean includeContentStores);

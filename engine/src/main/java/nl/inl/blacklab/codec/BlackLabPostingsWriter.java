@@ -284,14 +284,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
     /** Is this the field in which we should store relation info?
      *  E.g. contents%_relation@s */
     private static boolean isStoreRelationInfo(String luceneField) {
-        boolean storeRelationInfo = false;
-        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-        if (nameComponents.length > 1 && nameComponents[1].equals(
-                AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
-            // Yes, store relation info.
-            storeRelationInfo = true;
-        }
-        return storeRelationInfo;
+        return AnnotatedFieldNameUtil.isRelationsField(luceneField);
     }
 
     IndexOutput createOutput(String ext) throws IOException {

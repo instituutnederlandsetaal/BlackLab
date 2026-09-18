@@ -89,12 +89,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             IndexMetadataImpl metadata;
             if (docId == null) {
                 // No metadata document found. Instantiate default.
-                metadata = new IndexMetadataImpl(index, null);
+                metadata = new IndexMetadataImpl(index, null, false);
             } else {
                 // Load and deserialize metadata document.
-                String json = MetadataDocument.getMetadataJson(index.reader(), docId);
-                metadata = Json.getJaxbReader().readValue(
-                        new StringReader(json), IndexMetadataImpl.class);
+                metadata = readMetadata(index.reader(), docId);
+                metadata.sourceRangeEncoding();
                 metadata.fixAfterDeserialization(index, docId);
             }
             return metadata;
@@ -103,8 +102,20 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
     }
 
+    private static IndexMetadataImpl readMetadata(IndexReader reader, int docId) throws IOException {
+        return Json.getJaxbReader().readValue(new StringReader(MetadataDocument.getMetadataJson(reader, docId)),
+                IndexMetadataImpl.class);
+    }
+
+    /** Validate the recorded codec before an append writer can modify the index. */
+    public static void validateSourceRangeEncoding(IndexReader reader) throws IOException {
+        Integer docId = MetadataDocument.getMetadataDocId(reader);
+        if (docId != null)
+            readMetadata(reader, docId).sourceRangeEncoding();
+    }
+
     public static IndexMetadataImpl create(BlackLabIndex index, ConfigInputFormat config) {
-        return new IndexMetadataImpl(index, config);
+        return new IndexMetadataImpl(index, config, true);
     }
 
     /** Is this one of the special fields that only occur in the index metadata document? */
@@ -334,7 +345,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *
      * Either based on config if supplied, or populated with default values.
      */
-    private IndexMetadataImpl(BlackLabIndex index, ConfigInputFormat config) {
+    private IndexMetadataImpl(BlackLabIndex index, ConfigInputFormat config, boolean newIndex) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(index, createMetadataFieldValuesFactory());
         metadataFields.setTopLevelCustom(custom); // for special fields, metadata groups
@@ -401,7 +412,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
         // Add annotated field info
         for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
-            annotatedFields.addFromConfig(f);
+            annotatedFields.addFromConfig(f, !usesSourceRangeVectors());
         }
 
         // Also (recursively) add metadata and annotated field config from any linked
@@ -627,8 +638,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             for (String suffix: annotationWriter.sensitivitySuffixes()) {
                 annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
-            if (annotationWriter.includeOffsets())
-                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+            annotation.setOffsetsMatchSensitivity(annotationWriter.includeOffsets() ?
+                    MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()) : null);
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotation.createSensitivities(annotationWriter.getSensitivitySetting());
             //annotation.setOffsetsSensitivity(annotation.mainSensitivity().sensitivity());

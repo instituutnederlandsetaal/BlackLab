@@ -79,6 +79,11 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
             return outputIndexer;
         }
 
+        @Override
+        public boolean supportsSourceRangeVectors() {
+            return outputIndexer.supportsSourceRangeVectors();
+        }
+
         protected class DocConvertAndTag extends DocBase {
 
             private FileReference file;

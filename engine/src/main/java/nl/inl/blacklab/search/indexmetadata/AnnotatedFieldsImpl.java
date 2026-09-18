@@ -166,6 +166,11 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
     @Override
     public void addFromConfig(ConfigAnnotatedField configField) {
+        addFromConfig(configField, !index.metadata().usesSourceRangeVectors());
+    }
+
+    // During index creation, metadata has not been attached to the index yet.
+    void addFromConfig(ConfigAnnotatedField configField, boolean nativeOffsets) {
         AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(index, configField.getName());
         annotatedField.putCustom("displayName", configField.getDisplayName());
         annotatedField.putCustom("description", configField.getDescription());
@@ -180,7 +185,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         for (ConfigAnnotation configAnnot: configField.getAnnotations()) {
             if (configAnnot.isForEach())
                 continue;
-            hasOffsets = isFirstAnnotation; // first annotation gets offsets
+            hasOffsets = nativeOffsets && isFirstAnnotation;
             addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
             isFirstAnnotation = false;
             for (ConfigAnnotation subAnnot: configAnnot.getSubannotations()) {
@@ -192,7 +197,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
             for (ConfigAnnotation configAnnot: standoff.getAnnotations()) {
                 if (configAnnot.isForEach())
                     continue;
-                hasOffsets = isFirstAnnotation; // first annotation gets offsets
+                hasOffsets = nativeOffsets && isFirstAnnotation;
                 addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
                 isFirstAnnotation = false;
             }

@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.SourceUnitCodec;
 
 /**
  * An annotated field is like a Lucene field, but in addition to its "normal"
@@ -43,6 +44,11 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
  */
 public class AnnotatedFieldWriter {
 
+    public enum TokenOffsetStorage {
+        NATIVE_OFFSETS,
+        SOURCE_RANGE_VECTORS
+    }
+
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
 
     public static final String MSG_IS_DISCOURAGED_REASON = "' is discouraged (field/annotation names should be valid XML element names)";
@@ -55,6 +61,8 @@ public class AnnotatedFieldWriter {
 
     private MutableIntList end = new IntArrayList();
 
+    private MutableIntList sourceUnits;
+
     private final String fieldName;
 
     private final AnnotationWriter mainAnnotation;
@@ -64,6 +72,10 @@ public class AnnotatedFieldWriter {
     private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
     private final boolean needsPrimaryValuePayloads;
+
+    private final boolean sourceRangeVectors;
+
+    private int realTokenCount;
 
     private AnnotatedField field;
 
@@ -93,20 +105,31 @@ public class AnnotatedFieldWriter {
      */
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads, String defaultSearchAnnotation) {
+        this(docWriter, name, mainAnnotationName, sensitivity, docWriter.metadata().usesSourceRangeVectors() ?
+                        TokenOffsetStorage.SOURCE_RANGE_VECTORS : TokenOffsetStorage.NATIVE_OFFSETS,
+                mainPropHasPayloads, needsPrimaryValuePayloads, defaultSearchAnnotation);
+    }
+
+    /** Construct a writer with explicit control over token source-range storage. */
+    public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName,
+            AnnotationSensitivities sensitivity, TokenOffsetStorage tokenOffsetStorage, boolean mainPropHasPayloads,
+            boolean needsPrimaryValuePayloads, String defaultSearchAnnotation) {
         this.docWriter = docWriter;
         relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
-        boolean includeOffsets = true;
         fieldName = name;
         this.needsPrimaryValuePayloads = needsPrimaryValuePayloads;
-        mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets,
+        sourceRangeVectors = tokenOffsetStorage == TokenOffsetStorage.SOURCE_RANGE_VECTORS;
+        if (sourceRangeVectors && !docWriter.indexObjectFactory().supportsSourceRangeVectors())
+            throw new UnsupportedOperationException("Index backend does not support source-range vectors");
+        mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, !sourceRangeVectors,
                 mainPropHasPayloads, needsPrimaryValuePayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
         this.defaultSearchAnnotation = defaultSearchAnnotation == null ? mainAnnotationName : defaultSearchAnnotation;
     }
 
     public int numberOfTokens() {
-        return start.size();
+        return sourceRangeVectors ? realTokenCount + 1 : start.size();
     }
 
     public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean includePayloads,
@@ -127,26 +150,53 @@ public class AnnotatedFieldWriter {
      * fields in the meantime, so our character position is unavailable.
      */
     public void addFinalStartEndChars() {
-        addStartChar(start.isEmpty() ? 0 : start.get(start.size() - 1));
-        addEndChar(end.isEmpty() ? 0 : end.get(end.size() - 1));
+        if (!sourceRangeVectors) {
+            start.add(start.isEmpty() ? 0 : start.get(start.size() - 1));
+            end.add(end.isEmpty() ? 0 : end.get(end.size() - 1));
+        }
     }
 
     public void addStartChar(int startChar) {
-        assert start.isEmpty() || startChar >= start.get(start.size() - 1);
+        assert sourceRangeVectors || start.isEmpty() || startChar >= start.get(start.size() - 1);
         start.add(startChar);
     }
 
     public void addEndChar(int endChar) {
-        //assert end.isEmpty() || endChar >= end.get(end.size() - 1);
-
-        // Nested word tags can cause this... how to handle this gracefully?
-        if (!end.isEmpty() && endChar < end.get(end.size() - 1))
+        // Nested word tags can cause decreasing legacy ends, which native Lucene offsets cannot represent.
+        if (!sourceRangeVectors && !end.isEmpty() && endChar < end.get(end.size() - 1))
             endChar = end.get(end.size() - 1);
 
         end.add(endChar);
+        if (sourceRangeVectors)
+            realTokenCount++;
+    }
+
+    public void addSourceUnit(int sourceStart, int sourceEnd, int tokenEnd) {
+        assert sourceRangeVectors;
+        assert sourceUnits != null;
+        sourceUnits.add(sourceStart);
+        sourceUnits.add(sourceEnd);
+        sourceUnits.add(tokenEnd);
+    }
+
+    public void enableSourceUnits() {
+        assert sourceRangeVectors;
+        if (sourceUnits == null)
+            sourceUnits = new IntArrayList();
     }
 
     public void addToDoc(BLInputDocument doc) {
+        if (sourceRangeVectors) {
+            if (start.size() != realTokenCount || end.size() != realTokenCount)
+                throw new IllegalStateException("Source range count does not match real token count for field " + fieldName);
+            if (realTokenCount > 0) {
+                doc.addAnnotationField(AnnotatedFieldNameUtil.sourceRangesField(fieldName),
+                        new TokenStreamSourceRanges(start, end), docWriter.indexObjectFactory().fieldTypeSourceRanges());
+            }
+            if (sourceUnits != null)
+                doc.addStoredField(AnnotatedFieldNameUtil.sourceUnitsField(fieldName),
+                        SourceUnitCodec.encode(sourceUnits));
+        }
         for (AnnotationWriter p : annotations.values()) {
             p.addToDoc(doc, fieldName, start, end);
         }
@@ -169,6 +219,8 @@ public class AnnotatedFieldWriter {
         // Don't reuse buffers, reclaim memory so we don't run out
         start = new IntArrayList();
         end = new IntArrayList();
+        sourceUnits = null;
+        realTokenCount = 0;
 
         for (AnnotationWriter p : annotations.values()) {
             p.clear();

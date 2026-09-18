@@ -74,6 +74,10 @@ public interface BLInputDocument {
 
     void addStoredField(String name, String value);
 
+    default void addStoredField(String name, byte[] value) {
+        throw new UnsupportedOperationException("Binary stored fields are not supported by this index backend");
+    }
+
     void addAnnotationField(String name, TokenStream tokenStream, BLFieldType fieldType);
 
     default void addStoredNumericField(String name, int value, boolean addDocValue) {

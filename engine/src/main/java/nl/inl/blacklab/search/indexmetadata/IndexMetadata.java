@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.File;
 import java.util.Map;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.results.CorpusSize;
 
 /**
@@ -25,6 +26,23 @@ public interface IndexMetadata extends Freezable {
     }
 
     String indexFlag(String name);
+
+    /**
+     * Return the exact token source-range encoding fixed for this index, or {@code null} for legacy native offsets.
+     * Unknown nonempty values are never interpreted as legacy data.
+     */
+    default String sourceRangeEncoding() {
+        String encoding = indexFlag(SourceRangeEncoding.INDEX_FLAG);
+        if (encoding.isEmpty())
+            return null;
+        if (!SourceRangeEncoding.VERSION.equals(encoding))
+            throw new InvalidIndex("Unsupported token source-range encoding: " + encoding);
+        return encoding;
+    }
+
+    default boolean usesSourceRangeVectors() {
+        return sourceRangeEncoding() != null;
+    }
 
     AnnotatedFields annotatedFields();
 

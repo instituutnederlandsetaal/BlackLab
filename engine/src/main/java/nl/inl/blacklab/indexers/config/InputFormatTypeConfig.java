@@ -116,6 +116,11 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                 super(docWriter, file);
             }
 
+            @Override
+            protected boolean sourceIsXml() {
+                return config.getFileType() == ConfigInputFormat.FileType.XML;
+            }
+
             boolean inited = false;
 
             protected void ensureInitialized() {
@@ -354,6 +359,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                     return;
                 }
                 final String indexAsName = optTranslateMetadataFieldName(name);
+                ensureMetadataFieldNameAvailable(indexAsName);
                 value = StringUtil.trimWhitespace(value);
                 if (!value.isEmpty()) {
                     metadataFieldValues.computeIfAbsent(indexAsName, __ -> {

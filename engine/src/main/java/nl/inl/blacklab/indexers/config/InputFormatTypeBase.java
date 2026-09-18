@@ -38,11 +38,13 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.SourceRangeEncoding;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.StringUtil;
@@ -52,6 +54,17 @@ import nl.inl.util.fileprocessor.FileReference;
 public abstract class InputFormatTypeBase extends InputFormatType {
 
     protected static final Logger logger = LogManager.getLogger(InputFormatTypeBase.class);
+
+    static void validateLinkedSourceSyntax(boolean sourceRangeVectors, Doc outer, Doc linked) {
+        if (!sourceRangeVectors)
+            return;
+        if (!(outer instanceof InputFormatBase.DocBase) || !(linked instanceof InputFormatBase.DocBase))
+            throw new InvalidInputFormatConfig("Cannot determine linked source syntax for a source-range document");
+        if (((InputFormatBase.DocBase) outer).sourceIsXml() !=
+                ((InputFormatBase.DocBase) linked).sourceIsXml())
+            throw new InvalidInputFormatConfig("Source-range documents cannot combine linked XML and non-XML " +
+                    "resources in one Lucene document");
+    }
 
     /** A document in this format currently being indexed. Contains all the variable state. */
     public interface Doc extends AutoCloseable {
@@ -68,9 +81,16 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
     protected abstract static class InputFormatBase implements InputFormat {
 
+        @Override
+        public boolean supportsSourceRangeVectors() {
+            return true;
+        }
+
         protected abstract class DocBase implements Doc {
 
             private final DocWriter docWriter;
+
+            private final boolean sourceRangeVectors;
 
             private final RelationsStrategy relationsStrategy;
 
@@ -110,6 +130,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
+                sourceRangeVectors = docWriter != null && docWriter.metadata().usesSourceRangeVectors();
                 this.relationsStrategy =
                         docWriter == null/*test*/ ? RelationsStrategy.forNewIndex() : docWriter.getRelationsStrategy();
                 resetStats();
@@ -123,6 +144,10 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              */
             protected DocWriter getDocWriter() {
                 return docWriter;
+            }
+
+            protected boolean usesSourceRangeVectors() {
+                return sourceRangeVectors;
             }
 
             protected void setDocument(FileReference file) {
@@ -191,12 +216,19 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
                     return;
                 }
+                ensureMetadataFieldNameAvailable(name);
 
                 value = StringUtil.trimWhitespace(value);
                 if (!value.isEmpty()) {
                     metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
                     IndexMetadataWriter indexMetadata = getDocWriter().metadata();
                     indexMetadata.registerMetadataField(name);
+                }
+            }
+
+            protected void ensureMetadataFieldNameAvailable(String name) {
+                if (AnnotatedFieldNameUtil.isSourceBookkeepingField(name)) {
+                    throw new InvalidInputFormatConfig("Metadata field name is reserved by BlackLab: " + name);
                 }
             }
 
@@ -632,8 +664,22 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     getDocWriter().listener().documentStarted(documentName);
             }
 
+            /** Whether the retained source for this document should be interpreted as XML. */
+            protected boolean sourceIsXml() {
+                return false;
+            }
+
             protected void endDocument() {
                 Map<String, Integer> docLengthsPerField = new HashMap<>();
+
+                AnnotatedFieldWriter mainField = getMainAnnotatedField();
+                // Use the persisted index main field: a later format may declare these fields in another order.
+                if (!indexingIntoExistingDoc && mainField != null && sourceRangeVectors) {
+                    int flags = SourceRangeEncoding.DOC_FLAG_SOURCE_RANGE_VECTORS |
+                            (sourceIsXml() ? SourceRangeEncoding.DOC_FLAG_XML : 0);
+                    currentDoc.addStoredNumericField(AnnotatedFieldNameUtil.sourceStatusField(
+                            getDocWriter().metadata().mainAnnotatedField().name()), flags, false);
+                }
                 for (AnnotatedFieldWriter field: getAnnotatedFields().values()) {
                     AnnotationWriter propMain = field.mainAnnotation();
 
@@ -1030,6 +1076,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
         public void indexSpecificDocument(DocWriter writer, FileReference file, String documentPath, Doc linkingDoc,
                 String storeWithName) {
             try (Doc doc = createDoc(writer, file)) {
+                validateLinkedSourceSyntax(writer.metadata().usesSourceRangeVectors(), linkingDoc, doc);
                 doc.indexSpecificDocument(documentPath, linkingDoc, storeWithName);
             }
         }
