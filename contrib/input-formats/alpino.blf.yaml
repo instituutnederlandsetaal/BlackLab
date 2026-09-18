@@ -1,0 +1,129 @@
+# Alpino dependency trees. Each <alpino_ds> is one sentence/document.
+# Requires a source-range-vector index: XPath yield order defines token order.
+version: 2
+
+displayName: Alpino XML
+description: Alpino syntactic trees, indexed as one sentence per document.
+helpUrl: https://www.let.rug.nl/vannoord/alp/Alpino/
+
+type: content
+fileType: xml
+
+documentPath: //alpino_ds
+
+annotatedFields:
+  contents:
+    displayName: Contents
+    description: The tokenized Alpino sentence.
+
+    # Only terminal nodes contain a surface form. Non-terminal nodes describe
+    # syntactic constituents and must not be indexed as tokens.
+    # Retrieve the complete sentence; index its terminals in numeric @begin order.
+    containerPath: .
+    wordPath: >-
+      sort(.//node[@word], (), function($w) { xs:integer(exactly-one($w/@begin)) })
+    tokenIdPath: "@id"
+    punctBeforePath: "if (empty($previousWord)) then '' else ' '"
+
+    annotations:
+      # The first annotation is the main annotation.
+      - name: word
+        displayName: Word
+        valuePath: "@word"
+        sensitivity: sensitive_insensitive
+
+      - name: lemma
+        displayName: Lemma
+        valuePath: "@root"
+        sensitivity: sensitive_insensitive
+
+      - name: pos
+        displayName: Part of speech
+        valuePath: "@pos"
+        uiType: select
+
+      - name: rel
+        displayName: Dependency relation
+        valuePath: "@rel"
+        uiType: select
+
+    standoffAnnotations:
+      # Express the sentence span through terminal IDs in indexing order.
+      # It remains queryable as <node/> without document-order inline tags.
+      - path: ".//node[@rel = 'top'][descendant-or-self::node[@word]]"
+        type: span
+        valuePath: "'node'"
+        tokenRefPath: >-
+          sort(descendant-or-self::node[@word], (),
+               function($w) { xs:integer(exactly-one($w/@begin)) })[1]/@id
+        spanEndPath: >-
+          sort(descendant-or-self::node[@word], (),
+               function($w) { xs:integer(exactly-one($w/@begin)) })[last()]/@id
+        spanEndIsInclusive: true
+        annotations:
+          - name: rel
+            valuePath: "@rel"
+          - name: cat
+            valuePath: "@cat"
+          - name: begin
+            valuePath: "@begin"
+          - name: end
+            valuePath: "@end"
+
+      # Alpino puts a relation label on a child node, rather than directly on a
+      # word-to-word arc. Resolve both the child and its parent constituent to
+      # their lexical heads, then index the labelled arc between those tokens.
+      # A chain of @rel="hd" nodes (with the top-level "--" wrapper ignored)
+      # identifies a constituent's lexical head.
+      - path: >-
+          .//node[
+            let $child := .
+            return @rel = 'top' or (
+              @rel != 'hd' and @rel != '--' and
+              exists(
+                $child/parent::node/descendant::node[@word][
+                  not(ancestor-or-self::node[not(@rel = 'hd' or (@rel = '--' and not(@word)))] intersect $child/parent::node/descendant::node)
+                ]
+              )
+            )
+          ]
+        type: relation
+        relationClass: dep
+        valuePath: "@rel"
+        # The top node has no parent inside the parse tree, so BlackLab indexes
+        # it as a root relation. Other arcs start at the parent's lexical head.
+        sourcePath: >-
+          if (@rel = 'top') then '' else (
+            let $node := ..,
+                $leaves := $node/descendant-or-self::node[@word]
+            return $leaves[
+              not(ancestor-or-self::node[not(@rel = 'hd' or (@rel = '--' and not(@word)))] intersect $node/descendant::node)
+            ][1]/@id
+          )
+        # For an unheaded construction, fall back to its leftmost token so the
+        # non-head child still has a usable relation target.
+        targetPath: >-
+          let $node := .,
+              $leaves := $node/descendant-or-self::node[@word],
+              $heads := $leaves[
+                not(ancestor-or-self::node[not(@rel = 'hd' or (@rel = '--' and not(@word)))] intersect $node/descendant::node)
+              ]
+          return ($heads, $leaves[@begin = min($leaves/@begin)])[1]/@id
+
+metadata:
+  containerPath: .
+  fields:
+    - name: id
+      displayName: Sentence ID
+      valuePath: "@id"
+      type: untokenized
+
+    - name: alpinoVersion
+      displayName: Alpino version
+      valuePath: "@version"
+      type: untokenized
+
+corpusConfig:
+  contentViewable: true
+  specialFields:
+    pidField: id

@@ -1,0 +1,25 @@
+<alpino_ds version="1.1" id="2231">
+  <node begin="0" cat="top" end="9" id="0" rel="top">
+    <node begin="4" end="5" id="1" pos="punct" rel="--" root="&quot;" word="&quot;"/>
+    <node begin="0" cat="conj" end="7" id="2" rel="--">
+      <node begin="1" end="2" id="3" pos="vg" rel="crd" root="en" word="en"/>
+      <node begin="0" cat="np" end="7" id="4" rel="cnj">
+        <node begin="0" end="1" id="5" pos="noun" rel="hd" root="Santerra" word="Santerra"/>
+        <node begin="3" cat="pp" end="7" id="6" index="1" rel="mod">
+          <node begin="3" end="4" id="7" pos="prep" rel="hd" root="in" word="in"/>
+          <node begin="5" cat="mwu" end="7" id="8" rel="obj1">
+            <node begin="5" end="6" id="9" pos="noun" rel="mwp" root="the" word="the"/>
+            <node begin="6" end="7" id="10" pos="noun" rel="mwp" root="adventures" word="adventures"/>
+          </node>
+        </node>
+      </node>
+      <node begin="2" cat="np" end="7" id="11" rel="cnj">
+        <node begin="2" end="3" id="12" pos="noun" rel="hd" root="Dax" word="Dax"/>
+        <node begin="3" end="7" id="13" index="1" rel="mod"/>
+      </node>
+    </node>
+    <node begin="7" end="8" id="14" pos="punct" rel="--" root="&quot;" word="&quot;"/>
+    <node begin="8" end="9" id="15" pos="punct" rel="--" root="." word="."/>
+  </node>
+  <sentence>Santerra en Dax in &quot; the adventures &quot; .</sentence>
+</alpino_ds>
