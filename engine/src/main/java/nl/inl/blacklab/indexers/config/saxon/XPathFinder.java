@@ -1,12 +1,13 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -21,10 +22,12 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.UnprefixedElementMatchingPolicy;
 import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XPathSelector;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.s9api.XdmValue;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
@@ -52,6 +55,56 @@ public class XPathFinder {
         }
     }
 
+    private record ExpressionCacheKey(CompilerCacheKey compiler, String expression) {}
+
+    private record VariableBinding(QName name, XdmValue value) {}
+
+    private record DynamicScope(CompilerCacheKey compilerKey, Map<String, PooledExpression> expressions) {}
+
+    private static class CachedExpression {
+        private final XPathExecutable executable;
+        private final Map<String, QName> variableNames;
+
+        CachedExpression(XPathExecutable executable, CompilerCacheKey compilerKey) {
+            this.executable = executable;
+            this.variableNames = compilerKey.varNames().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(
+                    name -> name, name -> variableQName(name, compilerKey.namespaces())));
+        }
+
+        QName variableName(String name) {
+            QName variableName = variableNames.get(name);
+            if (variableName == null)
+                throw new IllegalArgumentException("Variable was not declared: " + name);
+            return variableName;
+        }
+    }
+
+    /** Mutable selector state is kept on the document/thread-confined finder, never in the shared cache. */
+    private static class PooledExpression {
+        private final CachedExpression expression;
+        private final ArrayDeque<XPathSelector> availableSelectors = new ArrayDeque<>();
+
+        PooledExpression(CachedExpression expression) {
+            this.expression = expression;
+        }
+
+        XPathSelector acquire() {
+            XPathSelector selector = availableSelectors.pollFirst();
+            return selector == null ? expression.executable.load() : selector;
+        }
+
+        void release(XPathSelector selector) {
+            var controller = selector.getUnderlyingXPathContext().getXPathContextObject().getController();
+            if (controller != null)
+                controller.clearDocumentPool();
+            availableSelectors.addFirst(selector);
+        }
+
+        QName variableName(String name) {
+            return expression.variableName(name);
+        }
+    }
+
     /**
      * Cache of XPathCompiler instances.
      * Static so it can be shared across all XPathFinder instances (i.e. across documents).
@@ -65,7 +118,7 @@ public class XPathFinder {
             fac.setCaching(true);
 
             for (String var: key.varNames()) {
-                fac.declareVariable(new QName(var));
+                fac.declareVariable(variableQName(var, key.namespaces()));
             }
             // xml namespace is implicit
             fac.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
@@ -95,36 +148,51 @@ public class XPathFinder {
             return fac;
         });
 
-    /**
-     * Cache of XPathSelector instances per XPathCompiler, with thread-local storage.
-     * XPathSelector.load() is slow, but the resulting selectors are reusable across documents
-     * and variable values. We cache them per-thread, since they're not thread-safe, 
-     * but we do cache them, as they are perfectly fine to reuse across documents,
-     * as long as the underlying namespaces and variable declarations
-     * are the same (which they are, since they're tied to the XPathCompiler).
-     */
-    private static final LoadingCache<XPathCompiler, ThreadLocal<Map<String, XPathSelector>>> selectorCache =
-            Caffeine.newBuilder()
-                    // allow GC of XPathCompiler instances
-                    .weakKeys() 
-                    // map is ThreadLocal, so no need for concurrent map
-                    .build(key -> ThreadLocal.withInitial(HashMap::new)); 
+    /** Compiled expressions are immutable; mutable selectors are created per active evaluation. */
+    private static final LoadingCache<ExpressionCacheKey, CachedExpression> expressionCache = Caffeine.newBuilder()
+            .maximumSize(500)
+            .expireAfterAccess(Duration.ofMinutes(1))
+            .build(key -> {
+                XPathCompiler compiler = compilerCache.get(key.compiler());
+                synchronized (compiler) {
+                    return new CachedExpression(compiler.compile(key.expression()), key.compiler());
+                }
+            });
 
-    private final XPathCompiler xPath;
+    private static QName variableQName(String name, Map<String, String> namespaces) {
+        if (name.startsWith("Q{"))
+            return QName.fromEQName(name);
+        int colon = name.indexOf(':');
+        if (colon < 0)
+            return new QName(name);
+        String prefix = name.substring(0, colon);
+        String namespace = prefix.equals(NAMESPACE_XML_PREFIX) ? NAMESPACE_XML_URI : namespaces.get(prefix);
+        if (namespace == null)
+            throw new InvalidConfiguration("No namespace declared for variable " + name);
+        return new QName(prefix, namespace, name.substring(colon + 1));
+    }
+
+    private final Map<String, String> namespaces;
+
+    private final CompilerCacheKey staticCompilerKey;
+
+    /** XPathFinder instances are document/thread-confined; only the static caches require synchronization. */
+    private final Map<String, PooledExpression> staticExpressions = new HashMap<>();
+
+    private final Map<Set<String>, DynamicScope> dynamicScopes = new HashMap<>();
 
     private final Serializer serializer;
 
     /** Variables to make available from XPath */
-    private final Map<String, String> vars = new HashMap<>();
+    private final List<VariableBinding> vars;
 
     public XPathFinder(Map<String, String> namespaces, Map<String, String> vars) {
-        this.vars.putAll(vars);
-
-        try {
-            this.xPath = compilerCache.get(new CompilerCacheKey(namespaces, this.vars.keySet()));
-        } catch (Exception e) {
-            throw new InvalidConfiguration("Error setting up XPath compiler", e);
-        }
+        this.namespaces = namespaces == null ? Map.of() : Map.copyOf(namespaces);
+        this.vars = vars.entrySet().stream()
+                .map(entry -> new VariableBinding(variableQName(entry.getKey(), this.namespaces),
+                        new XdmAtomicValue(entry.getValue())))
+                .toList();
+        staticCompilerKey = new CompilerCacheKey(this.namespaces, vars.keySet());
 
         // Set up serializer, for capturing XML code
         // (annotations can optionally capture XML instead of just a string value)
@@ -138,27 +206,61 @@ public class XPathFinder {
      * @param xpathExpr the xpath expression
      * @return the compiled expression
      */
-    private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
-        Map<String, XPathSelector> selectors = selectorCache.get(xPath).get();
-        XPathSelector selector = selectors.get(xpathExpr);
-        if (selector == null) {
-            selector = xPath.compile(xpathExpr).load();
-            selectors.put(xpathExpr, selector);
+    private XPathResult evaluate(String xpathExpr, XdmValue context, Map<String, XdmValue> dynamicVars)
+            throws SaxonApiException {
+        PooledExpression expression;
+        if (!dynamicVars.isEmpty()) {
+            DynamicScope scope = dynamicScopes.get(dynamicVars.keySet());
+            if (scope == null) {
+                Set<String> dynamicScope = Set.copyOf(dynamicVars.keySet());
+                Set<String> variableNames = new HashSet<>(staticCompilerKey.varNames());
+                variableNames.addAll(dynamicScope);
+                CompilerCacheKey compilerKey = new CompilerCacheKey(namespaces, variableNames);
+                scope = new DynamicScope(compilerKey, new HashMap<>());
+                dynamicScopes.put(dynamicScope, scope);
+            }
+            expression = cachedExpression(scope.expressions(), scope.compilerKey(), xpathExpr);
+        } else {
+            expression = cachedExpression(staticExpressions, staticCompilerKey, xpathExpr);
         }
-        // Always set variables since values may have changed between documents
-        for (Map.Entry<String, String> var : vars.entrySet()) {
-            selector.setVariable(new QName(var.getKey()), new XdmAtomicValue(var.getValue()));
+        XPathSelector selector = expression.acquire();
+        for (VariableBinding var: vars)
+            selector.setVariable(var.name(), var.value());
+        for (Map.Entry<String, XdmValue> var: dynamicVars.entrySet())
+            selector.setVariable(expression.variableName(var.getKey()), var.getValue());
+        return new XPathResult(xpathExpr, expression, selector, context);
+    }
+
+    private static PooledExpression cachedExpression(Map<String, PooledExpression> localCache,
+            CompilerCacheKey compilerKey, String xpathExpr) {
+        PooledExpression expression = localCache.get(xpathExpr);
+        if (expression == null) {
+            expression = new PooledExpression(expressionCache.get(new ExpressionCacheKey(compilerKey, xpathExpr)));
+            localCache.put(xpathExpr, expression);
         }
-        return selector;
+        return expression;
     }
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
+        return findNodes(wordsPath, container, false);
+    }
+
+    public List<NodeInfo> findNodesStrict(String wordsPath, NodeInfo container) {
+        return findNodes(wordsPath, container, true);
+    }
+
+    private List<NodeInfo> findNodes(String wordsPath, NodeInfo container, boolean rejectNonNodes) {
         List<NodeInfo> results = new ArrayList<>();
-        for (XdmItem item: find(wordsPath, XdmValue.wrap(container))) {
-            if (item.isNode())
-                results.add(((XdmNode) item).getUnderlyingNode());
-            else
-                logger.warn("XPath {} returned non-node: {}", wordsPath, item);
+        try (XPathResult result = findLeased(wordsPath, XdmValue.wrap(container))) {
+            for (XdmItem item: result) {
+                if (item.isNode())
+                    results.add(((XdmNode) item).getUnderlyingNode());
+                else if (rejectNonNodes)
+                    throw new InvalidConfiguration("XPath must return nodes, but returned " +
+                            item.getClass().getSimpleName() + "; for xpath " + wordsPath);
+                else
+                    logger.warn("XPath {} returned non-node: {}", wordsPath, item);
+            }
         }
         return results;
     }
@@ -171,9 +273,16 @@ public class XPathFinder {
      * @return the results
      */
     public Iterable<XdmItem> find(String xPath, XdmValue context) {
+        return findLeased(xPath, context);
+    }
+
+    public XPathResult findLeased(String xPath, XdmValue context) {
+        return findLeased(xPath, context, Map.of());
+    }
+
+    public XPathResult findLeased(String xPath, XdmValue context, Map<String, XdmValue> dynamicVars) {
         try {
-            XPathSelector selector = acquireExpression(xPath);
-            return new XpathResultIterator(selector, context);
+            return evaluate(xPath, context, dynamicVars);
         } catch (SaxonApiException | RuntimeException e) {
             Throwable cause = e instanceof RuntimeException && e.getCause() instanceof SaxonApiException ? e.getCause() : e;
             Exception exceptionToThrow = (cause instanceof Exception) ? (Exception) cause : new Exception(cause);
@@ -182,21 +291,38 @@ public class XPathFinder {
     }
 
     public void xpathForEach(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler) {
-        for (XdmItem item : find(xPath, XdmValue.wrap(context))) {
-            if (item.isNode()) {
-                handler.handle((NodeInfo) item.getUnderlyingValue());
+        xpathForEach(xPath, context, handler, false);
+    }
+
+    public void xpathForEachNodeStrict(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler) {
+        xpathForEach(xPath, context, handler, true);
+    }
+
+    private void xpathForEach(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler,
+            boolean rejectNonNodes) {
+        try (XPathResult result = findLeased(xPath, XdmValue.wrap(context))) {
+            for (XdmItem item : result) {
+                if (item.isNode())
+                    handler.handle((NodeInfo) item.getUnderlyingValue());
+                else if (rejectNonNodes)
+                    throw new InvalidConfiguration("XPath must return nodes, but returned " +
+                            item.getClass().getSimpleName() + "; for xpath " + xPath);
             }
         }
     }
 
     public void xpathForEach(String xPath, XdmValue context, InputFormatTypeXml.XdmValueHandler handler) {
-        for (XdmItem item : find(xPath, context))
-            handler.handle(item);
+        try (XPathResult result = findLeased(xPath, context)) {
+            for (XdmItem item : result)
+                handler.handle(item);
+        }
     }
 
     public void xpathForEachStringValue(String xPath, XdmValue context, InputFormatTypeXml.StringValueHandler handler) {
-        for (XdmItem item : find(xPath, context))
-            handler.handle(item.getStringValue());
+        try (XPathResult result = findLeased(xPath, context)) {
+            for (XdmItem item : result)
+                handler.handle(item.getStringValue());
+        }
     }
 
     public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
@@ -225,9 +351,18 @@ public class XPathFinder {
      * @throws InvalidConfiguration when the xpath returns multiple results
      */
     public String xpathValue(String xPath, XdmValue context) {
+        return xpathValue(xPath, context, Map.of());
+    }
+
+    public String xpathValue(String xPath, XdmValue context, Map<String, XdmValue> dynamicVars) {
         StringBuilder result = new StringBuilder();
-        for (XdmItem item : find(xPath, context)) {
-            result.append(item.getUnderlyingValue().getStringValue());
+        try (XPathResult evaluation = findLeased(xPath, context, dynamicVars)) {
+            for (XdmItem item : evaluation) {
+                if (!item.isNode() && !item.isAtomicValue())
+                    throw new InvalidConfiguration("XPath string value cannot be taken from " +
+                            item.getClass().getSimpleName() + "; for xpath " + xPath);
+                result.append(item.getUnderlyingValue().getStringValue());
+            }
         }
         return result.toString();
     }
@@ -243,43 +378,106 @@ public class XPathFinder {
      * The difference isn't world-changing, but we can speed up the *entire* indexing process by something like 20%
      * by using iterators vs the more fluid evaluate() approach.
      */
-     private static class XpathResultIterator implements Iterable<XdmItem> {
-        XPathSelector selector;
-        Iterator<XdmItem> ctxIt;
-        Iterator<XdmItem> resultIt;
+    public static class XPathResult implements Iterable<XdmItem>, java.util.Iterator<XdmItem>, AutoCloseable {
+        private final String expression;
+        private final PooledExpression pooledExpression;
+        private final XPathSelector selector;
+        private XdmSequenceIterator<XdmItem> contextIterator;
+        private XdmSequenceIterator<XdmItem> resultIterator;
 
-        public XpathResultIterator(final XPathSelector selector, final XdmValue context) {
+        private XPathResult(String expression, PooledExpression pooledExpression, XPathSelector selector,
+                XdmValue context) {
+            this.expression = expression;
+            this.pooledExpression = pooledExpression;
             this.selector = selector;
-            this.ctxIt = context.iterator();
-            this.resultIt = Collections.emptyIterator();
+            contextIterator = context.iterator();
         }
-        
-        @Override
-        public Iterator<XdmItem> iterator() {
-            return new Iterator<>() {
-                @Override
-                public boolean hasNext() {
-                    try {
-                        while (true) {
-                            if (resultIt != null && resultIt.hasNext())
-                                return true;
-                            if (ctxIt.hasNext()) {
-                                selector.setContextItem(ctxIt.next());
-                                resultIt = selector.iterator();
-                                continue;
-                            }
-                            return false;
-                        }
-                    } catch (SaxonApiException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
 
-                @Override
-                public XdmItem next() {
-                    return resultIt.next(); // assume it will throw if no next.
+        @Override
+        public java.util.Iterator<XdmItem> iterator() {
+            // XPath results are controlled single-pass iterables. Re-iteration would also violate selector leasing.
+            return this;
+        }
+
+        @Override
+        public boolean hasNext() {
+            if (contextIterator == null)
+                return false;
+            try {
+                while (true) {
+                    if (resultIterator != null && resultIterator.hasNext())
+                        return true;
+                    if (resultIterator != null) {
+                        resultIterator.close();
+                        resultIterator = null;
+                    }
+                    if (contextIterator.hasNext()) {
+                        selector.setContextItem(contextIterator.next());
+                        resultIterator = selector.iterator();
+                        continue;
+                    }
+                    close();
+                    return false;
                 }
-            };
-        };
+            } catch (SaxonApiException | RuntimeException e) {
+                closeAfterFailure(e);
+                throw new InvalidConfiguration(e.getMessage() + "; for xpath " + expression, e);
+            }
+        }
+
+        @Override
+        public XdmItem next() {
+            if (!hasNext())
+                throw new NoSuchElementException();
+            try {
+                return resultIterator.next();
+            } catch (RuntimeException e) {
+                closeAfterFailure(e);
+                if (e instanceof NoSuchElementException)
+                    throw e;
+                throw new InvalidConfiguration(e.getMessage() + "; for xpath " + expression, e);
+            }
+        }
+
+        @Override
+        public void close() {
+            close(true);
+        }
+
+        private void close(boolean reusable) {
+            if (contextIterator == null)
+                return;
+            RuntimeException failure = null;
+            try {
+                if (resultIterator != null)
+                    resultIterator.close();
+            } catch (RuntimeException e) {
+                failure = e;
+            }
+            try {
+                contextIterator.close();
+            } catch (RuntimeException e) {
+                if (failure == null)
+                    failure = e;
+                else
+                    failure.addSuppressed(e);
+            }
+            resultIterator = null;
+            contextIterator = null;
+            // All context and exact-scope variables are rebound before reuse. The pool dies with this document.
+            if (failure == null && reusable)
+                pooledExpression.release(selector);
+            if (failure != null)
+                throw failure;
+        }
+
+        private void closeAfterFailure(Throwable failure) {
+            try {
+                close(false);
+            } catch (RuntimeException cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+        }
     }
+
 }

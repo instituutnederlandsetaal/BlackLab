@@ -156,8 +156,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     return; // assume this will be captured using forEach
 
                 if (annotation.getBasePath() != null) {
-                    for (XdmItem item : finder.find (annotation.getBasePath(), word)) {
-                        processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()), positionSpanEndOrSource, spanEndOrRelTarget, handler);
+                    try (XPathFinder.XPathResult matches = finder.findLeased(annotation.getBasePath(), word)) {
+                        for (XdmItem item: matches) {
+                            processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()),
+                                    positionSpanEndOrSource, spanEndOrRelTarget, handler);
+                        }
                     }
                 } else {
                     processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
