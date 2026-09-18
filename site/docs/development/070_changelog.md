@@ -4,6 +4,7 @@
 
 ### New
 
+- New indexes use dedicated source-range storage: XPath result order defines XML token order, while document contents retain complete XML containers and highlight individual word elements. Forward-index snippets retain reading order and punctuation. See [token order and original XML](/guide/index-your-data/source-ranges) for punctuation options, XML containers, compatibility, and limitations.
 - You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
 - If you have configured a persistent identifier (pid), adding another document with the same pid will fail by default. To replace instead (i.e. upsert), pass `--ifexists replace` to `IndexTool` or configure `indexing.ifDocumentExists` in blacklab\[-server\].yaml.
 - New functions: `meet` and `meet_within` find collocations; `cspan` to adjust the hit to a capture group; `abs`, `in_range`, `gap`
@@ -40,6 +41,7 @@
 
 ### Fixed
 
+- XML element offsets and fragment repair correctly handle quoted `>`, comments, CDATA, processing instructions, and DTD declarations.
 - actually write the `csvdescription` parameter to the CSV export response
 - bug with subcorpusSize for hit groups when grouping on a numeric field
 - BLS: correctly stop the changed file monitor thread when shutting down the server

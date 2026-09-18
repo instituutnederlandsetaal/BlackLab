@@ -12,7 +12,7 @@ All position elements refer to token position in a document, 0-based.
 
 You should either specify `wordstart` and `wordend` for a snippet without a hit, or `hitstart`, `hitend` and (optionally) `context` for a snippet around a hit.
 
-Partial contents XML output will be wrapped in `<blacklabResponse/>` element to ensure a single root element.
+The default `usecontent=fi` returns token annotations and punctuation in indexing order.
 
 | Parameter          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -31,6 +31,11 @@ Partial contents XML output will be wrapped in `<blacklabResponse/>` element to 
 
 **HTTP response code**: `200 OK`
 
+### Original XML
+
+For XML documents indexed with source-range storage, use the default `usecontent=fi` for reading-order snippets. Numeric or named-span context uses the existing snippet rules and limits.
+
+A left/match/right split of original XML cannot represent reordered tokens. `usecontent=orig` therefore returns `UNSUPPORTED_CONCORDANCE_REPRESENTATION` for these documents, both here and in hit results. To render original XML with XSLT, request [document contents](./contents.md), which returns complete configured containers with matching word elements highlighted. Old indexes and non-XML documents retain their original-content concordances.
 
 ### Content examples
 
