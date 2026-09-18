@@ -389,9 +389,12 @@ public class ConfigInputFormat {
         for (ConfigMetadataBlock b : metadata)
             b.validate(messages);
         for (ConfigAnnotatedField af : annotatedFields.values()) {
-            if (fileType != FileType.XML)
-                af.setWordPath("N/A"); // prevent validation error
-            af.validate(messages);
+            if (fileType != FileType.XML) {
+                if (af.hasXmlOnlyOptions())
+                    messages.error("annotated field " + af.getName() +
+                            " uses XML-specific options with file type " + fileType.stringValue());
+            }
+            af.validate(messages, fileType == FileType.XML);
         }
         for (Map.Entry<String, ConfigLinkedDocument> e : linkedDocuments.entrySet()) {
             ConfigLinkedDocument ld = e.getValue();

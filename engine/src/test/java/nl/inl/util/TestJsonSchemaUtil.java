@@ -17,6 +17,9 @@ public class TestJsonSchemaUtil {
 
         Assert.assertFalse("annotatedFields should declare the schema of its values", annotatedFieldSchema.isMissingNode());
         Assert.assertEquals("#/$defs/ConfigAnnotatedField", annotatedFieldSchema.path("$ref").asText());
+        Assert.assertTrue(schema.at("/$defs/ConfigAnnotatedField/properties/containerPath").isObject());
         Assert.assertTrue(schema.at("/$defs/ConfigAnnotatedField/properties/annotations").isObject());
+        Assert.assertTrue(schema.at("/$defs/ConfigAnnotatedField/properties/punctBeforePath").isObject());
+        Assert.assertTrue(schema.at("/$defs/ConfigAnnotatedField/properties/punctAfterLastWordPath").isObject());
     }
 }
