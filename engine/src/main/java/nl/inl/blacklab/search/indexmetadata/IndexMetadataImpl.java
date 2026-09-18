@@ -354,6 +354,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
 
+        // Fix the codec before initializing annotation metadata, including for an empty new index.
+        // Missing metadata on an existing index must never silently upgrade its native offsets.
+        if (newIndex)
+            setIndexFlag(SourceRangeEncoding.INDEX_FLAG, SourceRangeEncoding.VERSION);
+
         // Create new index metadata from config
         File dir = index.indexDirectory();
         if (config == null)

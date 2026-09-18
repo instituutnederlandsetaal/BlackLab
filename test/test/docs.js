@@ -5,8 +5,9 @@ const expect = chai.expect;
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged, expectUrlUnchanged, expectCorpusUrlUnchanged} = require("./compare-responses");
+const { expectUnchanged, expectCorpusUrlUnchanged } = require("./compare-responses");
 const {corpusUrl} = require("./util");
+const parseXml = require('xml2js').parseStringPromise;
 
 
 /**
@@ -68,6 +69,42 @@ expectCorpusUrlUnchanged(corpus, 'docs', 'document metadata',
         '/docs/PBsve430');
 expectCorpusUrlUnchanged(corpus, 'docs', 'document contents',
         '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+
+const describeSource = constants.INDEX_TYPE === 'solr' ? describe.skip : describe;
+describeSource('original XML contents', () => {
+    const doc = constants.URL_CORPUS_TEST + '/docs/PBsve430';
+    const request = (endpoint, query, format = 'json') => chai.request(constants.SERVER_URL)
+        .get(doc + endpoint).query({ ...query, outputformat: format });
+
+    it('returns the same document contents in JSON', async () => {
+        const json = await request('/contents', { patt: '"the"' });
+        expect(json).to.have.status(200);
+        expect(Object.keys(json.body)).to.deep.equal(['contents']);
+        expectUnchanged(constants.CORPUS_TEST, 'docs', 'document contents', json.body.contents);
+    });
+
+    it('returns complete XML for bounded contents without a response metadata envelope', async () => {
+        const res = await request('/contents', { wordstart: 7, wordend: 12 });
+        expect(res).to.have.status(200);
+        expect(Object.keys(res.body)).to.deep.equal(['contents']);
+        expect(res.body.contents).not.to.contain('<hl');
+        const xml = await parseXml(res.body.contents);
+        expect(xml.blacklabResponse.text).to.have.lengthOf(1);
+    });
+
+    it('defaults contents to XML for existing XSLT clients', async () => {
+        const res = await chai.request(constants.SERVER_URL).get(doc + '/contents').query({ patt: '"the"' });
+        expect(res).to.have.status(200);
+        expect(res.headers['content-type']).to.contain('xml');
+        expectUnchanged(constants.CORPUS_TEST, 'docs', 'document contents', res.text || res.body);
+    });
+
+    it('directs structural original snippets to the contents endpoint', async () => {
+        const res = await request('/snippet', { hitstart: 9, hitend: 10, context: 2, usecontent: 'orig' });
+        expect(res).to.have.status(400);
+        expect(res.body.error.code).to.equal('UNSUPPORTED_CONCORDANCE_REPRESENTATION');
+    });
+});
 
 // Doc snippet
 expectCorpusUrlUnchanged(corpus, 'docs', 'document snippet wordstart',

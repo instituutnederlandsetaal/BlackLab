@@ -39,8 +39,6 @@ public class TestSourceRangeFormats {
                     config.addAnnotatedField(field);
                 DocumentFormats.add(config);
                 try (var writer = BlackLab.openForWriting(testDir.file(), pass == 0, config)) {
-                    if (pass == 0)
-                        writer.metadata().setIndexFlag(SourceRangeEncoding.INDEX_FLAG, SourceRangeEncoding.VERSION);
                     Assert.assertEquals("contents", writer.mainAnnotatedField().name());
                     Indexer indexer = Indexer.create(writer, config.getName());
                     try {
@@ -71,9 +69,8 @@ public class TestSourceRangeFormats {
                             ConfigInputFormat config = format(xml, store);
                             DocumentFormats.add(config);
                             try (var writer = BlackLab.openForWriting(directory, xml == xmlFirst, config)) {
-                                if (xml == xmlFirst)
-                                    writer.metadata().setIndexFlag(SourceRangeEncoding.INDEX_FLAG,
-                                            legacy ? "" : SourceRangeEncoding.VERSION);
+                                if (legacy && xml == xmlFirst)
+                                    writer.metadata().setIndexFlag(SourceRangeEncoding.INDEX_FLAG, "");
                                 Indexer indexer = Indexer.create(writer, config.getName());
                                 try {
                                     String source = xml ? "<doc><w>A</w><w>B</w></doc>" : "one two";

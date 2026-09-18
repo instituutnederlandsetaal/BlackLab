@@ -65,6 +65,8 @@ public class ResultDocContents {
 
     private String content;
 
+    private boolean documentXml = true; // Legacy indexes do not record the source syntax.
+
     private Set<String> namespaces;
 
     private Set<String> anonNamespaces;
@@ -89,6 +91,10 @@ public class ResultDocContents {
         return content;
     }
 
+    public boolean isDocumentXml() {
+        return documentXml;
+    }
+
     public Set<String> getNamespaces() {
         return namespaces;
     }
@@ -104,7 +110,9 @@ public class ResultDocContents {
         isFullDocument = false;
         int startAtWord = request.wordStart();
         int endAtWord = request.wordEnd();
-        if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
+        boolean sourceRanges = index.metadata().usesSourceRangeVectors();
+        if (startAtWord < -1 || endAtWord < -1 ||
+                (!sourceRanges && endAtWord >= 0 && endAtWord <= startAtWord)) {
             // Illegal value. Error will be thrown.
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         } else {
@@ -125,6 +133,12 @@ public class ResultDocContents {
             throw new NotAuthorized(
                     "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://blacklab.ivdnt.org/how-to-configure-indexing.html.");
 
+        AnnotatedField fieldToShow = request.field();
+        boolean structural = DocUtil.hasStructuralSource(index, docId, fieldToShow);
+        documentXml = !sourceRanges || structural;
+        if (sourceRanges && !fieldToShow.hasContentStore())
+            throw new BadRequest("CONTENT_NOT_AVAILABLE", "Original content is not stored for field " + fieldToShow.name());
+
         HitResults hitResults = null;
         if (requestHits != null) {
             hitResults = requestHits.getSearch().execute();
@@ -133,13 +147,29 @@ public class ResultDocContents {
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
-        AnnotatedField fieldToShow = request.field();
         if (hitResults == null) {
             hitsInDoc = Hits.empty(new Hits.HitsContext(fieldToShow));
         } else {
             hitsInDoc = hitResults.getHits().filteredByDocId(docId);
         }
-        if (isFullDocument) {
+        if (sourceRanges) {
+            if (!hitsInDoc.field().name().equals(fieldToShow.name()))
+                throw new BadRequest("UNSUPPORTED_CONTENT_REPRESENTATION",
+                        "Highlight hits must use the requested field's token coordinates.");
+            try {
+                if (!structural) {
+                    content = DocUtil.highlightTextContent(index, docId, hitsInDoc, startAtWord, endAtWord);
+                } else if (isFullDocument && requestHits == null) {
+                    content = DocUtil.contents(index, fieldToShow, docId, document);
+                } else {
+                    content = DocUtil.xmlContents(index, docId, fieldToShow, startAtWord, endAtWord, hitsInDoc);
+                }
+            } catch (IllegalArgumentException e) {
+                throw new BadRequest("ILLEGAL_BOUNDARIES", e.getMessage(), e);
+            }
+            if (!structural)
+                return;
+        } else if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in
             // a parallel corpus into account (cuts out part of the original input file).
             AnnotatedField field;

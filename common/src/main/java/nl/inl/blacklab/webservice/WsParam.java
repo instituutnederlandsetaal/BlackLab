@@ -49,6 +49,7 @@ public enum WsParam {
     CONTEXT("context"), // KWIC / concordances / collocations: words around hit or
     WITHIN("within"), // collocations, e.g. to find collocs within sentence
     USE_CONTENT("usecontent"), // create concs from forward index or original content (content store)?
+    ESCAPE_XML_FRAGMENT("escapexmlfragment", Type.BOOLEAN),
     OMIT_EMPTY_CAPTURES("omitemptycaptures", Type.BOOLEAN),  // omit capture groups of length 0? (false)
 
     // Doc snippets

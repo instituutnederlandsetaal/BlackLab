@@ -746,9 +746,8 @@ public class ResponseStreamer {
         hitsList.getEphemeral(0, hit);
         Map<String, MatchInfo> matchInfo = hitsList.matchInfoDefs().getMap(hit.matchInfos(), false);
         ContextSize context = result.getContext();
-        ConcordanceContext concordanceContext = result.isOrigContent() ?
-                ConcordanceContext.concordances(hitsList.concordances(context, ConcordanceType.CONTENT_STORE)) :
-                ConcordanceContext.kwics(hitsList.kwics(context));
+        ConcordanceContext concordanceContext = ConcordanceContext.get(hitsList,
+                result.isOrigContent() ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX, context);
         List<Annotation> annotationsToList = result.getAnnotsToWrite();
         //boolean includeContext = result.isHit(); // i.e. did we specify hitstart/hitend (include context) or
                                                  // wordstart/wordend (no context, just the snippet)
@@ -794,20 +793,20 @@ public class ResponseStreamer {
             // Add concordance from original XML
             Concordance c = concordanceContext.getConcordance(hit);
             if (includeContext) {
-                ds.startEntry(KEY_BEFORE).xmlFragment(c.left()).endEntry()
-                        .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
-                        .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
+                concordancePart(KEY_BEFORE, c, c.left());
+                concordancePart(KEY_MATCHING_PART_OF_HIT, c, c.match());
+                concordancePart(KEY_AFTER, c, c.right());
             } else {
                 if (isSnippet) {
                     if (isNewApi) {
-                        ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                        concordancePart(KEY_MATCHING_PART_OF_HIT, c, c.match());
                     } else {
-                        ds.xmlFragment(c.match());
+                        concordancePart(null, c, c.match());
                     }
                 } else {
-                    ds.startEntry(KEY_BEFORE).xmlFragment("").endEntry();
-                    ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
-                    ds.startEntry(KEY_AFTER).xmlFragment("").endEntry();
+                    concordancePart(KEY_BEFORE, c, "");
+                    concordancePart(KEY_MATCHING_PART_OF_HIT, c, c.match());
+                    concordancePart(KEY_AFTER, c, "");
                 }
             }
         } else {
@@ -1453,9 +1452,9 @@ public class ResponseStreamer {
                         ds.startItem(KEY_DOC_SNIPPET).startMap();
                         {
                             // Add concordance from original XML
-                            ds.startEntry(KEY_BEFORE).xmlFragment(c.left()).endEntry()
-                                    .startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry()
-                                    .startEntry(KEY_AFTER).xmlFragment(c.right()).endEntry();
+                            concordancePart(KEY_BEFORE, c, c.left());
+                            concordancePart(KEY_MATCHING_PART_OF_HIT, c, c.match());
+                            concordancePart(KEY_AFTER, c, c.right());
                         }
                         ds.endMap().endItem();
                     }
@@ -1791,6 +1790,8 @@ public class ResponseStreamer {
     }
 
     public String getDocContentsResponsePlain(ResultDocContents resultDocContents) {
+        if (!resultDocContents.isDocumentXml())
+            return resultDocContents.getContent();
         StringBuilder b = new StringBuilder();
 
         if (resultDocContents.needsXmlDeclaration()) {
@@ -1824,6 +1825,17 @@ public class ResponseStreamer {
         return b.toString();
     }
 
+    private void concordancePart(String name, Concordance concordance, String content) {
+        if (name != null)
+            ds.startEntry(name);
+        if (concordance.isXml())
+            ds.xmlFragment(content);
+        else
+            ds.value(content);
+        if (name != null)
+            ds.endEntry();
+    }
+
     public void docContentsResponseAsCdata(ResultDocContents result) {
         ds.startMap();
         ds.entry("contents", getDocContentsResponsePlain(result));
@@ -1831,7 +1843,10 @@ public class ResponseStreamer {
     }
 
     public void docContentsResponsePlain(ResultDocContents resultDocContents) {
-        ds.plain(getDocContentsResponsePlain(resultDocContents));
+        if (!ds.getType().equals("xml"))
+            docContentsResponseAsCdata(resultDocContents);
+        else
+            ds.plain(getDocContentsResponsePlain(resultDocContents));
     }
 
     public void docInfoResponse(ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,

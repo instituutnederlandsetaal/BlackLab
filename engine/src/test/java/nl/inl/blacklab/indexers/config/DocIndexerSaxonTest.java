@@ -18,10 +18,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.xml.sax.InputSource;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.TestCollatorsZalgo;
@@ -126,8 +128,8 @@ public class DocIndexerSaxonTest {
         // 3. Verify
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             QueryInfo qi = QueryInfo.create(index);
-            Assert.assertNotNull(index.annotatedField("contents").mainAnnotation().offsetsSensitivity());
-            Assert.assertFalse(index.metadata().usesSourceRangeVectors());
+            Assert.assertNull(index.annotatedField("contents").mainAnnotation().offsetsSensitivity());
+            Assert.assertTrue(index.metadata().usesSourceRangeVectors());
             
             // Build Lucene field name for pos annotation (insensitive)
             String posField = AnnotatedFieldNameUtil.annotationField("contents", "pos", MatchSensitivity.INSENSITIVE.luceneFieldSuffix());
@@ -302,6 +304,91 @@ public class DocIndexerSaxonTest {
                 Assert.assertArrayEquals(new int[] { xml.indexOf("A</w>") + 5, xml.indexOf("B</w>") + 5,
                         xml.indexOf("C</w>") + 5 }, ends);
             }
+        }
+    }
+
+    @Test
+    public void testDirectInputFormatRequiresSourceRangeCapability() throws Exception {
+        InputFormat plugin = Mockito.mock(InputFormat.class, Mockito.CALLS_REAL_METHODS);
+        DocumentFormats.add("direct-legacy-plugin", plugin);
+        Assert.assertFalse(plugin.supportsSourceRangeVectors());
+        var wrapped = new InputFormatTypeWithConverters().createInputFormat(plugin,
+                List.of(Mockito.mock(FileConverter.Parameterized.class)));
+        Assert.assertFalse(wrapped.supportsSourceRangeVectors());
+        DocumentFormats.add("wrapped-legacy-plugin", wrapped);
+        try (BlackLabIndexWriter writer = BlackLab.openForWriting(indexDir, true)) {
+            for (String name: List.of("direct-legacy-plugin", "wrapped-legacy-plugin")) {
+                InvalidInputFormatConfig error = Assert.assertThrows(InvalidInputFormatConfig.class,
+                        () -> Indexer.create(writer, name));
+                Assert.assertTrue(error.getMessage().contains("does not support source-range storage"));
+            }
+            writer.metadata().setIndexFlag(SourceRangeEncoding.INDEX_FLAG, "");
+            Indexer legacy = Indexer.create(writer, "direct-legacy-plugin");
+            Assert.assertSame(plugin, legacy.getDocIndexer());
+            legacy.close();
+        }
+        Mockito.verify(plugin, Mockito.never()).index(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    public void testCreationAndAppendKeepTheirCodecAndTokenOrder() throws Exception {
+        ConfigInputFormat config = new ConfigInputFormat("saxon-codec-lifecycle");
+        config.setFileType(ConfigInputFormat.FileType.XML);
+        config.setDocumentPath("//doc");
+        ConfigAnnotatedField contents = wordField("contents", null);
+        contents.setWordPath("reverse(.//w)");
+        config.addAnnotatedField(contents);
+        DocumentFormats.add(config);
+        String xml = "<doc><w>A</w><w>B</w></doc>";
+        for (boolean legacy: List.of(false, true)) {
+            File directory = new File(indexDir, legacy ? "legacy" : "source");
+            // Exercise CREATE_OR_APPEND on a missing index, then the usual explicit metadata save.
+            try (BlackLabIndexWriter writer = BlackLab.openForWriting(directory, false, config)) {
+                Assert.assertTrue(writer.metadata().usesSourceRangeVectors());
+                Assert.assertNull(writer.mainAnnotatedField().mainAnnotation().offsetsSensitivity());
+                if (legacy)
+                    writer.metadata().setIndexFlag(SourceRangeEncoding.INDEX_FLAG, "");
+                writer.metadata().save();
+            }
+            for (int append = 0; append < 2; append++) {
+                try (BlackLabIndexWriter writer = BlackLab.openForWriting(directory, false)) {
+                    Assert.assertEquals(!legacy, writer.metadata().usesSourceRangeVectors());
+                    Indexer indexer = Indexer.create(writer);
+                    try {
+                        indexer.index(FileReference.fromBytes("source.xml", xml.getBytes(StandardCharsets.UTF_8), null),
+                                null, FileConverter.ExtraConverters.NONE);
+                    } finally {
+                        indexer.close();
+                    }
+                }
+            }
+            try (BlackLabIndex index = BlackLab.open(directory)) {
+                Assert.assertEquals(!legacy, index.metadata().usesSourceRangeVectors());
+                Assert.assertEquals(2, index.metadata().documentCount());
+                Assert.assertEquals(4, index.metadata().tokenCount());
+                var field = index.mainAnnotatedField();
+                Hits hits = index.find(new BLSpanTermQuery(QueryInfo.create(index), new Term(
+                        field.mainAnnotation().sensitivity(MatchSensitivity.INSENSITIVE).luceneField(), "a")), null).getHits();
+                Assert.assertEquals(2, hits.size());
+                for (var hit: hits) {
+                    Assert.assertEquals(legacy ? 0 : 1, hit.start());
+                    int[] starts = {0, 1}, ends = {0, 1};
+                    DocUtil.characterOffsets(index, hit.doc(), field, starts, ends, false);
+                    Assert.assertArrayEquals(legacy ? new int[] {5, 13} : new int[] {13, 5}, starts);
+                    Assert.assertArrayEquals(legacy ? new int[] {13, 21} : new int[] {21, 13}, ends);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testEmptyIndexWithoutFormatKeepsNewCodec() {
+        try (BlackLabIndexWriter writer = BlackLab.openForWriting(indexDir, true)) {
+            Assert.assertTrue(writer.metadata().usesSourceRangeVectors());
+            writer.metadata().save();
+        }
+        try (BlackLabIndexWriter writer = BlackLab.openForWriting(indexDir, false)) {
+            Assert.assertTrue(writer.metadata().usesSourceRangeVectors());
         }
     }
 

@@ -206,7 +206,8 @@ public class BlackLabServer extends HttpServlet {
                 throw new BadRequest("OUTPUT_TYPE_NOT_SUPPORTED", "This request doesn't support requested type " + outputType.getContentType() + ", only " + requestHandler.getOverrideType().getContentType());
             }
             if (outputType == null)
-                outputType = BlsMain.get().getDefaultOutputType();
+                outputType = requestHandler.getOverrideType() == null ?
+                        BlsMain.get().getDefaultOutputType() : requestHandler.getOverrideType();
 
             // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
             BlsMain.get().getSearchManager().getAuthSystem().persistUser(userRequest, requestHandler.getUser());

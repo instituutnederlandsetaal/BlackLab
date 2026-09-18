@@ -195,7 +195,10 @@ public class TestIndexFormats {
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());
         Assert.assertEquals(AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE, field.mainAnnotation().sensitivitySetting());
-        Assert.assertEquals(MatchSensitivity.SENSITIVE, field.mainAnnotation().offsetsSensitivity().sensitivity());
+        if (index.metadata().usesSourceRangeVectors())
+            Assert.assertNull(field.mainAnnotation().offsetsSensitivity());
+        else
+            Assert.assertEquals(MatchSensitivity.SENSITIVE, field.mainAnnotation().offsetsSensitivity().sensitivity());
     }
 
     @Test
