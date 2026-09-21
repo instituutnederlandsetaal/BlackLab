@@ -102,10 +102,18 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             private final Map<String, List<Fragment>> fragsPerField = new HashMap<>();
 
             /** Behaviour of metadata fields that occur in at least one fragment.
-             * Depending on the behaviour, we may or may not want to index these at the document level,
-             * and we may or may not want to "inherit" from the document level to the fragment level.
+             *
+             * Only fields that actually occur in a fragment are added to this map; not fields that are merely
+             * inherited from the document level. (Fields that have FragmentBehaviour.SEPARATE are always added
+             * to the map, so they don't inherit from the document level)
+             *
+             * The fragment behaviour indicates if we want to skip indexing these at the document level,
+             *
+             * Depending on the behaviour, we may not want to "inherit" from the document level to the fragment level.
+             *
              * Fields that are not in this map are not indexed at the fragment level.
-             * (so fields set to fragments: ignore never end up here)
+             * (so fields that have "fragments: docvalue" in their config never end up here)
+             * We also use this to keep track of which fields are actually present in a fragment in the index metadata.
              */
             private final Map<String, FragmentBehaviour> metadataFieldsFragmentBehaviour = new HashMap<>();
 
@@ -570,12 +578,12 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
             protected void indexFragment(int start, int end, Map<String, Collection<String>> metadata) {
                 // Add to the list of fragments for this annotated field.
-                this.fragsPerField.compute(currentAnnotatedField.name(),
-                        (k, v) -> {
-                            List<Fragment> fragments = v == null ? new ArrayList<>() : v;
-                            fragments.add(new Fragment(Span.between(start, end), metadata));
-                            return fragments;
-                });
+                if (start == end) // skip empty fragments (shouldn't normally happen, but it's possible)
+                    return;
+                if (start < 0 || end < start)
+                    throw new InvalidInputFormatConfig("Invalid fragment token range: " + start + "-" + end);
+                fragsPerField.computeIfAbsent(currentAnnotatedField.name(), __ -> new ArrayList<>())
+                        .add(new Fragment(Span.between(start, end), metadata));
             }
 
             protected void ensureFragmentBehaviour(String field, Function<String, FragmentBehaviour> defaultValueProvider) {
@@ -620,7 +628,13 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             // ------------------------------- Indexing process ----------------------------------
 
             protected void startDocument() {
+
+                // Doc is instanced per file, but file can contain multiple documents, so clear the collections for
+                // the next.
                 metadataFieldValues.clear();
+                fragsPerField.clear();
+                metadataFieldsFragmentBehaviour.clear();
+
                 if (!indexingIntoExistingDoc) {
                     currentDoc = createNewDocument(BLInputDocument.DocType.DOCUMENT);
                     addMetadataField("fromInputFile", documentName);

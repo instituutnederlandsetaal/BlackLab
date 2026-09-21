@@ -353,8 +353,8 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         if (field != null) {
             field.setOccursInFragments();
             if (!anyOccurInFragments) {
-                anyOccurInFragments = true;
                 ensureNotFrozen();
+                anyOccurInFragments = true;
             }
         } else {
             throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");

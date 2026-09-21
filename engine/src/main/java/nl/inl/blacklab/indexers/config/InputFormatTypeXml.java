@@ -943,6 +943,13 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
             protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
                     String indexAsFieldName, ConfigMetadataField indexAsFieldConfig, Map<String, Collection<String>> metadataFieldValues) {
+
+                // Ensure that FragmentBehaviour.SEPARATE is handled correctly
+                // (i.e. not inherited from the doc level if fragment doesn't have a value)
+                ConfigMetadataField effectiveConfig = indexAsFieldConfig == null ? field : indexAsFieldConfig;
+                if (effectiveConfig.getFragments() == FragmentBehaviour.SEPARATE)
+                    ensureFragmentBehaviour(indexAsFieldName, __ -> FragmentBehaviour.SEPARATE);
+
                 // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
                 finder.xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);

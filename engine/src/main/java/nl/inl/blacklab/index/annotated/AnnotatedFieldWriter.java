@@ -166,7 +166,7 @@ public class AnnotatedFieldWriter {
      * Clear the internal state for reuse.
      */
     public void clear() {
-        // Don't reuse buffers, reclaim memory so we don't run out
+        // Don't reuse buffers (the Lucene doc still holds references to them), reclaim memory so we don't run out
         start = new IntArrayList();
         end = new IntArrayList();
 
