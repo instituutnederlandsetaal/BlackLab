@@ -34,12 +34,6 @@ function sanitizeBlsResponse(response) {
         user: {
             clientIp: true
         },
-        // indices: { // API v3/4
-        //     test: {
-        //         timeModified: true
-        //     }
-        // },
-        // cacheStatus: 'DELETE',
 
         // Corpus information page
         versionInfo: {

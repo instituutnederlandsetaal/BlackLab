@@ -26,7 +26,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
         RequestServerInfo request = RequestServerInfo.fromParams(indexMan, user,
                 getClientIp(), qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO),
                 debugMode);
-        WebserviceRequestHandler.opServerInfo(request, rs);
+        WebserviceRequestHandler.opServerInfo(request, searchMan.config(), rs);
         return HTTP_OK;
     }
 

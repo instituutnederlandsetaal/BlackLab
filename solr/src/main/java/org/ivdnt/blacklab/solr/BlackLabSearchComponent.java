@@ -231,7 +231,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 // "Root" endpoint
                 case SERVER_INFO ->
                         WebserviceRequestHandler.opServerInfo(RequestServerInfo.fromParams(indexManager, userRequest.getUser(),
-                                userRequest.clientIpAddress(), qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO), debugMode), dstream);
+                                userRequest.clientIpAddress(), qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO), debugMode), searchManager.config(), dstream);
 
                 // Information about the corpus
                 case CORPUS_INFO -> WebserviceRequestHandler.opCorpusInfo(RequestCorpusInfo.fromParams(qpar), dstream);
@@ -266,7 +266,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case CACHE_INFO -> WebserviceRequestHandler.opCacheInfo(searchManager.getBlackLabCache(),
                         qpar.getBool(WsParam.DEBUG), dstream);
                 case CACHE_CLEAR -> WebserviceRequestHandler.opClearCache(searchManager.getBlackLabCache(), dstream, debugMode);
-                case CONFIG -> WebserviceRequestHandler.opConfig(searchManager.config(), debugMode, dstream);
                 case WRITE_INPUT_FORMAT, DELETE_INPUT_FORMAT, CREATE_CORPUS, DELETE_CORPUS, ADD_TO_CORPUS,
                      CORPUS_SHARING -> throw new UnsupportedOperationException("Currently not supported: " + qpar.get(
                         WsParam.OPERATION));

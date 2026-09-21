@@ -3,6 +3,97 @@
   "blacklabBuildTime": "VALUE_REMOVED",
   "blacklabScmRevision": "VALUE_REMOVED",
   "blacklabVersion": "VALUE_REMOVED",
+  "config": {
+    "cache": {
+      "clientCacheTimeSec": 3600,
+      "denyAbortedSearchSec": 600,
+      "implementation": "",
+      "maxJobAgeSec": 3600,
+      "maxNumberOfJobs": 100,
+      "maxQueuedSearches": 20,
+      "maxSearchTimeSec": 300,
+      "minFreeMemForSearchMegs": 50,
+      "targetFreeMemMegs": 837
+    },
+    "indexing": {
+      "downloadAllowed": false,
+      "downloadCacheMaxFileSizeMegs": 100,
+      "downloadCacheSizeMegs": 100,
+      "ifDocumentExists": "fail",
+      "maxNumberOfIndicesPerUser": 10,
+      "maxValueLength": 0,
+      "numberOfThreads": 2,
+      "relationsSensitive": false,
+      "userIndexMaxTokenCount": 100000000,
+      "zipFilesMaxOpen": 10
+    },
+    "log": {
+      "trace": {
+        "cache": false,
+        "indexOpening": false,
+        "optimization": false,
+        "queryExecution": false
+      }
+    },
+    "parameters": {
+      "api": "5.0",
+      "contextSize": {
+        "default": 5,
+        "max": 200,
+        "maxInt": 200
+      },
+      "countHits": {
+        "default": 9223372036854776000,
+        "max": 9223372036854776000,
+        "maxInt": 2147483639
+      },
+      "defaultSearchSensitivity": "i",
+      "omitEmptyCaptures": false,
+      "pageSize": {
+        "default": 50,
+        "max": 9223372036854776000,
+        "maxInt": 2147483639
+      },
+      "processHits": {
+        "default": 9223372036854776000,
+        "max": 9223372036854776000,
+        "maxInt": 2147483639
+      },
+      "writeHitsAndDocsInGroupedHits": false
+    },
+    "performance": {
+      "abandonedCountAbortTimeSec": 30,
+      "maxConcurrentSearches": 11,
+      "maxThreadsPerSearch": 6
+    },
+    "plugins": {
+      "allowAll": false,
+      "allowed": [
+      ],
+      "delayInitialization": false,
+      "plugins": {
+      }
+    },
+    "protocol": {
+      "accessControlAllowOrigin": "*",
+      "defaultOutputType": "XML",
+      "omitEmptyProperties": false
+    },
+    "search": {
+      "collator": {
+        "country": "",
+        "language": "en",
+        "locale": "_EN",
+        "variant": ""
+      },
+      "contextSize": 5,
+      "enableHugeResultSets": true,
+      "fiMatchFactor": 900,
+      "maxHitsToCount": 9223372036854776000,
+      "maxHitsToRetrieve": 9223372036854776000
+    },
+    "solr": false
+  },
   "corpora": {
     "fragments": {
       "count": {

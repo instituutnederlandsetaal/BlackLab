@@ -109,15 +109,12 @@ public class WebserviceRequestHandler {
      * Show server information.
      *
      * @param request parameters
+     * @param config server configuration
      * @param rs output stream
      */
-    public static void opServerInfo(RequestServerInfo request, ResponseStreamer rs) {
+    public static void opServerInfo(RequestServerInfo request, BLSConfig config, ResponseStreamer rs) {
         ResultServerInfo serverInfo = new ResultServerInfo(request);
-        rs.serverInfo(serverInfo);
-    }
-
-    public static void opConfig(BLSConfig config, boolean debugMode, ResponseStreamer rs) {
-        rs.config(config, debugMode);
+        rs.serverInfo(serverInfo, config);
     }
 
     /**

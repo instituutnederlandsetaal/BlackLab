@@ -5,7 +5,6 @@ public enum BlsPath {
     AUTOCOMPLETE("autocomplete"),
     CACHE_CLEAR("cache-clear"),
     CACHE_INFO("cache-info"),
-    CONFIG("config"),
     COLLOCATIONS("collocations"),
     DOCS("docs"),
     FIELDS("fields"),
@@ -20,7 +19,7 @@ public enum BlsPath {
     STATUS("status"),
     TERMFREQ("termfreq");
 
-    private String path;
+    private final String path;
 
     BlsPath(String path) {
         this.path = path;

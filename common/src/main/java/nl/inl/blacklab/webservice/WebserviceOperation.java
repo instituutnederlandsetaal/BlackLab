@@ -46,7 +46,6 @@ public enum WebserviceOperation {
 
     CACHE_INFO("cache-info", BlsPath.CACHE_INFO),
     CACHE_CLEAR("cache-clear", HttpMethod.POST, BlsPath.CACHE_CLEAR),
-    CONFIG("config", BlsPath.CONFIG),
 
     CREATE_CORPUS("create-corpus", HttpMethod.POST, BlsPath.EMPTY),
     DELETE_CORPUS("delete-corpus", HttpMethod.DELETE, BlsPath.EMPTY),

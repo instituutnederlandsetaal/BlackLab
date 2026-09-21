@@ -1468,7 +1468,7 @@ public class ResponseStreamer {
         ds.endMap().endItem();
     }
 
-    public void serverInfo(ResultServerInfo result) {
+    public void serverInfo(ResultServerInfo result, BLSConfig config) {
         ds.startMap();
         {
             ds.entry("apiVersion", apiVersion.toString());
@@ -1495,6 +1495,9 @@ public class ResponseStreamer {
             userInfo(result.getUserInfo(), result.isDebugMode());
             if (isNewApi)
                 plugins(result.getPlugins());
+            ds.startEntry("config");
+            config(config, result.isDebugMode());
+            ds.endEntry();
         }
         ds.endMap();
     }
@@ -1973,13 +1976,14 @@ public class ResponseStreamer {
     public void config(BLSConfig config, boolean debugMode) {
         Map<String, Object> configMap = Json.getJsonObjectMapper().convertValue(config, new TypeReference<>() {});
         if (!debugMode) {
+            // Remove sensitive settings: various paths and debug and authentication settings
             configMap.remove("indexLocations");
             configMap.remove("userIndexes");
-            configMap.remove("debug");
-            if (configMap.containsKey("indexing")) {
-                Map<String, Object> indexing = (Map<String, Object>) configMap.get("indexing");
+            if (configMap.containsKey("indexing") && configMap.get("indexing") instanceof Map<?,?> indexing) {
                 indexing.remove("downloadCacheDir");
             }
+            configMap.remove("debug");
+            configMap.remove("authentication");
         }
         ds.value(configMap);
     }
