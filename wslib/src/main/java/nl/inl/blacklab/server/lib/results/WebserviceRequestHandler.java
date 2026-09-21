@@ -22,6 +22,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.requests.RequestAutocomplete;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusStatus;
@@ -113,6 +114,10 @@ public class WebserviceRequestHandler {
     public static void opServerInfo(RequestServerInfo request, ResponseStreamer rs) {
         ResultServerInfo serverInfo = new ResultServerInfo(request);
         rs.serverInfo(serverInfo);
+    }
+
+    public static void opConfig(BLSConfig config, boolean debugMode, ResponseStreamer rs) {
+        rs.config(config, debugMode);
     }
 
     /**
