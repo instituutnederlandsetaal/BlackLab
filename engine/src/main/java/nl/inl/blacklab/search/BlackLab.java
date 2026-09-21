@@ -457,8 +457,9 @@ public final class BlackLab {
                     // Oh well, we'll use the collator as-is
                 }
             }
+            fieldValueSortCollator.freeze();
         }
-        return fieldValueSortCollator;
+        return fieldValueSortCollator.cloneAsThawed();
     }
 
     public static boolean isPluginAllowed(Plugin plugin) {

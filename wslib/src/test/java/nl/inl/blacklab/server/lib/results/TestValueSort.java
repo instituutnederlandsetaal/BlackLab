@@ -22,6 +22,13 @@ public class TestValueSort {
         list.sort(coll);
         Assert.assertEquals(expected, list);
     }
+
+    @Test
+    public void testValueSortCollatorNotSharedInstance() {
+        Collator first = BlackLab.getFieldValueSortCollator();
+        Collator second = BlackLab.getFieldValueSortCollator();
+        Assert.assertNotSame(first, second);
+    }
     
     @Test
     public void testValueSortV2() {
