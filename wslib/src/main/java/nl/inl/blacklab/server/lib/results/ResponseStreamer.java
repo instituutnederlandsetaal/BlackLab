@@ -15,6 +15,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.InputFormatInfo;
@@ -71,6 +73,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -81,6 +84,7 @@ import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.webservice.WsParam;
+import nl.inl.util.Json;
 
 /**
  * For serializing BlackLab response objects.
@@ -1962,6 +1966,20 @@ public class ResponseStreamer {
         ds.value(blackLabCache.getContents(includeDebugInfo));
         ds.endEntry()
                 .endMap();
+    }
+
+    public void config(BLSConfig config, boolean debugMode) {
+        Map<String, Object> configMap = Json.getJsonObjectMapper().convertValue(config, new TypeReference<>() {});
+        if (!debugMode) {
+            configMap.remove("indexLocations");
+            configMap.remove("userIndexes");
+            configMap.remove("debug");
+            if (configMap.containsKey("indexing")) {
+                Map<String, Object> indexing = (Map<String, Object>) configMap.get("indexing");
+                indexing.remove("downloadCacheDir");
+            }
+        }
+        ds.value(configMap);
     }
 
     public void formatXsltResponse(ResultInputFormat result) {

@@ -52,6 +52,7 @@ public abstract class RequestHandler {
     // Top-level endpoints, e.g. /blacklab-server/input-formats
     private static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
     private static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
+    private static final String ENDPOINT_CONFIG           = BlsPath.CONFIG.path();
     private static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
     private static final String ENDPOINT_PLUGINS          = BlsPath.PLUGINS.path();
     private static final String ENDPOINT_SCHEMA           = BlsPath.SCHEMA.path();
@@ -60,6 +61,7 @@ public abstract class RequestHandler {
     private static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
             ENDPOINT_CACHE_CLEAR,
             ENDPOINT_CACHE_INFO,
+            ENDPOINT_CONFIG,
             ENDPOINT_INPUT_FORMATS,
             ENDPOINT_PLUGINS,
             ENDPOINT_SCHEMA,
@@ -277,6 +279,11 @@ public abstract class RequestHandler {
                                 "You (IP " + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
+                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_CONFIG)) {
+                    if (resourceOrPathGiven) {
+                        return errorObj.unknownOperation(indexName);
+                    }
+                    requestHandler = new RequestHandlerConfig(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
                 } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
