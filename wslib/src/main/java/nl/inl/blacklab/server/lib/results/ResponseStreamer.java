@@ -1219,7 +1219,9 @@ public class ResponseStreamer {
             }
 
             // Optionally include explanation of how the query was executed
-            optExplain(reqHits);
+            if (reqHits.explain()) {
+                explain(ds, reqHits.searchField(), reqHits.pattern());
+            }
         }
         ds.endMap().endEntry();
 
@@ -1240,20 +1242,17 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private void optExplain(RequestHits reqHits) {
-        BlackLabIndex index = reqHits.index();
-        if (reqHits.explain()) {
-            TextPattern tp = reqHits.pattern();
-            try {
-                BLSpanQuery q = tp.toQuery(QueryInfo.create(index, reqHits.searchField()));
-                QueryExplanation explanation = index.explain(q);
-                ds.startEntry("explanation").startMap()
-                        .entry("originalQuery", explanation.originalQuery())
-                        .entry("rewrittenQuery", explanation.rewrittenQuery())
-                        .endMap().endEntry();
-            } catch (InvalidQuery e) {
-                throw new BadRequest("INVALID_QUERY", e.getMessage());
-            }
+    public static void explain(DataStream ds, AnnotatedField searchField, TextPattern tp) {
+        BlackLabIndex index = searchField.index();
+        try {
+            BLSpanQuery q = tp.toQuery(QueryInfo.create(index, searchField));
+            QueryExplanation explanation = index.explain(q);
+            ds.startEntry("explanation").startMap()
+                    .entry("originalQuery", explanation.originalQuery())
+                    .entry("rewrittenQuery", explanation.rewrittenQuery())
+                    .endMap().endEntry();
+        } catch (InvalidQuery e) {
+            throw new BadRequest("INVALID_QUERY", e.getMessage());
         }
     }
 
@@ -1275,7 +1274,9 @@ public class ResponseStreamer {
                 }
 
                 // Optionally include explanation of how the query was executed
-                optExplain(hitsGrouped.getReqGroup().requestHits());
+                RequestHits reqHits = hitsGrouped.getReqGroup().requestHits();
+                if (reqHits.explain())
+                    explain(ds, reqHits.searchField(), reqHits.pattern());
             }
             ds.endMap().endEntry();
 

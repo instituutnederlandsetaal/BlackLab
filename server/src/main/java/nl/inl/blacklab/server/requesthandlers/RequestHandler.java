@@ -309,11 +309,6 @@ public abstract class RequestHandler {
                             return errorObj.unavailable(indexName, status.toString());
                         }
 
-                        if (debugMode && !handlerName.isEmpty()
-                                && !CORPUS_LEVEL_ENDPOINTS.contains(handlerName)) {
-                            handlerName = "debug";
-                        }
-
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.

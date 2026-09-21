@@ -14,23 +14,23 @@ import nl.inl.util.LuceneUtil;
 /**
  * Tries to optimize the query using "forward index matching" (also called NFA
  * matching because it uses a nondeterministic finite automaton).
- *
+ * <p>
  * Looks for adjacent clauses that may benefit from this. One of the clauses would
  * be resolved normally using Lucene's reverse index, yielding a list of matches.
  * We would then use the forward index to see if these are actual matches by checking
  * if the other clause actually occurs next to the match found using the reverse index.
- *
+ * <p>
  * This works best when one clause has few matches while the other has very many.
  * The first clause would be matched traditionally using Lucene's reverse index, while
  * the second, much more frequent clause would be matched using the forward index.
- *
+ * <p>
  * If such a situation is found, we convert the clause to be matched using the forward
  * index to an NFA (nondeterministic finite automaton) and use the other as the "anchor"
  * (because a forward index matching operations always needs a starting position).
  * Together they are combined in a FISEQ (forward index sequence) operation which, like
  * explained above, will first find infrequent matches using Lucene, then decide using
  * the forward index if they are actual matches or not.
- *
+ * <p>
  * Checking this for all adjacent clauses (repeatedly) can be a costly operation, so
  * you might want to disable this if you have high query volume and your indexes are not
  * very large.
@@ -53,23 +53,23 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     /**
      * The maximum value of nfaFactor, meaning "make as many NFAs as possible".
      */
-    public static final long MAX_NFA_MATCHING = Long.MAX_VALUE;
+    public static final long MAX_NFA_MATCHING = 0;
 
     /**
      * The minimum value of nfaFactor, meaning "make no NFAs".
      */
-    public static final long NO_NFA_MATCHING = 0;
+    public static final long NO_NFA_MATCHING = Long.MAX_VALUE;
 
     /**
-     * The default value of nfaThreshold.
+     * The default value of nfaThreshold. A lower threshold means more NFA matching will be done.
      */
     public static long defaultForwardIndexMatchingThreshold = 900; //DISABLE: NO_NFA_MATCHING;
 
     /**
      * Indicates how expensive fetching a lot of term positions from Lucene is; Used
-     * to calculate the cost of "regular" matching.
-     *
-     * Higher values means "regular" (reverse) matching is considered relatively cheaper.
+     * to calculate the cost of reverse matching.
+     * <p>
+     * Higher values means reverse matching is considered relatively cheaper.
      */
     private static final long TERM_FREQ_DIVIDER = 500;
 
@@ -88,7 +88,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * The ratio of estimated numbers of hits that we use to decide whether or not
      * to try NFA-matching with two clauses / subsequences. The lower the number,
      * the more we use NFA-matching.
-     *
+     * <p>
      * (we compare this to the absolute "combinability factor"; see below)
      */
     private static long nfaThreshold = defaultForwardIndexMatchingThreshold;
@@ -98,6 +98,9 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * (disable for testing)
      */
     private static boolean onlyUseNfaForManyUniqueTerms = true;
+
+    /** What do we consider to be "many" unique terms? */
+    public static final int MANY_UNIQUE_TERMS_THRESHOLD = 10_000;
 
     public static void setDefaultForwardIndexMatchingThreshold(long threshold) {
         ClauseCombinerNfa.defaultForwardIndexMatchingThreshold = threshold;
@@ -120,18 +123,18 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     }
 
     private static boolean isForwardIndexMatchingEnabled() {
-        return enableForwardIndexmatching && nfaThreshold > NO_NFA_MATCHING;
+        return enableForwardIndexmatching && nfaThreshold != NO_NFA_MATCHING;
     }
 
     /**
      * Determines the best direction for NFA and calculates a measure for how desirable NFA matching in this direction is.
-     *
+     * <p>
      * Forward NFA matching means: the left clause is resolved conventionally (using Lucene reverse index); the right clause
      * is then resolved with NFA matching using the forward index.
-     *
+     * <p>
      * Backward NFA matching means the opposite: the right clause is resolved conventionally, after which the left clause is
      * resolved with NFA matching using the forward index.
-     *
+     * <p>
      * Returns a number that indicates NFA matching desirability and direction. 0 means not possible/not desirable.
      * Positive numbers mean forward NFA matching is possible/preferred; the higher, the more desirable it is.
      * Negative numbers mean backward NFA matching is possible/preferred; the more negative, the more desirable it is.
@@ -221,27 +224,28 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
-        if (absFactor > nfaThreshold) {
+        if (absFactor < nfaThreshold) {
+            // The "score" for forward matching is below the threshold, so don't bother with NFA matching.
             if (traceOptimization)
-                logger.debug("(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
+                logger.debug("(CCNFA: abs(factor) < nfaThreshold (" + absFactor + " < " + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
 
+        // Even if the factor is above the threshold, we may not want to make an NFA for fields with relatively few
+        // unique terms (e.g. PoS), because it won't be faster.
         if (onlyUseNfaForManyUniqueTerms) {
             long maxTermsRight = LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField());
             long maxTermsLeft = LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField());
             if (traceOptimization)
                 logger.debug("(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
-            if (factor > 0 && maxTermsRight < 10_000 ||
-                factor < 0 && maxTermsLeft < 10_000) {
-
-                // Don't make NFA for fields with very few unique terms (e.g. PoS), because it won't be faster.
+            if (factor > 0 && maxTermsRight < MANY_UNIQUE_TERMS_THRESHOLD ||
+                factor < 0 && maxTermsLeft < MANY_UNIQUE_TERMS_THRESHOLD) {
                 return CANNOT_COMBINE;
             }
         }
 
-        return factor > 0 ? FORWARD_PRIORITY - (int) (10_000 / absFactor)
-                : BACKWARD_PRIORITY - (int) (10_000 / absFactor);
+        return factor > 0 ? FORWARD_PRIORITY - (int) (MANY_UNIQUE_TERMS_THRESHOLD / absFactor)
+                : BACKWARD_PRIORITY - (int) (MANY_UNIQUE_TERMS_THRESHOLD / absFactor);
     }
 
     @Override

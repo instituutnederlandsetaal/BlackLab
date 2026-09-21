@@ -326,6 +326,9 @@ public class WebserviceRequestHandler {
                 }
             }
             ds.endMap().endEntry();
+            ds.entry("searchField", request.searchField().name());
+            if (request.explain())
+                ResponseStreamer.explain(ds, request.searchField(), request.textPattern());
         }
         ds.endMap();
     }

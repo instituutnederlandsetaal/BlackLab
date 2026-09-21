@@ -2,7 +2,7 @@
 
 Show the contents of the query results cache. 
 
-**URL** : `/blacklab-server/<corpus-name>/cache-info`
+**URL** : `/blacklab-server/cache-info`
 
 **Method** : `GET`
 

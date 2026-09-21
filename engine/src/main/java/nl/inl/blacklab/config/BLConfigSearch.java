@@ -15,6 +15,8 @@ public class BLConfigSearch {
 
     private long maxHitsToCount = Long.MAX_VALUE;
 
+    /** Forward index match factor. Determines how aggressively forward index matching (NFA matching) is used.
+     *  Higher values mean more NFA matching will be done. */
     private long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
 
     /** Should result sets larger than the maximum array size (roughly 2^31) be supported?
