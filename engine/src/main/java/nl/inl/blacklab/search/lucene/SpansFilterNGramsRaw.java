@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.queries.spans.SpanCollector;
 
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
-
 /**
  * Expands the source spans to the left and right to form N-grams.
  *
@@ -252,7 +250,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
                 if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = in.docID();
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId);
                 }
 
                 // First n-gram containing source hit: minimum start position,
@@ -275,7 +273,7 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
                 if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = in.docID();
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId);
                 }
 
                 // First n-gram containing source hit: minimum start position,

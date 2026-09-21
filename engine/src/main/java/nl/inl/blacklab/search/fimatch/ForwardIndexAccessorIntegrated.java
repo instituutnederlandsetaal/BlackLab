@@ -11,7 +11,6 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
@@ -67,8 +66,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         public int getDocLength(int segmentDocId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return lengthGetter.getFieldLength(segmentDocId)
-                    - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            return lengthGetter.getFieldLength(segmentDocId);
         }
 
         @Override

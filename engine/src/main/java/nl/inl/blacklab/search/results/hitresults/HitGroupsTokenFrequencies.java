@@ -33,7 +33,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -411,8 +410,8 @@ public class HitGroupsTokenFrequencies {
                                 }
 
                                 // Step 2: retrieve the to-be-grouped metadata for this document
-                                int docLength = Integer.parseInt(doc.get(lengthTokensFieldName))
-                                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                int docLength = BlackLabIndex.decodeTokenLengthField(
+                                        Integer.parseInt(doc.get(lengthTokensFieldName)));
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
                                         new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ?

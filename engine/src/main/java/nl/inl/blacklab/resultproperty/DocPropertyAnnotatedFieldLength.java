@@ -3,7 +3,6 @@ package nl.inl.blacklab.resultproperty;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.util.PropertySerializeUtil;
@@ -27,7 +26,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
-    private DocValuesGetter docValuesGetter;
+    private DocValuesGetter dvTokensLength;
 
     private final BlackLabIndex index;
 
@@ -36,8 +35,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         index = prop.index;
         lengthTokensFieldName = prop.lengthTokensFieldName;
         friendlyName = prop.friendlyName;
-        docValuesGetter = this.context.lrc() == prop.context.lrc() ?
-                prop.docValuesGetter : DocValuesGetter.get(index, this.context.lrc(), lengthTokensFieldName);
+        dvTokensLength = this.context.lrc() == prop.context.lrc() ?
+                prop.dvTokensLength : DocValuesGetter.get(index, this.context.lrc(), lengthTokensFieldName);
     }
 
     public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String annotatedFieldName) {
@@ -45,7 +44,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         this.index = index;
         this.lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(annotatedFieldName);
         this.friendlyName = annotatedFieldName + " length";
-        docValuesGetter = DocValuesGetter.get(index, context.lrc(), this.lengthTokensFieldName);
+        dvTokensLength = DocValuesGetter.get(index, context.lrc(), this.lengthTokensFieldName);
     }
 
     @Override
@@ -54,7 +53,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     public long get(int docId) {
-        return docValuesGetter.getLong(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        return BlackLabIndex.decodeTokenLengthField((int)dvTokensLength.getLong(docId));
     }
 
     @Override

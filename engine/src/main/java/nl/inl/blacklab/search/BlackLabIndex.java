@@ -62,6 +62,33 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
+    /** Document length in Lucene and forward index is always reported as one
+     *  higher due to punctuation being a trailing value. We call this the
+     *  "extra closing token". */
+    int IGNORE_EXTRA_CLOSING_TOKEN = 1;
+
+    /** Apply the "extra closing token" when storing the token length.
+     *
+     * \see {@link #IGNORE_EXTRA_CLOSING_TOKEN}
+     *
+     * @param tokenLength the token length to encode
+     * @return the encoded token length
+     */
+    static int encodeTokenLengthField(int tokenLength) {
+        return tokenLength + IGNORE_EXTRA_CLOSING_TOKEN;
+    }
+
+    /** Remove the "extra closing token" when storing the token length.
+     *
+     * \see {@link #IGNORE_EXTRA_CLOSING_TOKEN}
+     *
+     * @param encodedTokenLength the encoded token length to decode
+     * @return the decoded token length
+     */
+    static int decodeTokenLengthField(int encodedTokenLength) {
+        return encodedTokenLength - IGNORE_EXTRA_CLOSING_TOKEN;
+    }
+
     static SearchDocs getSubcorpusSearch(BlackLabIndex index, Query docFilterQuery) {
         if (docFilterQuery == null) {
             docFilterQuery = index.getAllRealDocsQuery();

@@ -5,13 +5,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.jspecify.annotations.Nullable;
-
 import org.apache.lucene.document.Document;
+import org.jspecify.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
@@ -40,7 +38,7 @@ final public class DocumentFrequencyCounter {
         this.docId = docId;
         final String docLengthField = AnnotatedFieldNameUtil.lengthTokensField(cfg.annotatedField());
         this.doc = openDocument(index, docId, cfg, docLengthField);
-        this.docLength = Integer.parseInt(doc.get(docLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        this.docLength = BlackLabIndex.decodeTokenLengthField(Integer.parseInt(doc.get(docLengthField)));
     }
 
     private static Document openDocument(final BlackLabIndex index, final int docId, final FrequencyListConfig cfg,

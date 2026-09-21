@@ -4,11 +4,9 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
  * Return all n-grams of certain lengths.
@@ -114,7 +112,7 @@ class SpansNGrams extends BLSpans {
                 return NO_MORE_DOCS; // no more docs; we're done
             }
             // Get document length and reset currentStart/currentEnd so we can check if there's actually hits
-            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc);
             currentStart = currentEnd = -1;
         } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
         atFirstInCurrentDoc = true;

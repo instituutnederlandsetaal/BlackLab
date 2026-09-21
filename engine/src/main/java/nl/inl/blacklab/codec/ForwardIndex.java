@@ -16,6 +16,7 @@ import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Manages read access to forward indexes for a single segment.
@@ -187,7 +188,7 @@ public class ForwardIndex implements AutoCloseable {
         @Override
         public long docLength(ForwardIndexField field, int docId) {
             getDocOffsetAndLength(field, docId);
-            return docLength;
+            return BlackLabIndex.decodeTokenLengthField(docLength);
         }
 
         @Override

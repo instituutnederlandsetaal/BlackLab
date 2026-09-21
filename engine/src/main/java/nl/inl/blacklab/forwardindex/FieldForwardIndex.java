@@ -59,10 +59,10 @@ public class FieldForwardIndex implements AnnotationForwardIndex {
      * The document length should be the same for all annotations on the same field, of course.
      *
      * The "extra closing token" that is added to the end of the document (for punctuation and closing tags
-     * after the last word) is included in the length.
+     * after the last word) is NOT included in the length.
      *
      * @param docId segment-local docId of document to get length for
-     * @return doc length in tokens (including the "extra closing token")
+     * @return doc length in tokens
      */
     @Override
     public long docLength(int docId) {

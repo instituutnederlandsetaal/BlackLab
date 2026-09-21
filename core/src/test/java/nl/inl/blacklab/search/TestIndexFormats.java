@@ -118,7 +118,7 @@ public class TestIndexFormats {
     @Test
     public void testDocLength() {
         for (int i = 0; i < TestIndex.DOC_LENGTHS_TOKENS.length; i++) {
-            int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i] + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i];
             int docId = testIndex.getDocIdForDocNumber(i);
 
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
@@ -153,8 +153,7 @@ public class TestIndexFormats {
     /** if token offset out of range, throw an exception */
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOutOfRange() {
-        wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0] +
-                BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN));
+        wordTerms.get(getToken(wordFi, 0, (int)BlackLabIndex.encodeTokenLengthField(TestIndex.DOC_LENGTHS_TOKENS[0])));
     }
 
     @Test
