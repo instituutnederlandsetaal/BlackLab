@@ -942,6 +942,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
             protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
                     String indexAsFieldName, ConfigMetadataField indexAsFieldConfig, Map<String, Collection<String>> metadataFieldValues) {
+                // Explicit inheritance rules apply even when fragments have no local value (e.g. their own pid).
+                ConfigMetadataField effectiveConfig = indexAsFieldConfig == null ? field : indexAsFieldConfig;
+                if (effectiveConfig.getFragments() != FragmentBehaviour.DEFAULT)
+                    ensureFragmentBehaviour(indexAsFieldName, __ -> effectiveConfig.getFragments());
                 // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
                 finder.xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);

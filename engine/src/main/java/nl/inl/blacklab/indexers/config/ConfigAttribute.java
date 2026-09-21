@@ -47,7 +47,7 @@ public class ConfigAttribute {
         copy.name = name;
         copy.exclude = exclude;
         copy.valuePath = valuePath;
-        process.forEach(p -> copy.process.add(p.copy()));
+        copy.setProcess(process.stream().map(ConfigProcessStep::copy).toList());
         return copy;
     }
 
