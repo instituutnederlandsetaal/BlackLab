@@ -13,13 +13,18 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.CorpusSize;
 
 public class MockIndexMetadata implements IndexMetadata {
-    
-    private final List<AnnotatedField> fields;
+
+    private final AnnotatedFields annotatedFields;
+
+    private final MetadataFields metadataFields;
     
     private final FreezeStatus frozen = new FreezeStatus();
 
@@ -28,33 +33,29 @@ public class MockIndexMetadata implements IndexMetadata {
         MockAnnotatedField contents = new MockAnnotatedField(index, "contents", annot);
         annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
         MockAnnotatedField contents2 = new MockAnnotatedField(index, "contents2", annot);
-        fields = List.of(contents, contents2);
-    }
+        List<AnnotatedField> fields = List.of(contents, contents2);
+        this.annotatedFields = new AnnotatedFields() {
 
-    @Override
-    public AnnotatedFields annotatedFields() {
-        return new AnnotatedFields() {
-            
             @Override
             public Stream<AnnotatedField> stream() {
                 return fields.stream();
             }
-            
+
             @Override
             public AnnotatedField main() {
                 return fields.get(0);
             }
-            
+
             @Override
             public Iterator<AnnotatedField> iterator() {
                 return fields.iterator();
             }
-            
+
             @Override
             public AnnotatedField get(String fieldName) {
                 return fields.stream().filter(f -> f.name().equals(fieldName)).findFirst().orElse(null);
             }
-            
+
             @Override
             public boolean exists(String fieldName) {
                 return fields.stream().anyMatch(f -> f.name().equals(fieldName));
@@ -70,11 +71,69 @@ public class MockIndexMetadata implements IndexMetadata {
                 throw new UnsupportedOperationException();
             }
         };
+        List<MetadataField> metas = List.of();
+        this.metadataFields = new MetadataFields() {
+
+            @Override
+            public Iterator<MetadataField> iterator() {
+                return metas.iterator();
+            }
+
+            @Override
+            public String defaultAnalyzerName() {
+                return "";
+            }
+
+            @Override
+            public Stream<MetadataField> stream() {
+                return metas.stream();
+            }
+
+            @Override
+            public MetadataField get(String fieldName) {
+                return metas.stream().filter(f -> f.name().equals(fieldName)).findFirst().orElse(null);
+            }
+
+            @Override
+            public Map<String, ? extends MetadataFieldGroup> groups() {
+                return Map.of();
+            }
+
+            @Override
+            public MetadataField pidField() {
+                return null;
+            }
+
+            @Override
+            public boolean exists(String name) {
+                return metas.stream().anyMatch(m -> m.name().equals(name));
+            }
+
+            @Override
+            public List<String> names() {
+                return metas.stream().map(Field::name).toList();
+            }
+
+            @Override
+            public List<MetadataField> toList() {
+                return metas;
+            }
+
+            @Override
+            public boolean anyOccurInFragments() {
+                return false;
+            }
+        };
+    }
+
+    @Override
+    public AnnotatedFields annotatedFields() {
+        return annotatedFields;
     }
 
     @Override
     public MetadataFields metadataFields() {
-        return null;
+        return metadataFields;
     }
 
     @Override

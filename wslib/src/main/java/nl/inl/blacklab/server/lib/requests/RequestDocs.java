@@ -40,7 +40,7 @@ public record RequestDocs(
         CsvSettings csvSettings,
         ParamsForResponse params) {
     public static RequestDocs fromParams(QueryParams qpar, boolean isCsv) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         SampleParameters sampleParams = ParamUtil.sampleParams(
                 qpar.optDouble(WsParam.SAMPLE).orElse(null),
                 qpar.optLong(WsParam.SAMPLE_NUMBER).orElse(null),

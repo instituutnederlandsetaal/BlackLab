@@ -9,6 +9,7 @@ import org.apache.lucene.search.Query;
 import org.apache.solr.common.params.SolrParams;
 
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsMap;
 import nl.inl.blacklab.webservice.WsParam;
 
@@ -24,7 +25,7 @@ public class QueryParamsSolrUtil {
                 UserRequestSolr.BL_PAR_PREFIX + WsParam.JSON_REQUEST) != null;
     }
 
-    public static QueryParamsMap getParams(String corpusName, SolrParams solrParams, Query fallbackFilterQuery, BLSConfig config,
+    public static QueryParamsMap getParams(QueryParams.CorpusRefByName corpusRef, SolrParams solrParams, Query fallbackFilterQuery, BLSConfig config,
             boolean debugMode) {
         Map<WsParam, String> params = solrParams.stream()
                 .filter(e -> e.getKey().startsWith(UserRequestSolr.BL_PAR_PREFIX)) // Only BL params
@@ -33,6 +34,6 @@ public class QueryParamsSolrUtil {
                         .map(par -> Pair.of(par, StringUtils.join(e.getValue(), "; ")))
                         .stream()
                 ).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-        return new QueryParamsMap(corpusName, params, null, fallbackFilterQuery, config, debugMode);
+        return new QueryParamsMap(corpusRef, params, null, fallbackFilterQuery, config, debugMode);
     }
 }

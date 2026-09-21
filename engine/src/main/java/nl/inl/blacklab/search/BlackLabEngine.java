@@ -137,6 +137,12 @@ public final class BlackLabEngine implements AutoCloseable {
         return n;
     }
 
+    public static BlackLabEngine singleInstance() {
+        if (engines.size() != 1)
+            throw new IllegalStateException("There must be exactly one engine for this method to be used");
+        return engines.iterator().next();
+    }
+
     /**
      * Set the index object factory to use.
      *

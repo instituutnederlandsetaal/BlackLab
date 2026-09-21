@@ -18,7 +18,7 @@ public class UserRequestJaxb implements UserRequest {
 
     private final String method;
 
-    private final String corpusName;
+    private final QueryParams.CorpusRefByName corpusRef;
 
     private final MultivaluedMap<String, String> parameters;
 
@@ -30,7 +30,7 @@ public class UserRequestJaxb implements UserRequest {
             MultivaluedMap<String, String> parameters, WebserviceOperation op, boolean isXml) {
         this.client = client;
         this.method = method;
-        this.corpusName = corpusName;
+        this.corpusRef = new QueryParams.CorpusRefByName(corpusName);
         this.parameters = parameters;
         this.op = op;
         this.isXml = isXml;
@@ -85,8 +85,8 @@ public class UserRequestJaxb implements UserRequest {
     }
 
     @Override
-    public String getCorpusName() {
-        return "";
+    public QueryParams.CorpusRefByName getCorpusRef() {
+        return corpusRef;
     }
 
     @Override

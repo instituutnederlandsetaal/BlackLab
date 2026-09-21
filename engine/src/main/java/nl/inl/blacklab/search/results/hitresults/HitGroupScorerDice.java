@@ -26,6 +26,11 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     }
 
     @Override
+    public boolean needsTotalFrequency() {
+        return false;
+    }
+
+    @Override
     public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
             String relationType) {

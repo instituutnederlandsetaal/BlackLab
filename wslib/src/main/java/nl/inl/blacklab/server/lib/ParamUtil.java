@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -45,7 +44,6 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -68,11 +66,7 @@ public class ParamUtil {
 
     /** Resolve the index a request wants to access */
     public static BlackLabIndex index(String corpusName) {
-        try {
-            return IndexManager.get().getIndex(corpusName).blIndex();
-        } catch (Exception e) {
-            throw new InvalidIndex(e);
-        }
+        return QueryParams.DEFAULT_INDEX_RESOLVER.resolve(corpusName);
     }
 
     /**
@@ -239,11 +233,11 @@ public class ParamUtil {
         return sortBy == null ? null : DocProperty.deserialize(index, sortBy);
     }
 
-    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, String groupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
+    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, boolean hasGroupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
         if (operation.isDocsOperation())
             return defaultSortBy;
         HitGroupProperty sortProp = null;
-        if (groupBy != null) {
+        if (hasGroupBy) {
             if (sortBy != null && viewGroup == null) { // Sorting refers to results within the group when viewing contents of a group
                 sortProp = HitGroupProperty.deserialize(sortBy);
             }
@@ -255,10 +249,10 @@ public class ParamUtil {
         return sortProp;
     }
 
-    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, String groupBy, String viewGroup, String sortBy, ContextSize contextSize) {
+    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, boolean hasGroupBy, String viewGroup, String sortBy, ContextSize contextSize) {
         if (operation.isDocsOperation())
             return null;
-        if (groupBy != null && viewGroup == null) {
+        if (hasGroupBy && viewGroup == null) {
             // looking at groups, or results within a group, don't bother sorting the underlying results
             // themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
             return null;
@@ -427,7 +421,7 @@ public class ParamUtil {
     }
 
     public static Query filterQuery(QueryParams qpar) throws BlsException {
-        return filterQuery(index(qpar.getCorpusName()), qpar.get(WsParam.FILTER_LANGUAGE),
+        return filterQuery(qpar.getCorpusRef(), qpar.get(WsParam.FILTER_LANGUAGE),
                 qpar.get(WsParam.FILTER),
                 qpar.get(WsParam.DOC_PID), qpar.getFallbackFilterQuery());
     }
@@ -437,14 +431,15 @@ public class ParamUtil {
      *
      * Uses docPid (if specified), otherwise filter/filterLang.
      *
-     * @param index index we're searching
+     * @param corpusRef corpus we're searching
      * @param filterLang filter query language (e.g. "lucene")
      * @param filterQuery filter query string
      * @param docPid filter on this specific document (ignore filterQuery)
      * @param fallbackFilterQuery optional filter query to use if no filter query or docPid
      * @return document filter query
      */
-    public static Query filterQuery(BlackLabIndex index, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
+    public static Query filterQuery(QueryParams.CorpusRefByName corpusRef, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
+        BlackLabIndex index = corpusRef.index();
         Query result;
         if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)

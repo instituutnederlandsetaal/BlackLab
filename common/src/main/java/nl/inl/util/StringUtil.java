@@ -38,6 +38,9 @@ public final class StringUtil {
     /** Matches any value */
     public static final Pattern PATT_ANY_VALUE = Pattern.compile(REGEX_ANY_VALUE);
 
+    /** Matches any non-empty value */
+    public static final String REGEX_ANY_NON_EMPTY_VALUE = ".+";
+
     private StringUtil() {
     }
 

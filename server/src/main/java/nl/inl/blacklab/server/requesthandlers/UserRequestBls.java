@@ -32,7 +32,7 @@ public class UserRequestBls implements UserRequest {
     private boolean isNewCorporaEndpoint = false;
 
     /** Corpus name from the URL path */
-    private String corpusName;
+    private final QueryParams.CorpusRefByName corpusRef;
 
     /** Resource from the URL path, e.g. "hits" */
     private final String urlResource;
@@ -61,11 +61,12 @@ public class UserRequestBls implements UserRequest {
             this.isNewCorporaEndpoint = true;
         }
         String[] parts = servletPath.split("/", 3);
-        corpusName = parts.length >= 1 ? parts[0] : "";
+        String corpusName = parts.length >= 1 ? parts[0] : "";
         if (corpusName.startsWith(":")) {
             // Private index. Prefix with user id.
             corpusName = user.getId() + corpusName;
         }
+        corpusRef = new QueryParams.CorpusRefByName(corpusName);
         urlResource = parts.length >= 2 ? parts[1] : "";
         urlPathInfo = parts.length >= 3 ? parts[2] : "";
     }
@@ -141,14 +142,14 @@ public class UserRequestBls implements UserRequest {
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                blsParams = QueryParams.fromJson(corpusName, operation, jsonRequest, null, blsConfig,
+                blsParams = QueryParams.fromJson(corpusRef, operation, jsonRequest, null, blsConfig,
                         isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            blsParams = QueryParams.fromServletRequest(corpusName, operation, request, blsConfig, isDebugMode);
+            blsParams = QueryParams.fromServletRequest(corpusRef, operation, request, blsConfig, isDebugMode);
         }
 
         if (apiVersion().getMajor() <= 4 && !blsParams.get(WsParam.GROUP_BY).isEmpty()) {
@@ -170,8 +171,8 @@ public class UserRequestBls implements UserRequest {
     }
 
     @Override
-    public String getCorpusName() {
-        return corpusName;
+    public QueryParams.CorpusRefByName getCorpusRef() {
+        return corpusRef;
     }
 
     public String getUrlResource() {

@@ -44,6 +44,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -76,7 +77,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
-        blackLab = BlackLab.implicitInstance();
+        blackLab = BlackLab.currentInstance();
         blackLab.registerIndex(null, this);
     }
     
@@ -242,7 +243,30 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
         throw new UnsupportedOperationException();
     }
-    
+
+    Map<AnnotatedField, Map<CompleteQuery, Long>> countHitsResponses = new HashMap<>();
+
+    public void clearCountHitsResponses() {
+        countHitsResponses.clear();
+    }
+
+    /** Set up a future response to countHits call. */
+    public void putCountHitsResponse(AnnotatedField field, CompleteQuery completeQuery, long response) {
+        countHitsResponses
+                .computeIfAbsent(field, k -> new HashMap<>())
+                .put(completeQuery, response);
+    }
+
+    @Override
+    public long countHits(AnnotatedField field, CompleteQuery completeQuery) {
+        Long result = countHitsResponses
+                .getOrDefault(field, new HashMap<>())
+                .get(completeQuery);
+        if (result == null)
+            throw new IllegalStateException("No response set for input: " + field + ", " + completeQuery);
+        return result;
+    }
+
     @Override
     public void setCache(SearchCache cache) {
         throw new UnsupportedOperationException();

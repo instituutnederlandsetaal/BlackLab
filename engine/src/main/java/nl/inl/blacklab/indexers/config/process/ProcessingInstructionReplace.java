@@ -12,6 +12,7 @@ import nl.inl.blacklab.plugins.param.PEnum;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.plugins.param.PluginParams;
+import nl.inl.util.StringUtil;
 
 /**
  * A regular expression replace operation.
@@ -38,7 +39,7 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
 
     @Override
     public void initialize() throws PluginException {
-        parFind = addParam(PString.matching("find", ".+", true));
+        parFind = addParam(PString.matching("find", StringUtil.REGEX_ANY_NON_EMPTY_VALUE, true));
         parReplace = addParam(PString.any("replace", true));
         parFlags = addParam(PString.any("flags"));
         parKeep = addParam(PEnum.of("keep", List.of("replaced", "both")));

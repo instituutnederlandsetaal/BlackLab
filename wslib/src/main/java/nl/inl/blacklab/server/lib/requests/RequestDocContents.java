@@ -17,7 +17,7 @@ public record RequestDocContents(
         ParamsForResponse paramsForResponse) {
 
     public static RequestDocContents fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         return new RequestDocContents(
                 index,
                 ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD)),

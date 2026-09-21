@@ -307,7 +307,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param query the query
      * @return a query that only yields full documents
      */
-    private static Query upcastFragmentsToFullDocuments(Query query) {
+    public static Query upcastFragmentsToFullDocuments(Query query) {
         // We do this by first separating into full documents and fragments. We upcast the fragments
         // using ToParentBlockJoinQuery, then combine the results with the full documents.
         Query parentFilter = BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT);
@@ -638,7 +638,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                             tokenLengthFields.forEach(field -> {
                                 try {
                                     tokenLengthValuesPerField.put(field.name(), countTokens ? DocValues.getNumeric(reader, field.tokenLengthField()) : null);
-                                    tokensPerField.put(field.name(), new CorpusSize.Count(0, 0));
+                                    tokensPerField.computeIfAbsent(field.name(), __ -> new CorpusSize.Count(0, 0));
                                 } catch (IOException e) {
                                     throw new InvalidIndex(e);
                                 }

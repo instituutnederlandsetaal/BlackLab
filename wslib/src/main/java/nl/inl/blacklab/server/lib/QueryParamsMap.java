@@ -24,7 +24,7 @@ import nl.inl.util.Json;
  */
 public class QueryParamsMap implements QueryParams {
 
-    protected final String corpusName;
+    protected final CorpusRefByName corpusRef;
 
     private final Map<WsParam, String> params = new EnumMap<>(WsParam.class);
 
@@ -39,10 +39,10 @@ public class QueryParamsMap implements QueryParams {
     /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
     boolean debugMode;
 
-    public QueryParamsMap(String corpusName, Map<WsParam, String> params,
+    public QueryParamsMap(CorpusRefByName corpusRef, Map<WsParam, String> params,
             Map<WsParam, Object> typedParams, Query fallbackFilterQuery,
             BLSConfig config, boolean debugMode) {
-        this.corpusName = corpusName;
+        this.corpusRef = corpusRef;
         this.fallbackFilterQuery = fallbackFilterQuery;
         this.config = config;
         this.debugMode = debugMode;
@@ -274,7 +274,12 @@ public class QueryParamsMap implements QueryParams {
     }
 
     @Override
-    public String getCorpusName() { return corpusName; }
+    public String getCorpusName() { return corpusRef.name(); }
+
+    @Override
+    public CorpusRefByName getCorpusRef() {
+        return corpusRef;
+    }
 
     /** A way to convert from string to some type */
     @FunctionalInterface

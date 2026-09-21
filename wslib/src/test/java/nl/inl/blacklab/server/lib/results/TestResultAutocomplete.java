@@ -20,6 +20,7 @@ import org.mockito.Mockito;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsMap;
 import nl.inl.blacklab.webservice.WsParam;
 
@@ -42,7 +43,8 @@ public class TestResultAutocomplete {
     @Test
     public void testTokenizedAutocompleteParameterParsing() {
         Map<WsParam, String> parameterValues = Map.of();
-        QueryParamsMap paramsDefault = new QueryParamsMap("test-index", parameterValues, null, null,
+        QueryParams.CorpusRefByName corpusRef = new QueryParams.CorpusRefByName("test-index");
+        QueryParamsMap paramsDefault = new QueryParamsMap(corpusRef, parameterValues, null, null,
                 Mockito.mock(BLSConfig.class), true);
         Assert.assertEquals("term", paramsDefault.get(WsParam.AUTOCOMPLETE_TYPE));
     }

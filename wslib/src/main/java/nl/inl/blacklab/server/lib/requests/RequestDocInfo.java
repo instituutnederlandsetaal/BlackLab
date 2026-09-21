@@ -10,7 +10,7 @@ import nl.inl.blacklab.webservice.WsParam;
 
 public record RequestDocInfo(BlackLabIndex index, String docPid, Collection<MetadataField> metadataToInclude) {
     public static RequestDocInfo fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         return new RequestDocInfo(
                 index,
                 qpar.get(WsParam.DOC_PID),
