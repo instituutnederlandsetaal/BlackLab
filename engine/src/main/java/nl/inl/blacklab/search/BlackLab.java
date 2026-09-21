@@ -453,6 +453,7 @@ public final class BlackLab {
                     // Set parentheses equal to NULL, which is ignored.
                     rules += "&\u0000='('=')'";
                     fieldValueSortCollator = new RuleBasedCollator(rules);
+                    fieldValueSortCollator.freeze(); // make it thread-safe
                 } catch (Exception e) {
                     // Oh well, we'll use the collator as-is
                 }
