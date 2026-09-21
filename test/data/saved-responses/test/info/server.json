@@ -13,7 +13,7 @@
       "maxQueuedSearches": 20,
       "maxSearchTimeSec": 300,
       "minFreeMemForSearchMegs": 50,
-      "targetFreeMemMegs": 837
+      "targetFreeMemMegs": "VALUE_REMOVED"
     },
     "indexing": {
       "downloadAllowed": false,
@@ -63,8 +63,8 @@
     },
     "performance": {
       "abandonedCountAbortTimeSec": 30,
-      "maxConcurrentSearches": 11,
-      "maxThreadsPerSearch": 6
+      "maxConcurrentSearches": "VALUE_REMOVED",
+      "maxThreadsPerSearch": "VALUE_REMOVED"
     },
     "plugins": {
       "allowAll": false,
