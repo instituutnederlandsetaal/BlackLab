@@ -1973,6 +1973,11 @@ public class ResponseStreamer {
         if (!debugMode) {
             configMap.remove("indexLocations");
             configMap.remove("userIndexes");
+            configMap.remove("debug");
+            if (configMap.containsKey("indexing")) {
+                Map<String, Object> indexing = (Map<String, Object>) configMap.get("indexing");
+                indexing.remove("downloadCacheDir");
+            }
         }
         ds.value(configMap);
     }

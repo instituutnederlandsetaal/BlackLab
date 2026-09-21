@@ -5,6 +5,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /** Versions of the BlackLab webservice API.
  *
  *  Right now, they only differ in small details.
@@ -60,6 +63,7 @@ public enum ApiVersion {
      * @return closest version found
      * @throws IllegalArgumentException if no matching version was found
      */
+    @JsonCreator
     public static ApiVersion fromValue(String s) {
         s = s.toLowerCase();
 
@@ -108,11 +112,11 @@ public enum ApiVersion {
     /** Additional version info, if any */
     public final String suffix;
 
-    private ApiVersion(int major, int minor) {
+    ApiVersion(int major, int minor) {
         this(major, minor, "");
     }
 
-    private ApiVersion(int major, int minor, String suffix) {
+    ApiVersion(int major, int minor, String suffix) {
         this.major = major;
         this.minor = minor;
         this.suffix = suffix == null ? "" : suffix;
@@ -135,6 +139,7 @@ public enum ApiVersion {
         return Math.abs(this.minor - (minor < 0 ? 1000 : minor));
     }
 
+    @JsonValue
     @Override
     public String toString() {
         return major + "." + minor + (StringUtils.isEmpty(suffix) ? "" : "-" + suffix);
