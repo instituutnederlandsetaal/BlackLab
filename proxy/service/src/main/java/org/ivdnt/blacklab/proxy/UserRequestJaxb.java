@@ -80,6 +80,11 @@ public class UserRequestJaxb implements UserRequest {
     }
 
     @Override
+    public String clientIpAddress() {
+        return "";
+    }
+
+    @Override
     public String getCorpusName() {
         return "";
     }

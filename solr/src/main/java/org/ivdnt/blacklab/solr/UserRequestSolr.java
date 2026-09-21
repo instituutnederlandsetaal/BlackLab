@@ -117,6 +117,11 @@ public class UserRequestSolr implements UserRequest {
     }
 
     @Override
+    public String clientIpAddress() {
+        return getRemoteAddr();
+    }
+
+    @Override
     public ApiVersion apiVersion() {
         String paramApi = rb.req.getParams().get(BL_PAR_PREFIX + WsParam.API);
         return paramApi == null ? config().getParameters().getApi() :

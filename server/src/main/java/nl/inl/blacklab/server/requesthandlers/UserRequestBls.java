@@ -165,6 +165,11 @@ public class UserRequestBls implements UserRequest {
     }
 
     @Override
+    public String clientIpAddress() {
+        return ServletUtil.getOriginatingAddress(request);
+    }
+
+    @Override
     public String getCorpusName() {
         return corpusName;
     }

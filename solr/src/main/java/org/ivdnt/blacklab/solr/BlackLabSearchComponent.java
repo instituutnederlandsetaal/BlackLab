@@ -231,7 +231,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 // "Root" endpoint
                 case SERVER_INFO ->
                         WebserviceRequestHandler.opServerInfo(RequestServerInfo.fromParams(indexManager, userRequest.getUser(),
-                                qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO), debugMode), dstream);
+                                userRequest.clientIpAddress(), qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO), debugMode), dstream);
 
                 // Information about the corpus
                 case CORPUS_INFO -> WebserviceRequestHandler.opCorpusInfo(RequestCorpusInfo.fromParams(qpar), dstream);
@@ -258,7 +258,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case AUTOCOMPLETE -> WebserviceRequestHandler.opAutocomplete(RequestAutocomplete.fromParams(qpar), dstream);
 
                 // Manage user corpora
-                case LIST_INPUT_FORMATS -> WebserviceRequestHandler.opListInputFormats(userRequest.getUser(), indexManager, dstream, debugMode);
+                case LIST_INPUT_FORMATS -> WebserviceRequestHandler.opListInputFormats(userRequest.getUser(), indexManager, userRequest.clientIpAddress(), dstream, debugMode);
                 case INPUT_FORMAT_INFO ->
                         WebserviceRequestHandler.opInputFormatInfo(qpar.opt(WsParam.INPUT_FORMAT).orElse(null), dstream);
                 case INPUT_FORMAT_XSLT ->

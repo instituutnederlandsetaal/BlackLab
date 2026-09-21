@@ -271,6 +271,7 @@ public class ResponseStreamer {
                 ds.entry("id", null);
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
             ds.entry("debugMode", debugMode);
+            ds.entry("clientIp", userInfo.getClientIp());
         }
         ds.endMap().endEntry();
     }

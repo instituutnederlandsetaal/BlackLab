@@ -31,6 +31,9 @@ function sanitizeBlsResponse(response) {
                 timeModified: true
             }
         },
+        user: {
+            clientIp: true
+        },
         // indices: { // API v3/4
         //     test: {
         //         timeModified: true

@@ -395,6 +395,8 @@ public abstract class RequestHandler {
 
     protected boolean debugMode;
 
+    private final String clientIp;
+
     /** Is this a new API request? (/corpora/... in API v4+)
      * These endpoints were added in API v4+ and use a new version of the API.
      * They replace the old index-related endpoints in API v5.
@@ -443,6 +445,7 @@ public abstract class RequestHandler {
         indexMan = searchMan.getIndexManager();
         request = userRequest.getRequest();
         user = userRequest.getUser();
+        clientIp = userRequest.clientIpAddress();
         indexName = userRequest.getCorpusName();
         urlResource = userRequest.getUrlResource();
         urlPathInfo = userRequest.getUrlPathInfo();
@@ -561,5 +564,9 @@ public abstract class RequestHandler {
     protected String getParameterNoLineEndings(String name) {
         String value = request.getParameter(name);
         return value == null ? null : value.replaceAll("[\n\r]", "_");
+    }
+
+    public String getClientIp() {
+        return clientIp;
     }
 }

@@ -83,11 +83,17 @@ public interface UserRequest {
     boolean isDebugMode();
 
     /**
+     * Get the user's IP address, taking into account any proxy headers.
+     * @return user's IP address
+     */
+    String clientIpAddress();
+
+    /**
      * Get the name of the corpus we're accessing.
      *
      * @return corpus name
      */
-    public String getCorpusName();
+    String getCorpusName();
 
     ApiVersion apiVersion();
 }

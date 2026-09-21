@@ -3,6 +3,7 @@
   },
   "user": {
     "canCreateIndex": false,
+    "clientIp": "VALUE_REMOVED",
     "debugMode": false,
     "id": null,
     "loggedIn": false

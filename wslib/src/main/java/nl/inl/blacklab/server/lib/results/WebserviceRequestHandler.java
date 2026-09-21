@@ -17,12 +17,12 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.requests.RequestAutocomplete;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusStatus;
@@ -267,8 +267,9 @@ public class WebserviceRequestHandler {
         rs.formatInfoResponse(result);
     }
 
-    public static void opListInputFormats(User user, IndexManager indexMan, ResponseStreamer rs, boolean debugMode) {
-        ResultListInputFormats result = new ResultListInputFormats(user, indexMan, debugMode);
+    public static void opListInputFormats(User user, IndexManager indexMan, String clientIp, ResponseStreamer rs, boolean debugMode) {
+        ResultUserInfo userInfo = new ResultUserInfo(user, indexMan, clientIp);
+        ResultListInputFormats result = new ResultListInputFormats(userInfo, indexMan, debugMode);
         rs.listFormatsResponse(result);
     }
 
