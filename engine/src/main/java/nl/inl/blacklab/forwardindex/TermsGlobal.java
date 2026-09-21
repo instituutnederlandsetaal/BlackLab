@@ -1,10 +1,11 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -84,16 +85,14 @@ public class TermsGlobal implements Terms {
      */
     private final Map<LeafReaderContext, int[]> segmentToGlobalTermIds = new HashMap<>();
 
-    /** Only used during initialization */
-    private final Map<String, Integer> globalTermIds;
+    /** Global term ids determined for one segment. */
+    private record SegmentTerms(LeafReaderContext context, Terms reader, int[] globalTermIds,
+                                InterruptedException exception) {}
 
     public TermsGlobal(String luceneField) {
         super();
         DEBUGGING = TermsGlobal.class.desiredAssertionStatus(); // assertions enabled?
         this.luceneField = luceneField;
-
-        // Will be used in initialization only, then clear()'ed
-        globalTermIds = new LinkedHashMap<>();
 
         // initialize will be called by the initialization thread or as needed;
         // terms object will only be available after that.
@@ -282,66 +281,64 @@ public class TermsGlobal implements Terms {
             if (terms != null)
                 terms.reader();
         }
-        // Now that all the terms are in memory, we can read them in parallel to
-        // determine the global term ids and sort orders.
-        // TODO: probably because of locking the globalTermIds. Try with a local map per thread and merge at the end.
-        // TODO: deal with ConcurrentModificationException so we can actually make it parallel.
-        Exception e = indexReader.leaves().parallelStream()
+        // Each worker owns its segment's non-thread-safe Terms reader. Only global ids are shared through the
+        // concurrent map; mappings are published to segmentToGlobalTermIds below, after all workers have completed.
+        Map<String, Integer> globalTermIds = new ConcurrentHashMap<>();
+        AtomicInteger nextGlobalTermId = new AtomicInteger();
+        List<SegmentTerms> segments = indexReader.leaves().parallelStream()
                 .map(lrc -> {
                         try {
                             BLTerms blTerms = BLTerms.forSegment(lrc, luceneField);
                             if (blTerms == null)
                                 return null;
                             Terms terms = blTerms.reader();
-                            String[] segmentTerms = readTermsFromSegment(terms);
-                            int[] segmentToGlobal;
-                            synchronized (segmentToGlobalTermIds) {
-                                segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(lrc,
-                                        __ -> new int[segmentTerms.length]);
-                            }
-                            synchronized (globalTermIds) {
-                                for (int segmentTermId = 0; segmentTermId < segmentTerms.length; segmentTermId++) {
-                                    int globalTermId = globalTermIds.computeIfAbsent(segmentTerms[segmentTermId],
-                                            __ -> globalTermIds.size());
-                                    // Remember the mapping from segment id to global id
-                                    segmentToGlobal[segmentTermId] = globalTermId;
-                                    if (globalTermId == globalTermIds.size() - 1) {
-                                        // New term, remember where it came from
-                                        termSegmentTerms.add(terms);
-                                        termSegmentTermId.add(segmentTermId);
-                                    }
-                                }
-                            }
+                            int[] segmentToGlobal = new int[terms.numberOfTerms()];
+                            for (int segmentTermId = 0; segmentTermId < terms.numberOfTerms(); segmentTermId++) {
+                                // Make sure this can be interrupted if e.g. a commandline utility completes
+                                // before this initialization is finished.
+                                if (Thread.interrupted())
+                                    throw new InterruptedException();
 
+                                segmentToGlobal[segmentTermId] = globalTermIds.computeIfAbsent(
+                                        terms.get(segmentTermId), __ -> nextGlobalTermId.getAndIncrement());
+                            }
+                            return new SegmentTerms(lrc, terms, segmentToGlobal, null);
                         } catch (InterruptedException e1) {
                             Thread.currentThread().interrupt(); // preserve interrupted status
-                            return e1;
+                            return new SegmentTerms(lrc, null, null, e1);
                         }
-                        return null;
                     })
                 .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null);
-        if (e != null)
-            throw new ErrorOpeningIndex(e);
+                .toList();
 
-        String[] terms = globalTermIds.keySet().toArray(new String[0]);
-        globalTermIds.clear();
-        return terms;
-    }
-
-    private String[] readTermsFromSegment(Terms terms)
-            throws InterruptedException {
-        String[] segmentTerms = new String[terms.numberOfTerms()];
-        for (int segmentTermId = 0; segmentTermId < terms.numberOfTerms(); segmentTermId++) {
-            // Make sure this can be interrupted if e.g. a commandline utility completes
-            // before this initialization is finished.
-            if (Thread.interrupted())
-                throw new InterruptedException();
-
-            segmentTerms[segmentTermId] = terms.get(segmentTermId);
+        // Check for interruption before publishing any results.
+        for (SegmentTerms segment: segments) {
+            if (segment.exception() != null)
+                throw new ErrorOpeningIndex(segment.exception());
         }
-        return segmentTerms;
+
+        // Materialize the id-indexed term array after all ids have been assigned.
+        String[] terms = new String[nextGlobalTermId.get()];
+        globalTermIds.forEach((term, id) -> terms[id] = term);
+
+        // Allocate the retained origin lists directly, then derive each origin from the segment mappings. This extra
+        // pass only reads primitive arrays and avoids allocating an origin object for every unique term.
+        for (int i = 0; i < terms.length; i++) {
+            termSegmentTerms.add(null);
+            termSegmentTermId.add(0);
+        }
+        for (SegmentTerms segment: segments) {
+            int[] segmentToGlobal = segment.globalTermIds();
+            segmentToGlobalTermIds.put(segment.context(), segmentToGlobal);
+            for (int segmentTermId = 0; segmentTermId < segmentToGlobal.length; segmentTermId++) {
+                int globalTermId = segmentToGlobal[segmentTermId];
+                if (termSegmentTerms.get(globalTermId) == null) {
+                    termSegmentTerms.set(globalTermId, segment.reader());
+                    termSegmentTermId.set(globalTermId, segmentTermId);
+                }
+            }
+        }
+        return terms;
     }
 
     private int[] determineSort(CollationKey[] terms) {
