@@ -49,6 +49,11 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
             this.context = context;
         }
 
+        /** Called before checking combinations at a new document/start/end position. */
+        public void startPosition() {
+            // Default implementation does nothing
+        }
+
         public abstract boolean accept();
 
         public void collect(SpanCollector collector) {
@@ -234,6 +239,7 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
      */
     private int nextMatchAtThisPosition(boolean immediatelyGoToNext) {
         if (!immediatelyGoToNext) {
+            filter.startPosition();
             // Check if we're already at a valid match.
             if (filter.accept()) {
                 return spanWindow.top().bucketStart();

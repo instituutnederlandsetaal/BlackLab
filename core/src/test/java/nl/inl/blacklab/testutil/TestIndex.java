@@ -53,7 +53,7 @@ import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.UtilsForTesting;
 import nl.inl.util.fileprocessor.FileReference;
 
-public class TestIndex {
+public class TestIndex implements AutoCloseable {
 
     /** Create an index with multiple segments? */
     private static final boolean MULTI_SEGMENT = true;
@@ -80,6 +80,10 @@ public class TestIndex {
 
     public static TestIndex get() {
         return new TestIndex(false);
+    }
+
+    public static TestIndex get(String format, String... documents) {
+        return new TestIndex(false, format, documents);
     }
 
     private static synchronized TestIndex getPreindexed() {
@@ -200,18 +204,22 @@ public class TestIndex {
 
     /** Create a temporary index, delete the directory when finished */
     private TestIndex(boolean testDelete) {
+        this(testDelete, TEST_FORMAT_NAME, TEST_DATA);
+    }
+
+    private TestIndex(boolean testDelete, String format, String[] documents) {
         // Get a temporary directory for our test index
         dir = UtilsForTesting.createBlackLabTestDir("TestIndex");
         indexDir = dir.file();
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, format);
             Indexer indexer = Indexer.create(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
                 // Index each of our test "documents".
-                for (int i = 0; i < TEST_DATA.length; i++) {
+                for (int i = 0; i < documents.length; i++) {
                     if (MULTI_SEGMENT && i == 1) {
                         // Close and re-open the indexer to create a new segment.
                         indexer.close();
@@ -219,7 +227,7 @@ public class TestIndex {
                         indexer = Indexer.create(indexWriter);
                         indexer.setListener(new IndexListenerAbortOnError()); // throw on error
                     }
-                    FileReference fileRef = FileReference.fromBytes("test" + (i + 1), TEST_DATA[i].getBytes(), null);
+                    FileReference fileRef = FileReference.fromBytes("test" + (i + 1), documents[i].getBytes(StandardCharsets.UTF_8), null);
                     indexer.index(fileRef, null, FileConverter.ExtraConverters.NONE);
                 }
                 if (testDelete) {
@@ -263,6 +271,7 @@ public class TestIndex {
         return index;
     }
 
+    @Override
     public void close() {
         if (index != null)
             index.close();

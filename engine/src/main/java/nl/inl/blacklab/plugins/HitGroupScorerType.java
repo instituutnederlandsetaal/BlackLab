@@ -38,6 +38,19 @@ public abstract class HitGroupScorerType extends Plugin {
     public abstract Type getType();
 
     /**
+     * Does this scorer need the total population frequency to calculate its score?
+     * <p>
+     * Determining this value may require an additional document or relation query. This defaults to true so existing
+     * scorer plugins continue to receive the value; implementations that do not use {@code totalFrequency} should
+     * override this method and return false.
+     *
+     * @return true if {@code totalFrequency} must be calculated before constructing this scorer
+     */
+    public boolean needsTotalFrequency() {
+        return true;
+    }
+
+    /**
      * Get a scorer for a group representing a collocate of a word or query.
      * <p>
      * Check getType() to make sure this HitGroupScorerProvider does collocation scoring.
@@ -51,8 +64,9 @@ public abstract class HitGroupScorerType extends Plugin {
      *                            case-insensitive alternative of the word annotation. Used to find frequency from
      *                            group identity.
      * @param filter              document filter
-     * @param totalFrequency      number of words in the corpus (for proximity collocations), or cardinality of the
-     *                            relation (for relation-based collocations).
+     * @param totalFrequency      number of words in the selected (sub)corpus (for proximity collocations), or
+     *                            cardinality of the relation (for relation-based collocations); -1 if
+     *                            {@link #needsTotalFrequency()} returns false
      * @param wordFrequency       total frequency of the search word (or query) we're finding collocations *for* ("ship" in
      *                            the example)
      * @param collocationType     collocation type, e.g. proximity, relation sources or targets.
