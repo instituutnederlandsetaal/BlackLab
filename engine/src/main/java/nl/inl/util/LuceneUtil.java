@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,20 +82,22 @@ public final class LuceneUtil {
         Weight filterWeight = determineFilterWeight(docFilter, index.searcher());
 
         BytesRef bytesRef = new BytesRef(term);
-        Map<Integer, Long> counts = new ConcurrentHashMap<>();
+        LongAdder count = new LongAdder();
         index.forEachDocument((ParallelDocTask) lrc -> {
             try {
-                Scorer scorer = docFilter == null ? null :
-                        filterWeight.scorer(index.searcher().getLeafContexts().get(0));
-                DocIdSetIterator docIt = scorer == null ? null : scorer.iterator();
+                Scorer scorer = docFilter == null ? null : filterWeight.scorer(lrc);
+                DocIdSetIterator docIt = docFilter == null ? null :
+                        scorer == null ? DocIdSetIterator.empty() : scorer.iterator();
                 TermVectors termVectors = lrc.reader().termVectors();
                 return docId -> {
                     try {
-                        int matchingDocId = scorer == null ? docId :
+                        int matchingDocId = docIt == null ? docId :
                                 docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId);
                         if (matchingDocId == docId) {
                             // This doc matches the filter.
-                            countDocTermFrequency(luceneField, lrc, docId, termVectors, bytesRef, counts);
+                            TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
+                            if (termsEnum.seekExact(bytesRef))
+                                count.add(termsEnum.totalTermFreq());
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -105,7 +107,7 @@ public final class LuceneUtil {
                 throw new RuntimeException(e);
             }
         });
-        return counts.values().stream().mapToLong(Long::longValue).sum();
+        return count.sum();
     }
 
     private static @Nullable Weight determineFilterWeight(Query docFilter, IndexSearcher searcher) {
@@ -121,13 +123,6 @@ public final class LuceneUtil {
             filterWeight = null;
         }
         return filterWeight;
-    }
-
-    private static void countDocTermFrequency(String luceneField, LeafReaderContext lrc, int docId, TermVectors termVectors,
-            BytesRef bytesRef, Map<Integer, Long> counts) throws IOException {
-        TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
-        long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
-        counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
     }
 
     /**

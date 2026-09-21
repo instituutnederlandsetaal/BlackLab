@@ -1,23 +1,32 @@
 package nl.inl.blacklab.server.lib.requests;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupPropertyScore;
 import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -32,6 +41,7 @@ import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsParam;
+import nl.inl.util.StringUtil;
 
 /**
  * A request for a hits search.
@@ -164,12 +174,151 @@ public final class RequestHits {
         this.paramsForResponse = paramsForResponse;
     }
 
+    /** /collocations endpoint is an alternative way to group hits, useful for easily finding and scoring collocations.
+     *
+     * @param qpar parameters from the request
+     * @param isCsv whether this is for a CSV response or not (some parameters are interpreted differently for CSV)
+     * @return object representing the collocations request
+     */
+    public static RequestHits fromParamsCollocations(QueryParams qpar, boolean isCsv) {
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
+        Annotation annotation;
+        if (StringUtils.isEmpty(qpar.get(WsParam.ANNOTATION))) {
+            annotation = annotatedField.mainAnnotation();
+        } else {
+            annotation = annotatedField.annotation(qpar.get(WsParam.ANNOTATION));
+            if (annotation == null)
+                throw new BadRequest("UNKNOWN_ANNOTATION",
+                        "Annotation '" + qpar.get(WsParam.ANNOTATION) + "' not found in field '" +
+                                annotatedField.name() + "'.");
+        }
+
+        // Determine what we're finding collocations for
+        // (e.g. collocations for "schip", or for [lemma = "bla.*" & pos="N"])
+        String findQuery = qpar.get(WsParam.PATTERN);
+        if (StringUtils.isBlank(findQuery))
+            throw new BadRequest("NO_PATTERN_GIVEN", "Missing required parameter: patt (pattern to find collocations for)");
+        String collocateQuery = qpar.opt(WsParam.COLLOCATE_PATTERN).orElse("[]");
+        HitGroupCollocationScorer.CollocationType collocationType;
+        try {
+            collocationType = qpar.opt(WsParam.COLLOCATION_TYPE,
+                            HitGroupCollocationScorer.CollocationType::fromStringValue)
+                    .orElse(HitGroupCollocationScorer.CollocationType.PROXIMITY);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequest("INVALID_COLLOCATION_TYPE", e.getMessage(), e);
+        }
+        boolean findRelations = collocationType != HitGroupCollocationScorer.CollocationType.PROXIMITY;
+        String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_VALUE);
+
+        // Construct and parse the query that will yield the collocations
+        String within = qpar.has(WsParam.WITHIN) ? "<" + qpar.get(WsParam.WITHIN) + "/>" : "";
+        ContextSize context;
+        try {
+            context = qpar.has(WsParam.CONTEXT) ? ParamUtil.getContext(qpar) : ContextSize.ZERO;
+        } catch (IllegalArgumentException e) {
+            throw new BadRequest("INVALID_CONTEXT", e.getMessage(), e);
+        }
+        String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex, within);
+        TextPattern textPattern = parseCollocationPattern(bcqlQuery);
+
+        // Determine group by
+        MatchSensitivity sensitivity = qpar.optBool(WsParam.SENSITIVE).orElse(false) ? MatchSensitivity.SENSITIVE :
+                MatchSensitivity.INSENSITIVE;
+        HitProperty groupBy = new HitPropertyHitText(index, annotation, sensitivity);
+
+        // Determine group scorer
+        Query filter = ParamUtil.filterQuery(qpar);
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put(HitGroupScorer.KEY_ID, qpar.opt(WsParam.SCORER_TYPE).orElse(HitGroupScorer.DEFAULT_TYPE_ID));
+        config.put(HitGroupCollocationScorer.KEY_DOC_FILTER, filter);
+        config.put(HitGroupCollocationScorer.KEY_PATTERN, parseCollocationPattern(findQuery));
+        config.put(HitGroupCollocationScorer.KEY_ANNOTATION, annotation.name());
+        config.put(HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString());
+        config.put(HitGroupCollocationScorer.KEY_COLL_TYPE, collocationType.toString());
+        config.put(HitGroupCollocationScorer.KEY_REL_TYPE, findRelations ? relationTypeRegex : null);
+        HitGroupScorer groupScorer;
+        try {
+            groupScorer = HitGroupScorer.fromConfig(annotatedField, config);
+        } catch (InvalidQuery e) {
+            throw BadRequest.pattSyntaxError(e);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequest("INVALID_SCORER", e.getMessage(), e);
+        }
+
+        return optFromParams(qpar, isCsv, textPattern, groupBy, groupScorer, HitGroupPropertyScore.get())
+                .orElseThrow();
+    }
+
+    /** Determine the query that will yield the collocations we're looking for. */
+    static String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
+            HitGroupCollocationScorer.CollocationType collocationType, String relTypeRegex, String within) {
+        if (StringUtils.isBlank(findQuery))
+            throw new BadRequest("NO_PATTERN_GIVEN", "Missing required parameter: patt (pattern to find collocations for)");
+        if (context.isInlineTag()) {
+            if (!within.isEmpty())
+                throw new BadRequest("INVALID_CONTEXT",
+                        "Both within and a tag context specified! If you specify within, context may be omitted or " +
+                                "must be in number of tokens");
+            // You can either specify within=s (optionally combined with e.g. context=3:5), or you can specify
+            // context=s to just find collocations within sentences without any proximity restriction.
+            within = "<" + context.inlineTagName() + "/>";
+            context = ContextSize.ZERO;
+        }
+        if (collocationType == HitGroupCollocationScorer.CollocationType.PROXIMITY) {
+            // Proximity-based collocations.
+            int lower, upper;
+            if (context.equals(ContextSize.ZERO)) {
+                lower = -1;
+                upper = 1;
+            } else {
+                lower = context.before() == 0 ? 1 : -context.before();
+                upper = context.after() == 0 ? -1 : context.after();
+            }
+            String optLowerUpper = "," + lower + "," + upper;
+            if (!within.isEmpty() && context.equals(ContextSize.ZERO)) {
+                // We only care about within (e.g. within <s/>), not about proximity.
+                optLowerUpper = "";
+            }
+            return within.isEmpty() ?
+                    "meet(" + collocateQuery + ", " + findQuery + optLowerUpper + ")" :
+                    "meet_within(" + collocateQuery + ", " + findQuery + ", " + within + optLowerUpper + ")";
+        } else {
+            if (!within.isEmpty())
+                throw new BadRequest("INVALID_CONTEXT", "Parameter within is not supported for relation-based collocations");
+            // Relation-based collocations.
+            String optRelTypeFilter = StringUtils.isEmpty(relTypeRegex) ||
+                    relTypeRegex.equals(StringUtil.REGEX_ANY_VALUE) ? "" :
+                    "(" + relTypeRegex + ")";
+            if (collocationType == HitGroupCollocationScorer.CollocationType.RELATION_TARGETS) {
+                // Find all targets for specified source and relation type
+                return "rspan(" + findQuery + " -" + optRelTypeFilter + "-> " + collocateQuery + ", \"target\")";
+            } else {
+                // Find all sources for specified target and relation type
+                return collocateQuery + " -" + optRelTypeFilter + "-> " + findQuery;
+            }
+        }
+    }
+
+    private static TextPattern parseCollocationPattern(String bcqlQuery) {
+        try {
+            return BcqlQueryLanguageParser.parseQuery(bcqlQuery);
+        } catch (InvalidQuery e) {
+            throw BadRequest.pattSyntaxError(e);
+        }
+    }
+
     public static RequestHits fromParams(QueryParams params, boolean isCsv, TextPattern pattern) {
         return optFromParams(params, isCsv, pattern).orElseThrow(
                 () -> new IllegalArgumentException("No pattern specified"));
     }
 
     public static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv, TextPattern overridePattern) {
+        return optFromParams(qpar, isCsv, overridePattern, null, null, HitGroupPropertySize.get());
+    }
+
+    private static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv, TextPattern overridePattern,
+            HitProperty overrideGroupBy, HitGroupScorer overrideGroupScorer, HitGroupProperty defaultGroupSort) {
         BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
         ContextSize contextSize = ParamUtil.getContext(qpar);
         String optContextTag = contextSize.inlineTagName();
@@ -188,17 +337,17 @@ public final class RequestHits {
         AnnotatedField searchField = ParamUtil.getSearchField(index, qpar.get(WsParam.FIELD),
                 qpar.opt(WsParam.SEARCH_FIELD).orElse(null));
         WebserviceOperation operation = ParamUtil.getOperation(qpar);
-        HitProperty hitsGroupProperty = ParamUtil.getHitsGroupProperty(operation, groupBy,
-                annotatedField, contextSize);
-        HitGroupScorer hitGroupScorer = ParamUtil.getHitGroupScorer(annotatedField,
-                qpar.opt(WsParam.SCORER).orElse(null));
+        HitProperty hitsGroupProperty = overrideGroupBy == null ?
+                ParamUtil.getHitsGroupProperty(operation, groupBy, annotatedField, contextSize) : overrideGroupBy;
+        HitGroupScorer hitGroupScorer = overrideGroupBy == null ?
+                ParamUtil.getHitGroupScorer(annotatedField, qpar.opt(WsParam.SCORER).orElse(null)) : overrideGroupScorer;
         TextPattern patternOriginal = ParamUtil.patternNoWithinContextTag(index,
                 qpar.get(WsParam.PATTERN_LANGUAGE),
                 qpar.get(WsParam.PATTERN), qpar.get(WsParam.PATTERN_GAP_DATA)).orElse(null);
-        HitProperty hitsSortProperty = ParamUtil.hitsSortProperty(operation, annotatedField, groupBy,
+        HitProperty hitsSortProperty = ParamUtil.hitsSortProperty(operation, annotatedField, hitsGroupProperty != null,
                 viewGroup, sortBy, contextSize);
-        HitGroupProperty sortGroupsBy = ParamUtil.hitGroupSortProperty(operation, groupBy, sortBy,
-                viewGroup, HitGroupPropertySize.get());
+        HitGroupProperty sortGroupsBy = ParamUtil.hitGroupSortProperty(operation, hitsGroupProperty != null, sortBy,
+                viewGroup, defaultGroupSort);
         boolean includeGroupContents = ParamUtil.getIncludeGroupContents(
                 qpar.optBool(WsParam.INCLUDE_GROUP_CONTENTS).orElse(null), qpar.config());
         SampleParameters sampleParams = ParamUtil.sampleParams(

@@ -638,7 +638,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                             tokenLengthFields.forEach(field -> {
                                 try {
                                     tokenLengthValuesPerField.put(field.name(), countTokens ? DocValues.getNumeric(reader, field.tokenLengthField()) : null);
-                                    tokensPerField.put(field.name(), new CorpusSize.Count(0, 0));
+                                    tokensPerField.computeIfAbsent(field.name(), __ -> new CorpusSize.Count(0, 0));
                                 } catch (IOException e) {
                                     throw new InvalidIndex(e);
                                 }

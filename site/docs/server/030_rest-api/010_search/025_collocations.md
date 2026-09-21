@@ -33,6 +33,9 @@ Only `patt` is required; other parameters are optional.
 
 In addition to these basic parameters, any parameter that can be added to a regular grouped hits request can be used (e.g. `first`, `number`, etc.). See [here](find-hits).
 
+To view a collocate's hits, add the `viewgroup` parameter, containing that collocate group's `identity` value.
+The `sort`, `first` and `number` will apply to the hits within the collocate group. Keep `context` and other collocation parameters the same to preserve the group membership.
+
 ## Scorers
 
 Collocation groups are scored using a scorer formula:
@@ -42,7 +45,7 @@ Collocation groups are scored using a scorer formula:
 | `coll-dice`      | calculates the Dice Coefficient           | `(2 * f / (double) (f1 + f2))`             |
 | `coll-salience`  | calculates a log-based salience measure   | `log(f) * log(f * N / (f1 * f2)) / log(2)` |
 
-In the above formulas, `f` is the frequency of the keyword and collocate occurring together; `f1` and `f2` are the frequencies of the words separately; `N` is the total corpus size (or total cardinality of the relation type you searched for).
+In the above formulas, `f` is the frequency of the keyword and collocate occurring together; `f1` and `f2` are the frequencies of the words separately; `N` is the total size of the (sub)corpus selected by the document filter (or total cardinality of the relation type you searched for).
 
 You can also use hit group scorers with a regular grouped `/hits` request. In this case, you should pass the `scorer` parameter with this JSON structure (commented for clarity):
 

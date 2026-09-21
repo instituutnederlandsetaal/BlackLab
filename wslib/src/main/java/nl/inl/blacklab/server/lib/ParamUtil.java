@@ -239,11 +239,11 @@ public class ParamUtil {
         return sortBy == null ? null : DocProperty.deserialize(index, sortBy);
     }
 
-    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, String groupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
+    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, boolean hasGroupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
         if (operation.isDocsOperation())
             return defaultSortBy;
         HitGroupProperty sortProp = null;
-        if (groupBy != null) {
+        if (hasGroupBy) {
             if (sortBy != null && viewGroup == null) { // Sorting refers to results within the group when viewing contents of a group
                 sortProp = HitGroupProperty.deserialize(sortBy);
             }
@@ -255,10 +255,10 @@ public class ParamUtil {
         return sortProp;
     }
 
-    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, String groupBy, String viewGroup, String sortBy, ContextSize contextSize) {
+    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, boolean hasGroupBy, String viewGroup, String sortBy, ContextSize contextSize) {
         if (operation.isDocsOperation())
             return null;
-        if (groupBy != null && viewGroup == null) {
+        if (hasGroupBy && viewGroup == null) {
             // looking at groups, or results within a group, don't bother sorting the underlying results
             // themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
             return null;
