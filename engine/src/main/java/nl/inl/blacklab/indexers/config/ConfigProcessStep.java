@@ -1,6 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -86,8 +88,22 @@ public class ConfigProcessStep {
     public ConfigProcessStep copy() {
         ConfigProcessStep cp = new ConfigProcessStep();
         cp.setAction(action);
-        cp.param.putAll(param);
+        param.forEach((name, value) -> cp.param.put(name, copyParameter(value)));
         return cp;
+    }
+
+    private static Object copyParameter(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Map<Object, Object> copy = new LinkedHashMap<>();
+            map.forEach((key, item) -> copy.put(key, copyParameter(item)));
+            return copy;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            list.forEach(item -> copy.add(copyParameter(item)));
+            return copy;
+        }
+        return value;
     }
 
     public String getAction() {

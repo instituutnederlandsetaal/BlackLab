@@ -90,7 +90,17 @@ public class ConfigInlineTag {
     }
 
     public ConfigInlineTag copy() {
-        return new ConfigInlineTag(path, displayAs);
+        ConfigInlineTag copy = new ConfigInlineTag(path, displayAs);
+        copy.type = type;
+        copy.metadataContainerPath = metadataContainerPath;
+        metadata.forEach(block -> copy.metadata.add(block.copy()));
+        copy.tokenIdPath = tokenIdPath;
+        copy.defaultIndexAttributes = defaultIndexAttributes;
+        if (!attributes.isEmpty()) {
+            copy.attributes = new LinkedHashMap<>();
+            attributes.forEach((name, attribute) -> copy.attributes.put(name, attribute.copy()));
+        }
+        return copy;
     }
 
     public AnnotationType getType() {

@@ -166,6 +166,14 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
+        result.type = type;
+        result.spanEndPath = spanEndPath;
+        result.spanEndIsInclusive = spanEndIsInclusive;
+        result.valuePath = valuePath;
+        result.relationClass = relationClass;
+        result.targetField = targetField;
+        result.targetVersionPath = targetVersionPath;
+        result.metadataContainerPath = metadataContainerPath;
         for (ConfigAnnotation a : annotations) {
             result.addAnnotation(a.copy());
         }

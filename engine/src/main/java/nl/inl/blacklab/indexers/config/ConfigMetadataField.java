@@ -152,6 +152,7 @@ public class ConfigMetadataField {
         cp.displayValues.putAll(displayValues);
         cp.displayOrder.addAll(displayOrder);
         cp.setSortValues(sortValues);
+        cp.setFragments(fragments);
         return cp;
     }
 
