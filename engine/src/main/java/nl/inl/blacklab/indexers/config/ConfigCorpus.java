@@ -63,24 +63,6 @@ public class ConfigCorpus {
         annotationGroups.put(name, groups);
     }
 
-    public ConfigCorpus copy() {
-        ConfigCorpus result = new ConfigCorpus();
-        result.contentViewable = contentViewable;
-        result.textDirection = textDirection;
-        result.specialFields.putAll(specialFields);
-        for (ConfigMetadataFieldGroup g : getMetadataFieldGroups()) {
-            result.addMetadataFieldGroup(g.copy());
-        }
-        for (Map.Entry<String, List<ConfigAnnotationGroup>> entry: getAnnotationGroups().entrySet()) {
-            List<ConfigAnnotationGroup> groups = new ArrayList<>();
-            for (ConfigAnnotationGroup group: entry.getValue()) {
-                groups.add(group.copy());
-            }
-            result.addAnnotationGroups(entry.getKey(), groups);
-        }
-        return result;
-    }
-
     public Map<String, String> getSpecialFields() {
         return Collections.unmodifiableMap(specialFields);
     }

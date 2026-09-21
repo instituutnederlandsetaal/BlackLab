@@ -83,13 +83,6 @@ public class ConfigProcessStep {
         messages.mustHave(t, action, "method");
     }
 
-    public ConfigProcessStep copy() {
-        ConfigProcessStep cp = new ConfigProcessStep();
-        cp.setAction(action);
-        cp.param.putAll(param);
-        return cp;
-    }
-
     public String getAction() {
         return action;
     }

@@ -89,10 +89,6 @@ public class ConfigInlineTag {
         }
     }
 
-    public ConfigInlineTag copy() {
-        return new ConfigInlineTag(path, displayAs);
-    }
-
     public AnnotationType getType() {
         return type;
     }

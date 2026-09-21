@@ -54,8 +54,6 @@ public class DocIndexerSaxonTest {
     public void testSaxonTokenizer() throws Exception {
         // 1. Create ConfigInputFormat
         ConfigInputFormat config = new ConfigInputFormat("saxon-test");
-        config.setFileType(ConfigInputFormat.FileType.XML);
-        config.addFileTypeOption("processor", "saxon");
         config.setDocumentPath("//doc");
 
         ConfigAnnotatedField contents = new ConfigAnnotatedField("contents");
@@ -76,6 +74,7 @@ public class DocIndexerSaxonTest {
         ConfigAnnotation head = new ConfigAnnotation();
         head.setName("head");
         // Note: using ! for map operator in XPath 3.0+ (Saxon supports this)
+        // Example: "ADP(type=pre)+PD(type=d-p,subtype=art,position=prenom)" -> "ADP", "PD"
         head.setValuePath("tokenize(., '\\+')!substring-before(., '(')");
         pos.addSubannotation(head);
 
@@ -122,4 +121,5 @@ public class DocIndexerSaxonTest {
             Assert.assertEquals("Should find head PD", 1, hits.size());
         }
     }
+
 }
