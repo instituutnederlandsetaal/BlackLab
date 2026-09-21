@@ -54,8 +54,8 @@ public class SingleDocIdFilter extends Query {
                     public DocIdSetIterator iterator() {
                         // Check that id could be in this segment, and bits allows this doc id
                         if (luceneDocId >= ctx.docBase) {
-                            // Check that the id is really in this segment by looking at the next segment
-                            if (ctx.reader().maxDoc() > luceneDocId) {
+                            // Compare the segment-local document id with the segment size.
+                            if (luceneDocId - ctx.docBase < ctx.reader().maxDoc()) {
                                 // Doc occurs in this segment.
                                 return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
                             }
