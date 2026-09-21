@@ -34,6 +34,15 @@ function sanitizeBlsResponse(response) {
         user: {
             clientIp: true
         },
+        config: {
+            cache: {
+                targetFreeMemMegs: true
+            },
+            performance: {
+                maxConcurrentSearches: true,
+                maxThreadsPerSearch: true
+            }
+        },
 
         // Corpus information page
         versionInfo: {
