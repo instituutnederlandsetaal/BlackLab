@@ -143,10 +143,9 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                             false);
                     annotRelation.setHasForwardIndex(false);
 
-                    // Create properties for the other annotations
-                    for (int i = 1; i < annotations.size(); i++) {
-                        ConfigAnnotation annot = annotations.get(i);
-                        if (!annot.isForEach())
+                    // Skip mainAnnotation (immediately registered on construction of the fieldWriter)
+                    for (ConfigAnnotation annot: annotations) {
+                        if (!annot.isForEach() && !annot.getName().equals(mainAnnotation.getName()))
                             fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                                     annot.isForwardIndex());
                     }
