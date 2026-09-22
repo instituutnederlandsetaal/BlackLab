@@ -46,7 +46,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
@@ -772,11 +771,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         String luceneField = annot.forwardIndexSensitivity().luceneField();
                         AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                         int docLength = (int) fi.docLength(segmentDocId);
-                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
+                        if (docLength > 0) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)
                             fieldCount.add(1,
-                                    (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                                    (long) docLength);
                             documentVersionCount++;
                             if (firstField) {
                                 documentCount++;

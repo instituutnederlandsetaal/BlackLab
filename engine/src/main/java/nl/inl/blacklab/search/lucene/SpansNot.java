@@ -8,8 +8,6 @@ import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
-
 /**
  * Returns all tokens that do not occur in the matches of the specified query.
  *
@@ -126,7 +124,7 @@ class SpansNot extends BLSpans {
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
             // Prepare to produce tokens for this doc
-            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc);
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         atFirstInCurrentDoc = true;

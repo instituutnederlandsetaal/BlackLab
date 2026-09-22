@@ -6,6 +6,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -64,9 +65,7 @@ public class DocFieldLengthGetter {
      *
      * Used to produce all tokens that aren't hits in our clause.
      *
-     * NOTE: this includes the "extra closing token" at the end that may contain punctuation
-     * after the last word! You must subtract 1 for indices that have this extra closing
-     * token (all recent indices do).
+     * (NOTE: this EXCLUDES the so-called "extra closing token", so it returns the actual document length)
      *
      * @param doc the document
      * @return the number of tokens
@@ -74,7 +73,7 @@ public class DocFieldLengthGetter {
     public int getFieldLength(int doc) {
 
         if (useTestValues)
-            return 6; // while testing, all documents have same length
+            return 5; // while testing, all documents have same length
 
         if (cachedFieldLengths == null) {
             // We must be in a segment that only contains the metadata doc.
@@ -85,7 +84,7 @@ public class DocFieldLengthGetter {
 
         try {
             if (cachedFieldLengths.advanceExact(doc)){
-                return (int)cachedFieldLengths.longValue();
+                return BlackLabIndex.decodeTokenLengthField((int)cachedFieldLengths.longValue());
             }
             return 0;
         } catch (IOException e) {

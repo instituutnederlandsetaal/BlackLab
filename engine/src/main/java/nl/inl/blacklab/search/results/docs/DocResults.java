@@ -23,7 +23,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.join.QueryBitSetProducer;
 import org.apache.lucene.search.join.ToParentBlockJoinQuery;
@@ -42,7 +41,7 @@ import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -656,8 +655,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                                             NumericDocValues tokenLengthValuesForField = entry.getValue();
                                             if (tokenLengthValuesForField != null) {
                                                 long tokens = tokenLengthValuesForField.advanceExact(docId) ?
-                                                    tokenLengthValuesForField.longValue()
-                                                            - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN : 0;
+                                                        BlackLabIndex.decodeTokenLengthField((int)tokenLengthValuesForField.longValue()) : 0;
                                                 if (tokens > 0) {
                                                     numberOfTokens += tokens;
                                                     tokensPerField.compute(fieldName, (k, v) -> {

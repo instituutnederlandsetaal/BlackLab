@@ -77,10 +77,6 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, BlackLabIndex {
-    /** Document length in Lucene and forward index is always reported as one
-     *  higher due to punctuation being a trailing value. We call this the
-     *  "extra closing token". */
-    public static final int IGNORE_EXTRA_CLOSING_TOKEN = 1;
 
     // Class variables
     //---------------------------------------------------------------

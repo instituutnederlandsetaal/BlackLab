@@ -3,20 +3,18 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -122,8 +120,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                             if (currentDoc >= maxDoc)
                                 break;
                             boolean currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
-                            int docLength = lengthGetter.getFieldLength(currentDoc)
-                                    - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            int docLength = lengthGetter.getFieldLength(currentDoc);
                             boolean currentDocIsTooShort = docLength < end;
                             skipThisDoc = currentDocIsDeletedDoc || currentDocIsTooShort;
                         } while (currentDoc < maxDoc && skipThisDoc);

@@ -20,7 +20,6 @@ import org.jspecify.annotations.NonNull;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -560,8 +559,10 @@ public class WriteCsv {
                 row.add(Long.toString(docResult.size()));
 
                 // Length field, if applicable
-                if (tokenLengthField != null)
-                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN)); // lengthInTokens
+                if (tokenLengthField != null) {
+                    int docLength = BlackLabIndex.decodeTokenLengthField(Integer.parseInt(doc.get(tokenLengthField)));
+                    row.add(Integer.toString(docLength));
+                }
 
                 // other fields in order of appearance
                 for (String fieldId : metadataFieldIds) {

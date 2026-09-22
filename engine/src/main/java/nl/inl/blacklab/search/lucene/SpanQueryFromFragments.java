@@ -32,7 +32,7 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.Span;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -427,7 +427,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 fragStart = 0;
                 if (dvTokenLength.docID() != docId)
                     dvTokenLength.advance(docId);
-                fragEnd = (int)dvTokenLength.longValue() - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                fragEnd = BlackLabIndex.decodeTokenLengthField((int)dvTokenLength.longValue());
             } else {
                 // This is a fragment.
                 if (dvFragAnnotatedField.docID() != docId) {

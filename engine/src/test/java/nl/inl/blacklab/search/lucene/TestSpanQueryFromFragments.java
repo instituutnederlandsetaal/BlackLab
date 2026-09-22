@@ -23,7 +23,6 @@ import org.junit.Test;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.BLInputDocumentLucene;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -75,7 +74,7 @@ public class TestSpanQueryFromFragments {
     private static BLInputDocumentLucene parent(QueryInfo queryInfo, int length) {
         BLInputDocumentLucene doc = new BLInputDocumentLucene(BLInputDocument.DocType.DOCUMENT);
         doc.addNumericField(queryInfo.field().tokenLengthField(),
-                length + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN, false, false, true);
+                (int)BlackLabIndex.encodeTokenLengthField(length), false, false, true);
         return doc;
     }
 

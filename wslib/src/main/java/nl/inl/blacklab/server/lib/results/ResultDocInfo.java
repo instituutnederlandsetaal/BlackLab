@@ -19,7 +19,6 @@ import org.apache.lucene.util.BitSet;
 
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -144,7 +143,7 @@ public class ResultDocInfo {
             if (f.tokenLengthField() != null) {
                 String strDocLength = document.get(f.tokenLengthField());
                 length = strDocLength == null ? 0 :
-                        Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                        BlackLabIndex.decodeTokenLengthField(Integer.parseInt(strDocLength));
             }
             lengthInTokensPerField.put(f.name(), length);
         }
