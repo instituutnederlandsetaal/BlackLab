@@ -36,6 +36,7 @@ function sanitizeBlsResponse(response) {
         },
         config: {
             cache: {
+                minFreeMemForSearchMegs: true,
                 targetFreeMemMegs: true
             },
             performance: {

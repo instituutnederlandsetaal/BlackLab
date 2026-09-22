@@ -12,7 +12,7 @@
       "maxNumberOfJobs": 100,
       "maxQueuedSearches": 20,
       "maxSearchTimeSec": 300,
-      "minFreeMemForSearchMegs": 50,
+      "minFreeMemForSearchMegs": "VALUE_REMOVED",
       "targetFreeMemMegs": "VALUE_REMOVED"
     },
     "indexing": {
