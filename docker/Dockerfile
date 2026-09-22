@@ -27,6 +27,11 @@ ARG TOMCAT_APP_NAME=blacklab-server
 # (URIEncoding=utf-8)
 COPY ${CONFIG_ROOT}/server.xml /usr/local/tomcat/conf/
 
+# Install custom logging.properties so uncaught exceptions reported via
+# Tomcat's "localhost" logger (e.g. by ErrorReportValve) also appear in
+# `docker logs`, instead of only being written to logs/localhost.*.log
+COPY ${CONFIG_ROOT}/logging.properties /usr/local/tomcat/conf/
+
 # Copy the configuration file
 COPY ${CONFIG_ROOT}/blacklab-server.yaml /etc/blacklab/
 
