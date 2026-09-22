@@ -189,6 +189,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 
                 // make sure we don't hold on to memory needlessly
                 parsedDocument = null;
+                SaxonHelper.clearDocUrisLoadedByCurrentThread();
             }
 
             @Override
