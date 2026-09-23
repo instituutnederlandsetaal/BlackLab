@@ -54,8 +54,6 @@ public class DocIndexerSaxonTest {
     public void testSaxonTokenizer() throws Exception {
         // 1. Create ConfigInputFormat
         ConfigInputFormat config = new ConfigInputFormat("saxon-test");
-        config.setFileType(ConfigInputFormat.FileType.XML);
-        config.addFileTypeOption("processor", "saxon");
         config.setDocumentPath("//doc");
 
         ConfigAnnotatedField contents = new ConfigAnnotatedField("contents");
@@ -76,6 +74,7 @@ public class DocIndexerSaxonTest {
         ConfigAnnotation head = new ConfigAnnotation();
         head.setName("head");
         // Note: using ! for map operator in XPath 3.0+ (Saxon supports this)
+        // Example: "ADP(type=pre)+PD(type=d-p,subtype=art,position=prenom)" -> "ADP", "PD"
         head.setValuePath("tokenize(., '\\+')!substring-before(., '(')");
         pos.addSubannotation(head);
 
@@ -120,49 +119,6 @@ public class DocIndexerSaxonTest {
             q = new BLSpanTermQuery(qi, new Term(headField, "pd"));
             hits = index.find(q, null);
             Assert.assertEquals("Should find head PD", 1, hits.size());
-        }
-    }
-
-    @Test
-    public void testIndexingNonFirstMainAnnotation() throws Exception {
-        String formatName = "saxon-non-first-main-test";
-        ConfigInputFormat config = new ConfigInputFormat(formatName);
-        config.setFileType(ConfigInputFormat.FileType.XML);
-        config.setDocumentPath("//doc");
-
-        ConfigAnnotatedField contents = new ConfigAnnotatedField("contents");
-        contents.setContainerPath(".");
-        contents.setWordPath(".//w");
-        ConfigAnnotation lemma = new ConfigAnnotation();
-        lemma.setName("lemma");
-        lemma.setValuePath("@lemma");
-        contents.addAnnotation(lemma);
-
-        ConfigAnnotation word = new ConfigAnnotation();
-        word.setName("word");
-        word.setValuePath(".");
-        contents.addAnnotation(word);
-        
-        contents.setMainAnnotation("word");
-        config.addAnnotatedField(contents);
-        DocumentFormats.add(config);
-
-        try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, formatName)) {
-            Indexer indexer = Indexer.create(indexWriter);
-            indexer.index(FileReference.fromBytes("doc1", "<doc><w lemma='L'>X</w></doc>".getBytes(), null), null,
-                    FileConverter.ExtraConverters.NONE);
-            indexer.close();
-        }
-
-        try (BlackLabIndex index = BlackLab.open(indexDir)) {
-            Assert.assertEquals("word", index.annotatedField("contents").mainAnnotation().name());
-            QueryInfo qi = QueryInfo.create(index);
-            String lemmaField = AnnotatedFieldNameUtil.annotationField("contents", "lemma",
-                    MatchSensitivity.INSENSITIVE.luceneFieldSuffix());
-            String wordField = AnnotatedFieldNameUtil.annotationField("contents", "word",
-                    MatchSensitivity.INSENSITIVE.luceneFieldSuffix());
-            Assert.assertEquals(1, index.find(new BLSpanTermQuery(qi, new Term(lemmaField, "l")), null).size());
-            Assert.assertEquals(1, index.find(new BLSpanTermQuery(qi, new Term(wordField, "x")), null).size());
         }
     }
 

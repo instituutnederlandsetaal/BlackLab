@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -193,15 +192,14 @@ public class InputFormatTypeExample extends InputFormatTypeBase {
                 getDocWriter().metadata().annotatedFields().addFromConfig(fieldContents);
 
                 // Create a AnnotatedFieldWriter for this field so we can index it
-                Collection<ConfigAnnotation> annots = fieldContents.getAnnotations();
-                Iterator<ConfigAnnotation> annotIt = annots.iterator();
                 ConfigAnnotation mainAnnotation = ConfigAnnotatedField.determineMainAnnotation(fieldContents);
                 AnnotatedFieldWriter contents = new AnnotatedFieldWriter(getDocWriter(), fieldContents.getName(),
                         mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(),
                         false,
                         getDocWriter().needsPrimaryValuePayloads(), fieldContents.getDefaultSearchAnnotation());
-                while (annotIt.hasNext()) {
-                    ConfigAnnotation annot = annotIt.next();
+                for (ConfigAnnotation annot: fieldContents.getAnnotations()) {
+                    if (annot == mainAnnotation)
+                        continue; // already added in AnnotatedFieldWriter constructor
                     boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
                     contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads,
                             annot.isForwardIndex());
