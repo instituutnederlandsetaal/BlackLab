@@ -13,7 +13,7 @@ public enum FragmentBehaviour {
     // otherwise, index it only at document level
     SEPARATE,  // index at document level and fragment level separately (e.g. pid field)
     DOC_VALUE; // fragments will simply index the value from the document-level, not their own specific value for
-    // this field (i.e. no need to apply this metadata rule for each fragment)
+               // this field (i.e. no need to apply this metadata rule for each fragment)
 
     @JsonCreator
     public static FragmentBehaviour forValue(String value) {

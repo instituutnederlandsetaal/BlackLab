@@ -2,7 +2,6 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.lucene.index.Term;
@@ -19,8 +18,8 @@ import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.IndexListener;
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -164,6 +163,9 @@ public class TestMetadataFragments {
 
     private void index(String formatName, String xml) throws Exception {
         Throwable error = index(formatName, FORMAT, xml);
+        if (error instanceof Exception exc) {
+            throw exc;
+        }
         Assert.assertNull("Expected indexing to succeed, got: " + error, error);
     }
 
