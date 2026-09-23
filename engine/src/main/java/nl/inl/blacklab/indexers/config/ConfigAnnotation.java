@@ -219,23 +219,6 @@ public class ConfigAnnotation {
             messages.warning("captureXml setting on " + id + " is deprecated, use XPath serialize(./node()) instead");
     }
 
-    public ConfigAnnotation copy() {
-        ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
-        result.setProcess(process);
-        result.setNameProcess(nameProcess);
-        result.setDisplayName(displayName);
-        result.setDescription(description);
-        result.setSensitivity(sensitivity);
-        result.setUiType(uiType);
-        result.setBasePath(basePath);
-        for (ConfigAnnotation a : subannotations) {
-            result.addSubannotation(a.copy());
-        }
-        result.setForwardIndex(forwardIndex);
-        result.setCaptureXml(captureXml);
-        return result;
-    }
-
     public String getValuePath() {
         return valuePath;
     }

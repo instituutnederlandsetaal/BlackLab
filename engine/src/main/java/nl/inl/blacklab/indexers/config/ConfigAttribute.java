@@ -42,15 +42,6 @@ public class ConfigAttribute {
         // Default constructor for deserialization
     }
 
-    public ConfigAttribute copy() {
-        ConfigAttribute copy = new ConfigAttribute();
-        copy.name = name;
-        copy.exclude = exclude;
-        copy.valuePath = valuePath;
-        process.forEach(p -> copy.process.add(p.copy()));
-        return copy;
-    }
-
     public String getName() {
         return name;
     }

@@ -45,18 +45,6 @@ public class ConfigMetadataBlock {
         }
     }
 
-    public ConfigMetadataBlock copy() {
-        ConfigMetadataBlock result = new ConfigMetadataBlock();
-        result.setContainerPath(containerPath);
-        result.setDefaultAnalyzer(defaultAnalyzer);
-        result.setApplyDocRules(applyDocRules);
-        blocks.forEach(block -> result.blocks.add(block.copy()));
-        for (ConfigMetadataField f : fields) {
-            result.addMetadataField(f.copy());
-        }
-        return result;
-    }
-
     public boolean isApplyDocRules() {
         return applyDocRules;
     }

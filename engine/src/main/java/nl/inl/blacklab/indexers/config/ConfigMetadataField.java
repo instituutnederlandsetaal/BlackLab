@@ -138,24 +138,6 @@ public class ConfigMetadataField {
         setForEachPath(forEachPath);
     }
 
-    public ConfigMetadataField copy() {
-        ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
-        cp.setProcess(process);
-        cp.setNameProcess(nameProcess);
-        cp.setDisplayName(displayName);
-        cp.setDescription(description);
-        cp.setType(type);
-        cp.setUiType(uiType);
-        cp.setUnknownCondition(unknownCondition);
-        cp.setUnknownValue(unknownValue);
-        cp.setAnalyzer(analyzer);
-        cp.displayValues.putAll(displayValues);
-        cp.displayOrder.addAll(displayOrder);
-        cp.setSortValues(sortValues);
-        cp.setFragments(fragments);
-        return cp;
-    }
-
     void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         String t = "metadata field";
         if (isForEach())

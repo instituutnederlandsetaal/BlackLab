@@ -164,25 +164,6 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
             m.validate(messages);
     }
 
-    public ConfigStandoffAnnotations copy() {
-        ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
-        result.type = type;
-        result.spanEndPath = spanEndPath;
-        result.spanEndIsInclusive = spanEndIsInclusive;
-        result.valuePath = valuePath;
-        result.relationClass = relationClass;
-        result.targetField = targetField;
-        result.targetVersionPath = targetVersionPath;
-        result.metadataContainerPath = metadataContainerPath;
-        for (ConfigAnnotation a : annotations) {
-            result.addAnnotation(a.copy());
-        }
-        for (ConfigMetadataBlock m : metadata) {
-            result.metadata.add(m.copy());
-        }
-        return result;
-    }
-
     public String getPath() {
         return path;
     }

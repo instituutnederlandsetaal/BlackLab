@@ -29,13 +29,6 @@ public class ConfigAnnotationGroup {
         setName(name);
     }
 
-    public ConfigAnnotationGroup copy() {
-        ConfigAnnotationGroup cp = new ConfigAnnotationGroup(name);
-        cp.annotations.addAll(annotations);
-        cp.addRemainingAnnotations = addRemainingAnnotations;
-        return cp;
-    }
-
     public String getName() {
         return name;
     }
