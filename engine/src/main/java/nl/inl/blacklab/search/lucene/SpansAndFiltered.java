@@ -50,7 +50,7 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
         }
 
         /** Called before checking combinations at a new document/start/end position. */
-        public void startPosition() {
+        public void resetForPosition() {
             // Default implementation does nothing
         }
 
@@ -125,10 +125,12 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
                 assert spans.bucketSize() > 0;
                 add(spans);
             }
+            filter.resetForPosition(); // clear any leftover state in the filter to prepare for a new position
         }
 
         boolean nextPosition() throws IOException {
             // Advance the top (most lagging) span
+            filter.resetForPosition(); // clear any leftover state in the filter to prepare for a new position
             SpansInBuckets topSpans = top();
             assert topSpans.bucketStart() != NO_MORE_POSITIONS;
             if (topSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
@@ -239,7 +241,6 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
      */
     private int nextMatchAtThisPosition(boolean immediatelyGoToNext) {
         if (!immediatelyGoToNext) {
-            filter.startPosition();
             // Check if we're already at a valid match.
             if (filter.accept()) {
                 return spanWindow.top().bucketStart();

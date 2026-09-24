@@ -27,7 +27,7 @@ public class SpansAndFilterFactoryUniqueRelations implements SpansAndFilterFacto
             private final Set<List<RelationInfo>> relationsReturnedAtThisPosition = new HashSet<>();
 
             @Override
-            public void startPosition() {
+            public void resetForPosition() {
                 relationsReturnedAtThisPosition.clear();
             }
 
