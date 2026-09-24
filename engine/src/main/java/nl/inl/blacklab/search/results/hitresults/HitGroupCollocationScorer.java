@@ -46,6 +46,9 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
     private static final TextPattern ANY_TOKEN = new TextPatternAnyToken(1);
 
+    /** If a fragment filter is used, do we upcast it so it only has to look at whole documents? */
+    private static final boolean UPCAST_FRAGMENT_FILTERS = false;
+
     /** From what annotation should collocates come? */
     private final AnnotationSensitivity collocateAnnotation;
 
@@ -54,12 +57,6 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
     public HitGroupCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter) {
         this.collocateAnnotation = collocateAnnotation;
-        BlackLabIndex index = collocateAnnotation.annotation().field().index();
-        if (filter != null && index.isFragmentQuery(filter)) {
-            // We don't support precisely scoring collocations on fragments (yet);
-            // convert the filter to a full-document filter.
-            filter = DocResults.upcastFragmentsToFullDocuments(filter);
-        }
         this.filter = filter;
     }
 
@@ -90,6 +87,13 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
             throw new IllegalArgumentException("Collocation scorer needs " + KEY_PATTERN + " parameter");
 
         Query filter = (Query)parameters.get(KEY_DOC_FILTER);
+
+        if (UPCAST_FRAGMENT_FILTERS && filter != null && field.index().isFragmentQuery(filter)) {
+            // We don't support precisely scoring collocations on fragments (yet);
+            // convert the filter to a full-document filter.
+            filter = DocResults.upcastFragmentsToFullDocuments(filter);
+        }
+
         String relationType = (String)parameters.get(KEY_REL_TYPE);
         CollocationType collocationType = CollocationType.PROXIMITY;
         TextPattern population = ANY_TOKEN; // potential collocates
@@ -160,30 +164,34 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
         BlackLabIndex index = field.index();
 
-        // Do we simply need to know the number of tokens?
-        if (pattern.equals(ANY_TOKEN)) {
-            if (filter == null) {
-                // Literally all tokens in the field. Get from the metadata.
-                return index.metadata().countPerField().get(field.name()).getTokens();
-            } else {
-                // Tokens in subcorpus
-                CorpusSize.Count fieldSize = index.queryDocuments(filter).subcorpusSize()
-                        .getCountsPerField().get(field.name());
-                return fieldSize == null ? 0 : fieldSize.getTokens();
-            }
-        }
+        if (/*FIXME below code doesn't work right with fragments!?*/!index.isFragmentQuery(filter)) {
 
-        // Is this a simple annotation=value query?
-        if (pattern instanceof TextPatternTerm term &&
-                term.getClass() == TextPatternTerm.class && // NOT TextPatternRegex!
-                term.getAnnotation() != null && term.getSensitivity() != null) {
-            // Simple annotation=value; use Lucene term frequency statistics for speed.
-            Annotation annotation = field.annotation(term.getAnnotation());
-            if (annotation == null)
-                throw new InvalidQuery("Annotation doesn't exist: " + term.getAnnotation() +
-                        " on field " + field.name());
-            return LuceneUtil.getTermFrequency(annotation.sensitivity(term.getSensitivity()),
-                    term.getSensitivity().desensitize(term.getValue()), filter, ACCURATE_TERM_FREQ);
+            // Do we simply need to know the number of tokens?
+            if (pattern.equals(ANY_TOKEN)) {
+                if (filter == null) {
+                    // Literally all tokens in the field. Get from the metadata.
+                    return index.metadata().countPerField().get(field.name()).getTokens();
+                } else {
+                    // Tokens in subcorpus
+                    DocResults docResults = index.queryDocuments(filter);
+                    CorpusSize.Count fieldSize = docResults.subcorpusSize()
+                            .getCountsPerField().get(field.name());
+                    return fieldSize == null ? 0 : fieldSize.getTokens();
+                }
+            }
+
+            // Is this a simple annotation=value query?
+            if (pattern instanceof TextPatternTerm term &&
+                    term.getClass() == TextPatternTerm.class && // NOT TextPatternRegex!
+                    term.getAnnotation() != null && term.getSensitivity() != null) {
+                // Simple annotation=value; use Lucene term frequency statistics for speed.
+                Annotation annotation = field.annotation(term.getAnnotation());
+                if (annotation == null)
+                    throw new InvalidQuery("Annotation doesn't exist: " + term.getAnnotation() +
+                            " on field " + field.name());
+                return LuceneUtil.getTermFrequency(annotation.sensitivity(term.getSensitivity()),
+                        term.getSensitivity().desensitize(term.getValue()), filter, ACCURATE_TERM_FREQ);
+            }
         }
 
         // Execute query and count hits.
