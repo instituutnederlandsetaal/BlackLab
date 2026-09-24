@@ -307,7 +307,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param query the query
      * @return a query that only yields full documents
      */
-    private static Query upcastFragmentsToFullDocuments(Query query) {
+    public static Query upcastFragmentsToFullDocuments(Query query) {
         // We do this by first separating into full documents and fragments. We upcast the fragments
         // using ToParentBlockJoinQuery, then combine the results with the full documents.
         Query parentFilter = BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT);

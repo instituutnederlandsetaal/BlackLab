@@ -95,9 +95,12 @@ public final class LuceneUtil {
                                 docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId);
                         if (matchingDocId == docId) {
                             // This doc matches the filter.
-                            TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
-                            if (termsEnum.seekExact(bytesRef))
-                                count.add(termsEnum.totalTermFreq());
+                            Terms terms = termVectors.get(docId).terms(luceneField);
+                            if (terms != null) { // field may not be present in this document (e.g. fragment)
+                                TermsEnum termsEnum = terms.iterator();
+                                if (termsEnum.seekExact(bytesRef))
+                                    count.add(termsEnum.totalTermFreq());
+                            }
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
