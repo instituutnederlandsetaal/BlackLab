@@ -19,8 +19,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
-import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -44,12 +42,13 @@ public class TestCollocationRequest {
                 ArgumentCaptor<CompleteQuery> query = ArgumentCaptor.forClass(CompleteQuery.class);
                 Mockito.verify(fixture.index).countHits(Mockito.eq(fixture.field), query.capture());
                 Assert.assertSame(fixture.filter, query.getValue().filter());
-                TextPatternRelationMatch relation = (TextPatternRelationMatch)query.getValue().pattern();
+                TextPattern relation = query.getValue().pattern();
                 TextPattern keyword = BcqlQueryLanguageParser.parseQuery("\"eat\"");
-                Assert.assertEquals(type.equals("relsources") ? TextPatternDefaultValue.get() : keyword,
-                        relation.getParent());
-                Assert.assertEquals(type.equals("relsources") ? keyword : TextPatternDefaultValue.get(),
-                        relation.getChildren().get(0).getTarget());
+                if (type.equals("relsources")) {
+                    Assert.assertEquals("RMATCH(DEFVAL(), [REL(obj, CMP(DEFVAL(), =, \"eat\"))])", relation.toString());
+                } else {
+                    Assert.assertEquals("QFUNC(rspan, RMATCH(CMP(DEFVAL(), =, \"eat\"), [REL(obj, DEFVAL())]), \"target\")", relation.toString());
+                }
             }
         }
     }

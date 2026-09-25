@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.grouping;
 
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +10,6 @@ import org.apache.lucene.search.TermInSetQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -32,6 +30,7 @@ import nl.inl.blacklab.search.results.hitresults.HitGroupScorerDice;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorerSalience;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorerSize;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.testutil.TestIndex;
@@ -169,12 +168,6 @@ public class TestCollocationScorers {
         Assert.assertEquals(expected, group.score(), 1e-12);
     }
 
-    // FIXME: fails with NaN when selecting correct(?) span mode in HitGroupCollocationScorer.relationPattern(), why?
-    //        if we always use spanMode SOURCE it succeeds, but then the score is wrong for reltargets?
-    // Also
-    // FIXME: clean up this test, it is incomprehensible what the actually input looks like and why
-    //            documents are being concatenated when separateDocuments == false.
-    @Ignore("Fails for unknown reason, possibly the test itself is borked and definitely unreadable")
     @Test
     public void testRelationScores() throws Exception {
         ConfigInputFormat format = ConfigInputFormat.read(new StringReader("""
@@ -190,38 +183,62 @@ public class TestCollocationScorers {
                       sensitivity: sensitive_insensitive
                 """), false, "test-collocation-relations", null);
         DocumentFormats.add(format);
-        List<String> documents = new ArrayList<>();
-        for (String[] words: List.of(new String[] { "eat", "eat", "Apples" },
-                new String[] { "eats", "eat", "apple" }, new String[] { "peel", "peel", "Apples" })) {
-            documents.add("1\t" + words[0] + "\t" + words[1] + "\tVERB\t_\t_\t0\troot\t_\t_\n" +
-                    "2\t" + words[2] + "\tapple\tNOUN\t_\t_\t1\tobj\t_\t_\n\n");
-        }
-        // Relation ids and token positions repeat across documents; both layouts must give the same results.
-        for (boolean separateDocuments: List.of(false, true)) {
-            String[] data = (separateDocuments ? documents : List.of(String.join("", documents))).toArray(String[]::new);
-            try (TestIndex relations = TestIndex.get(format.getName(), data)) {
-                // Two eat->apple pairs, three incoming obj relations for lemma apple, one peel->apple pair.
-                assertRelationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
-                        "reltargets", "[lemma=\"eat\"]", "lemma", MatchSensitivity.INSENSITIVE,
-                        Map.of("apple", 2L), Map.of("apple", 0.8));
-                assertRelationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
-                        "relsources", "[lemma=\"apple\"]", "lemma", MatchSensitivity.INSENSITIVE,
-                        Map.of("eat", 2L, "peel", 1L), Map.of("eat", 0.8, "peel", 0.5));
-                assertRelationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
-                        "reltargets", "[lemma=\"eat\"]", "word", MatchSensitivity.SENSITIVE,
-                        Map.of("Apples", 1L, "apple", 1L), Map.of("Apples", 0.5, "apple", 2.0 / 3));
-                // Salience also needs the population: three obj relations, rather than six tokens.
-                assertRelationScores(relations.index(), HitGroupScorerSalience.TYPE_ID,
-                        "reltargets", "[lemma=\"eat\"]", "lemma", MatchSensitivity.INSENSITIVE,
-                        Map.of("apple", 2L), Map.of("apple", 0.0));
-                assertRelationScores(relations.index(), HitGroupScorerSalience.TYPE_ID,
-                        "relsources", "[lemma=\"apple\"]", "lemma", MatchSensitivity.INSENSITIVE,
-                        Map.of("eat", 2L, "peel", 1L), Map.of("eat", 0.0, "peel", 0.0));
+        // The words we'll construct document out of
+        List<String[]> docsWords = List.of(
+            new String[] { "eat",  "eat",  "Apples", "apple" },
+            new String[] { "eats", "eat",  "apple",  "apple" },
+            new String[] { "peel", "peel", "Apples", "apple" }
+        );
+        // Construct the CoNLL-U documents
+        String[] documents = new String[docsWords.size()];
+        int docIndex = 0;
+        for (String[] docWords: docsWords) {
+            String[][] tokens = new String[][] {
+                // Construct documents with two tokens: a verb and its object.
+                // So the first token has a dependency relation "obj" to the second token.
+                // ID  FORM         LEMMA        UPOS    XPOS FEATS HEAD DEPREL  DEPS MISC
+                { "1", docWords[0], docWords[1], "VERB", "_", "_",  "0", "root", "_", "_" },
+                { "2", docWords[2], docWords[3], "NOUN", "_", "_",  "1", "obj",  "_", "_" }
+            };
+            StringBuilder doc = new StringBuilder();
+            for (String[] token: tokens) {
+                doc.append(String.join("\t", token)).append("\n");
             }
+            doc.append("\n");
+            documents[docIndex] = doc.toString();
+            docIndex++;
+        }
+
+        try (TestIndex relations = TestIndex.get(format.getName(), documents)) {
+
+            HitResults results = relations.find("[] -obj-> [lemma=\"apple\"]");
+            Assert.assertEquals(3, results.size());
+
+            // Target for lemma "eat" is lemma "apple"
+            assertRelationCollocationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
+                    "reltargets", "[lemma=\"eat\"]", "lemma", MatchSensitivity.INSENSITIVE,
+                    Map.of("apple", 2L), Map.of("apple", 0.8));
+            // Target for lemma "eat" is word "Apples" and "apple" (case-sensitive)
+            assertRelationCollocationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
+                    "reltargets", "[lemma=\"eat\"]", "word", MatchSensitivity.SENSITIVE,
+                    Map.of("Apples", 1L, "apple", 1L), Map.of("Apples", 0.5, "apple", 2.0 / 3));
+            // Salience also needs the population: three obj relations, rather than six tokens.
+            assertRelationCollocationScores(relations.index(), HitGroupScorerSalience.TYPE_ID,
+                    "reltargets", "[lemma=\"eat\"]", "lemma", MatchSensitivity.INSENSITIVE,
+                    Map.of("apple", 2L), Map.of("apple", 0.0));
+
+            // Source for lemma "apple" is lemmas "eat" and "peel"
+            assertRelationCollocationScores(relations.index(), HitGroupScorerDice.TYPE_ID,
+                    "relsources", "[lemma=\"apple\"]", "lemma", MatchSensitivity.INSENSITIVE,
+                    Map.of("eat", 2L, "peel", 1L), Map.of("eat", 0.8, "peel", 0.5));
+            // Salience also needs the population: three obj relations, rather than six tokens.
+            assertRelationCollocationScores(relations.index(), HitGroupScorerSalience.TYPE_ID,
+                    "relsources", "[lemma=\"apple\"]", "lemma", MatchSensitivity.INSENSITIVE,
+                    Map.of("eat", 2L, "peel", 1L), Map.of("eat", 0.0, "peel", 0.0));
         }
     }
 
-    private static void assertRelationScores(BlackLabIndex index, String scorerType, String type, String pattern,
+    private static void assertRelationCollocationScores(BlackLabIndex index, String scorerType, String type, String pattern,
             String annotation, MatchSensitivity sensitivity, Map<String, Long> counts, Map<String, Double> scores) {
         AnnotatedField field = index.mainAnnotatedField();
         HitGroupScorer scorer = HitGroupScorer.fromConfig(field, Map.of(
@@ -231,8 +248,8 @@ public class TestCollocationScorers {
                 HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString(),
                 HitGroupCollocationScorer.KEY_COLL_TYPE, type,
                 HitGroupCollocationScorer.KEY_REL_TYPE, "obj"));
-        String query = type.equals("relsources") ? "[] -obj-> " + pattern :
-                "rspan(" + pattern + " -obj-> [], \"target\")";
+        String query = type.equals("relsources") ? "[] -obj-> (" + pattern + ")":
+                "rspan((" + pattern + ") -obj-> [], \"target\")";
         HitProperty groupBy = new HitPropertyHitText(index, field.annotation(annotation), sensitivity);
         HitGroups groups = index.search(field, false)
                 .find(new CompleteQuery(BcqlQueryLanguageParser.parseQuery(query)))

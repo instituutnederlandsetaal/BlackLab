@@ -10,6 +10,7 @@ import nl.inl.blacklab.plugins.HitGroupScorerType;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -28,6 +29,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCompare;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
+import nl.inl.blacklab.search.textpattern.TextPatternFunctionCall;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternValue;
@@ -164,7 +166,9 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
         BlackLabIndex index = field.index();
 
-        if (/*FIXME below code doesn't work right with fragments!?*/!index.isFragmentQuery(filter)) {
+        boolean searchingFullDocuments = filter == null || !index.isFragmentQuery(filter);
+        if (searchingFullDocuments) {
+            // See if we can optimize.
 
             // Do we simply need to know the number of tokens?
             if (pattern.equals(ANY_TOKEN)) {
@@ -215,10 +219,14 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
         RelationOperatorInfo relOpInfo = new RelationOperatorInfo(relationType,
                 SpanQueryRelations.Direction.BOTH_DIRECTIONS,
                 null, false, false, false);
-        RelationInfo.SpanMode spanMode = collocationType == CollocationType.RELATION_TARGETS ?
-                RelationInfo.SpanMode.TARGET : RelationInfo.SpanMode.SOURCE;
-        RelationTarget relationTarget = new RelationTarget(relOpInfo, target, spanMode, null);
-        return new TextPatternRelationMatch(source, List.of(relationTarget));
+        RelationTarget relationTarget = new RelationTarget(relOpInfo, target, RelationInfo.SpanMode.SOURCE, null);
+        TextPattern relMatch = new TextPatternRelationMatch(source, List.of(relationTarget));
+        if (collocationType == CollocationType.RELATION_TARGETS) {
+            // Make sure we return the target of the relation as requested.
+            TextPattern tpSpanType = TextPatternValue.fromObject("target");
+            relMatch = new TextPatternFunctionCall(XFRelations.FUNC_RSPAN, List.of(relMatch, tpSpanType));
+        }
+        return relMatch;
     }
 
     /** Type of collocations to find */
