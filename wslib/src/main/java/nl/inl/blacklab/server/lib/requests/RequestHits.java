@@ -339,7 +339,7 @@ public final class RequestHits {
         WebserviceOperation operation = ParamUtil.getOperation(qpar);
         HitProperty hitsGroupProperty = overrideGroupBy == null ?
                 ParamUtil.getHitsGroupProperty(operation, groupBy, annotatedField, contextSize) : overrideGroupBy;
-        HitGroupScorer hitGroupScorer = overrideGroupBy == null ?
+        HitGroupScorer hitGroupScorer = overrideGroupScorer == null ?
                 ParamUtil.getHitGroupScorer(annotatedField, qpar.opt(WsParam.SCORER).orElse(null)) : overrideGroupScorer;
         TextPattern patternOriginal = ParamUtil.patternNoWithinContextTag(index,
                 qpar.get(WsParam.PATTERN_LANGUAGE),
