@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -45,7 +44,6 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -68,11 +66,7 @@ public class ParamUtil {
 
     /** Resolve the index a request wants to access */
     public static BlackLabIndex index(String corpusName) {
-        try {
-            return IndexManager.get().getIndex(corpusName).blIndex();
-        } catch (Exception e) {
-            throw new InvalidIndex(e);
-        }
+        return QueryParams.DEFAULT_INDEX_RESOLVER.resolve(corpusName);
     }
 
     /**

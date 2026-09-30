@@ -76,7 +76,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
-        blackLab = BlackLab.implicitInstance();
+        blackLab = BlackLab.currentInstance();
         blackLab.registerIndex(null, this);
     }
     

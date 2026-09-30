@@ -107,7 +107,7 @@ These are breaking changes compared to v4.0. Make sure you update your client ac
     - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Mainly affects `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
     - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
 - server, corpus, field info:
-    - `indexName` in responses has been replaced with `corpusName`.
+    - `indexName` in responses has been replaced with `corpus`.
     - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
     - Document and token count have been grouped under a `count` key. A parallel corpus will also include a `docVersions` key that gives the total number of document versions. `annotatedFields` will also include a `count` key that gives the number of docs/tokens for that field.
 - Results pages:

@@ -157,7 +157,12 @@ public final class BlackLab {
     public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
         return (BlackLabIndexWriter) implicitInstance().wrapIndexReader(indexName, reader, true);
     }
-    
+
+    public static synchronized BlackLabEngine currentInstance() {
+        if (explicitlyCreated)
+            return BlackLabEngine.singleInstance();
+        return implicitInstance();
+    }
     
     /**
      * Return the implicitly created instance of BlackLab.

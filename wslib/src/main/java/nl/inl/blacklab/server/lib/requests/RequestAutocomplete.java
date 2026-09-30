@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.lib.requests;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.webservice.WsParam;
 
@@ -12,7 +11,7 @@ public record RequestAutocomplete(BlackLabIndex index, String fieldName, String 
         String annotationName = qpar.get(WsParam.ANNOTATION);
 
         // Annotated field specified but no annotation?
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         if (annotationName == null && index.metadata().annotatedFields().exists(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Also specify a annotation to autocomplete for annotated field: " + fieldName);

@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.lib.requests;
 import java.util.Collection;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.webservice.WsParam;
 
@@ -19,7 +18,7 @@ public record RequestFieldInfo(
 
     public static RequestFieldInfo fromParams(QueryParams qpar) {
         return new RequestFieldInfo(
-                ParamUtil.index(qpar.getCorpusName()),
+                qpar.getCorpusRef().index(),
                 qpar.get(WsParam.FIELD),
                 qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO),
                 qpar.getList(WsParam.LIST_VALUES_FOR_ANNOTATIONS),

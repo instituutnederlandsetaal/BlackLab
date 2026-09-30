@@ -25,7 +25,7 @@ public record RequestTermFrequencies(
 ) {
 
     public static RequestTermFrequencies fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField field = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
         AnnotationSensitivity annotSensitivity = getAnnotationSensitivity(
                 field,

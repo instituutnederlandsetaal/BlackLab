@@ -181,7 +181,7 @@ public final class RequestHits {
      * @return object representing the collocations request
      */
     public static RequestHits fromParamsCollocations(QueryParams qpar, boolean isCsv) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
         Annotation annotation;
         if (StringUtils.isEmpty(qpar.get(WsParam.ANNOTATION))) {
@@ -319,7 +319,7 @@ public final class RequestHits {
 
     private static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv, TextPattern overridePattern,
             HitProperty overrideGroupBy, HitGroupScorer overrideGroupScorer, HitGroupProperty defaultGroupSort) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         ContextSize contextSize = ParamUtil.getContext(qpar);
         String optContextTag = contextSize.inlineTagName();
         TextPattern pattern;

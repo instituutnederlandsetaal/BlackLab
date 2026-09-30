@@ -14,7 +14,7 @@ public record RequestParsePattern(
         TextPattern textPattern,
         boolean explain) {
     public static RequestParsePattern fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField searchField = ParamUtil.getSearchField(index, qpar.get(WsParam.FIELD),
                 qpar.opt(WsParam.SEARCH_FIELD).orElse(null));
         return new RequestParsePattern(
