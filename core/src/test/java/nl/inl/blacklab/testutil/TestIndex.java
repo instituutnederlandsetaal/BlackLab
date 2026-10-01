@@ -64,8 +64,10 @@ public class TestIndex implements AutoCloseable {
     /** Pre-indexed (to test that we don't accidentally break file compatibility). */
     private static TestIndex testIndexPre;
 
+    static final String TEST_FORMAT_NAME = "testformat";
+
     static {
-        String fileNameRelative = "testformat.blf.yaml";
+        String fileNameRelative = TEST_FORMAT_NAME + ".blf.yaml";
         try (InputStream is = TestIndex.class.getClassLoader().getResourceAsStream(fileNameRelative)) {
             if (is == null)
                 throw new IllegalStateException("Resource not found: testformat.blf.yaml");
@@ -180,8 +182,6 @@ public class TestIndex implements AutoCloseable {
     };
 
     public static final int[] DOC_LENGTHS_TOKENS = { 9, 12, 6, 10 };
-
-    static final String TEST_FORMAT_NAME = "testformat";
 
     /**
      * The BlackLab index object.

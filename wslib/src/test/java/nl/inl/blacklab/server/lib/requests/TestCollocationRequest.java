@@ -1,8 +1,11 @@
 package nl.inl.blacklab.server.lib.requests;
 
+import java.io.File;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,11 +29,27 @@ public class TestCollocationRequest {
 
     private static AnnotatedField field;
 
+    private static File tmpDir;
+
     @BeforeClass
     public static void beforeClass() {
-        BlsMain.get();
+        BLSConfig blsConfig = new BLSConfig();
+        tmpDir = new File(System.getProperty("java.io.tmpdir"), "blacklab-tmp");
+        if (!tmpDir.mkdirs())
+            throw new IllegalStateException("Unable to create tmp directory: " + tmpDir.getAbsolutePath());
+        blsConfig.setIndexLocations(List.of(tmpDir.getAbsolutePath())); // prevent error
+        BlsMain.create(blsConfig);
         index = new MockBlackLabIndex();
         field = index.mainAnnotatedField();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        index = null;
+        field = null;
+        if (!tmpDir.delete())
+            throw new IllegalStateException("Unable to delete tmp directory: " + tmpDir.getAbsolutePath());
+        tmpDir = null;
     }
 
     private static final QueryParams.IndexResolver testResolver = corpusName -> {

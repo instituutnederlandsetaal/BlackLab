@@ -248,7 +248,8 @@ public class TestCollocationScorers {
                 HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString(),
                 HitGroupCollocationScorer.KEY_COLL_TYPE, type,
                 HitGroupCollocationScorer.KEY_REL_TYPE, "obj"));
-        String query = type.equals("relsources") ? "[] -obj-> (" + pattern + ")":
+        String query = type.equals("relsources") ?
+                "[] -obj-> (" + pattern + ")" :
                 "rspan((" + pattern + ") -obj-> [], \"target\")";
         HitProperty groupBy = new HitPropertyHitText(index, field.annotation(annotation), sensitivity);
         HitGroups groups = index.search(field, false)

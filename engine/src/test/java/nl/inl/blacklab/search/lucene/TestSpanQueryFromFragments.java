@@ -17,10 +17,12 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.BLInputDocumentLucene;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -33,7 +35,6 @@ public class TestSpanQueryFromFragments {
     @Test
     public void testIndependentIteratorsWithAndWithoutFragments() throws Exception {
         try (Directory directory = new ByteBuffersDirectory()) {
-            QueryInfo queryInfo = QueryInfo.create(null, null);
             IndexWriterConfig config = new IndexWriterConfig(new KeywordAnalyzer());
             config.setMergePolicy(NoMergePolicy.INSTANCE);
             try (IndexWriter writer = new IndexWriter(directory, config)) {
@@ -49,6 +50,10 @@ public class TestSpanQueryFromFragments {
                 writer.commit();
                 writer.addDocument(new BLInputDocumentLucene(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
+            AnnotatedField field = Mockito.mock(AnnotatedField.class);
+            Mockito.when(field.name()).thenReturn("contents");
+            Mockito.when(field.tokenLengthField()).thenReturn(TOKEN_LENGTH_LUCENE_FIELD);
+            QueryInfo queryInfo = QueryInfo.create(null, field);
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 assertEquals(3, reader.leaves().size());
                 var query = new SpanQueryFromFragments(queryInfo, new MatchAllDocsQuery(), null,

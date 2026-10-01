@@ -38,10 +38,20 @@ public class BlsMain {
 
     private static BlsMain instance;
 
+    public static synchronized BlsMain create(BLSConfig config) {
+        if (instance != null) {
+            throw new IllegalStateException("Already created");
+        }
+        instance = new BlsMain(config);
+        return instance;
+    }
+
     /** Get instance, creating one if it doesn't exist yet */
     public static synchronized BlsMain get() {
-        if (instance == null)
-            instance = new BlsMain();
+        if (instance == null) {
+            BLSConfig config = ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
+            instance = new BlsMain(config);
+        }
         return instance;
     }
 
@@ -62,9 +72,7 @@ public class BlsMain {
      */
     private DataFormat defaultOutputType;
 
-    private BlsMain() {
-
-        BLSConfig config = ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
+    private BlsMain(BLSConfig config) {
 
         // Create our search manager (main webservice class)
         searchManager = new SearchManager(config, true);
