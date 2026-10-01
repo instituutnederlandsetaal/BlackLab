@@ -69,11 +69,14 @@ public class TermsGlobal implements Terms {
     /** Mapping from sensitive sort position to term id */
     private int[] sensitive2TermId;
 
-    /** What segment should we read each term string from? */
-    private final ObjectList<Terms> termSegmentTerms = new ObjectArrayList<>();
+    /** Mapping from global term id to a segment Terms object it occurs in.
+     * You also need {@link #globalIdToSegmentTermId} for the segment-local term id in that segment.
+     */
+    private final ObjectList<Terms> globalIdToSegmentContainingTerm = new ObjectArrayList<>();
 
-    /** Mapping from global term id to segment term id (in the segment given by termSegment) */
-    private final IntList termSegmentTermId = new IntArrayList();
+    /** Mapping from global term id to segment term id (in the segment given by
+     * {@link #globalIdToSegmentContainingTerm}) */
+    private final IntList globalIdToSegmentTermId = new IntArrayList();
 
     private boolean initialized = false;
 
@@ -119,7 +122,7 @@ public class TermsGlobal implements Terms {
         // we stored in termSegmentTerms, which are not thread-safe.
         if (id >= numberOfTerms || id < 0)
             return "";
-        return termSegmentTerms.get(id).get(termSegmentTermId.getInt(id));
+        return globalIdToSegmentContainingTerm.get(id).get(globalIdToSegmentTermId.getInt(id));
     }
 
     @Override
@@ -321,20 +324,20 @@ public class TermsGlobal implements Terms {
         String[] terms = new String[nextGlobalTermId.get()];
         globalTermIds.forEach((term, id) -> terms[id] = term);
 
-        // Allocate the retained origin lists directly, then derive each origin from the segment mappings. This extra
-        // pass only reads primitive arrays and avoids allocating an origin object for every unique term.
+        // Allocate the retained global-to-segment lists directly, then derive each from the segment mappings.
+        // This extra pass only reads primitive arrays and avoids allocating an object for every unique term.
         for (int i = 0; i < terms.length; i++) {
-            termSegmentTerms.add(null);
-            termSegmentTermId.add(0);
+            globalIdToSegmentContainingTerm.add(null);
+            globalIdToSegmentTermId.add(0);
         }
         for (SegmentTerms segment: segments) {
             int[] segmentToGlobal = segment.globalTermIds();
             segmentToGlobalTermIds.put(segment.context(), segmentToGlobal);
             for (int segmentTermId = 0; segmentTermId < segmentToGlobal.length; segmentTermId++) {
                 int globalTermId = segmentToGlobal[segmentTermId];
-                if (termSegmentTerms.get(globalTermId) == null) {
-                    termSegmentTerms.set(globalTermId, segment.reader());
-                    termSegmentTermId.set(globalTermId, segmentTermId);
+                if (globalIdToSegmentContainingTerm.get(globalTermId) == null) {
+                    globalIdToSegmentContainingTerm.set(globalTermId, segment.reader());
+                    globalIdToSegmentTermId.set(globalTermId, segmentTermId);
                 }
             }
         }
