@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -23,31 +21,31 @@ import org.junit.Test;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.BLInputDocumentLucene;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestSpanQueryFromFragments {
 
+    private static final String FIELD_NAME = "contents";
+
+    private static final String TOKEN_LENGTH_LUCENE_FIELD = AnnotatedFieldNameUtil.lengthTokensField(FIELD_NAME);
+
     @Test
     public void testIndependentIteratorsWithAndWithoutFragments() throws Exception {
         try (Directory directory = new ByteBuffersDirectory()) {
-            AnnotatedField field = mock(AnnotatedField.class);
-            when(field.name()).thenReturn("contents");
-            when(field.tokenLengthField()).thenReturn(AnnotatedFieldNameUtil.lengthTokensField("contents"));
-            QueryInfo queryInfo = QueryInfo.create(mock(BlackLabIndex.class), field);
+            QueryInfo queryInfo = QueryInfo.create(null, null);
             IndexWriterConfig config = new IndexWriterConfig(new KeywordAnalyzer());
             config.setMergePolicy(NoMergePolicy.INSTANCE);
             try (IndexWriter writer = new IndexWriter(directory, config)) {
-                BLInputDocumentLucene plain = parent(queryInfo, 3);
+                BLInputDocumentLucene plain = parent(3);
                 writer.addDocument(plain.getDocument());
                 writer.commit();
                 BLInputDocumentLucene fragment = new BLInputDocumentLucene(BLInputDocument.DocType.FRAGMENT);
-                fragment.addIndexedAndDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, queryInfo.field().name());
+                fragment.addIndexedAndDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, FIELD_NAME);
                 fragment.addNumericField(BLInputDocument.FRAG_FIELD_START, 1, false, false, true);
                 fragment.addNumericField(BLInputDocument.FRAG_FIELD_END, 2, false, false, true);
-                writer.addDocuments(List.of(fragment.getDocument(), parent(queryInfo, 4).getDocument()));
-                writer.addDocument(parent(queryInfo, 2).getDocument());
+                writer.addDocuments(List.of(fragment.getDocument(), parent(4).getDocument()));
+                writer.addDocument(parent(2).getDocument());
                 writer.commit();
                 writer.addDocument(new BLInputDocumentLucene(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
@@ -71,9 +69,9 @@ public class TestSpanQueryFromFragments {
         }
     }
 
-    private static BLInputDocumentLucene parent(QueryInfo queryInfo, int length) {
+    private static BLInputDocumentLucene parent(int length) {
         BLInputDocumentLucene doc = new BLInputDocumentLucene(BLInputDocument.DocType.DOCUMENT);
-        doc.addNumericField(queryInfo.field().tokenLengthField(),
+        doc.addNumericField(TOKEN_LENGTH_LUCENE_FIELD,
                 (int)BlackLabIndex.encodeTokenLengthField(length), false, false, true);
         return doc;
     }

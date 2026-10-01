@@ -27,7 +27,7 @@ public class TestCollocationRequest {
     private static AnnotatedField field;
 
     @BeforeClass
-    public static void beforeClass() throws Exception {
+    public static void beforeClass() {
         BlsMain.get();
         index = new MockBlackLabIndex();
         field = index.mainAnnotatedField();

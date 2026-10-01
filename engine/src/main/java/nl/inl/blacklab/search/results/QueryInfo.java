@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheMap;
 
 /**
  * Information about the original query.
@@ -15,7 +16,7 @@ public final class QueryInfo {
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
-        return create(index, field, index.cache());
+        return create(index, field, index == null ? null : index.cache());
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
@@ -37,7 +38,7 @@ public final class QueryInfo {
         super();
         this.index = index;
         this.field = field;
-        this.cacheToUse = cacheToUse;
+        this.cacheToUse = cacheToUse == null ? new SearchCacheMap() : cacheToUse;
     }
 
     /** @return the index that was searched. */
