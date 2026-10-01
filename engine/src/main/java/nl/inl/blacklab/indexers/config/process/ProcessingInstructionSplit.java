@@ -11,6 +11,7 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.plugins.param.PluginParams;
+import nl.inl.util.StringUtil;
 
 /**
  * A regular expression replace operation.
@@ -35,7 +36,7 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
 
     @Override
     public void initialize() throws PluginException {
-        parSeparator = addParam(PString.matching("separator", ".+"));
+        parSeparator = addParam(PString.matching("separator", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
         parFlags = addParam(PString.any("flags"));
         parKeep = addParam(PString.matching("keep", "\\d+|both|all"));
     }

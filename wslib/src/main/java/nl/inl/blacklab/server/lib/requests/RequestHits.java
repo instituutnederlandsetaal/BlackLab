@@ -209,7 +209,7 @@ public final class RequestHits {
             throw new BadRequest("INVALID_COLLOCATION_TYPE", e.getMessage(), e);
         }
         boolean findRelations = collocationType != HitGroupCollocationScorer.CollocationType.PROXIMITY;
-        String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_VALUE);
+        String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_NON_EMPTY_VALUE);
 
         // Construct and parse the query that will yield the collocations
         String within = qpar.has(WsParam.WITHIN) ? "<" + qpar.get(WsParam.WITHIN) + "/>" : "";

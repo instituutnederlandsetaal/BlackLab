@@ -10,6 +10,7 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.plugins.param.PluginParams;
+import nl.inl.util.StringUtil;
 
 /**
  * Strip certain characters from the start and end of the value(s)
@@ -30,7 +31,7 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
 
     @Override
     public void initialize() throws PluginException {
-        parChars = addParam(PString.matching("chars", ".+"));
+        parChars = addParam(PString.matching("chars", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
     }
 
     @Override

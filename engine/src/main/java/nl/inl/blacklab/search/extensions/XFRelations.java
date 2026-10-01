@@ -30,6 +30,7 @@ import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
+import nl.inl.util.StringUtil;
 
 /**
  * Extension functions for working with relations (dependency, parallel corpus).
@@ -43,7 +44,8 @@ public class XFRelations implements ExtensionFunctionClass {
     public static final String DEFAULT_CONTEXT_REL_NAME = "context_rels";
 
     /** Regex for matching all relations (default for rcapture) */
-    public static final String REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE = RelationUtil.fullTypeRegex(".+", ".+");
+    public static final String REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE = RelationUtil.fullTypeRegex(
+            StringUtil.REGEX_ANY_NON_EMPTY_VALUE, StringUtil.REGEX_ANY_NON_EMPTY_VALUE);
 
     /** Default name for match info if no explicit capture name is set for a relation operator, and none could be
      derived from the relation type filter expression. */
@@ -99,7 +101,8 @@ public class XFRelations implements ExtensionFunctionClass {
                         PEnum.of("spanMode", RelationInfo.SpanMode.class),
                         PString.identifier("captureAs"),
                         PEnum.of("direction", SpanQueryRelations.Direction.class)),
-                Arrays.asList(".+", QueryFunction.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
+                Arrays.asList(StringUtil.REGEX_ANY_NON_EMPTY_VALUE, QueryFunction.VALUE_QUERY_ANY_NGRAM,
+                        "source", "", "both"),
                 (queryInfo, context, args) -> {
                     String relationType = (String) args.get(0);
                     BLSpanQuery matchTarget = (BLSpanQuery) args.get(1);

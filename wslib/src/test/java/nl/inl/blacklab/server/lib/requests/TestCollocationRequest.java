@@ -9,8 +9,9 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyScore;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -21,7 +22,7 @@ import nl.inl.blacklab.webservice.WsParam;
 
 public class TestCollocationRequest {
 
-    private static BlackLabIndex index;
+    private static MockBlackLabIndex index;
 
     private static AnnotatedField field;
 
@@ -38,34 +39,44 @@ public class TestCollocationRequest {
         throw new BadRequest("UNKNOWN_CORPUS", "Unknown corpus: " + corpusName);
     };
 
-//    @Test
-//    public void testRelationScorerDirection() {
-//        for (String type: new String[] { "relsources", "reltargets" }) {
-//            RequestHits.fromParamsCollocations(params(Map.of(WsParam.COLLOCATION_TYPE, type,
-//                    WsParam.RELATION_TYPE, "obj")), false);
-//            ArgumentCaptor<CompleteQuery> query = ArgumentCaptor.forClass(CompleteQuery.class);
-//            Mockito.verify(index).countHits(Mockito.eq(field), query.capture());
-//            TextPattern relation = query.getValue().pattern();
-//            if (type.equals("relsources")) {
-//                Assert.assertEquals("RMATCH(DEFVAL(), [REL(obj, CMP(DEFVAL(), =, \"eat\"))])", relation.toString());
-//            } else {
-//                Assert.assertEquals("QFUNC(rspan, RMATCH(CMP(DEFVAL(), =, \"eat\"), [REL(obj, DEFVAL())]), \"target\")", relation.toString());
-//            }
-//        }
-//    }
+    @Test
+    public void testRelationScorerDirection() {
+        for (String type: new String[] { "relsources", "reltargets" }) {
+
+            // Ensure that countHits call will not fail if the expected query is used.
+            setUpCountHitsResponse(switch (type) {
+                case "relsources" -> "_ -obj-> \"eat\"";
+                case "reltargets" -> "rspan(\"eat\" -obj-> _, str('target'))";
+                default -> throw new IllegalStateException();
+            });
+
+            RequestHits.fromParamsCollocations(params(Map.of(WsParam.COLLOCATION_TYPE, type,
+                    WsParam.RELATION_TYPE, "obj")), false);
+        }
+    }
 
     @Test
     public void testViewGroupPreservesRequest() {
         for (String type: new String[] { "proximity", "relsources", "reltargets" }) {
             QueryParams params = params(Map.of(WsParam.COLLOCATION_TYPE, type,
                     WsParam.CONTEXT, "2:3", WsParam.SAMPLE_NUMBER, "12", WsParam.SAMPLE_SEED, "7"));
+
+            // Ensure that countHits call will not fail if the expected query is used.
+            setUpCountHitsResponse(switch (type) {
+                case "proximity" -> "\"eat\"";
+                case "relsources" -> "_ --> \"eat\"";
+                case "reltargets" -> "rspan(\"eat\" --> _, str('target'))";
+                default -> throw new IllegalStateException();
+            });
+
             RequestHits grouped = RequestHits.fromParamsCollocations(params, false);
+
             RequestHits group = RequestHits.fromParamsCollocations(params.withOverrides(Map.of(
                     WsParam.VIEW_GROUP, "cws:word:i:apple", WsParam.SORT_BY, "-hitposition",
                     WsParam.FIRST_RESULT, 3L, WsParam.NUMBER_OF_RESULTS, 2L)), false);
             Assert.assertEquals(grouped.pattern(), group.pattern());
             Assert.assertEquals(grouped.groupBy(), group.groupBy());
-            Assert.assertEquals("hit:word:i", group.groupBy().serialize());
+            Assert.assertEquals("hit:contents%word:i", group.groupBy().serialize());
             Assert.assertEquals(grouped.sampleParams(), group.sampleParams());
             Assert.assertEquals(grouped.contextSettings(), group.contextSettings());
             Assert.assertEquals("cws:word:i:apple", group.viewGroup());
@@ -79,25 +90,26 @@ public class TestCollocationRequest {
                     WsParam.NUMBER_OF_RESULTS, 0L, WsParam.SORT_BY, "score")), false);
             Assert.assertEquals(new WindowSettings(0, 0), count.windowSettings());
             Assert.assertNull(count.sortBy());
-
-//            try (MockedStatic<WebserviceOperations> operations = Mockito.mockStatic(WebserviceOperations.class)) {
-//                ResultHits result = Mockito.mock(ResultHits.class);
-//                operations.when(() -> WebserviceOperations.hits(group)).thenReturn(result);
-//                ResponseStreamer response = Mockito.mock(ResponseStreamer.class);
-//                WebserviceRequestHandler.opHits(group, response, false);
-//                Mockito.verify(response).hitsResponse(result, false);
-//            }
         }
     }
 
     @Test
     public void testCollocationGroupingOverridesExplicitGroup() {
+        // Ensure that countHits call will not fail if the expected query is used.
+        setUpCountHitsResponse("\"eat\"");
+
         RequestHits request = RequestHits.fromParamsCollocations(params(Map.of(
                 WsParam.GROUP_BY, "docid", WsParam.ANNOTATION, "lemma", WsParam.SENSITIVE, "true",
                 WsParam.SORT_BY, "-identity")), false);
-        Assert.assertEquals("hit:lemma:s", request.groupBy().serialize());
+        Assert.assertEquals("hit:contents%lemma:s", request.groupBy().serialize());
         Assert.assertEquals("-identity", request.sortGroupsBy().serialize());
         Assert.assertNull(request.sortBy());
+    }
+
+    private static void setUpCountHitsResponse(String query) {
+        TextPattern pattEat = index.getQueryParser("bcql").parse(query).pattern();
+        index.clearCountHitsResponses();
+        index.putCountHitsResponse(field, new CompleteQuery(pattEat, null), 1234L);
     }
 
     @Test
@@ -110,8 +122,6 @@ public class TestCollocationRequest {
                 params(Map.of(WsParam.SCORER_TYPE, "missing")), false));
         assertBadRequest("PATT_SYNTAX_ERROR", () -> RequestHits.fromParamsCollocations(
                 params(Map.of(WsParam.PATTERN, "\"unterminated")), false));
-
-//        Mockito.when(field.annotation("missing")).thenReturn(null);
         assertBadRequest("PATT_SYNTAX_ERROR", () -> RequestHits.fromParamsCollocations(
                 params(Map.of(WsParam.PATTERN, "[missing=\"word\"]")), false));
         assertBadRequest("UNKNOWN_ANNOTATION", () -> RequestHits.fromParamsCollocations(

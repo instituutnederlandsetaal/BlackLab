@@ -29,6 +29,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactorySameRelationId;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.util.StringUtil;
 
 /**
  * A span/relation strategy where the type (span name) and any attributes are indexed
@@ -201,9 +202,9 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      */
     private static String tagAttributeRegex(String relTypeRegex, String nameRegex, String valueRegex) {
         if (StringUtils.isEmpty(relTypeRegex))
-            relTypeRegex = ".+";
+            relTypeRegex = RelationUtil.ANY_TYPE_REGEX;
         if (StringUtils.isEmpty(nameRegex))
-            nameRegex = ".+";
+            nameRegex = StringUtil.REGEX_ANY_NON_EMPTY_VALUE;
         return RelationUtil.optParRegex(relTypeRegex) + ATTR_SEPARATOR +
                 RelationUtil.optParRegex(nameRegex) + KEY_VALUE_SEPARATOR +
                 RelationUtil.optParRegex(valueRegex);

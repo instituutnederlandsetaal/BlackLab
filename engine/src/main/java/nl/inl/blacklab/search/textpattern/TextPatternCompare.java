@@ -113,7 +113,7 @@ public class TextPatternCompare extends TextPattern {
      * <p>
      * (i.e. will this be serialized as "cat" instead of [word="cat"])?
      */
-    boolean isEqualsDefaultAnnotation() {
+    public boolean isEqualsDefaultAnnotation() {
         TextPattern left = getLeftClause();
         if (left instanceof TextPatternDefaultValue) {
             // Special case: a top-level string in BCQL is comparing with the default annotation

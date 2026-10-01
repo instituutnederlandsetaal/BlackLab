@@ -143,4 +143,13 @@ public class MockAnnotatedField implements AnnotatedField {
             return name().compareTo(field.name());
         return getClass().getName().compareTo(field.getClass().getName());
     }
+
+    @Override
+    public String toString() {
+        return "MockAnnotatedField{" +
+                "name='" + name + '\'' +
+                ", annotations=" + annotations +
+                ", index=" + index +
+                '}';
+    }
 }

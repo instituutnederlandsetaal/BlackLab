@@ -421,7 +421,7 @@ public class ParamUtil {
     }
 
     public static Query filterQuery(QueryParams qpar) throws BlsException {
-        return filterQuery(index(qpar.getCorpusName()), qpar.get(WsParam.FILTER_LANGUAGE),
+        return filterQuery(qpar.getCorpusRef(), qpar.get(WsParam.FILTER_LANGUAGE),
                 qpar.get(WsParam.FILTER),
                 qpar.get(WsParam.DOC_PID), qpar.getFallbackFilterQuery());
     }
@@ -431,14 +431,15 @@ public class ParamUtil {
      *
      * Uses docPid (if specified), otherwise filter/filterLang.
      *
-     * @param index index we're searching
+     * @param corpusRef corpus we're searching
      * @param filterLang filter query language (e.g. "lucene")
      * @param filterQuery filter query string
      * @param docPid filter on this specific document (ignore filterQuery)
      * @param fallbackFilterQuery optional filter query to use if no filter query or docPid
      * @return document filter query
      */
-    public static Query filterQuery(BlackLabIndex index, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
+    public static Query filterQuery(QueryParams.CorpusRefByName corpusRef, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
+        BlackLabIndex index = corpusRef.index();
         Query result;
         if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)

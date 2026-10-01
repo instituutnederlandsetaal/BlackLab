@@ -24,6 +24,7 @@ import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.DocTask;
+import nl.inl.util.StringUtil;
 
 /** Reads a list of PIDs and removes documents from the index that are not on the list.
  *
@@ -40,8 +41,8 @@ public class RemoveDocIfNotInList extends DocTaskType {
 
     @Override
     public void initialize() throws PluginException {
-        parToKeepFile = addParam(PString.matching("toKeepFile", ".+", true));
-        parToAddFile = addParam(PString.matching("toAddFile", ".+"));
+        parToKeepFile = addParam(PString.matching("toKeepFile", StringUtil.REGEX_ANY_NON_EMPTY_VALUE, true));
+        parToAddFile = addParam(PString.matching("toAddFile", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
         parOkayToRemoveMany = addParam(PBoolean.optional("okayToRemoveMany"));
     }
 

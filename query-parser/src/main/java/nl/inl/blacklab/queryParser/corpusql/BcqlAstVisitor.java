@@ -425,6 +425,12 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
     public TextPattern visitQueryFunctionCall(BcqlParser.QueryFunctionCallContext ctx) {
         String name = ctx.functionName().getText();
         List<TextPattern> params = commaSeparatedParamList(ctx.commaSeparatedParamList());
+        if (name.equals("str") && params.size() == 1 && params.get(0) instanceof TextPatternCompare cmp &&
+            cmp.isEqualsDefaultAnnotation()) {
+            // str('bla') should not be parsed as a function call with a query argument,
+            // but as a simple literal string
+            return cmp.getRightClause();
+        }
         return new TextPatternFunctionCall(name, params);
     }
 

@@ -17,8 +17,21 @@ public class MockAnnotation implements Annotation {
 
     private final String name;
 
+    AnnotationSensitivity i;
+
     public MockAnnotation(String name) {
         this.name = name;
+        i = new AnnotationSensitivity() {
+            @Override
+            public Annotation annotation() {
+                return MockAnnotation.this;
+            }
+
+            @Override
+            public MatchSensitivity sensitivity() {
+                return MatchSensitivity.INSENSITIVE;
+            }
+        };
     }
     
     public void setField(AnnotatedField field) {
@@ -37,7 +50,7 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public boolean hasForwardIndex() {
-        return false;
+        return true; //false
     }
 
     @Override
@@ -57,6 +70,8 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
+        if (sensitivity == MatchSensitivity.INSENSITIVE)
+            return i;
         return null;
     }
 
@@ -100,4 +115,11 @@ public class MockAnnotation implements Annotation {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "MockAnnotation{" +
+                "field=" + field +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }
