@@ -29,6 +29,8 @@ services:
       - ./data:/test-data
       # Script that indexes test data
       - ./start-with-test-data.sh:/etc/blacklab/start-with-test-data.sh
+      # Input format available to BLS for /input-formats test
+      - ./data/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
       # Volume where indexed corpus is stored
       - blacklab-test-data:/data
 
