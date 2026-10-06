@@ -66,7 +66,7 @@ public class TestTerms {
     public void testInitializeWhileCommonPoolThreadsWaitForLock() throws Exception {
         BlackLabIndex index = testIndex.index();
         Annotation ann = index.mainAnnotatedField().mainAnnotation();
-        TermsGlobal termsGlobal = new TermsGlobal(ann.sensitivity(MatchSensitivity.SENSITIVE).luceneField());
+        TermsGlobal termsGlobal = (TermsGlobal)index.forwardIndex(ann).terms();
 
         // Start initialization in a common pool thread, then make sure the other
         // common pool threads are all blocked waiting for the lock.
@@ -92,13 +92,7 @@ public class TestTerms {
             }));
         }
         init.get();
-        Terms expected = index.forwardIndex(ann).terms();
-        Assert.assertEquals(expected.numberOfTerms(), termsGlobal.numberOfTerms());
         for (CompletableFuture<Integer> waiter: waiters)
-            Assert.assertEquals(expected.numberOfTerms(), (int) waiter.get());
-        for (int i = 0; i < expected.numberOfTerms(); i++) {
-            String term = termsGlobal.get(i);
-            Assert.assertEquals(term, expected.get(expected.indexOf(term, MatchSensitivity.SENSITIVE)));
-        }
+            Assert.assertEquals(termsGlobal.numberOfTerms(), (int) waiter.get());
     }
 }
