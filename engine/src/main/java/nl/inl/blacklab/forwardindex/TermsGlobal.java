@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
@@ -194,9 +197,31 @@ public class TermsGlobal implements Terms {
     public synchronized void initialize(IndexReader indexReader) throws InterruptedException {
         if (initialized)
             return;
-        try {
-            initialized = true;
+        initialized = true;
 
+        // We hold locks while initializing (this object's monitor and that of our AnnotationForwardIndexGlobal),
+        // and other threads (e.g. search threads running in the common ForkJoinPool) may block on those locks.
+        // If we used the common pool for our parallel work, a pool worker waiting for one of our subtasks to
+        // complete could steal and run such a search task, block on our lock and never complete our subtask:
+        // a deadlock. So we run all parallel work in a dedicated pool, which only ever executes our own
+        // (lock-free) tasks.
+        ForkJoinPool pool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+        try {
+            ForkJoinTask<?> task = pool.submit(() -> performInitialization(indexReader));
+            try {
+                task.get();
+            } catch (ExecutionException e) {
+                // performInitialization() catches and logs all exceptions, so this shouldn't happen
+                logger.error(e);
+            }
+        } finally {
+            // (if we were interrupted, this will also interrupt the workers, so initialization stops)
+            pool.shutdownNow();
+        }
+    }
+
+    private void performInitialization(IndexReader indexReader) {
+        try {
             // Determine collators for this field by looking at one of the segments
             Collators collators = indexReader.leaves().stream()
                     .map(lrc -> BLTerms.forSegment(lrc, luceneField))
