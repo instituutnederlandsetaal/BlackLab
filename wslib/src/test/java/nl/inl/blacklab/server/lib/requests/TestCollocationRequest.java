@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyScore;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -76,8 +75,7 @@ public class TestCollocationRequest {
 
             // SonarCloud requires an assert, even though we already know the query is correct if no exception is thrown
             // (i.e. the countHits() in the Mock index responds because we set it up with the correct query)
-            TextPattern tp = BcqlQueryLanguageParser.parseQuery(query);
-            Assert.assertEquals(tp, reqHits.patternOriginal());
+            Assert.assertEquals("CMP(DEFVAL(), =, \"eat\")", reqHits.patternOriginal().toString());
         }
     }
 

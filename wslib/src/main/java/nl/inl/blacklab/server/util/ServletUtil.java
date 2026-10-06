@@ -41,8 +41,8 @@ public class ServletUtil {
         if (value.toLowerCase().matches("false|no|0"))
             return false;
 
-        logger.warn("Illegal value '" + value + "' given for boolean parameter '" + name
-                + "'. Using default (" + defStr + ")");
+        logger.warn("Illegal value '{}' given for boolean parameter '{}'. Using default ({})",
+                value, name, defStr);
         return defaultValue;
     }
 

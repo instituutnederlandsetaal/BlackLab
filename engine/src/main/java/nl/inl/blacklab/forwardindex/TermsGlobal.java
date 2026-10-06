@@ -108,6 +108,16 @@ public class TermsGlobal implements Terms {
         public int hashCode() {
             return Objects.hash(context, reader, Arrays.hashCode(globalTermIds), exception);
         }
+
+        @Override
+        public String toString() {
+            return "SegmentTerms{" +
+                    "context=" + context +
+                    ", reader=" + reader +
+                    ", globalTermIds=" + Arrays.toString(globalTermIds) +
+                    ", exception=" + exception +
+                    '}';
+        }
     }
 
     public TermsGlobal(String luceneField) {

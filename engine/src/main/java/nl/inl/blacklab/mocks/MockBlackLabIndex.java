@@ -304,7 +304,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public Document luceneDoc(int docId, boolean includeContentStores) {
-        throw new IllegalStateException("luceneDoc is not supported in MockBlackLabIndex");
+        throw new UnsupportedOperationException("luceneDoc is not supported in MockBlackLabIndex");
 //        if (includeContentStores)
 //            throw new UnsupportedOperationException("Always skips content stores");
 //        try {
