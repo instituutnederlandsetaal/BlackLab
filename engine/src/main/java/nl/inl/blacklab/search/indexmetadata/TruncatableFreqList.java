@@ -12,9 +12,9 @@ import nl.inl.util.LimitUtil;
  */
 public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqList> {
 
-    private long limitValues = Integer.MAX_VALUE;
+    private long limitValues;
 
-    private final Map<String, Long> values;
+    private final TreeMap<String, Long> values;
 
     private boolean truncated;
 
@@ -24,9 +24,21 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
         truncated = false;
     }
 
-    public TruncatableFreqList(Map<String, Long> values, boolean truncated) {
+    /**
+     * Construct a TruncatableFreqList from a map of values.
+     *
+     * NOTE: The map is not copied but used directly, and if truncated is set,
+     * all the values in the map are set to 1L!
+     *
+     * @param values values and frequencies
+     * @param truncated whether the list is truncated or not
+     */
+    public TruncatableFreqList(TreeMap<String, Long> values, boolean truncated) {
         this.values = values;
-        this.truncated = truncated;
+        this.truncated = false;
+        this.limitValues = truncated ? values.size() : Integer.MAX_VALUE;
+        if (truncated)
+            setTruncated();
     }
 
     public static TruncatableFreqList dummy() {
@@ -48,14 +60,25 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
         return !truncated || maxValues <= values.size();
     }
 
-    public void add(String value, long count) {
-        if (values.size() < limitValues || values.containsKey(value)) {
-            // Count as normal
-            values.compute(value, (__, prevCount) ->
-                    prevCount == null ? count : prevCount + count);
-        } else {
+    public boolean add(String value, long count) {
+        if (truncated)
+            return false;
+        if (values.size() >= limitValues && !values.containsKey(value)) {
             // Reached the limit; stop storing now and indicate that there's more.
+            setTruncated();
+            return false;
+        }
+        // Count as normal
+        values.compute(value, (__, prevCount) ->
+                prevCount == null ? count : prevCount + count);
+        return true;
+    }
+
+    private void setTruncated() {
+        if (!truncated) {
             truncated = true;
+            // We set all frequencies to 1, so it is abundantly clear that these are not correct for a truncated list.
+            values.replaceAll((k, v) -> 1L);
         }
     }
 

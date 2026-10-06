@@ -46,13 +46,13 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocGroup;
@@ -375,7 +375,7 @@ public class WebserviceOperations {
      *
      * @param index index
      * @param annotation annotation to get values for
-     * @param limitValues maximum number of values to return
+     * @param limitValues maximum number of values to return, or -1 for default
      * @return values for this annotation
      */
     public static TruncatableFreqList getAnnotationValues(BlackLabIndex index, Annotation annotation, long limitValues) {
@@ -396,11 +396,8 @@ public class WebserviceOperations {
         if (annotation.isRelationAnnotation()) {
             throw new IllegalArgumentException("Spans (tags) and relations are reported in the relations section.");
         } else {
-            // Regular annotated field.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
-                terms.add(term, freq);
-                return true;
-            });
+            // Regular annotated field. Collect values until we hit the limit.
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, terms::add);
         }
 
         // Store in cache for future requests

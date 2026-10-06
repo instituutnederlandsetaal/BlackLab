@@ -11,17 +11,29 @@ public class LimitUtil {
     }
 
     public static <T> T limit(T value, long limitValue) {
-        if (value instanceof Limitable)
-            return ((Limitable<T>)value).withLimit(limitValue);
-        else if (value instanceof Map)
-            return (T) limitMap((Map)value, limitValue);
-        else if (value instanceof List)
-            return (T) limitList((List)value, limitValue);
+        if (value instanceof Limitable<?> limitable)
+            return (T) limitable.withLimit(limitValue);
+        else if (value instanceof TreeMap<?, ?> map)
+            return (T) limitMap((TreeMap<String, T>)map, limitValue);
+        else if (value instanceof Map<?, ?> map)
+            return (T) limitMap((Map<String, T>)map, limitValue);
+        else if (value instanceof List list)
+            return (T) limitList(list, limitValue);
         else
             return value;
     }
 
     private static <T> Map<String, T> limitMap(Map<String, T> source, long limitValue) {
+        if (source.isEmpty())
+            return source;
+        return source.entrySet().stream()
+                .limit(limitValue)
+                .map(entry -> Map.entry(entry.getKey(), limit(entry.getValue(), limitValue)))
+                .collect(TreeMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()),
+                        Map::putAll);
+    }
+
+    private static <T> TreeMap<String, T> limitMap(TreeMap<String, T> source, long limitValue) {
         if (source.isEmpty())
             return source;
         return source.entrySet().stream()

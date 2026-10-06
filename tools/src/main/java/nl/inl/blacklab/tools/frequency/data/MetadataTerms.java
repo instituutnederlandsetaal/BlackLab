@@ -1,14 +1,14 @@
 package nl.inl.blacklab.tools.frequency.data;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 final public class MetadataTerms {
     private final Map<String, List<String>> terms;
