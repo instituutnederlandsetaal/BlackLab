@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyScore;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -63,14 +64,20 @@ public class TestCollocationRequest {
         for (String type: new String[] { "relsources", "reltargets" }) {
 
             // Ensure that countHits call will not fail if the expected query is used.
-            setUpCountHitsResponse(switch (type) {
+            String query = switch (type) {
                 case "relsources" -> "_ -obj-> \"eat\"";
                 case "reltargets" -> "rspan(\"eat\" -obj-> _, str('target'))";
                 default -> throw new IllegalStateException();
-            });
+            };
+            setUpCountHitsResponse(query);
 
-            RequestHits.fromParamsCollocations(params(Map.of(WsParam.COLLOCATION_TYPE, type,
+            RequestHits reqHits = RequestHits.fromParamsCollocations(params(Map.of(WsParam.COLLOCATION_TYPE, type,
                     WsParam.RELATION_TYPE, "obj")), false);
+
+            // SonarCloud requires an assert, even though we already know the query is correct if no exception is thrown
+            // (i.e. the countHits() in the Mock index responds because we set it up with the correct query)
+            TextPattern tp = BcqlQueryLanguageParser.parseQuery(query);
+            Assert.assertEquals(tp, reqHits.patternOriginal());
         }
     }
 

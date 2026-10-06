@@ -1,5 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,21 @@ public class TermsGlobal implements Terms {
 
     /** Global term ids determined for one segment. */
     private record SegmentTerms(LeafReaderContext context, Terms reader, int[] globalTermIds,
-                                InterruptedException exception) {}
+                                InterruptedException exception) {
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof SegmentTerms that))
+                return false;
+            return Objects.equals(reader, that.reader) && Objects.deepEquals(globalTermIds,
+                    that.globalTermIds) && Objects.equals(context, that.context) && Objects.equals(
+                    exception, that.exception);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(context, reader, Arrays.hashCode(globalTermIds), exception);
+        }
+    }
 
     public TermsGlobal(String luceneField) {
         super();

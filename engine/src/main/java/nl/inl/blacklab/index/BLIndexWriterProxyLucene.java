@@ -159,7 +159,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     /** Finds all PIDs currently in the index. */
     private Set<String> findUsedPids() {
-        Set<String> usedPids = new ObjectOpenHashSet<>(getNumberOfDocs());
+        Set<String> pids = new ObjectOpenHashSet<>(getNumberOfDocs());
         String pidFieldName1 = getPidFieldName();
         if (pidFieldName1 != null) {
             try (IndexReader reader = DirectoryReader.open(indexWriter)) {
@@ -186,14 +186,14 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
                     String pid1 = doc.get(pidFieldName1);
                     if (pid1 != null) {
-                        usedPids.add(pid1);
+                        pids.add(pid1);
                     }
                 }
             } catch (IOException e) {
                 throw new ErrorIndexingFile("Error gathering existing persistent identifiers from index", e);
             }
         }
-        return usedPids;
+        return pids;
     }
 
     /** Get the Lucene documents for a list of BLInputDocuments. */

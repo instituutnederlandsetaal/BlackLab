@@ -19,6 +19,7 @@ import nl.inl.util.XPathUtil;
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
+    public static final String STR_STANDOFF_ANNOTATIONS_OF_TYPE = "Standoff annotations of type ";
     /**
      * The type of standoff annotation (e.g. "token" (default), "span", "relation" or "fragment")
      */
@@ -148,17 +149,17 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         }
         if (type != AnnotationType.RELATION) {
             if (relationClass != null)
-                messages.error("Standoff annotations of type " + type + " cannot have a relationClass.");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a relationClass.");
             if (targetField != null && !targetField.isEmpty())
-                messages.error("Standoff annotations of type " + type + " cannot have a targetField.");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a targetField.");
             if (targetVersionPath != null && !targetVersionPath.isEmpty())
-                messages.error("Standoff annotations of type " + type + " cannot have a targetVersionPath.");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a targetVersionPath.");
         }
         if (type != AnnotationType.FRAGMENT) {
             if (!metadata.isEmpty())
-                messages.error("Standoff annotations of type " + type + " cannot have metadata blocks.");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have metadata blocks.");
             if (!metadataContainerPath.equals("."))
-                messages.error("Standoff annotations of type " + type + " cannot have metadataContainerPath");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have metadataContainerPath");
         }
         for (ConfigMetadataBlock m : metadata)
             m.validate(messages);
