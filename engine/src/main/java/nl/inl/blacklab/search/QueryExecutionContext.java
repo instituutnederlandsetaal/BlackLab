@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -80,7 +81,7 @@ public class QueryExecutionContext {
      */
     private QueryExecutionContext(BlackLabIndex index, AnnotatedField field, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
-            QueryInfo queryInfo) {
+            QueryInfo queryInfo) throws InvalidQuery {
         this.index = index;
         if (field == null)
             throw new IllegalArgumentException("field == null");
@@ -89,7 +90,7 @@ public class QueryExecutionContext {
         this.annotationName = annotationName;
         Annotation annotation = this.field.annotation(annotationName);
         if (annotation == null)
-            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + this.field);
+            throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + annotationName + " on field " + this.field);
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
@@ -111,7 +112,7 @@ public class QueryExecutionContext {
             throws InvalidQuery {
         Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
         if (annotationName != null && annotation == null)
-            throw new InvalidQuery("Annotation doesn't exist: " + annotationName + " on field " + field);
+            throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + annotationName + " on field " + field);
         return withAnnotationAndSensitivity(annotation, matchSensitivity);
     }
 

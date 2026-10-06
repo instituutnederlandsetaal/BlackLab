@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.matchfilter;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
@@ -120,7 +121,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     public MatchFilter withField(AnnotatedField field) {
         Annotation annotation = field.annotation(annotationName);
         if (annotation == null)
-            throw new IllegalArgumentException("Annotation '" + annotationName + "' not found in field '" + field.name() + "'.");
+            throw new FeatureNotPresentInCorpus("Annotation '" + annotationName + "' not found in field '" + field.name() + "'.");
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
                 groupName, annotation, compareToTermString, sensitivity);
         mf.annotationIndex = annotationIndex;

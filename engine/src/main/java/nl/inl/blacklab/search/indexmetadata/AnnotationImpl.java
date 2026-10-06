@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
+import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.LuceneUtil;
@@ -133,7 +134,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
         AnnotationSensitivity s = sensitivitiesMap.get(sensitivity);
         if (s == null)
-            throw new UnsupportedOperationException("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
+            throw new FeatureNotPresentInCorpus("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
         return s;
     }
 

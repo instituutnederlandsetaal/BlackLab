@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.plugins.HitGroupScorerType;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
@@ -191,7 +191,7 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
                 // Simple annotation=value; use Lucene term frequency statistics for speed.
                 Annotation annotation = field.annotation(term.getAnnotation());
                 if (annotation == null)
-                    throw new InvalidQuery("Annotation doesn't exist: " + term.getAnnotation() +
+                    throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + term.getAnnotation() +
                             " on field " + field.name());
                 return LuceneUtil.getTermFrequency(annotation.sensitivity(term.getSensitivity()),
                         term.getSensitivity().desensitize(term.getValue()), filter, ACCURATE_TERM_FREQ);
