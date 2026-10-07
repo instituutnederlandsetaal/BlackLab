@@ -32,20 +32,47 @@ public class TextPatternCompare extends TextPattern {
 
     public static int TP_PRECEDENCE = 5;
 
-    static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
 
     /** Left operand, often annotation name */
-    protected final TextPattern left;
+    private final TextPattern left;
 
     /** Right operand, e.g. value to match */
-    protected final TextPattern right;
+    private final TextPattern right;
 
     /** Type of comparison, e.g. =, <=, etc. */
-    protected final MatchFilterCompare.Operator operator;
+    private final MatchFilterCompare.Operator operator;
+
+    /** The sensitivity to use for comparison, or null to use the default sensitivity */
+    private final MatchSensitivity forceSensitivity;
 
     public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator) {
         super(TP_PRECEDENCE);
         this.left = left;
+
+        // If the regex starts with a sensitivity prefix, e.g. (?s) for case-sensitive,
+        // remember it and strip it from the value. This will allow cleaner optimizations.
+        MatchSensitivity sensitivity = null;
+        if (right instanceof TextPatternValue value &&
+            value.getValue() instanceof ConstraintValueString str) {
+            Pattern sensitivityPrefix = Pattern.compile("\\(\\?(s|-?i|c|d)\\)");
+            String regex = str.getValue();
+            Matcher matcher = sensitivityPrefix.matcher(regex);
+            if (matcher.find()) {
+                sensitivity = switch (matcher.group(1)) {
+                    case TextPattern.REGEX_PREFIX_SENSITIVE, TextPattern.REGEX_PREFIX_SENSITIVE_ALT ->
+                            MatchSensitivity.SENSITIVE;
+                    case TextPattern.REGEX_PREFIX_INSENSITIVE -> MatchSensitivity.INSENSITIVE;
+                    case TextPattern.REGEX_PREFIX_DIACRITICS_SENSITIVE -> MatchSensitivity.CASE_INSENSITIVE;
+                    case TextPattern.REGEX_PREFIX_CASE_SENSITIVE -> MatchSensitivity.DIACRITICS_INSENSITIVE;
+                    default -> null;
+                };
+                regex = regex.substring(matcher.group(1).length() + 3);
+                right = new TextPatternValue(ConstraintValueString.get(regex));
+            }
+        }
+        forceSensitivity = sensitivity;
+
         this.right = right;
         this.operator = operator;
     }
@@ -97,7 +124,7 @@ public class TextPatternCompare extends TextPattern {
                 // Nope. Nothing to rewrite.
                 return null;
             }
-            // Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
+            // Yes. Create new TP from remaining regex.
             result = new TextPatternRegex(value, annotation, sensitivity);
         }
 
@@ -117,19 +144,13 @@ public class TextPatternCompare extends TextPattern {
         TextPattern left = getLeftClause();
         if (left instanceof TextPatternDefaultValue) {
             // Special case: a top-level string in BCQL is comparing with the default annotation
-            // (i.e. "cow" means [word="cow"])
+            // (i.e. "cow" means [word="cow"], assuming word is the default annotation)
             if (operator == MatchFilterCompare.Operator.EQUAL && getRightClause() instanceof TextPatternValue tpv &&
-                    tpv.getValue() instanceof ConstraintValueString cvs) {
+                    tpv.getValue() instanceof ConstraintValueString) {
                 return true;
             }
         }
         return false;
-    }
-
-    public static String regexForRange(int min, int max) {
-        if (min > max)
-            return RangeRegex.REGEX_WITHOUT_MATCHES;
-        return RangeRegex.forRange(min, max);
     }
 
     @Override
@@ -137,12 +158,13 @@ public class TextPatternCompare extends TextPattern {
         TextPattern actualLeft = left instanceof TextPatternDefaultValue ? // use default annotation
                 new TextPatternValue(ConstraintValue.symbol(context.field().defaultSearchAnnotation().name())) :
                 left;
+        MatchSensitivity sensitivity = forceSensitivity == null ? context.getSensitivity() : forceSensitivity;
         if (context.isInConstraint()) {
             // Constraint.
             return new MatchFilterCompare(actualLeft.toMatchFilter(context),
-                    right.toMatchFilter(context), operator, MatchSensitivity.INSENSITIVE);
+                    right.toMatchFilter(context), operator, sensitivity);
         } else {
-            // Regular query. Only equals supported.
+            // Regular query. Only [not] equals supported.
             boolean isNot = operator == MatchFilterCompare.Operator.NOT_EQUAL;
             if (!isNot && operator != MatchFilterCompare.Operator.EQUAL)
                 throw new InvalidQuery("Only equality comparisons are supported in queries, not " + operator);
@@ -157,7 +179,7 @@ public class TextPatternCompare extends TextPattern {
                 String regex;
                 if (result2 instanceof ConstraintValue cv) {
                     if (cv instanceof ConstraintValueIntRange cvir) {
-                        regex = regexForRange(cvir.getMin(), cvir.getMax());
+                        regex = RangeRegex.forRange(cvir.getMin(), cvir.getMax());
                     } else {
                         regex = cv.asString().getValue();
                     }
@@ -167,15 +189,13 @@ public class TextPatternCompare extends TextPattern {
                 }
 
                 // See if this is really a regex query or just a term query maskerading as one...
-                TextPattern result = rewriteToSimplerTextPattern(annotation.name(),
-                        MatchSensitivity.INSENSITIVE, regex);
+                TextPattern result = rewriteToSimplerTextPattern(annotation.name(), sensitivity, regex);
                 if (result != null) {
                     // Rewritten into a TextPattern{Term|Regex}; translate that instead
                     query = result.toQuery(context);
                 } else {
                     // We're dealing with an actual regex query.
-                    context = context.withAnnotationAndSensitivity(annotation,
-                            MatchSensitivity.INSENSITIVE);
+                    context = context.withAnnotationAndSensitivity(annotation, sensitivity);
                     String valueDesensitized = context.optDesensitize(regex);
 
                     // Lucene's regex engine requires double quotes to be escaped, unlike most others.
@@ -208,21 +228,21 @@ public class TextPatternCompare extends TextPattern {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass())
+        if (!(o instanceof TextPatternCompare that))
             return false;
-        TextPatternCompare that = (TextPatternCompare) o;
         return Objects.equals(left, that.left) && Objects.equals(right, that.right)
-                && operator == that.operator;
+                && operator == that.operator && forceSensitivity == that.forceSensitivity;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(left, right, operator);
+        return Objects.hash(left, right, operator, forceSensitivity);
     }
 
     @Override
     public String toString() {
-        return "CMP(" + left + ", " + operator + ", " + right + ")";
+        String optForceSens = forceSensitivity == null ? "" : ", " + forceSensitivity;
+        return "CMP(" + left + ", " + operator + ", " + right + optForceSens + ")";
     }
 
     public TextPattern getLeftClause() {
@@ -235,6 +255,10 @@ public class TextPatternCompare extends TextPattern {
 
     public MatchFilterCompare.Operator getOperator() {
         return operator;
+    }
+
+    public MatchSensitivity getForceSensitivity() {
+        return forceSensitivity;
     }
 
     @Override

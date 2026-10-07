@@ -169,7 +169,9 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
                 comparison.getRightClause() instanceof TextPatternValue right &&
                 right.getValue() instanceof ConstraintValueString value &&
                 !StringUtil.containsRegexCharacters(value.getValue())) {
-            pattern = TextPattern.term(value.getValue(), annotation.getValue(), sensitivity);
+            MatchSensitivity useSensitivity =
+                    comparison.getForceSensitivity() == null ? sensitivity : comparison.getForceSensitivity();
+            pattern = TextPattern.term(value.getValue(), annotation.getValue(), useSensitivity);
         }
 
         BlackLabIndex index = field.index();

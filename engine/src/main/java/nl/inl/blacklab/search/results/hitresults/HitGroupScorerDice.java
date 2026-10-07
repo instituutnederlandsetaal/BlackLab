@@ -42,7 +42,7 @@ public class HitGroupScorerDice extends HitGroupScorerType {
 
             @Override
             public double score(PropertyValue identity, long size) {
-                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType);
+                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType, loose);
                 long divisor = collocateFrequency + wordFrequency;
                 if (divisor == 0)
                     divisor = 1;
