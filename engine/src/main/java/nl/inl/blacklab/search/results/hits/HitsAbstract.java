@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -185,22 +186,22 @@ public abstract class HitsAbstract implements Hits {
 
     public static void performPerPublisher(List<HitPublisher> publishers, Supplier<HitSubscriber> subscriberSupplier,
             boolean prefetchAll) {
-        final Exception[] thrownException = { null };
+        if (prefetchAll) {
+            publishers.parallelStream().forEach(publisher ->
+                    publisher.getStatic().publisher().subscribe(subscriberSupplier.get()));
+            return;
+        }
+
+        AtomicReference<Throwable> thrownException = new AtomicReference<>();
         CountDownLatch segmentDoneLatch = new CountDownLatch(publishers.size());
-        publishers.parallelStream().forEach(publisher -> {
-            if (prefetchAll) {
-                // Fetch all hits for this segment first
-                publisher = publisher.getStatic().publisher();
-            }
-            publisher.subscribe(new LatchingHitSubscriber(subscriberSupplier.get(), segmentDoneLatch,
-                    thrownException));
-        });
+        publishers.parallelStream().forEach(publisher -> publisher.subscribe(
+                new LatchingHitSubscriber(subscriberSupplier.get(), segmentDoneLatch, thrownException)));
 
         // Wait for all segments to be done grouping
         try {
             segmentDoneLatch.await();
-            if (thrownException[0] != null)
-                throw new RuntimeException(thrownException[0]);
+            if (thrownException.get() != null)
+                throw new RuntimeException(thrownException.get());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -216,9 +217,10 @@ public abstract class HitsAbstract implements Hits {
 
         HitSubscriber wrapped;
 
-        private final Throwable[] thrownException;
+        private final AtomicReference<Throwable> thrownException;
 
-        public LatchingHitSubscriber(HitSubscriber wrapped, CountDownLatch segmentDoneLatch, Exception[] thrownException) {
+        public LatchingHitSubscriber(HitSubscriber wrapped, CountDownLatch segmentDoneLatch,
+                AtomicReference<Throwable> thrownException) {
             this.segmentDoneLatch = segmentDoneLatch;
             this.wrapped = wrapped;
             this.thrownException = thrownException;
@@ -226,7 +228,6 @@ public abstract class HitsAbstract implements Hits {
 
         @Override
         public void start(LeafReaderContext lrc, Hits results) {
-            latched = false;
             wrapped.start(lrc, results);
         }
 
@@ -253,10 +254,7 @@ public abstract class HitsAbstract implements Hits {
 
         @Override
         public void done(LeafReaderContext lrc) {
-            wrapped.done(lrc);
-
-            // Signal we're done with this segment, so we can wait for all segments to be done below.
-            signalDone();
+            finish(null, () -> wrapped.done(lrc));
         }
 
         private synchronized void signalDone() {
@@ -268,9 +266,19 @@ public abstract class HitsAbstract implements Hits {
 
         @Override
         public void error(LeafReaderContext lrc, Throwable exception) {
-            wrapped.error(lrc, exception);
-            thrownException[0] = exception;
-            signalDone();
+            finish(exception, () -> wrapped.error(lrc, exception));
+        }
+
+        private void finish(Throwable publisherException, Runnable callback) {
+            if (publisherException != null)
+                thrownException.compareAndSet(null, publisherException);
+            try {
+                callback.run();
+            } catch (Throwable callbackException) {
+                thrownException.compareAndSet(null, callbackException);
+            } finally {
+                signalDone();
+            }
         }
     }
 
