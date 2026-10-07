@@ -67,7 +67,11 @@ You can also use hit group scorers with a regular grouped `/hits` request. In th
   "annotation": "word",
   
   // whether grouping was (case- and accent-)sensitive or not
-  "sensitive": false
+  "sensitive": false,
+  
+  // use faster calculation that may still count terms in some deleted docs?
+  // (defaults to false; experimental parameter, may be removed in the future)
+  "loose": false,
 }
 ```
 

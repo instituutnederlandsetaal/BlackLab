@@ -368,8 +368,8 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * <p>
      * This should produce a query equivalent to <code>(?< "good" ) "dog"</code>.
      *
-     * @param property      hit property to refine with
      * @param index         index to search
+     * @param original      query to refine
      * @param propertyValue property value to refine with
      * @return refined query, or null if query couldn't be refined this way
      */

@@ -71,11 +71,12 @@ public abstract class HitGroupScorerType extends Plugin {
      *                            the example)
      * @param collocationType     collocation type, e.g. proximity, relation sources or targets.
      * @param relationType        relation type if we're finding relation collocations, null otherwise
+     * @param loose               allow fast-and-loose calculation (terms in some deleted docs may still be counted)?
      * @return collocate scorer
      */
     public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
+            String relationType, boolean loose) {
         throw new PluginException("HitGroupScorerType " + getName() + " does not support collocation scoring");
     }
 

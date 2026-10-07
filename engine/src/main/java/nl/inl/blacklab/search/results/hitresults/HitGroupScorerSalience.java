@@ -28,7 +28,7 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
     @Override
     public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
+            String relationType, boolean loose) {
         return new HitGroupCollocationScorer(collocateAnnotation, filter) {
             @Override
             public HitGroupScorerType getType() {
@@ -37,7 +37,7 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
 
             @Override
             public double score(PropertyValue identity, long size) {
-                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType);
+                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType, loose);
                 if (collocateFrequency == 0)
                     collocateFrequency = 1;
                 double temp = (size / (double)wordFrequency) / (double)collocateFrequency;

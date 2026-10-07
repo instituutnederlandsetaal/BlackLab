@@ -33,7 +33,7 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     @Override
     public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
+            String relationType, boolean loose) {
         return new HitGroupCollocationScorer(collocateAnnotation, filter) {
             @Override
             public HitGroupScorerType getType() {

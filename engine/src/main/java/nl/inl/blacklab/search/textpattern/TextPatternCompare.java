@@ -87,7 +87,7 @@ public class TextPatternCompare extends TextPattern {
         // surrounded by ^ and $, turn it into a TermQuery, which might be a little
         // faster than doing it via RegexpQuery (which has to build an Automaton).
         TextPatternTerm result = null;
-                if (onlyLettersAndDigits.matcher(value).matches()) {
+        if (onlyLettersAndDigits.matcher(value).matches()) {
             // No regex characters, so we can turn it into a term query
             result = new TextPatternTerm(value, annotation, sensitivity);
         }

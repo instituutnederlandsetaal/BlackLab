@@ -184,13 +184,14 @@ public final class RequestHits {
         BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
         Annotation annotation;
-        if (StringUtils.isEmpty(qpar.get(WsParam.ANNOTATION))) {
+        String parAnnotation = qpar.get(WsParam.ANNOTATION);
+        if (StringUtils.isEmpty(parAnnotation)) {
             annotation = annotatedField.mainAnnotation();
         } else {
-            annotation = annotatedField.annotation(qpar.get(WsParam.ANNOTATION));
+            annotation = annotatedField.annotation(parAnnotation);
             if (annotation == null)
                 throw new BadRequest("UNKNOWN_ANNOTATION",
-                        "Annotation '" + qpar.get(WsParam.ANNOTATION) + "' not found in field '" +
+                        "Annotation '" + parAnnotation + "' not found in field '" +
                                 annotatedField.name() + "'.");
         }
 
