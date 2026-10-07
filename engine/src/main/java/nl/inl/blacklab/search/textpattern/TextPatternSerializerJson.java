@@ -284,7 +284,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             TextPatternCompare tp = (TextPatternCompare) pattern;
             writer.write(NT_COMPARE,
                     KEY_CLAUSES, List.of(tp.getLeftClause(), tp.getRightClause()),
-                    KEY_OPERATION, tp.getOperator().toString());
+                    KEY_OPERATION, tp.getOperator().toString(),
+                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
         });
 
         // TextPatternImplication
@@ -365,7 +366,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             return new TextPatternCompare(
                     cl.get(0),
                     cl.get(1),
-                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION))
+                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION)),
+                    optArgSensitivity(args)
             );
         }
         case NT_CONSTRAINED:

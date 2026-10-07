@@ -168,6 +168,7 @@ public class TestCollocationScorers {
         Assert.assertEquals(expected, group.score(), 1e-12);
     }
 
+    //@Ignore //@@@@@@ FIXME DEADLOCK
     @Test
     public void testRelationScores() throws Exception {
         ConfigInputFormat format = ConfigInputFormat.read(new StringReader("""

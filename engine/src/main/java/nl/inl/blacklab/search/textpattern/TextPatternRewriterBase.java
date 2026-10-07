@@ -28,7 +28,7 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
         TextPattern rewrittenLeft = tp.getLeftClause().accept(this);
         TextPattern rewrittenRight = tp.getRightClause().accept(this);
         if (!rewrittenLeft.equals(tp.getLeftClause()) || !rewrittenRight.equals(tp.getRightClause())) {
-            return new TextPatternCompare(rewrittenLeft, rewrittenRight, tp.getOperator());
+            return new TextPatternCompare(rewrittenLeft, rewrittenRight, tp.getOperator(), tp.getSensitivity());
         }
         return tp;
     }

@@ -47,24 +47,56 @@ public class TextPatternSerializerBcql {
         b.append(bt.end);
     }
 
-    private static void handleRegexOrTerm(TextPatternTerm tp, StringBuilder b, boolean negate) {
-        String className = tp.getClass().getSimpleName();
-        boolean isRegexPattern = tp instanceof TextPatternRegex;
-        String annotation = tp.getAnnotation();
-        if (negate && annotation == null)
-            throw new UnsupportedOperationException("Cannot serialize negated " + className + " without annotation to CQL");
-        MatchSensitivity sensitivity = tp.getSensitivity();
-        if (sensitivity != null)
-            throw new UnsupportedOperationException("Cannot serialize " + className + " with sensitivity to CQL");
-        if (annotation != null)
-            b.append(annotation).append(negate ? "!" : "").append("=");
-        // Regular regex or literal, e.g. [word="the"]
-        String value = tp.getValue();
-        if (!isRegexPattern) {
-            // We're looking for an exact value, which may include regex characters.
-            value = StringUtil.escapeLuceneRegexCharacters(value);
+    private static void handleRegexOrTerm(TextPattern tp1, StringBuilder b, boolean negate) {
+        if (tp1 instanceof TextPatternTerm tp) {
+            String className = tp.getClass().getSimpleName();
+            boolean isRegexPattern = tp instanceof TextPatternRegex;
+            String annotation = tp.getAnnotation();
+            if (negate && annotation == null)
+                throw new UnsupportedOperationException(
+                        "Cannot serialize negated " + className + " without annotation to CQL");
+            MatchSensitivity sensitivity = tp.getSensitivity();
+            if (sensitivity != null)
+                throw new UnsupportedOperationException("Cannot serialize " + className + " with sensitivity to CQL");
+            if (annotation != null)
+                b.append(annotation).append(negate ? "!" : "").append("=");
+            // Regular regex or literal, e.g. [word="the"]
+            String value = tp.getValue();
+            if (!isRegexPattern) {
+                // We're looking for an exact value, which may include regex characters.
+                value = StringUtil.escapeLuceneRegexCharacters(value);
+            }
+            serializeToQuotedString(b, value);
+        } else if (tp1 instanceof TextPatternCompare tp) {
+            // TextPatternCompare
+            String annotation;
+            if (tp.getLeftClause() instanceof TextPatternDefaultValue) {
+                annotation = null;
+            } else if (tp.getLeftClause() instanceof TextPatternValue v &&
+                       v.getValue() instanceof ConstraintValueSymbol symbol) {
+                annotation = symbol.getValue();
+            } else {
+                throw new UnsupportedOperationException(
+                        "Cannot serialize left operand to CQL: " + tp.getLeftClause());
+            }
+            if (negate && annotation == null)
+                throw new UnsupportedOperationException(
+                        "Cannot serialize negated TextPatternCompare without annotation to CQL");
+            MatchSensitivity sensitivity = tp.getSensitivity();
+            String optPrefix = sensitivity == null ? "" :
+                    TextPattern.getRegexSensitivityPrefix(sensitivity, null);
+            if (annotation != null)
+                b.append(annotation).append(negate ? "!" : "").append("=");
+            // Regular regex or literal, e.g. [word="the"]
+            String value;
+            if (tp.getRightClause() instanceof TextPatternValue tpv) {
+                value = optPrefix + tpv.getValue().asString().getValue();
+            } else {
+                throw new UnsupportedOperationException(
+                        "Cannot serialize right clause: " + tp.getRightClause());
+            }
+            serializeToQuotedString(b, value);
         }
-        serializeToQuotedString(b, value);
     }
 
     interface NodeSerializer {
@@ -326,17 +358,26 @@ public class TextPatternSerializerBcql {
         // TextPattern compare
         cqlSerializers.put(TextPatternCompare.class, (pattern, b, insideTokenBrackets) -> {
             TextPatternCompare tp = (TextPatternCompare) pattern;
+            TextPattern rightClause;
+            if (tp.getSensitivity() != null && tp.getRightClause() instanceof TextPatternValue rvalue) {
+                // Prefix right clause with sensitivity indicator before serializing
+                String prefix = TextPattern.getRegexSensitivityPrefix(tp.getSensitivity(), null);
+                String regex = rvalue.getValue().asString().getValue();
+                rightClause = new TextPatternValue(ConstraintValue.get(prefix + regex));
+            } else {
+                rightClause = tp.getRightClause();
+            }
             if (tp.isEqualsDefaultAnnotation()) {
                 // Special case: a top-level string in BCQL is comparing with the default annotation
                 // (i.e. "cow" means [word="cow"])
-                String value = ((ConstraintValueString) ((TextPatternValue) tp.getRightClause()).getValue()).getValue();
-                handleRegexOrTerm((TextPatternTerm)TextPattern.regex(value), b, false);
+                String value = ((ConstraintValueString) ((TextPatternValue) rightClause).getValue()).getValue();
+                handleRegexOrTerm(TextPattern.regex(value), b, false);
             } else {
                 if (tp.getLeftClause() instanceof TextPatternDefaultValue)
                     throw new UnsupportedOperationException("TextPatternCompare with default annotation is only allowed with = and a string value");
                 ((NodeSerializerBrackets) (brackets) -> {
                     infix(b, insideTokenBrackets, " " + tp.getOperator() + " ",
-                            List.of(tp.getLeftClause(), tp.getRightClause()), tp.getPrecedence());
+                            List.of(tp.getLeftClause(), rightClause), tp.getPrecedence());
                 }).serialize(insideTokenBrackets);
             }
         });

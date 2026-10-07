@@ -43,7 +43,7 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternCompare(TextPatternDefaultValue.get(), TextPatternValue.fromObject("the"),
-                MatchFilterCompare.Operator.EQUAL);
+                MatchFilterCompare.Operator.EQUAL, null);
         Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "bcql"));
     }
 

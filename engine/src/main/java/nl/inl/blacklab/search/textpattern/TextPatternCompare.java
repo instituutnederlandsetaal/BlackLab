@@ -46,13 +46,13 @@ public class TextPatternCompare extends TextPattern {
     /** The sensitivity to use for comparison, or null to use the default sensitivity */
     private final MatchSensitivity forceSensitivity;
 
-    public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator) {
+    public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator, MatchSensitivity sensitivity) {
         super(TP_PRECEDENCE);
         this.left = left;
 
         // If the regex starts with a sensitivity prefix, e.g. (?s) for case-sensitive,
         // remember it and strip it from the value. This will allow cleaner optimizations.
-        MatchSensitivity sensitivity = null;
+        // (sensitivity prefix in the regex overrides the sensitivity parameter)
         if (right instanceof TextPatternValue value &&
             value.getValue() instanceof ConstraintValueString str) {
             Pattern sensitivityPrefix = Pattern.compile("\\(\\?(s|-?i|c|d)\\)");
@@ -257,7 +257,7 @@ public class TextPatternCompare extends TextPattern {
         return operator;
     }
 
-    public MatchSensitivity getForceSensitivity() {
+    public MatchSensitivity getSensitivity() {
         return forceSensitivity;
     }
 

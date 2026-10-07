@@ -129,7 +129,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
         for (int i = 1; i < cvs.size(); i++) {
             String op = ctx.comparisonOperator(i - 1).getText();
             TextPattern clause2 = visit(cvs.get(i));
-            result = new TextPatternCompare(result, clause2, MatchFilterCompare.Operator.fromSymbol(op));
+            result = new TextPatternCompare(result, clause2, MatchFilterCompare.Operator.fromSymbol(op), null);
         }
         return result;
     }
@@ -485,7 +485,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
         String unescaped = BcqlQueryLanguageParser.getRegexFromQuotedString(ctx.getText());
         TextPattern result = new TextPatternValue(ConstraintValue.get(unescaped));
         if (quotedStringIsQuery)
-            result = new TextPatternCompare(TextPatternDefaultValue.get(), result, MatchFilterCompare.Operator.EQUAL);
+            result = new TextPatternCompare(TextPatternDefaultValue.get(), result, MatchFilterCompare.Operator.EQUAL, null);
         return result;
     }
 }

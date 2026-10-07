@@ -43,7 +43,10 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String REGEX_PREFIX_DIACRITICS_SENSITIVE = "d";
 
     public static TextPattern regex(String value, String annotation, MatchSensitivity sensitivity) {
-        return new TextPatternRegex(value, annotation, sensitivity);
+        TextPattern left = annotation == null ? TextPatternDefaultValue.get() :
+                new TextPatternValue(ConstraintValue.symbol(annotation));
+        TextPattern right = new TextPatternValue(ConstraintValue.get(value));
+        return new TextPatternCompare(left, right, MatchFilterCompare.Operator.EQUAL, sensitivity);
     }
 
     public static TextPattern term(String value, String annotation, MatchSensitivity sensitivity) {
@@ -72,17 +75,18 @@ public abstract class TextPattern implements TextPatternStruct {
 
     public static TextPattern sequenceOfTerms(List<String> terms, Annotation annotation, MatchSensitivity sensitivity) {
         List<TextPattern> patterns = new ArrayList<>();
-        String regexSensitivityPrefix = getRegexSensitivityPrefix(sensitivity, annotation.field().index().defaultMatchSensitivity());
+        if (sensitivity == annotation.field().index().defaultMatchSensitivity())
+            sensitivity = null;
         for (String term: terms) {
             TextPattern annot = new TextPatternValue(ConstraintValue.symbol(annotation.name()));
-            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + StringUtil.escapeLuceneRegexCharacters(term)));
-            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL);
+            TextPattern value = new TextPatternValue(ConstraintValue.get(StringUtil.escapeLuceneRegexCharacters(term)));
+            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL, sensitivity);
             patterns.add(compare);
         }
         return patterns.size() == 1 ? patterns.get(0) : new TextPatternSequence(patterns);
     }
 
-    private static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
+    public static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
         String regexSensitivityPrefix = "";
         if (sensitivity != defaultSensitivity) {
             // We need a regex prefix to indicate that we want a different sensitivity than the default for the index.

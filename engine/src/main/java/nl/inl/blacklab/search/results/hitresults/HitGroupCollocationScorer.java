@@ -170,7 +170,7 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
                 right.getValue() instanceof ConstraintValueString value &&
                 !StringUtil.containsRegexCharacters(value.getValue())) {
             MatchSensitivity useSensitivity =
-                    comparison.getForceSensitivity() == null ? sensitivity : comparison.getForceSensitivity();
+                    comparison.getSensitivity() == null ? sensitivity : comparison.getSensitivity();
             pattern = TextPattern.term(value.getValue(), annotation.getValue(), useSensitivity);
         }
 
