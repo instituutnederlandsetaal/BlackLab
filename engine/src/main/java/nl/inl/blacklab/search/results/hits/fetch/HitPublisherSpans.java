@@ -166,7 +166,7 @@ public class HitPublisherSpans implements HitPublisher {
                     throw new IllegalStateException("Cannot catch up late subscriber, published hits were not saved");
                 // This method is called when the batch has already been added to alreadyPublishedHits,
                 // but not yet reported to subscribers. Take this into account.
-                long howManyActuallyPublished = alreadyPublishedHitsSize - currentBatchOfHits.size();
+                long howManyActuallyPublished = alreadyPublishedHitsSize;
                 sub.hits(lrc, alreadyPublishedHits, 0, howManyActuallyPublished, docsProcessed, 0);
             }
             if (hitsCounted > 0)

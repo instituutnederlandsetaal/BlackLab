@@ -50,7 +50,7 @@ public class HitPublisherFilter implements HitPublisher {
             if (!alreadyPublishedHits.isEmpty()) {
                 // This method is called when the batch has already been added to alreadyPublishedHits,
                 // but not yet reported to subscribers. Take this into account.
-                long howManyActuallyPublished = alreadyPublishedHits.size() - currentBatchOfHits.size();
+                long howManyActuallyPublished = alreadyPublishedHits.size();
                 sub.hits(lrc, alreadyPublishedHits, 0, howManyActuallyPublished, docsProcessed, 0);
             }
             if (isDone.get()) {
