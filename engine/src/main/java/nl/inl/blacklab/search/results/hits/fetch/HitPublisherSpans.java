@@ -335,9 +335,24 @@ public class HitPublisherSpans implements HitPublisher {
                 // See if we can pause fetching
                 if (atDocBoundary && !needsMoreHits()) {
                     output.flush();
+                    // This synchronization closes a race at the pause point. The worker first sees no
+                    // demand, flushes, then enters synchronized (this) and checks again. If a caller
+                    // publishes demand while the worker is waiting to enter that block, the second
+                    // check sees it and the worker continues. If the worker gets the monitor first,
+                    // it clears workerScheduled before releasing the monitor; a later activate() can
+                    // then schedule a worker. Since activate() uses the same monitor, the caller can’t
+                    // slip between the worker’s final check and clearing workerScheduled and have its
+                    // activation ignored.
                     synchronized (this) {
-                        // Subscription and getStatic() publish their monotonic demand before activate(). Because
-                        // output.needsMoreHits() is a pure volatile-snapshot poll, it is safe under this monitor.
+
+                        // Subscription and getStatic() "decide" how many hits they need (which only ever
+                        // goes up, never down) before activate() is called.
+                        // output.needsMoreHits() doesn't do any locking itself; it is a pure
+                        // volatile-snapshot poll, so it's safe under this monitor.
+                        // The demand poll itself doesn’t need this monitor: it reads the volatile demand
+                        // snapshot. The monitor coordinates worker ownership and the pause/resume handoff,
+                        // preventing new demand from being stranded with no worker scheduled.
+
                         if (needsMoreHits())
                             continue;
                         workerScheduled = false;

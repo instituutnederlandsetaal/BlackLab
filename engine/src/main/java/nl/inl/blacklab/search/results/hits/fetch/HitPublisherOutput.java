@@ -12,14 +12,18 @@ import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
 
 /**
- * Owns the externally visible output of one segment publisher.
+ * Holds the output that subscribers can see for one segment publisher.
  *
- * Publication, catch-up and terminal callbacks are serialized on this object. A batch is added to the retained hits
- * and its public counters are advanced before any subscriber sees it, so late subscribers cannot observe a prefix
- * that disagrees with the retained store. Subscriber callbacks must not subscribe to this same output reentrantly.
+ * Sending hits, catching up a new subscriber, and notifying subscribers
+ * that processing has finished or failed are all synchronized methods.
+ * This ensures that updates happen atomically and a new subscriber sees
+ * the same hits and counts as existing subscribers.
  *
- * Producer lifecycle synchronization deliberately lives elsewhere. In particular, {@link #needsMoreHits()} only
- * reads a volatile, never-mutated subscriber-array snapshot: it never takes the output monitor and allocates nothing.
+ * You must never add another subscriber from one of the subscriber methods
+ * (hits, counted, flush, done, error). This would be a "reentrant" call and
+ * could cause deadlocks or other problems.
+ *
+ * The producer's start and stop coordination is handled elsewhere.
  */
 final class HitPublisherOutput {
 
@@ -32,18 +36,27 @@ final class HitPublisherOutput {
     /** Persistent published hits, or null if this publisher only streams batches. */
     private final HitsMutable retainedHits;
 
-    /** Completed after terminal callbacks with null for success or the exact source failure object. */
-    private final CompletableFuture<Throwable> terminal = new CompletableFuture<>();
+    /** Completed after terminal callbacks (complete, fail) with null for success or the exact source failure object. */
+    private final CompletableFuture<Throwable> completionOutcome = new CompletableFuture<>();
 
-    /** Never mutated after assignment, so demand polling needs neither locking nor allocation. */
+    /**
+     * Our subscribers. For performance reasons, this is a volatile reference to a read-only array
+     * instead of e.g. a synchronized collection. This allows us to avoid locking when checking
+     * whether any subscriber needs more hits. It also means no allocation is needed for iterating
+     * over the subscribers, which is important because this is a hot path.
+     */
     private volatile HitSubscriber[] subscribers = NO_SUBSCRIBERS;
 
+    /** Number of published (processed) hits */
     private long publishedHits;
 
+    /** Number of documents the published hits cover */
     private int publishedDocs;
 
+    /** Number of hits that were only counted, not published (processed) */
     private long countedHits;
 
+    /** Number of documents the counted-only hits cover */
     private int countedDocs;
 
     HitPublisherOutput(Hits.HitsContext context, boolean retainHits) {
@@ -62,12 +75,17 @@ final class HitPublisherOutput {
 
     /** Whether a success or failure outcome has been published. */
     boolean isComplete() {
-        return terminal.isDone();
+        return completionOutcome.isDone();
     }
 
     /**
-     * Register a subscriber after replaying the complete public prefix. A terminal subscriber is replayed but not
-     * retained. The flush establishes the replayed prefix even when the producer is currently paused.
+     * Register a subscriber after sending it all the published hits so far.
+     * <p>
+     * A subscriber that subcribes after we're already done will get all the hits, but won't be stored.
+     * The flush() notifies the subscriber that it has received all the hits so far and should process them,
+     * making them available to its client. It is important especially if the producer is paused: then it
+     * wouldn’t publish more hits or send its next flush, so the new subscriber could otherwise wait
+     * indefinitely despite already having received the replay
      */
     synchronized void subscribe(HitSubscriber subscriber) {
         for (HitSubscriber existing: subscribers) {
@@ -83,20 +101,29 @@ final class HitPublisherOutput {
         if (countedHits > 0)
             subscriber.counted(countedHits, countedDocs);
         subscriber.flush(lrc, publishedHits);
-        if (terminal.isDone()) {
-            Throwable failure = terminal.getNow(null);
+        if (completionOutcome.isDone()) {
+            // We were already completed, so notify the subscriber of that.
+            // The subscriber is not stored in this case, because it won't receive any more hits.
+            Throwable failure = completionOutcome.getNow(null);
             if (failure == null)
                 subscriber.done(lrc);
             else
                 subscriber.error(lrc, failure);
             return;
         }
+        // Add the subscriber to our list of subscribers (update the volatile reference with a new array).
         HitSubscriber[] updated = Arrays.copyOf(subscribers, subscribers.length + 1);
         updated[subscribers.length] = subscriber;
         subscribers = updated;
     }
 
-    /** Publish a complete-document batch. */
+    /** Publish a batch of hits.
+     * <p>
+     * These always represent whole documents, so the number of documents in the batch is also provided.
+     *
+     * @param batch the batch of hits to publish
+     * @param batchDocs the number of documents in the batch
+     */
     synchronized void publish(Hits batch, int batchDocs) {
         ensureOpen();
         long batchSize = batch.size();
@@ -122,21 +149,27 @@ final class HitPublisherOutput {
             subscriber.counted(hits, docs);
     }
 
+    /** Tell subscribers to process the hits they've received so far. */
     synchronized void flush() {
         ensureOpen();
         for (HitSubscriber subscriber: subscribers)
             subscriber.flush(lrc, publishedHits);
     }
 
-    /** Mark successful completion. The producer must flush the final published prefix before calling this. */
+    /** Mark successful completion.
+     * The producer must publish all its hits to subscribers and call flush before calling this. */
     synchronized void complete() {
         ensureOpen();
         for (HitSubscriber subscriber: subscribers)
             subscriber.done(lrc);
         subscribers = NO_SUBSCRIBERS;
-        terminal.complete(null);
+        completionOutcome.complete(null);
     }
 
+    /**
+     * Mark failed completion.
+     * @param failure the exception that caused the failure
+     */
     synchronized void fail(Throwable failure) {
         ensureOpen();
         try {
@@ -144,11 +177,16 @@ final class HitPublisherOutput {
                 subscriber.error(lrc, failure);
         } finally {
             subscribers = NO_SUBSCRIBERS;
-            terminal.complete(failure);
+            completionOutcome.complete(failure);
         }
     }
 
-    /** Pure demand poll; see the class contract. */
+    /** Do any of our subscribers require more hits at this time?
+     * <p>
+     * Could be called often, so performance is important.
+     * It does not need synchronization because it only checks a
+     * (volatile reference to a) read-only array. Using an array
+     * instead of list also means no iterator needs to be allocated. */
     boolean needsMoreHits() {
         for (HitSubscriber subscriber: subscribers) {
             if (subscriber.needsMoreHits())
@@ -161,7 +199,7 @@ final class HitPublisherOutput {
         if (retainedHits == null)
             throw new IllegalStateException("This publisher doesn't save its hits, cannot get static view");
         try {
-            Throwable failure = terminal.get();
+            Throwable failure = completionOutcome.get();
             if (failure != null)
                 throw BlackLabException.wrapRuntime(failure);
         } catch (InterruptedException e) {
@@ -174,7 +212,7 @@ final class HitPublisherOutput {
     }
 
     private void ensureOpen() {
-        if (terminal.isDone())
+        if (completionOutcome.isDone())
             throw new IllegalStateException("Publisher output is already complete");
     }
 

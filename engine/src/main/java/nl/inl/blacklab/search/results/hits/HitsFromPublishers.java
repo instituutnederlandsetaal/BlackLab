@@ -190,7 +190,7 @@ public class HitsFromPublishers extends HitsAbstract {
     /** Lock for waiting for hits to be available */
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    /** Signalled whenever progress changes a predicate observed by ensureResultsRead(). */
+    /** Signaled whenever progress changes a predicate observed by ensureResultsRead(). */
     private final Condition resultsChanged = lock.writeLock().newCondition();
 
     public HitsFromPublishers(List<? extends HitPublisher> publishers, SearchSettings searchSettings) {
@@ -222,8 +222,9 @@ public class HitsFromPublishers extends HitsAbstract {
         docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
             @Override
             public boolean processedAtLeast(long lowerBound) {
-                // Ask for hits one at a time until enough documents are represented. Once the processing limit is
-                // reached, no future count-only progress can add a processed document, so don't spin while counting.
+                // Ask for hits one at a time until enough documents are represented.
+                // Break from the loop if the processing limit is reached (we'll never
+                // reach the lower bound in that case).
                 while (!hitsStats.done() && docsStats.processedSoFar() < lowerBound &&
                         hitsStats.processedSoFar() < maxHitsToProcess) {
                     hitsStats.processedAtLeast(hitsStats.processedSoFar() + 1);
@@ -247,7 +248,7 @@ public class HitsFromPublishers extends HitsAbstract {
                 return docsStats.countedSoFar();
             }
         });
-        // Set this before subscribing: subscribe() may synchronously replay a publisher's terminal state.
+        // Set this before subscribing: subscribe() may synchronously replay a publisher's hits.
         publishersActive = this.publishers.size();
 
         publishers.forEach(publisher -> {
@@ -349,7 +350,8 @@ public class HitsFromPublishers extends HitsAbstract {
                 public void done(LeafReaderContext lrc) {
                     lock.writeLock().lock();
                     try {
-                        if (--publishersActive < 0)
+                        publishersActive--;
+                        if (publishersActive < 0)
                             throw new IllegalStateException("Received more 'done' messages than publishers");
                         if (publishersActive == 0)
                             hitsStats.setDone();
@@ -589,6 +591,9 @@ public class HitsFromPublishers extends HitsAbstract {
         HitsStretch stretch = new HitsStretch(
                 stretches.size(), docBase, segmentHits, from, numHitsGlobalView, stretchLength);
         stretches.add(stretch);
+
+        // Caller holds the view write lock, so this read-modify-write cannot race with another writer.
+        //noinspection NonAtomicOperationOnVolatileField
         numHitsGlobalView += stretchLength;
 
         // Record a mapping every HIT_INDEX_TO_STRETCH_STEP hits for fast global-index lookup.
@@ -603,7 +608,8 @@ public class HitsFromPublishers extends HitsAbstract {
     }
 
     private boolean ensureResultsRead(long number) {
-        // Reading an available prefix must not restart paused publishers or increase their demand.
+        // Reading a number of hits that is already available must not restart paused
+        // publishers or increase their demand.
         lock.readLock().lock();
         try {
             checkExceptionLocked();
@@ -629,6 +635,7 @@ public class HitsFromPublishers extends HitsAbstract {
         try {
             lock.writeLock().lock();
             try {
+                // Wait until we have enough hits, or all publishers are done, or one of them failed.
                 while (firstFailure == null && publishersActive > 0 && needsMoreResults())
                     resultsChanged.await();
                 checkExceptionLocked();
