@@ -197,7 +197,7 @@ public abstract class HitsAbstract implements Hits {
         publishers.parallelStream().forEach(publisher -> publisher.subscribe(
                 new LatchingHitSubscriber(subscriberSupplier.get(), segmentDoneLatch, thrownException)));
 
-        // Wait for all segments to be done grouping
+        // Wait for all segments to be done
         try {
             segmentDoneLatch.await();
             if (thrownException.get() != null)

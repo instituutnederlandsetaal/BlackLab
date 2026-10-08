@@ -26,6 +26,10 @@ import nl.inl.blacklab.search.results.hits.fetch.HitSubscriber;
 
 public class TestHitsFromPublishers {
 
+    /**
+     * A deterministic publisher that emits one hit on its first activation and can either finish
+     * immediately or remain open depending on the test.
+     */
     private static final class ControlledPublisher implements HitPublisher {
         private final Hits.HitsContext context = new Hits.HitsContext(new MockAnnotatedField());
         private final boolean finish;
@@ -67,6 +71,10 @@ public class TestHitsFromPublishers {
         }
     }
 
+    /**
+     * Separates activation from publication so tests can hold a reader blocked until they send
+     * count, hit, completion, or failure callbacks explicitly.
+     */
     private static final class ManualPublisher implements HitPublisher {
         private final Hits.HitsContext context = new Hits.HitsContext(new MockAnnotatedField());
         private final Hits hit = Hits.single(context, 0, 0, 1);
@@ -101,6 +109,7 @@ public class TestHitsFromPublishers {
         }
     }
 
+    // Published hits are included in the aggregate counted total even without a separate count callback.
     @Test(timeout = 1_000)
     public void publishedHitsContributeToCountedTotal() {
         ControlledPublisher publisher = new ControlledPublisher(true);
@@ -109,6 +118,7 @@ public class TestHitsFromPublishers {
         assertEquals(1, hits.resultsStats().countedTotal());
     }
 
+    // Reaching the requested hit count stops requesting further results from an unfinished publisher.
     @Test(timeout = 1_000)
     public void publishedHitsSatisfyCountDemand() {
         ControlledPublisher publisher = new ControlledPublisher(false);
@@ -118,6 +128,7 @@ public class TestHitsFromPublishers {
         assertFalse(publisher.subscriber.needsMoreHits());
     }
 
+    // Repeatedly reading an already-available prefix must not reactivate its publishers.
     @Test(timeout = 1_000)
     public void readingPublishedPrefixDoesNotReactivatePublishers() {
         ControlledPublisher publisher = new ControlledPublisher(false);
@@ -136,6 +147,7 @@ public class TestHitsFromPublishers {
         assertFalse(publisher.subscriber.needsMoreHits());
     }
 
+    // Invalid sublist bounds fail promptly instead of waiting for more hits while holding a read lock.
     @Test(timeout = 1_000)
     public void invalidSublistDoesNotWaitForMoreResultsWhileHoldingReadLock() {
         ControlledPublisher publisher = new ControlledPublisher(false);
@@ -146,6 +158,7 @@ public class TestHitsFromPublishers {
         assertEquals(1, publisher.activations);
     }
 
+    // Count-only progress must notify a thread waiting for the aggregate counted total.
     @Test(timeout = 2_000)
     public void countOnlyProgressWakesWaiter() throws Exception {
         ManualPublisher publisher = new ManualPublisher();
@@ -164,6 +177,7 @@ public class TestHitsFromPublishers {
         }
     }
 
+    // A result-count waiter sleeps for publisher signals rather than periodically polling with a timeout.
     @Test(timeout = 2_000)
     public void waitsForSignalsWithoutTimedPolling() throws Exception {
         ManualPublisher publisher = new ManualPublisher();
@@ -187,6 +201,7 @@ public class TestHitsFromPublishers {
         }
     }
 
+    // Concurrent publisher errors race safely, and whichever failure is reported first remains canonical.
     @Test(timeout = 2_000)
     public void firstConcurrentFailureRemainsTheReportedCause() throws Exception {
         ManualPublisher firstPublisher = new ManualPublisher();
@@ -214,6 +229,7 @@ public class TestHitsFromPublishers {
         }
     }
 
+    /** Waits at a common barrier so independent publishers deliver failures concurrently. */
     private static void failAtBarrier(CyclicBarrier barrier, ManualPublisher publisher, Throwable failure) {
         try {
             barrier.await();
@@ -223,6 +239,7 @@ public class TestHitsFromPublishers {
         publisher.subscriber.error(null, failure);
     }
 
+    /** Extracts the underlying publisher failure from the exception thrown while resolving result size. */
     private static Throwable reportedCause(HitsFromPublishers hits) {
         try {
             hits.size();
@@ -233,6 +250,7 @@ public class TestHitsFromPublishers {
         }
     }
 
+    /** Gives a state transition a short opportunity to occur without relying on a fixed long sleep. */
     private static boolean awaitCondition(BooleanSupplier condition) throws InterruptedException {
         for (int i = 0; i < 100 && !condition.getAsBoolean(); i++)
             Thread.sleep(5);

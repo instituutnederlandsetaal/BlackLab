@@ -33,7 +33,7 @@ final class HitPublisherOutput {
 
     private final LeafReaderContext lrc;
 
-    /** Persistent published hits, or null if this publisher only streams batches. */
+    /** Persistent published hits. */
     private final HitsMutable retainedHits;
 
     /** Completed after terminal callbacks (complete, fail) with null for success or the exact source failure object. */
@@ -59,10 +59,10 @@ final class HitPublisherOutput {
     /** Number of documents the counted-only hits cover */
     private int countedDocs;
 
-    HitPublisherOutput(Hits.HitsContext context, boolean retainHits) {
+    HitPublisherOutput(Hits.HitsContext context) {
         this.context = context;
         lrc = context.leafReaderContext();
-        retainedHits = retainHits ? HitsMutable.create(context, -1, true, true) : null;
+        retainedHits = HitsMutable.create(context, -1, true, true);
     }
 
     Hits.HitsContext context() {

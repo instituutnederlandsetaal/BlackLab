@@ -105,8 +105,7 @@ public class HitPublisherSpans implements HitPublisher {
 
     /** Lazy Hits interface to a single Spans object. */
     public HitPublisherSpans(LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext sourceHitQueryContext,
-            ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats,
-            boolean saveAllPublishedHits) {
+            ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         this.weight = weight;
         this.sourceHitQueryContext = sourceHitQueryContext;
         this.spans = null;
@@ -117,7 +116,7 @@ public class HitPublisherSpans implements HitPublisher {
         this.docsStats = docsStats;
         Hits.HitsContext context = new Hits.HitsContext(sourceHitQueryContext.getField(),
                 sourceHitQueryContext.getMatchInfoDefs(), lrc);
-        output = new HitPublisherOutput(context, saveAllPublishedHits);
+        output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
     }
 

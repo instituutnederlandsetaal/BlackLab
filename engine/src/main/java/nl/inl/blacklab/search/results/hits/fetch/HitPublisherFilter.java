@@ -26,7 +26,7 @@ public class HitPublisherFilter implements HitPublisher {
     public HitPublisherFilter(HitPublisher source, HitFilter filter) {
         this.source = source;
         Hits.HitsContext context = source.context();
-        output = new HitPublisherOutput(context, true);
+        output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
 
         // We receive hits from our source
