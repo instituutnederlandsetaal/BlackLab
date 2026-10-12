@@ -308,4 +308,8 @@ public class MockSpans extends BLSpans {
         return start.length;
     }
 
+    public int numberOfHits() {
+        return start.length;
+    }
+
 }
