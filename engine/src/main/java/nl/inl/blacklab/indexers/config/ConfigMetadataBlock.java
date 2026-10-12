@@ -8,6 +8,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 
 /** Configuration for a block of metadata fields. */
 public class ConfigMetadataBlock {
@@ -113,4 +114,15 @@ public class ConfigMetadataBlock {
         return "ConfigMetadataBlock [containerPath=" + containerPath + "]";
     }
 
+    public boolean hasPidField() {
+        for (ConfigMetadataField f: fields) {
+            if (f.getRole() == MetadataField.Role.PID)
+                return true;
+        }
+        for (ConfigMetadataBlock b: blocks) {
+            if (b.hasPidField())
+                return true;
+        }
+        return false;
+    }
 }

@@ -37,6 +37,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         field.putCustom("displayOrder", config.getDisplayOrder());
 
         field.setAnalyzer(!StringUtils.isEmpty(config.getAnalyzer()) ? config.getAnalyzer() : metadataFields.defaultAnalyzerName());
+        field.role = config.getRole();
         return field;
     }
 
@@ -49,6 +50,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      * The analyzer to use for indexing and querying this field.
      */
     private String analyzer = "DEFAULT";
+
+    /** "Special" role for this metadata field (regular or persistent identifier) */
+    private MetadataField.Role role = MetadataField.Role.REGULAR;
 
     /** Does this field occur at the fragment level? Used for optimization. */
     private boolean occursInFragments = false;
@@ -164,5 +168,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
             ensureNotFrozen();
             occursInFragments = true;
         }
+    }
+
+    public MetadataField.Role role() {
+        return role;
     }
 }

@@ -15,7 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
@@ -31,12 +30,6 @@ import nl.inl.util.UtilsForTesting;
 import nl.inl.util.fileprocessor.FileReference;
 
 public class TestMetadataFragments {
-
-    private static final String PID_CONFIG = """
-            corpusConfig:
-              specialFields:
-                pidField: id
-            """;
 
     private static final String FORMAT = """
             documentPath: //doc
@@ -54,8 +47,7 @@ public class TestMetadataFragments {
               fields:
                 - name: id
                   valuePath: "@id"
-                  type: untokenized
-                  fragments: separate
+                  role: pid
                 - name: author
                   valuePath: "@author"
                 - name: title
@@ -64,7 +56,7 @@ public class TestMetadataFragments {
 
                 - name: scope
                   valuePath: "@scope"
-            """ + PID_CONFIG;
+            """;
 
     private UtilsForTesting.TestDir testDir;
     private File indexDir;
@@ -148,13 +140,6 @@ public class TestMetadataFragments {
     }
 
     @Test
-    public void fragmentsRequirePidFieldConfiguration() throws Exception {
-        Throwable error = indexExpectingError("fragment-without-pid-field", formatWithoutPidConfig(),
-                "<doc id='d'><frag><w>A</w></frag></doc>");
-        assertErrorCause(error, InvalidInputFormatConfig.class);
-    }
-
-    @Test
     public void fragmentsRequireDocumentPidValue() throws Exception {
         Throwable error = indexExpectingError("fragment-without-pid", FORMAT,
                 "<doc><frag><w>A</w></frag></doc>");
@@ -196,12 +181,6 @@ public class TestMetadataFragments {
         Throwable error = index(formatName, formatContents, xml);
         Assert.assertNotNull("Expected indexing to fail", error);
         return error;
-    }
-
-    private static String formatWithoutPidConfig() {
-        Assert.assertEquals("Expected PID config to occur once, at the end of the format",
-                FORMAT.length() - PID_CONFIG.length(), FORMAT.indexOf(PID_CONFIG));
-        return FORMAT.replace(PID_CONFIG, "");
     }
 
     private static void assertErrorCause(Throwable error, Class<? extends Throwable> expected) {

@@ -205,7 +205,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 if (!value.isEmpty()) {
                     metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
                     IndexMetadataWriter indexMetadata = getDocWriter().metadata();
-                    indexMetadata.registerMetadataField(name);
+                    indexMetadata.metadataFields().register(name);
                 }
             }
 

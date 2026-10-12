@@ -91,7 +91,12 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     @Override
     public MetadataFieldImpl addFromConfig(ConfigMetadataField f) {
         MetadataFieldImpl fieldDesc = MetadataFieldImpl.fromConfig(f, this);
-        put(f.getName(), fieldDesc);
+        synchronized (this) {
+            ensureNotFrozen();
+            if (fieldDesc.role() == MetadataField.Role.PID)
+                setPidField(fieldDesc.name());
+            metadataFieldInfos.put(f.getName(), fieldDesc);
+        }
         return fieldDesc;
     }
 
@@ -269,12 +274,6 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                     .toList();
             topLevelCustom.put("metadataFieldGroups", metaGroupsCustom);
         }
-    }
-
-    @Override
-    public synchronized void put(String fieldName, MetadataFieldImpl fieldDesc) {
-        ensureNotFrozen();
-        metadataFieldInfos.put(fieldName, fieldDesc);
     }
 
     @Override

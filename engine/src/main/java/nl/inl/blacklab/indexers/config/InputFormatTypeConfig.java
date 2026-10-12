@@ -364,7 +364,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                             return new ArrayList<>();
                         }
                     }).add(value);
-                    getDocWriter().metadata().registerMetadataField(indexAsName);
+                    getDocWriter().metadata().metadataFields().register(indexAsName);
                 }
             }
 

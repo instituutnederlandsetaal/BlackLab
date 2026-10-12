@@ -25,7 +25,6 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.util.CurrentThreadExecutorService;
 import nl.inl.util.VersionFile;
 
@@ -312,7 +311,7 @@ public final class BlackLabEngine implements AutoCloseable {
     public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
 
-        if (config != null && config.getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) == null) {
+        if (config != null && !config.hasPidField()) {
             logger.warn("YOUR DOCUMENT IDs ARE NOT PERSISTENT! The input format " + config.getName() + " " +
                     "does not specify a persistent identifier (pid) field. This will work, but random ids will " +
                     "be assigned to your documents every time you index. So reindexing may assign totally different " +

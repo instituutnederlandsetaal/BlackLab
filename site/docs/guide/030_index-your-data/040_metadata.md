@@ -73,7 +73,10 @@ As you can see, this can help reduce duplication, keeping your XPath expressions
 
 ## Tokenize or not?
 
-By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it. One example of this is a field containing the document id: if your document ids contain characters that normally would indicate a token boundary, like a period (.) , your document id would be split into several tokens, which is usually not what you want.
+By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it.
+One example of this is a field containing a code such as `ABC.123`: if these contain characters that normally would 
+indicate a token boundary, like a period (.) , the code would be split into several tokens, which is usually 
+not what you want.
 
 To prevent a metadata field from being tokenized:
 
@@ -85,10 +88,12 @@ metadata:
   fields:
 
     # This field should not be split into words
-  - name: docId
-    valuePath: @docId
+  - name: code
+    valuePath: @code
     type: untokenized
 ```
+
+The persistent identifier field (marked with `role: pid`) will automatically be set to untokenized.
 
 ## Numeric fields
 
@@ -324,6 +329,25 @@ metadata:
     value: blacklab-docs
 ```
 
+## Persistent document identifiers (PIDs)
+
+To ensure document ids in URLs and responses don't change when you re-index, you should designate one of your metadata
+fields as the persistent identifier (PID). This should be unique among documents. E.g. it might be a unique number or code that
+can be used to refer to the document.
+
+Tag this metadata field with `role: pid` so BlackLab knows to use it as the persistent identifier.
+
+```yaml
+metadata:
+
+- containerPath: metadata
+
+  fields:   
+  - name: id
+    valuePath: @id
+    role: pid
+```
+
 ## Corpus metadata
 
 Each BlackLab corpus has its own metadata, recording information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields.
@@ -344,7 +368,6 @@ The best way to influence the corpus metadata is by including a special section 
 
       # Metadata fields with a special meaning
       specialFields:
-        pidField: id           # unique persistent identifier, used for document lookups, etc.
         titleField: title      # used to display document title in interface
         authorField: author    # used to display author in interface
         dateField: date        # used to display document date in interface
@@ -470,8 +493,10 @@ metadata:
     fields:
         - name: id
           valuePath: "@id"
-          type: untokenized
-          fragments: separate   # documents and fragments each have their own unique id; index separately
+          role: pid
+          # "fragments: separate" indicates that id should NOT inherit to fragment;
+          # (this is already implied by "role: pid", so specifying it here is superfluous)
+          fragments: separate
         - name: title
           valuePath: "@title"
         - name: author
@@ -557,8 +582,7 @@ metadata:
   fields:
   - name: id
     valuePath: "@id"
-    type: untokenized
-    fragments: separate   # documents and fragments each have their own unique id; index separately
+    role: pid
   - name: title
     valuePath: "@title"
   - name: author
@@ -579,10 +603,10 @@ Notice that in the examples above, two fragments are defined, from `A` to `B` an
 A metadata field is normally inherited from the document level in each fragment, unless the fragment overrides its value, of course. However, you can change this for a metadata field using the `fragments` setting. The possible values are:
 
 - `default` (or omit the setting): fields that occur at the fragment level will ONLY be indexed in fragments. If the field also occurs at the document level in the input file (such as `author` in the example above), it will NOT be indexed at the document level, but instead the value specified there will inherit to any fragment that doesn't define its own `author`. In other words: in the example doc, each fragment without an `author` will index `Katrien` as its author. Searching for an author will only find fragment(s), never the full document.
-- `separate`: with this behavior, document level and fragment level don't affect each other at all. The field will simply be indexed where it occurs in the input file. In the example, values for `id` are indexed at both the document level and at the fragment level, with each fragment having a unique id. The (automatically created) fragment from milestone `C` to `D` will not get the field `id` at all.
+- `separate`: with this behavior, document level and fragment level don't affect each other at all. The field will simply be indexed where it occurs in the input file. The field tagged with `role: pid` (`id` in the example) will automatically get this `fragments` setting. In the example, values for `id` are indexed at both the document level and at the fragment level, with each fragment having a unique id. The (automatically created) fragment from milestone `C` to `D` will not get the field `id` at all.
 - `docvalue`: fields with this behavior will index at the document level and index the exact same value at the fragment level, ignoring the possibility of overriding it with a different value. Slightly speeds up indexing because we have fewer field rules to apply for each fragment.
 
-Mostly, you should only specify `fragments: separate` for a few fields (such as `id`) and leave the rest at the default behavior.
+Mostly, you should not need the `fragments` setting and leave it at the default behaviour.
 
 <h3>Fragment metadata rules</h3>
 

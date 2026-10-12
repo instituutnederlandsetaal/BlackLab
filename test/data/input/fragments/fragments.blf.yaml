@@ -37,9 +37,6 @@ annotatedFields:
         spanEndIsInclusive: false
 
 corpusConfig:
-  specialFields:
-    pidField: pid
-
   contentViewable: true
 
 
@@ -48,8 +45,7 @@ metadata:
   fields:
   - name: pid
     valuePath: "@id"
-    type: untokenized
-    fragments: separate
+    role: pid
   - name: title
     valuePath: "@title"
   - name: author

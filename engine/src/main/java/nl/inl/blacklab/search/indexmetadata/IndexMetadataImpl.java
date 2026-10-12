@@ -811,11 +811,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         tokenCount += tokensProcessed;
     }
 
-    @Override
-    public synchronized MetadataField registerMetadataField(String fieldName) {
-        return metadataFields.register(fieldName);
-    }
-
     /**
      * Is this a new, empty index?
      *

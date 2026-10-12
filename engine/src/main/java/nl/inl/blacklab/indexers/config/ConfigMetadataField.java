@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.XPathUtil;
 
@@ -95,6 +96,10 @@ public class ConfigMetadataField {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String analyzer = "";
 
+    /** Special role for this field, if any (REGULAR|PID) */
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private MetadataField.Role role = MetadataField.Role.REGULAR;
+
     /** What UI element to show in the interface (optional) */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String uiType = "";
@@ -140,10 +145,15 @@ public class ConfigMetadataField {
 
     void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         String t = "metadata field";
-        if (isForEach())
+        if (isForEach()) {
             messages.mustHave(t, namePath, "namePath");
-        else
+            if (role != MetadataField.Role.REGULAR)
+                messages.error("Special roles (pid) are not allowed for forEach metadata fields");
+        } else {
             messages.mustHave(t, name, "name");
+            if (role == MetadataField.Role.PID)
+                messages.foundPidField(name); // (detects duplicate pid fields)
+        }
         for (ConfigProcessStep step : process) {
             step.validate(messages);
         }
@@ -223,6 +233,20 @@ public class ConfigMetadataField {
 
     public void setAnalyzer(String analyzer) {
         this.analyzer = analyzer;
+    }
+
+    public MetadataField.Role getRole() {
+        return role;
+    }
+
+    public void setRole(MetadataField.Role role) {
+        this.role = role;
+        if (role == MetadataField.Role.PID) {
+            // PID fields must be untokenized, and must not inherit to fragments
+            //   (although fragments may have their own PID fields if desired)
+            this.type = FieldType.UNTOKENIZED;
+            this.fragments = FragmentBehaviour.SEPARATE;
+        }
     }
 
     // Only include in JSON serialization if not FieldType.TOKENIZED

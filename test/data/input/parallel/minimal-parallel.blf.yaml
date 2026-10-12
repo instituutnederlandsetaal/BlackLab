@@ -60,11 +60,9 @@ annotatedFields:
 corpusConfig:
   displayName: parallel
 
-  specialFields:
-    pidField: pid
-
 metadata:
   containerPath: .
   fields:
   - name: pid
     valuePath: "@xml:id"
+    role: pid

@@ -113,15 +113,11 @@ public class TestCollocationScorers {
                     inlineTags:
                     - path: .//frag
                       type: fragment
-                corpusConfig:
-                  specialFields:
-                    pidField: pid
                 metadata:
                   fields:
                   - name: pid
                     valuePath: "@pid"
-                    type: untokenized
-                    fragments: separate
+                    role: pid
                   - name: selection
                     valuePath: "@selection"
                     fragments: separate

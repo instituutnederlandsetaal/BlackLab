@@ -13,8 +13,6 @@ public interface MetadataFieldsWriter extends MetadataFields {
     
     void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups);
 
-    void put(String fieldName, MetadataFieldImpl fieldDesc);
-
     void setDefaultAnalyzer(String name);
 
     /**

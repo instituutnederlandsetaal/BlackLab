@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+
 /**
  * Settings that will be used to write the indexmetadata file for any corpus we
  * create from this format.
@@ -104,4 +106,12 @@ public class ConfigCorpus {
         return "ConfigCorpus [displayName=" + displayName + "]";
     }
 
+    public void validate(InputFormatMessages messages) {
+        String f = specialFields.get(MetadataFields.SPECIAL_FIELD_SETTING_PID);
+        if (f != null) {
+            if (f.isEmpty())
+                messages.error("pidField cannot be empty");
+            messages.foundPidField(f); // ensure no more than one pid field is defined
+        }
+    }
 }
