@@ -6,7 +6,7 @@
     "start": "vitepress dev ."
   },
   "dependencies": {
-    "markdown-it": "^14.1.1",
+    "markdown-it": "^14.3.1",
     "sass-embedded": "^1.97.3",
     "vitepress": "^1.6.4",
     "vitepress-plugin-tabs": "^0.7.3",
