@@ -389,7 +389,7 @@ public class TestIndex implements AutoCloseable {
      * @param hits the hits to display
      * @return the left, match and right values for the "word" annotation
      */
-    static List<String> getConcordances(Hits hits, Annotation word) {
+    public static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
         for (EphemeralHit hit: hits) {

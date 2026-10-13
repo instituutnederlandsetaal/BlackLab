@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc xml:id="parallel-1">
+  <text lang="nl">
+    <s xml:id="nl_s1">
+      <w xml:id="nl_w1">Dit</w>
+      <w xml:id="nl_w2">is</w>
+      <w xml:id="nl_w3">een</w>
+      <w xml:id="nl_w4">voorbeeld</w>
+    </s>
+    <s xml:id="nl_s2">
+      <w xml:id="nl_w5">Wij</w>
+      <w xml:id="nl_w6">testen</w>
+      <w xml:id="nl_w7">parallelle</w>
+      <w xml:id="nl_w8">zinnen</w>
+    </s>
+    <s xml:id="nl_s3">
+      <w xml:id="nl_w9">Kleine</w>
+      <w xml:id="nl_w10">corpora</w>
+      <w xml:id="nl_w11">helpen</w>
+    </s>
+
+    <link source="nl_s1" target="en_s1" type="s"/>
+    <link source="nl_s2" target="en_s2" type="s"/>
+    <link source="nl_s3" target="en_s3" type="s"/>
+    <link source="nl_s1" target="de_s1" type="s"/>
+    <link source="nl_s2" target="de_s2" type="s"/>
+    <link source="nl_s3" target="de_s3" type="s"/>
+
+    <link source="nl_w1" target="en_w1" type="w"/>
+    <link source="nl_w2" target="en_w2" type="w"/>
+    <link source="nl_w3" target="en_w3" type="w"/>
+    <link source="nl_w4" target="en_w4" type="w"/>
+    <link source="nl_w5" target="en_w5" type="w"/>
+    <link source="nl_w6" target="en_w6" type="w"/>
+    <link source="nl_w7" target="en_w7" type="w"/>
+    <link source="nl_w8" target="en_w8" type="w"/>
+    <link source="nl_w9" target="en_w9" type="w"/>
+    <link source="nl_w10" target="en_w10" type="w"/>
+    <link source="nl_w11" target="en_w11" type="w"/>
+
+    <link source="nl_w1" target="de_w1" type="w"/>
+    <link source="nl_w2" target="de_w2" type="w"/>
+    <link source="nl_w3" target="de_w3" type="w"/>
+    <link source="nl_w4" target="de_w4" type="w"/>
+    <link source="nl_w5" target="de_w5" type="w"/>
+    <link source="nl_w6" target="de_w6" type="w"/>
+    <link source="nl_w7" target="de_w7" type="w"/>
+    <link source="nl_w8" target="de_w8" type="w"/>
+    <link source="nl_w9" target="de_w9" type="w"/>
+    <link source="nl_w10" target="de_w10" type="w"/>
+    <link source="nl_w11" target="de_w11" type="w"/>
+  </text>
+  <text lang="en">
+    <s xml:id="en_s1">
+      <w xml:id="en_w1">This</w>
+      <w xml:id="en_w2">is</w>
+      <w xml:id="en_w3">an</w>
+      <w xml:id="en_w4">example</w>
+    </s>
+    <s xml:id="en_s2">
+      <w xml:id="en_w5">We</w>
+      <w xml:id="en_w6">test</w>
+      <w xml:id="en_w7">parallel</w>
+      <w xml:id="en_w8">sentences</w>
+    </s>
+    <s xml:id="en_s3">
+      <w xml:id="en_w9">Small</w>
+      <w xml:id="en_w10">corpora</w>
+      <w xml:id="en_w11">help</w>
+    </s>
+  </text>
+  <text lang="de">
+    <s xml:id="de_s1">
+      <w xml:id="de_w1">Dies</w>
+      <w xml:id="de_w2">ist</w>
+      <w xml:id="de_w3">ein</w>
+      <w xml:id="de_w4">Beispiel</w>
+    </s>
+    <s xml:id="de_s2">
+      <w xml:id="de_w5">Wir</w>
+      <w xml:id="de_w6">testen</w>
+      <w xml:id="de_w7">parallele</w>
+      <w xml:id="de_w8">Saetze</w>
+    </s>
+    <s xml:id="de_s3">
+      <w xml:id="de_w9">Kleine</w>
+      <w xml:id="de_w10">Korpora</w>
+      <w xml:id="de_w11">helfen</w>
+    </s>
+  </text>
+</doc>
