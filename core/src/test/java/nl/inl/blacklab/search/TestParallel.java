@@ -72,7 +72,7 @@ public class TestParallel {
         Assert.assertEquals(1, hits.size());
         Annotation wordNl = testIndex.index().annotatedField("contents__nl").annotation("word");
         List<String> conc = testIndex.getConcordances(hits.getHits(), wordNl);
-        Assert.assertEquals(List.of("[Dit] is een"), conc);
+        Assert.assertEquals(List.of("[Dit] is"), conc);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class TestParallel {
         Assert.assertEquals(1, hits.size());
         Annotation wordEn = testIndex.index().annotatedField("contents__en").annotation("word");
         List<String> conc = testIndex.getConcordances(hits.getHits(), wordEn);
-        Assert.assertEquals(List.of("[This] is an"), conc);
+        Assert.assertEquals(List.of("[This] is"), conc);
     }
 
     @Test
@@ -91,12 +91,36 @@ public class TestParallel {
         Assert.assertEquals("contents__en", hitsEn.field().name());
         Assert.assertEquals(1, hitsEn.size());
         Annotation wordEn = testIndex.index().annotatedField("contents__en").annotation("word");
-        Assert.assertEquals(List.of("[This] is an"), testIndex.getConcordances(hitsEn.getHits(), wordEn));
+        Assert.assertEquals(List.of("[This] is"), testIndex.getConcordances(hitsEn.getHits(), wordEn));
 
         HitResults hitsDe = find("rfield(\"Dit\" =w=>en _ ; =w=>de _, 'de')");
         Assert.assertEquals("contents__de", hitsDe.field().name());
         Assert.assertEquals(1, hitsDe.size());
         Annotation wordDe = testIndex.index().annotatedField("contents__de").annotation("word");
-        Assert.assertEquals(List.of("[Dies] ist ein"), testIndex.getConcordances(hitsDe.getHits(), wordDe));
+        Assert.assertEquals(List.of("[Dies] ist"), testIndex.getConcordances(hitsDe.getHits(), wordDe));
+    }
+
+    @Test
+    public void testKoeIssueDescriptionExample() throws InvalidQuery {
+        // Without rfield: hits are in Dutch source field
+        HitResults hitsNl = find("\"koe\" =w=>en _ ; =w=>de _");
+        Assert.assertEquals("contents__nl", hitsNl.field().name());
+        Assert.assertEquals(1, hitsNl.size());
+        Annotation wordNl = testIndex.index().annotatedField("contents__nl").annotation("word");
+        Assert.assertEquals(List.of("De [koe] loeit"), testIndex.getConcordances(hitsNl.getHits(), wordNl));
+
+        // With rfield to English
+        HitResults hitsEn = find("rfield(\"koe\" =w=>en _ ; =w=>de _, 'en')");
+        Assert.assertEquals("contents__en", hitsEn.field().name());
+        Assert.assertEquals(1, hitsEn.size());
+        Annotation wordEn = testIndex.index().annotatedField("contents__en").annotation("word");
+        Assert.assertEquals(List.of("The [cow] moos"), testIndex.getConcordances(hitsEn.getHits(), wordEn));
+
+        // With rfield to German
+        HitResults hitsDe = find("rfield(\"koe\" =w=>en _ ; =w=>de _, 'de')");
+        Assert.assertEquals("contents__de", hitsDe.field().name());
+        Assert.assertEquals(1, hitsDe.size());
+        Annotation wordDe = testIndex.index().annotatedField("contents__de").annotation("word");
+        Assert.assertEquals(List.of("Die [Kuh] muht"), testIndex.getConcordances(hitsDe.getHits(), wordDe));
     }
 }

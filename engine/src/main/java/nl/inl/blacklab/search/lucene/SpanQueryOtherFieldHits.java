@@ -27,14 +27,27 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
+    private static QueryInfo getQueryInfo(BLSpanQuery clause, AnnotatedField targetField) {
+        if (clause.queryInfo == null)
+            return null;
+        return targetField == null ? clause.queryInfo : clause.queryInfo.withField(targetField);
+    }
+
     private final BLSpanQuery clause;
 
     private final AnnotatedField targetField;
 
+    private final AnnotatedField clauseField;
+
     public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField) {
-        super(clause.queryInfo);
+        this(clause, targetField, clause.getAnnotatedField());
+    }
+
+    public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField, AnnotatedField clauseField) {
+        super(getQueryInfo(clause, targetField), targetField != null ? targetField : (clauseField != null ? clauseField : clause.getAnnotatedField()));
         this.clause = clause;
         this.targetField = targetField;
+        this.clauseField = clauseField != null ? clauseField : clause.getAnnotatedField();
 
         this.guarantees = createGuarantees();
     }
@@ -44,7 +57,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryOtherFieldHits(rewritten, targetField);
+        return new SpanQueryOtherFieldHits(rewritten, targetField, clauseField);
     }
 
     @Override
@@ -85,7 +98,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansOtherFieldHits(spans, targetField, clause.getAnnotatedField());
+            return new SpansOtherFieldHits(spans, targetField, clauseField != null ? clauseField : clause.getAnnotatedField());
         }
     }
 
@@ -125,6 +138,11 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     @Override
+    public AnnotatedField getAnnotatedField() {
+        return targetField != null ? targetField : (clauseField != null ? clauseField : clause.getAnnotatedField());
+    }
+
+    @Override
     public String getRealField() {
         if (targetField != null)
             return targetField.name(); // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
@@ -144,6 +162,6 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(queryInfo);
+        clause.setQueryInfo(clauseField == null ? queryInfo : queryInfo.withField(clauseField));
     }
 }

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -99,6 +101,21 @@ public final class QueryInfo {
     }
 
     /**
+     * Return QueryInfo with the specified field.
+     *
+     * Will return a new QueryInfo if the field differs from ours;
+     * otherwise, will return this.
+     *
+     * @param field the field to set
+     * @return a QueryInfo with the specified field
+     */
+    public QueryInfo withField(AnnotatedField field) {
+        if (Objects.equals(this.field, field))
+            return this;
+        return new QueryInfo(index, field, cacheToUse);
+    }
+
+    /**
      * Return QueryInfo with the correct field, taken from query.
      *
      * Will return a new QueryInfo if the query's field differs from ours;
@@ -108,7 +125,7 @@ public final class QueryInfo {
      * @return a QueryInfo with the correct field
      */
     public QueryInfo optOverrideField(BLSpanQuery query) {
-        if (query.getAnnotatedField().equals(field))
+        if (query.getAnnotatedField() == null || query.getAnnotatedField().equals(field))
             return this;
         return new QueryInfo(index, query.getAnnotatedField(), cacheToUse);
     }

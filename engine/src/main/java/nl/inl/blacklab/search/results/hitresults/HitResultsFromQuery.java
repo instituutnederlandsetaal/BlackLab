@@ -45,6 +45,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
         super(queryInfo.optOverrideField(sourceQuery));
+        queryInfo = queryInfo();
         sourceQuery.setQueryInfo(queryInfo);
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;

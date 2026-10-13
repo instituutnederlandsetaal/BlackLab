@@ -18,13 +18,20 @@
       <w xml:id="nl_w10">corpora</w>
       <w xml:id="nl_w11">helpen</w>
     </s>
+    <s xml:id="nl_s4">
+      <w xml:id="nl_w12">De</w>
+      <w xml:id="nl_w13">koe</w>
+      <w xml:id="nl_w14">loeit</w>
+    </s>
 
     <link source="nl_s1" target="en_s1" type="s"/>
     <link source="nl_s2" target="en_s2" type="s"/>
     <link source="nl_s3" target="en_s3" type="s"/>
+    <link source="nl_s4" target="en_s4" type="s"/>
     <link source="nl_s1" target="de_s1" type="s"/>
     <link source="nl_s2" target="de_s2" type="s"/>
     <link source="nl_s3" target="de_s3" type="s"/>
+    <link source="nl_s4" target="de_s4" type="s"/>
 
     <link source="nl_w1" target="en_w1" type="w"/>
     <link source="nl_w2" target="en_w2" type="w"/>
@@ -37,6 +44,9 @@
     <link source="nl_w9" target="en_w9" type="w"/>
     <link source="nl_w10" target="en_w10" type="w"/>
     <link source="nl_w11" target="en_w11" type="w"/>
+    <link source="nl_w12" target="en_w12" type="w"/>
+    <link source="nl_w13" target="en_w13" type="w"/>
+    <link source="nl_w14" target="en_w14" type="w"/>
 
     <link source="nl_w1" target="de_w1" type="w"/>
     <link source="nl_w2" target="de_w2" type="w"/>
@@ -49,6 +59,9 @@
     <link source="nl_w9" target="de_w9" type="w"/>
     <link source="nl_w10" target="de_w10" type="w"/>
     <link source="nl_w11" target="de_w11" type="w"/>
+    <link source="nl_w12" target="de_w12" type="w"/>
+    <link source="nl_w13" target="de_w13" type="w"/>
+    <link source="nl_w14" target="de_w14" type="w"/>
   </text>
   <text lang="en">
     <s xml:id="en_s1">
@@ -68,6 +81,11 @@
       <w xml:id="en_w10">corpora</w>
       <w xml:id="en_w11">help</w>
     </s>
+    <s xml:id="en_s4">
+      <w xml:id="en_w12">The</w>
+      <w xml:id="en_w13">cow</w>
+      <w xml:id="en_w14">moos</w>
+    </s>
   </text>
   <text lang="de">
     <s xml:id="de_s1">
@@ -86,6 +104,11 @@
       <w xml:id="de_w9">Kleine</w>
       <w xml:id="de_w10">Korpora</w>
       <w xml:id="de_w11">helfen</w>
+    </s>
+    <s xml:id="de_s4">
+      <w xml:id="de_w12">Die</w>
+      <w xml:id="de_w13">Kuh</w>
+      <w xml:id="de_w14">muht</w>
     </s>
   </text>
 </doc>
