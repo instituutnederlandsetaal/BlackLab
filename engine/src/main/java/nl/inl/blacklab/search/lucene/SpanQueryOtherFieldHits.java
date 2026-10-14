@@ -27,16 +27,32 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
+    public static QueryInfo getQueryInfo(QueryInfo queryInfo, AnnotatedField targetField) {
+        if (queryInfo == null)
+            return null;
+        return targetField == null ? queryInfo : queryInfo.withField(targetField);
+    }
+
     private final BLSpanQuery clause;
 
     private final AnnotatedField targetField;
 
     public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField) {
-        super(clause.queryInfo);
+        super(getQueryInfo(clause.queryInfo, targetField),
+                targetField != null ? targetField : clause.getAnnotatedField());
         this.clause = clause;
         this.targetField = targetField;
 
         this.guarantees = createGuarantees();
+    }
+
+    private static AnnotatedField firstNonNull(AnnotatedField... fields) {
+        for (AnnotatedField field : fields) {
+            if (field != null) {
+                return field;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -144,6 +160,6 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(queryInfo);
+        clause.setQueryInfo(clause.getAnnotatedField() == null ? queryInfo : queryInfo.withField(clause.getAnnotatedField()));
     }
 }

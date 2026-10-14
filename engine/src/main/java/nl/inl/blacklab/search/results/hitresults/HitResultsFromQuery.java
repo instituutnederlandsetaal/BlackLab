@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -44,13 +45,13 @@ public class HitResultsFromQuery extends HitResultsAbstract {
 
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
-        super(queryInfo.optOverrideField(sourceQuery));
-        sourceQuery.setQueryInfo(queryInfo);
+        super(SpanQueryOtherFieldHits.getQueryInfo(queryInfo, sourceQuery.getAnnotatedField()));
+        sourceQuery.setQueryInfo(this.queryInfo);
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;
         ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
-        List<HitPublisher> publishers = getHitPublishers(queryInfo, sourceQuery, searchSettings, hitsStats, docsStats);
+        List<HitPublisher> publishers = getHitPublishers(this.queryInfo, sourceQuery, searchSettings, hitsStats, docsStats);
         hits = new HitsFromPublishers(publishers, searchSettings);
     }
 
@@ -62,7 +63,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
 
         ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
+        HitQueryContext hitQueryContext = new HitQueryContext(index, null, sourceQuery.getAnnotatedField());
         for (LeafReaderContext lrc: index.reader().leaves()) {
             publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
         }

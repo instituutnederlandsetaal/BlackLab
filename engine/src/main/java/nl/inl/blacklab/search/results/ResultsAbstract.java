@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public abstract class ResultsAbstract implements Results {
 
     /** Information about the original query: index, field, max settings, max stats. */
-    private final QueryInfo queryInfo;
+    protected final QueryInfo queryInfo;
 
     protected ResultsAbstract(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;

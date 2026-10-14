@@ -773,9 +773,6 @@ public class TestHitPublisher {
         output.complete();
     }
 
-
-    ///@@@@@@@@@@
-
     // Concurrent getStatic callers all unblock with the same fully completed retained result.
     @Test(timeout = 5000)
     public void multipleStaticWaitersShareTheCompletedRetainedView() throws Exception {

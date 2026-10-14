@@ -99,3 +99,16 @@ expectHitsUnchanged("fragments", "hit beyond matching fragment", { patt: '"Linde
 expectHitsUnchanged("fragments", "inherited metadata", { patt: '"dog"', filter: 'author:Piet' });
 expectHitsUnchanged("fragments", "inline tag fragment 1", { patt: '"jumps"', filter: 'ftype:inline' });
 expectHitsUnchanged("fragments", "inline tag fragment 2", { patt: '"starship"', filter: 'author:majel' });
+
+expectHitsUnchanged("parallel", "parallel hits", {
+    patt: '"Dit" =w=>en _',
+    field: 'contents__nl',
+    adjusthits: 'true',
+    withspans: 'true'
+});
+expectHitsUnchanged("parallel", "parallel hits with rfield", {
+    patt: 'rfield("Dit" =w=>en _, "en")',
+    field: 'contents__nl',
+    adjusthits: 'true',
+    withspans: 'true',
+});

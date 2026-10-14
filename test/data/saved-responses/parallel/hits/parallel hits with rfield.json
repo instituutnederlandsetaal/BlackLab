@@ -1,0 +1,168 @@
+{
+  "docInfos": {
+    "parallel-1": {
+      "mayView": false,
+      "metadata": {
+        "fromInputFile": [
+          "minimal-parallel.xml"
+        ],
+        "pid": [
+          "parallel-1"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents__de",
+          "tokens": 11
+        },
+        {
+          "fieldName": "contents__en",
+          "tokens": 11
+        },
+        {
+          "fieldName": "contents__nl",
+          "tokens": 11
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
+      "before": {
+        "punct": [
+        ],
+        "word": [
+        ]
+      },
+      "docPid": "parallel-1",
+      "end": 1,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "This"
+        ]
+      },
+      "start": 0
+    }
+  ],
+  "summary": {
+    "params": {
+      "adjusthits": true,
+      "context": "1",
+      "field": "contents__nl",
+      "indexname": "parallel",
+      "op": "hits",
+      "patt": "rfield(\"Dit\" =w=>en _, \"en\")",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true,
+      "withspans": true
+    },
+    "pattern": {
+      "bcql": "rfield(\"Dit\" =w=>en _, \"en\")",
+      "fieldName": "contents__en",
+      "json": {
+        "args": [
+          {
+            "bcqlFragment": "\"Dit\" =w=>en _",
+            "children": [
+              {
+                "alignment": true,
+                "bcqlFragment": " =w=>en _",
+                "clause": {
+                  "bcqlFragment": "_",
+                  "type": "defval"
+                },
+                "relType": "w",
+                "targetVersion": "en",
+                "type": "reltarget"
+              }
+            ],
+            "parent": {
+              "bcqlFragment": "\"Dit\"",
+              "clauses": [
+                {
+                  "bcqlFragment": "_",
+                  "type": "defval"
+                },
+                {
+                  "bcqlFragment": "\"Dit\"",
+                  "type": "string",
+                  "value": "Dit"
+                }
+              ],
+              "operation": "=",
+              "type": "compare"
+            },
+            "type": "relmatch"
+          },
+          {
+            "bcqlFragment": "\"en\"",
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"en\"",
+                "type": "string",
+                "value": "en"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
+          }
+        ],
+        "bcqlFragment": "rfield(\"Dit\" =w=>en _, \"en\")",
+        "name": "rfield",
+        "type": "callfunc"
+      },
+      "matchInfos": {
+        "w__en": {
+          "fieldName": "contents__nl",
+          "type": "list"
+        },
+        "with-spans": {
+          "type": "list"
+        }
+      },
+      "otherFields": [
+        "contents__nl"
+      ]
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}
