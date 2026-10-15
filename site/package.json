@@ -11,6 +11,6 @@
     "vitepress": "^1.6.4",
     "vitepress-plugin-tabs": "^0.7.3",
     "vitepress-sidebar": "^1.33.1",
-    "vue": "^3.5.28"
+    "vue": "^3.5.44"
   }
 }
