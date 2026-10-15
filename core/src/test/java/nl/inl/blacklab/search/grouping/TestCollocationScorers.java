@@ -64,8 +64,7 @@ public class TestCollocationScorers {
                     HitGroupScorer.KEY_ID, HitGroupScorerSalience.TYPE_ID,
                     HitGroupCollocationScorer.KEY_DOC_FILTER, filter,
                     HitGroupCollocationScorer.KEY_PATTERN, findPattern,
-                    HitGroupCollocationScorer.KEY_ANNOTATION, contents.mainAnnotation().name(),
-                    HitGroupCollocationScorer.KEY_SENSITIVITY, MatchSensitivity.INSENSITIVE.toString()));
+                    HitGroupCollocationScorer.KEY_GROUP_BY, new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.INSENSITIVE)));
 
             HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.INSENSITIVE);
             HitGroups groups = testIndex.find("meet([], [lemma=\"mier\"], -5, 5)", filter)
@@ -145,13 +144,14 @@ public class TestCollocationScorers {
     private static void assertFragmentScore(BlackLabIndex index, Query filter, int tokens, int collocates) {
         Assert.assertTrue(index.isFragmentQuery(filter));
         AnnotatedField field = index.mainAnnotatedField();
-        HitGroupScorer scorer = HitGroupScorer.fromConfig(field, Map.of(
+        HitPropertyHitText groupBy = new HitPropertyHitText(index, field.annotation("word"), MatchSensitivity.INSENSITIVE);
+        Map<String, Object> config = Map.of(
                 HitGroupScorer.KEY_ID, HitGroupScorerSalience.TYPE_ID,
                 HitGroupCollocationScorer.KEY_DOC_FILTER, filter,
                 HitGroupCollocationScorer.KEY_PATTERN, BcqlQueryLanguageParser.parseQuery("[word=\"seed\"]"),
-                HitGroupCollocationScorer.KEY_ANNOTATION, "word",
-                HitGroupCollocationScorer.KEY_SENSITIVITY, MatchSensitivity.INSENSITIVE.toString()));
-        HitProperty groupBy = new HitPropertyHitText(index, field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
+                HitGroupCollocationScorer.KEY_GROUP_BY,
+                groupBy);
+        HitGroupScorer scorer = HitGroupScorer.fromConfig(field, config);
         TextPattern pattern = BcqlQueryLanguageParser.parseQuery("meet([word=\"near\"], [word=\"seed\"], -1, 1)");
         HitGroups groups = index.search(field, false).find(new CompleteQuery(pattern, filter))
                 .groupStats(groupBy, 0, scorer).execute();
@@ -164,6 +164,7 @@ public class TestCollocationScorers {
         Assert.assertEquals(expected, group.score(), 1e-12);
     }
 
+    //@Ignore //@@@@@@ FIXME DEADLOCK
     @Test
     public void testRelationScores() throws Exception {
         ConfigInputFormat format = ConfigInputFormat.read(new StringReader("""
@@ -240,8 +241,7 @@ public class TestCollocationScorers {
         HitGroupScorer scorer = HitGroupScorer.fromConfig(field, Map.of(
                 HitGroupScorer.KEY_ID, scorerType,
                 HitGroupCollocationScorer.KEY_PATTERN, BcqlQueryLanguageParser.parseQuery(pattern),
-                HitGroupCollocationScorer.KEY_ANNOTATION, annotation,
-                HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString(),
+                HitGroupCollocationScorer.KEY_GROUP_BY, new HitPropertyHitText(index, field.annotation(annotation), sensitivity),
                 HitGroupCollocationScorer.KEY_COLL_TYPE, type,
                 HitGroupCollocationScorer.KEY_REL_TYPE, "obj"));
         String query = type.equals("relsources") ?

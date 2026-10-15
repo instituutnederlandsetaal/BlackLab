@@ -99,11 +99,17 @@ public class QueryExecutionContext {
         this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
     }
 
+    public MatchSensitivity getSensitivity() {
+        return sensitivity.sensitivity();
+    }
+
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             annotation = sensitivity.annotation();
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
+        if (annotation == sensitivity.annotation() && matchSensitivity == requestedSensitivity)
+            return this;
         return new QueryExecutionContext(index, field, version, annotation.name(), matchSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }

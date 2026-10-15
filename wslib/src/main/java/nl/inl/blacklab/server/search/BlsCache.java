@@ -186,7 +186,7 @@ public class BlsCache implements SearchCache {
         boolean useCache = /*search.queryInfo().useCache() &&*/ !cacheDisabled;
         future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
         if (future == null) {
-            logger.info("not found in cache, starting search: " + search);
+            logger.debug("not found in cache, starting search: " + search);
             int numQueued = numberOfQueuedSearches();
             if (numQueued >= config.getMaxQueuedSearches()) {
                 logger.warn("Can't start new search, too many queued searches (numQueued = " + numQueued + ", maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");

@@ -56,7 +56,11 @@ public class TestTextPatternSerialize {
     @Test
     public void testSimple() throws IOException {
         TextPattern pattern = TextPattern.term("cow");
-        String expected = "{\"bcqlFragment\":\"\\\"cow\\\"\",\"type\":\"term\",\"value\":\"cow\"}";
+        String expected = """
+                {"bcqlFragment":"\\"cow\\"","type":"compare","clauses":[\
+                {"bcqlFragment":"_","type":"defval"},\
+                {"bcqlFragment":"\\"cow\\"","type":"string","value":"cow"}\
+                ],"operation":"="}""";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
     }
@@ -70,12 +74,16 @@ public class TestTextPatternSerialize {
                         TextPattern.MAX_UNLIMITED
                 ),
                 TextPattern.term("cow"));
-        String expected = "{\"bcqlFragment\":\"\\\"lazy\\\"+ \\\"cow\\\"\",\"type\":\"sequence\",\"clauses\":["+
-                "{\"bcqlFragment\":\"\\\"lazy\\\"+\",\"type\":\"repeat\",\"clause\":"+
-                    "{\"bcqlFragment\":\"\\\"lazy\\\"\",\"type\":\"term\",\"value\":\"lazy\"},"+
-                    "\"min\":1},"+
-                "{\"bcqlFragment\":\"\\\"cow\\\"\",\"type\":\"term\",\"value\":\"cow\"}"+
-            "]}";
+        String expected = """
+                {"bcqlFragment":"\\"lazy\\"+ \\"cow\\"","type":"sequence","clauses":[\
+                {"bcqlFragment":"\\"lazy\\"+","type":"repeat","clause":\
+                {"bcqlFragment":"\\"lazy\\"","type":"compare","clauses":[\
+                {"bcqlFragment":"_","type":"defval"},\
+                {"bcqlFragment":"\\"lazy\\"","type":"string","value":"lazy"}],"operation":"="},"min":1},\
+                {"bcqlFragment":"\\"cow\\"","type":"compare","clauses":[\
+                {"bcqlFragment":"_","type":"defval"},\
+                {"bcqlFragment":"\\"cow\\"","type":"string","value":"cow"}\
+                ],"operation":"="}]}""";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
     }

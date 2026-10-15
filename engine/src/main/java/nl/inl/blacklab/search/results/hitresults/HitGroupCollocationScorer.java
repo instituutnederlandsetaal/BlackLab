@@ -7,22 +7,21 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.plugins.HitGroupScorerType;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.matchfilter.ConstraintValueString;
-import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
-import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.RegexStripped;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -31,42 +30,48 @@ import nl.inl.blacklab.search.textpattern.TextPatternCompare;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
 import nl.inl.blacklab.search.textpattern.TextPatternFunctionCall;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 public abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
     // Configuration parameter keys
     public static final String KEY_DOC_FILTER = "filter";
+
+    /** Pattern we've found collocations for */
     public static final String KEY_PATTERN = "patt";
-    public static final String KEY_ANNOTATION = "annotation";
-    public static final String KEY_SENSITIVITY = "sensitivity";
+
+    /** Collocate pattern (used to filter collocates, e.g. "only nouns") */
+    public static final String KEY_COLL_PATTERN = "collpatt";
+
+    /** Annotation we've grouped the collocates on */
+    public static final String KEY_GROUP_BY = "group";
+
+    /** Relation type we've required when finding collocates [relation-based collocations only] */
     public static final String KEY_REL_TYPE = "reltype";
+
+    /** Collocation type: proximity, relsources or reltargets */
     public static final String KEY_COLL_TYPE = "colltype";
 
-    private static final TextPattern ANY_TOKEN = new TextPatternAnyToken(1);
+    /** Loose score calculation? (i.e. terms in some deleted docs might still be counted) [false] */
+    public static final String KEY_LOOSE = "loose";
 
-    /** If a fragment filter is used, do we upcast it so it only has to look at whole documents? */
+    /** If a fragment filter is used, do we upcast it so it only has to look at whole documents?
+     * (we probably don't want to do this, as it would arguably miscalculate the scores) */
     private static final boolean UPCAST_FRAGMENT_FILTERS = false;
 
+    public static final String STR_NEED_GROUP_BY = "Collocation scorer needs " + KEY_GROUP_BY + " parameter";
+
     /** From what annotation should collocates come? */
-    private final AnnotationSensitivity collocateAnnotation;
+    private final HitProperty hitProperty;
 
     /** The documents filter to apply, or null for none */
     private final Query filter;
 
-    public HitGroupCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter) {
-        this.collocateAnnotation = collocateAnnotation;
+    public HitGroupCollocationScorer(HitProperty hitProperty, Query filter) {
+        this.hitProperty = hitProperty;
         this.filter = filter;
     }
-
-    /**
-     * Should getTermFrequency calculate accurate term frequency slowly?
-     * If false, and if possible, uses totalTermFrequency which doesn't take deleted documents into account.
-     */
-    public static final boolean ACCURATE_TERM_FREQ = false;
 
     /** Instantiate a collocation scorer from its configuration parameters
      *
@@ -77,43 +82,49 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
      */
     public static HitGroupScorer get(AnnotatedField field, HitGroupScorerType type,
             Map<String, Object> parameters) {
-        String annotation = parameters.getOrDefault(KEY_ANNOTATION, "").toString();
-        if (annotation.isEmpty())
-            throw new IllegalArgumentException("Collocation scorer needs annotation");
-        MatchSensitivity sensitivity = MatchSensitivity.fromName(
-                parameters.getOrDefault(KEY_SENSITIVITY, MatchSensitivity.INSENSITIVE.toString()).toString());
-        AnnotationSensitivity annotSensitivity = field.annotation(annotation).sensitivity(sensitivity);
+        Object parGroupBy = parameters.get(KEY_GROUP_BY);
+        HitProperty hitProperty;
+        if (parGroupBy instanceof HitProperty hp)
+            hitProperty = hp;
+        else
+            throw new IllegalArgumentException(STR_NEED_GROUP_BY + (parGroupBy == null ? "" : " of type HitProperty"));
 
-        TextPattern pattern = (TextPattern)parameters.get(KEY_PATTERN);
-        if (pattern == null)
+        //AnnotationSensitivity annotSensitivity = field.annotation(annotation).sensitivity(sensitivity);
+
+        TextPattern keywordPattern = (TextPattern)parameters.get(KEY_PATTERN);
+        if (keywordPattern == null)
             throw new IllegalArgumentException("Collocation scorer needs " + KEY_PATTERN + " parameter");
+
+        TextPattern collocatePattern = (TextPattern)parameters.get(KEY_COLL_PATTERN);
+        if (collocatePattern == null)
+            collocatePattern = TextPatternAnyToken.ANY_SINGLE_TOKEN;
 
         Query filter = (Query)parameters.get(KEY_DOC_FILTER);
 
         if (UPCAST_FRAGMENT_FILTERS && filter != null && field.index().isFragmentQuery(filter)) {
-            // We don't support precisely scoring collocations on fragments (yet);
-            // convert the filter to a full-document filter.
+            // Convert the filter to a full-document filter.
             filter = DocResults.upcastFragmentsToFullDocuments(filter);
         }
 
         String relationType = (String)parameters.get(KEY_REL_TYPE);
         CollocationType collocationType = CollocationType.PROXIMITY;
-        TextPattern population = ANY_TOKEN; // potential collocates
+        TextPattern population = collocatePattern; // potential collocates
         if (relationType != null) {
             collocationType = CollocationType.fromStringValue((String)parameters.getOrDefault(KEY_COLL_TYPE,
                             CollocationType.RELATION_TARGETS.toString()));
             TextPattern any = TextPatternDefaultValue.get();
             population = relationPattern(any, any, collocationType, relationType);
-            pattern = relationPattern(pattern, any, collocationType, relationType);
+            keywordPattern = relationPattern(keywordPattern, any, collocationType, relationType);
         }
 
         // Find the "total frequency" N, which depends on the collocations type.
+        boolean loose = Boolean.parseBoolean(parameters.getOrDefault(KEY_LOOSE, "true").toString());
         long totalFrequency = type.needsTotalFrequency()
-                ? countFrequency(field, population, sensitivity, filter)
+                ? countFrequency(field, population, /*sensitivity,*/ filter, loose)
                 : -1;
-        long patternFrequency = countFrequency(field, pattern, sensitivity, filter);
-        return type.getCollocationScorer(annotSensitivity, filter, totalFrequency, patternFrequency, collocationType,
-                relationType);
+        long patternFrequency = countFrequency(field, keywordPattern, /*sensitivity,*/ filter, loose);
+        return type.getCollocationScorer(field, hitProperty, filter, totalFrequency, patternFrequency, collocationType,
+                relationType, loose);
     }
 
     /**
@@ -124,21 +135,25 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
      * @param collocate the collocate to get the frequency for
      * @param collocationType collocation type (proximity or relation sources/targets)
      * @param relationType if relation-based collocation, the relation type to use
+     * @param loose allow fast-and-loose calculation (terms in some deleted docs may still be counted)?
      * @return the frequency of the collocate
      */
-    protected long getCollocateFrequency(PropertyValue collocate, CollocationType collocationType,
-            String relationType) {
-        if (!(collocate instanceof PropertyValueContextWords words))
+    protected long getCollocateFrequency(AnnotatedField field, PropertyValue collocate, CollocationType collocationType,
+            String relationType, boolean loose) {
+        boolean isContextBased = collocate instanceof PropertyValueContextWords ||
+                (collocate instanceof PropertyValueMultiple && collocate.valuesList().stream()
+                        .allMatch(v -> v instanceof PropertyValueContextWords));
+        if (!isContextBased)
             throw new UnsupportedOperationException("Group identity is not context-based");
-        if (words.terms().size() != 1)
+        if (!collocate.valuesList().stream().allMatch(v -> ((PropertyValueContextWords)v).terms().size() == 1))
             throw new UnsupportedOperationException("Only single-term collocates are supported for now");
 
-        TextPattern pattern = TextPattern.term(words.toString(), collocateAnnotation.annotation().name(),
-                collocateAnnotation.sensitivity());
+        CompleteQuery cq = new CompleteQuery(null, filter);
+        cq = hitProperty.refine(null, cq, collocate).orElseThrow();
+        TextPattern collocatePattern  = cq.pattern();
         if (collocationType != CollocationType.PROXIMITY)
-            pattern = relationPattern(TextPatternDefaultValue.get(), pattern, collocationType, relationType);
-        return countFrequency(collocateAnnotation.annotation().field(), pattern, collocateAnnotation.sensitivity(),
-                filter);
+            collocatePattern = relationPattern(TextPatternDefaultValue.get(), collocatePattern, collocationType, relationType);
+        return countFrequency(field, collocatePattern, filter, loose);
     }
 
     /** Count the number of hits for the given pattern.
@@ -147,23 +162,12 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
      *
      * @param field the annotated field to search
      * @param pattern the text pattern to count hits for
-     * @param sensitivity the match sensitivity
      * @param filter the query filter
+     * @param loose allow fast-and-loose calculation (terms in some deleted docs may still be counted)?
      * @return the frequency count
      */
-    private static long countFrequency(AnnotatedField field, TextPattern pattern, MatchSensitivity sensitivity,
-            Query filter) {
-        // Convert TextPatternCompare to TextPatternTerm if possible
-        if (pattern instanceof TextPatternCompare comparison &&
-                comparison.getOperator() == MatchFilterCompare.Operator.EQUAL &&
-                comparison.getLeftClause() instanceof TextPatternValue left &&
-                left.getValue() instanceof ConstraintValueSymbol annotation &&
-                comparison.getRightClause() instanceof TextPatternValue right &&
-                right.getValue() instanceof ConstraintValueString value &&
-                !StringUtil.containsRegexCharacters(value.getValue())) {
-            pattern = TextPattern.term(value.getValue(), annotation.getValue(), sensitivity);
-        }
-
+    private static long countFrequency(AnnotatedField field, TextPattern pattern,
+            Query filter, boolean loose) {
         BlackLabIndex index = field.index();
 
         boolean searchingFullDocuments = filter == null || !index.isFragmentQuery(filter);
@@ -171,7 +175,7 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
             // See if we can optimize.
 
             // Do we simply need to know the number of tokens?
-            if (pattern.equals(ANY_TOKEN)) {
+            if (pattern.equals(TextPatternAnyToken.ANY_SINGLE_TOKEN)) {
                 if (filter == null) {
                     // Literally all tokens in the field. Get from the metadata.
                     return index.metadata().countPerField().get(field.name()).getTokens();
@@ -185,16 +189,24 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
             }
 
             // Is this a simple annotation=value query?
-            if (pattern instanceof TextPatternTerm term &&
-                    term.getClass() == TextPatternTerm.class && // NOT TextPatternRegex!
-                    term.getAnnotation() != null && term.getSensitivity() != null) {
-                // Simple annotation=value; use Lucene term frequency statistics for speed.
-                Annotation annotation = field.annotation(term.getAnnotation());
-                if (annotation == null)
-                    throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + term.getAnnotation() +
-                            " on field " + field.name());
-                return LuceneUtil.getTermFrequency(annotation.sensitivity(term.getSensitivity()),
-                        term.getSensitivity().desensitize(term.getValue()), filter, ACCURATE_TERM_FREQ);
+            if (pattern instanceof TextPatternCompare compare && compare.isSimpleAnnotationValueComparison()) {
+                RegexStripped rightString = compare.getRightString();
+                if (rightString.isLettersAndDigits()) {
+                    // Simple non-regex annotation=value; use Lucene term frequency statistics for speed.
+                    String annotationName = compare.getLeftSymbol();
+                    Annotation annotation = annotationName == null ? field.mainAnnotation() : field.annotation(annotationName);
+                    if (annotation == null)
+                        throw new FeatureNotPresentInCorpus(
+                                "Annotation doesn't exist: " + annotationName +
+                                        " on field " + field.name());
+                    String term = rightString.regex();
+                    MatchSensitivity sensitivity = rightString.sensitivity();
+                    if (sensitivity == null)
+                        sensitivity = field.index().defaultMatchSensitivity();
+                    return LuceneUtil.getTermFrequency(annotation.sensitivity(sensitivity),
+                            sensitivity.desensitize(term),
+                            filter, !loose);
+                }
             }
         }
 

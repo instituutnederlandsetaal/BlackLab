@@ -60,7 +60,7 @@ public class TestSearchHitGroups {
 
     private void testGroup(boolean fastPath, Query filter) throws InvalidQuery {
         String title = fastPath ? "group fast path" : "group slow path";
-        TextPattern tp = new TextPatternAnyToken(1, 1);
+        TextPattern tp = TextPatternAnyToken.ANY_SINGLE_TOKEN;
         CompleteQuery completeQuery = new CompleteQuery(tp, filter);
         HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE);
         SearchHits searchHits = index.search(contents, false).find(completeQuery);
@@ -80,7 +80,7 @@ public class TestSearchHitGroups {
 
     @Test
     public void testHitGroupsTitle() throws InvalidQuery {
-        TextPattern tp = new TextPatternAnyToken(1, 1);
+        TextPattern tp = TextPatternAnyToken.ANY_SINGLE_TOKEN;
         CompleteQuery completeQuery = new CompleteQuery(tp);
         HitProperty groupBy = new HitPropertyDocumentStoredField(index, "title", "Title");
         SearchHits searchHits = index.search(contents, false).find(completeQuery);

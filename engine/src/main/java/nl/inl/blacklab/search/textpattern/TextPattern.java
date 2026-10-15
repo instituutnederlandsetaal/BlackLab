@@ -43,11 +43,14 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String REGEX_PREFIX_DIACRITICS_SENSITIVE = "d";
 
     public static TextPattern regex(String value, String annotation, MatchSensitivity sensitivity) {
-        return new TextPatternRegex(value, annotation, sensitivity);
+        TextPattern left = annotation == null ? TextPatternDefaultValue.get() :
+                new TextPatternValue(ConstraintValue.symbol(annotation));
+        TextPattern right = new TextPatternValue(ConstraintValue.get(value));
+        return new TextPatternCompare(left, right, MatchFilterCompare.Operator.EQUAL, sensitivity);
     }
 
     public static TextPattern term(String value, String annotation, MatchSensitivity sensitivity) {
-        return new TextPatternTerm(value, annotation, sensitivity);
+        return regex(value, annotation, sensitivity);
     }
 
     public static TextPattern regex(String value) {
@@ -72,17 +75,18 @@ public abstract class TextPattern implements TextPatternStruct {
 
     public static TextPattern sequenceOfTerms(List<String> terms, Annotation annotation, MatchSensitivity sensitivity) {
         List<TextPattern> patterns = new ArrayList<>();
-        String regexSensitivityPrefix = getRegexSensitivityPrefix(sensitivity, annotation.field().index().defaultMatchSensitivity());
+        if (sensitivity == annotation.field().index().defaultMatchSensitivity())
+            sensitivity = null;
         for (String term: terms) {
             TextPattern annot = new TextPatternValue(ConstraintValue.symbol(annotation.name()));
-            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + StringUtil.escapeLuceneRegexCharacters(term)));
-            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL);
+            TextPattern value = new TextPatternValue(ConstraintValue.get(StringUtil.escapeLuceneRegexCharacters(term)));
+            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL, sensitivity);
             patterns.add(compare);
         }
         return patterns.size() == 1 ? patterns.get(0) : new TextPatternSequence(patterns);
     }
 
-    private static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
+    public static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
         String regexSensitivityPrefix = "";
         if (sensitivity != defaultSensitivity) {
             // We need a regex prefix to indicate that we want a different sensitivity than the default for the index.
@@ -119,7 +123,7 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     /**
-     * If the argument is a simple TextPatternTerm or TextPatternRegex, extract its string value.
+     * If the argument is a simple TextPatternCompare (i.e. annotion equals value), extract its string value.
      *
      * This is used to decide whether a function parameter value e.g. "duck" is a query [word="duck"] or
      * just a simple string value "duck", based on the declared type of the parameter.
@@ -147,17 +151,6 @@ public abstract class TextPattern implements TextPatternStruct {
         } else if (arg instanceof TextPatternAdditiveOp tadd) {
             // Try to evaluate expression directly (so e.g. --3 works)
             strValue = tadd.rewriteToConstant().toString();
-        } else if (arg instanceof TextPatternRegex tpr) {
-            // Interpret as regular string, not as a query
-            // kind of a hack, but should work
-            strValue = tpr.getValue();
-            if (strValue.startsWith("^") && strValue.endsWith("$")) {
-                // strip off ^ and $
-                strValue = strValue.substring(1, strValue.length() - 1);
-            }
-        } else if (arg instanceof TextPatternTerm tpt) {
-            // Interpret as regular string, not as a query
-            strValue = tpt.getValue();
         }
         return strValue;
     }

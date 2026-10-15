@@ -3,8 +3,9 @@ package nl.inl.blacklab.search.results.hitresults;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.plugins.HitGroupScorerType;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 /** Scorer that just uses the group size */
 public class HitGroupScorerSize extends HitGroupScorerType {
@@ -32,10 +33,10 @@ public class HitGroupScorerSize extends HitGroupScorerType {
     }
 
     @Override
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+    public HitGroupScorer getCollocationScorer(AnnotatedField field, HitProperty groupBy, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
-        return new HitGroupCollocationScorer(collocateAnnotation, filter) {
+            String relationType, boolean loose) {
+        return new HitGroupCollocationScorer(groupBy, filter) {
             @Override
             public HitGroupScorerType getType() {
                 return HitGroupScorerSize.this;

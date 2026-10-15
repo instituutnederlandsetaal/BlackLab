@@ -42,7 +42,7 @@ public class TestTextPatternToCorpusQL {
         assertRoundtrip("[!(word = \"a\" & word = \"b\")]");
         assertRoundtrip("[word != \"the\" & (lemma = \"cat\" | pos = \"dog\")] \"turtle\"");
         assertRoundtrip("!\"cat\"");
-        assertRoundtrip("[!(word = \"a\") & !(word = \"b\")]");
+        assertCanonicalized("[word!=\"a\" & word!=\"b\"]", "[!(word = \"a\") & !(word = \"b\")]");
     }
 
     @Test

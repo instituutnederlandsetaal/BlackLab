@@ -27,8 +27,7 @@ Only `patt` is required; other parameters are optional.
 | `context`    | (proximity-based collocations) how close a word has to occur to be considered a collocate. Examples: `5` gives 5 words around the word, `5:10` gives 5 before and 10 after. Default: `5`                                   |
 | `within`     | (proximity-based collocations) whether a collocation needs to be contained within a specific tag. Example: `s` will require both parts to be `within <s/>`. Default: none                                                  |
 | `reltype`    | (relation-based collocations; optional) a specific relation type to match, or a regular expression to filter relation types.                                                                                               |
-| `annotation` | annotation to use for gathering collocates (i.e. annotation to group on). Default: main annotation, usually `word`.                                                                                                        |
-| `sensitive`  | whether to group case- and accent-sensitively or not. Default: `false`                                                                                                                                                     |
+| `group`      | Annotations to group on when gathering collocates (`hit:<annotation>:<sensitivity>`, like regular hits grouping). You can group on multiple annotations (comma-separated). Default: main annotation, i.e. `hit:word:i`.    |
 | `scorertype` | collocations found will be scored. This gives the hit group scorer to use. Builtin scorers are `coll-dice` (default) and `coll-salience`. See below.                                                                       |
 
 In addition to these basic parameters, any parameter that can be added to a regular grouped hits request can be used (e.g. `first`, `number`, etc.). See [here](find-hits).
@@ -63,11 +62,12 @@ You can also use hit group scorers with a regular grouped `/hits` request. In th
   // relation type filter (if any, and if relation-based collocations) 
   "reltype": "nsubj",
   
-  // annotation used for grouping
-  "annotation": "word",
+  // what we grouped the hits on to determine our collocates and their frequencies
+  "group": "hit:word:i",
   
-  // whether grouping was (case- and accent-)sensitive or not
-  "sensitive": false
+  // use faster calculation that may still count terms in some deleted docs?
+  // (defaults to true for better performance; experimental parameter, may be removed in the future)
+  "loose": false,
 }
 ```
 
@@ -86,8 +86,7 @@ This proximity collocations request (shown without URL encoding for readability)
         collpatt=[pos="N.*"]&
         colltype=proximity&
         context=3:4&
-        annotation=word&
-        sensitive=false&
+        group=hit:word:i&
         scorertype=coll-dice
 
 is exactly equivalent to this (shorter but more cryptic) grouped hits request:
@@ -95,7 +94,7 @@ is exactly equivalent to this (shorter but more cryptic) grouped hits request:
     /CORPUSNAME/hits?
         patt=meet([pos="N.*"],"boot",-3,4)&
         group=hit:word:i&
-        scorer={"id":"coll-dice","patt":"\"boot\"","annotation":"word","sensitive":false}
+        scorer={"id":"coll-dice","patt":"\"boot\"","group":"hit:word:i"}
 
 ### Relation-based
 
@@ -106,8 +105,7 @@ This proximity collocations request (shown without URL encoding for readability)
         collpatt=[pos="N.*"]&
         colltype=reltargets&
         reltype=nsubj&
-        annotation=word&
-        sensitive=false&
+        group=hit:word:i&
         scorertype=coll-dice
 
 is exactly equivalent to this grouped hits request:
@@ -115,7 +113,7 @@ is exactly equivalent to this grouped hits request:
     /CORPUSNAME/hits?
         patt=rspan("boot" -nsubj-> [pos="N.*"], "target")&
         group=hit:word:i&
-        scorer={"id":"coll-dice","patt":"\"boot\"","annotation":"word","sensitive":false,"reltype":"nsubj","colltype":"reltargets"}
+        scorer={"id":"coll-dice","patt":"\"boot\"","group":"hit:word:i","reltype":"nsubj","colltype":"reltargets"}
 
 
 

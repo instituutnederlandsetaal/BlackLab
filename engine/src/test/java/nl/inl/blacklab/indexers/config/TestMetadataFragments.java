@@ -209,7 +209,7 @@ public class TestMetadataFragments {
 
     private static void assertFilteredTokens(BlackLabIndex index, String field, String value, int docId,
             int... positions) {
-        Hits hits = index.search().find(new CompleteQuery(new TextPatternAnyToken(1),
+        Hits hits = index.search().find(new CompleteQuery(TextPatternAnyToken.ANY_SINGLE_TOKEN,
                 new TermQuery(new Term(field, value)))).execute().getHits();
         Assert.assertEquals(positions.length, hits.size());
         for (int i = 0; i < positions.length; i++) {

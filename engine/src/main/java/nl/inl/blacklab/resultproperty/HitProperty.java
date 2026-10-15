@@ -188,6 +188,12 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         this.reverse = invert != prop.reverse;
     }
 
+    public static HitProperty combine(List<HitPropertyHitText> list) {
+        if (list.size() == 1)
+            return list.get(0);
+        return new HitPropertyMultiple(list.toArray(HitPropertyHitText[]::new));
+    }
+
     /**
      * Is the default for this property to sort descending?
      * <p>
@@ -368,8 +374,8 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * <p>
      * This should produce a query equivalent to <code>(?< "good" ) "dog"</code>.
      *
-     * @param property      hit property to refine with
-     * @param index         index to search
+     * @param index         index to search (only needed for HitPropertyDoc, HitPropertyStoredField, etc.)
+     * @param original      query to refine
      * @param propertyValue property value to refine with
      * @return refined query, or null if query couldn't be refined this way
      */

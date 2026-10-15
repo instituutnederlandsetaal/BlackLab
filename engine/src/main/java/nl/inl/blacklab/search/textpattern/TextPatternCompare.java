@@ -2,20 +2,21 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
@@ -32,81 +33,141 @@ public class TextPatternCompare extends TextPattern {
 
     public static int TP_PRECEDENCE = 5;
 
-    static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
-
     /** Left operand, often annotation name */
-    protected final TextPattern left;
+    private final TextPattern left;
 
     /** Right operand, e.g. value to match */
-    protected final TextPattern right;
+    private final TextPattern right;
 
     /** Type of comparison, e.g. =, <=, etc. */
-    protected final MatchFilterCompare.Operator operator;
+    private final MatchFilterCompare.Operator operator;
 
-    public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator) {
+    /** The sensitivity to use for comparison, or null to use the default sensitivity from the context */
+    private final MatchSensitivity sensitivity;
+
+    /** The left side of this comparison if it's a symbol (i.e. an annotation name); null otherwise */
+    private final String leftSymbol;
+
+    /** Is the left side the "default value" (i.e. the default annotation, i.e. "cow" means [word="cow"]) */
+    private final boolean leftIsDefaultValue;
+
+    /** The right side of this comparison if it's a string (i.e. a regex or just a simple term); null otherwise */
+    private final RegexStripped rightString;
+
+    public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator, MatchSensitivity sensitivity) {
         super(TP_PRECEDENCE);
+
+        // If right side is a string, check if it's a regex with a sensitivity prefix and/or anchors, and strip those off.
+        // Also remember if it's a simple term (not a regex) for later.
+        if (right instanceof TextPatternValue value &&
+            value.getValue() instanceof ConstraintValueString str) {
+            // If the regex starts with a sensitivity prefix, e.g. (?s) for case-sensitive,
+            // remember it and strip it from the value. This will allow cleaner optimizations.
+            // (sensitivity prefix in the regex overrides the sensitivity parameter)
+            // RegexStripped also strips off any anchors (^ and $) from the regex.
+            String regex = str.getValue();
+            RegexStripped stripped = new RegexStripped(regex, sensitivity);
+            sensitivity = stripped.sensitivity();
+            if (!stripped.regex().equals(regex)) {
+                // We stripped off a sensitivity prefix and/or anchors; create a new right operand with the stripped regex
+                right = new TextPatternValue(ConstraintValueString.get(stripped.regex()));
+            }
+            // Check and remember if right side is a string (i.e. a regex or just a simple term).
+            rightString = stripped;
+        } else {
+            rightString = null;
+        }
+
+        // Check and remember if left side is a symbol (i.e. annotation name).
+        leftIsDefaultValue = left instanceof TextPatternDefaultValue;
+        if (left instanceof TextPatternValue tpv && tpv.getValue() instanceof ConstraintValueSymbol cvs) {
+            leftSymbol = cvs.getValue();
+        } else {
+            leftSymbol = null;
+        }
+
         this.left = left;
         this.right = right;
         this.operator = operator;
+        this.sensitivity = sensitivity;
+    }
+
+    /** Get simple anytoken, term or regex query. */
+    public static BLSpanQuery getSimpleMatchQuery(QueryExecutionContext context, String annotation, String value, MatchSensitivity sensitivity) {
+        RegexStripped stripped = new RegexStripped(value, sensitivity);
+        if (stripped.isAnyToken()) {
+            // Any token query.
+            return TextPatternAnyToken.ANY_SINGLE_TOKEN.toQuery(context);
+        } else if (stripped.isLettersAndDigits()) {
+            // Simple term query.
+            TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, true, annotation, value);
+            if (rewrittenPseudoAnnot != null)
+                return rewrittenPseudoAnnot.toQuery(context);
+            context = context.withAnnotationAndSensitivity(annotation, sensitivity);
+            return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
+                    context.optDesensitize(context.optDesensitize(value))));
+        } else {
+            // Regex query.
+            if (stripped.regex().equals(value) && stripped.sensitivity().equals(sensitivity)) {
+                return evalRegex(context, annotation, value, sensitivity);
+            } else {
+                return evalRegex(context, annotation, stripped.regex(), stripped.sensitivity());
+            }
+        }
+    }
+
+    private static @NonNull BLSpanMultiTermQueryWrapper<RegexpQuery> evalRegex(
+            QueryExecutionContext context, String annotation, String value, MatchSensitivity sensitivity) throws InvalidQuery {
+
+        // We're dealing with an actual regex query.
+        context = context.withAnnotationAndSensitivity(annotation, sensitivity);
+        String valueDesensitized = context.optDesensitize(value);
+
+        // Lucene's regex engine requires double quotes to be escaped, unlike most others.
+        // Escape double quotes
+        valueDesensitized = StringUtil.escapeQuoteForBcql(valueDesensitized, "\"");
+
+        try {
+            Term term = new Term(context.luceneField(), valueDesensitized);
+            RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
+            return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
+        } catch (StackOverflowError e) {
+            // If we pass in a really large regular expression, like a huge
+            // list of words combined with OR, stack overflow occurs inside
+            // Lucene's automaton building code and we may end up here.
+            throw new RegexpTooLarge();
+        }
     }
 
     /**
-     * Rewrite to TextPatternTerm if value only contains letters and numbers.
+     * If the annotation doesn't exist in the data, but there is a suitable
+     * extension function, rewrite this term to a function call.
      *
-     * Also looks at (?i), (?-i), (?c), etc. at the start of the pattern and converts
-     * that into an appropriate TextPatternSensitive() wrapper.
-     *
-     * In all other cases, we keep TextPatternRegex because Lucene's regex, wildcard
-     * and prefix queries all work in the same basic way (are converted into
-     * AutomatonQuery's), so they are equally fast.
-     *
-     * @return the TextPattern
+     * @param context the query execution context
      */
-    public static TextPattern rewriteToSimplerTextPattern(String annotation, MatchSensitivity sensitivity, String value) {
-        // See if a sensitivity prefix was provided
-        MatchSensitivity forceSensitivity = null;
-        Pattern sensitivityPrefix = Pattern.compile("\\(\\?(s|-?i|c|d)\\)");
-        Matcher matcher = sensitivityPrefix.matcher(value);
-        if (matcher.find()) {
-            forceSensitivity = switch (matcher.group(1)) {
-                case TextPattern.REGEX_PREFIX_SENSITIVE, TextPattern.REGEX_PREFIX_SENSITIVE_ALT -> MatchSensitivity.SENSITIVE;
-                case TextPattern.REGEX_PREFIX_INSENSITIVE -> MatchSensitivity.INSENSITIVE;
-                case TextPattern.REGEX_PREFIX_DIACRITICS_SENSITIVE -> MatchSensitivity.CASE_INSENSITIVE;
-                case TextPattern.REGEX_PREFIX_CASE_SENSITIVE -> MatchSensitivity.DIACRITICS_INSENSITIVE;
-                default -> null;
-            };
-            value = value.substring(matcher.group(1).length() + 3);
-        }
-
-        // Is it "any token"?
-        if (value.equals(StringUtil.REGEX_ANY_VALUE)) {
-            return new TextPatternAnyToken(1, 1);
-        }
-
-        // If this contains no funny characters, only (Unicode) letters and digits,
-        // surrounded by ^ and $, turn it into a TermQuery, which might be a little
-        // faster than doing it via RegexpQuery (which has to build an Automaton).
-        TextPatternTerm result = null;
-                if (onlyLettersAndDigits.matcher(value).matches()) {
-            // No regex characters, so we can turn it into a term query
-            result = new TextPatternTerm(value, annotation, sensitivity);
-        }
-        if (result == null) {
-            // Not a term query. Did we strip off a sensitivity flag above?
-            if (forceSensitivity == null) {
-                // Nope. Nothing to rewrite.
-                return null;
+    protected static TextPattern rewriteIfPseudoAnnotation(QueryExecutionContext context, boolean convertToRegex, String annotation, String value) {
+        TextPattern rewrittenPseudoAnnot = null;
+        if (!context.field().annotations().exists(annotation)) {
+            // Annotation doesn't exist in the data.
+            // Check if there's an extension function that functions as a pseudo-annotation,
+            // e.g. punctAfter(".") to enable [punctAfter="."]
+            if (QueryExtensions.exists(annotation)) {
+                QueryFunction func = QueryExtensions.get(annotation);
+                if (func.requiredNumberOfArguments() != 1)
+                    throw new InvalidQuery("Pseudo-annotation function " + annotation + " must take exactly one argument.");
+                String regex = convertToRegex ? StringUtil.escapeLuceneRegexCharacters(value) : value;
+                TextPatternValue tpRegex = TextPatternValue.fromObject(regex);
+                rewrittenPseudoAnnot = new TextPatternFunctionCall(annotation, List.of(tpRegex));
             }
-            // Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
-            result = new TextPatternRegex(value, annotation, sensitivity);
         }
+        return rewrittenPseudoAnnot;
+    }
 
-        if (forceSensitivity != null && forceSensitivity != sensitivity) {
-            // Pattern started with e.g. (?-i) or (?c) to force another sensitivity
-            result = result.withAnnotationAndSensitivity(null, forceSensitivity);
-        }
-
-        return result;
+    public boolean isSimpleAnnotationValueComparison() {
+        return (leftSymbol != null || leftIsDefaultValue) && rightString != null &&
+                operator == MatchFilterCompare.Operator.EQUAL;
     }
 
     /** Is this a non-negated comparison with the default annotation?
@@ -117,19 +178,13 @@ public class TextPatternCompare extends TextPattern {
         TextPattern left = getLeftClause();
         if (left instanceof TextPatternDefaultValue) {
             // Special case: a top-level string in BCQL is comparing with the default annotation
-            // (i.e. "cow" means [word="cow"])
+            // (i.e. "cow" means [word="cow"], assuming word is the default annotation)
             if (operator == MatchFilterCompare.Operator.EQUAL && getRightClause() instanceof TextPatternValue tpv &&
-                    tpv.getValue() instanceof ConstraintValueString cvs) {
+                    tpv.getValue() instanceof ConstraintValueString) {
                 return true;
             }
         }
         return false;
-    }
-
-    public static String regexForRange(int min, int max) {
-        if (min > max)
-            return RangeRegex.REGEX_WITHOUT_MATCHES;
-        return RangeRegex.forRange(min, max);
     }
 
     @Override
@@ -137,12 +192,13 @@ public class TextPatternCompare extends TextPattern {
         TextPattern actualLeft = left instanceof TextPatternDefaultValue ? // use default annotation
                 new TextPatternValue(ConstraintValue.symbol(context.field().defaultSearchAnnotation().name())) :
                 left;
+        MatchSensitivity sensitivity = this.sensitivity == null ? context.getSensitivity() : this.sensitivity;
         if (context.isInConstraint()) {
             // Constraint.
             return new MatchFilterCompare(actualLeft.toMatchFilter(context),
-                    right.toMatchFilter(context), operator, MatchSensitivity.INSENSITIVE);
+                    right.toMatchFilter(context), operator, sensitivity);
         } else {
-            // Regular query. Only equals supported.
+            // Regular query. Only [not] equals supported.
             boolean isNot = operator == MatchFilterCompare.Operator.NOT_EQUAL;
             if (!isNot && operator != MatchFilterCompare.Operator.EQUAL)
                 throw new InvalidQuery("Only equality comparisons are supported in queries, not " + operator);
@@ -157,7 +213,7 @@ public class TextPatternCompare extends TextPattern {
                 String regex;
                 if (result2 instanceof ConstraintValue cv) {
                     if (cv instanceof ConstraintValueIntRange cvir) {
-                        regex = regexForRange(cvir.getMin(), cvir.getMax());
+                        regex = RangeRegex.forRange(cvir.getMin(), cvir.getMax());
                     } else {
                         regex = cv.asString().getValue();
                     }
@@ -166,35 +222,8 @@ public class TextPatternCompare extends TextPattern {
                             + result2.getClass().getSimpleName());
                 }
 
-                // See if this is really a regex query or just a term query maskerading as one...
-                TextPattern result = rewriteToSimplerTextPattern(annotation.name(),
-                        MatchSensitivity.INSENSITIVE, regex);
-                if (result != null) {
-                    // Rewritten into a TextPattern{Term|Regex}; translate that instead
-                    query = result.toQuery(context);
-                } else {
-                    // We're dealing with an actual regex query.
-                    context = context.withAnnotationAndSensitivity(annotation,
-                            MatchSensitivity.INSENSITIVE);
-                    String valueDesensitized = context.optDesensitize(regex);
-
-                    // Lucene's regex engine requires double quotes to be escaped, unlike most others.
-                    // Escape double quotes
-                    valueDesensitized = StringUtil.escapeQuoteForBcql(valueDesensitized, "\"");
-
-                    try {
-                        Term term = new Term(context.luceneField(), valueDesensitized);
-                        RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
-                        query = new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
-                    } catch (IllegalArgumentException e) {
-                        throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
-                    } catch (StackOverflowError e) {
-                        // If we pass in a really large regular expression, like a huge
-                        // list of words combined with OR, stack overflow occurs inside
-                        // Lucene's automaton building code and we may end up here.
-                        throw new RegexpTooLarge();
-                    }
-                }
+                // Rewrite to appropriate query, i.e. anytoken, term or regex.
+                query = getSimpleMatchQuery(context, annotation.name(), regex, sensitivity);
             } else if (evaluated instanceof QueryFunction func) {
                 // Pseudo-annotation, actually a function call
                 query = new TextPatternFunctionCall(func.getName(), List.of(right)).toQuery(context);
@@ -208,21 +237,26 @@ public class TextPatternCompare extends TextPattern {
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass())
+        if (!(o instanceof TextPatternCompare that))
             return false;
-        TextPatternCompare that = (TextPatternCompare) o;
         return Objects.equals(left, that.left) && Objects.equals(right, that.right)
-                && operator == that.operator;
+                && operator == that.operator && sensitivity == that.sensitivity;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(left, right, operator);
+        return Objects.hash(left, right, operator, sensitivity);
     }
 
     @Override
     public String toString() {
-        return "CMP(" + left + ", " + operator + ", " + right + ")";
+        String optForceSens = sensitivity == null ? "" : ", " + sensitivity;
+        if (leftIsDefaultValue && rightString != null) {
+            // Special case: to avoid having to update all the tests,
+            // serialize simple term comparisons like this (like old TextPatternTerm).
+            return "TERM(" + rightString.regex() + optForceSens + ")";
+        }
+        return "CMP(" + left + ", " + operator + ", " + right + optForceSens + ")";
     }
 
     public TextPattern getLeftClause() {
@@ -237,6 +271,10 @@ public class TextPatternCompare extends TextPattern {
         return operator;
     }
 
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
+    }
+
     @Override
     public boolean isBracketQuery() {
         return left != TextPatternDefaultValue.get();
@@ -245,5 +283,13 @@ public class TextPatternCompare extends TextPattern {
     @Override
     public <T> T accept(TextPatternVisitor<T> visitor) {
         return visitor.visitCompare(this);
+    }
+
+    public RegexStripped getRightString() {
+        return rightString;
+    }
+
+    public String getLeftSymbol() {
+        return leftSymbol;
     }
 }

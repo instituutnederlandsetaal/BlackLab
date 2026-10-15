@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
  */
 public class TextPatternAnyToken extends TextPattern {
 
+    public static final TextPattern ANY_SINGLE_TOKEN = new TextPatternAnyToken(1);
     public static int TP_PRECEDENCE = 0;
 
     /*

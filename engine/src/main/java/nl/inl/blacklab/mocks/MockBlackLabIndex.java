@@ -201,7 +201,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public MatchSensitivity defaultMatchSensitivity() {
-        return MatchSensitivity.CASE_INSENSITIVE;
+        return MatchSensitivity.INSENSITIVE;
     }
 
     @Override
@@ -263,7 +263,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
                 .getOrDefault(field, new HashMap<>())
                 .get(completeQuery);
         if (result == null)
-            throw new IllegalStateException("No response set for input: " + field + ", " + completeQuery);
+            throw new IllegalArgumentException("No response set for input: " + field + ", " + completeQuery);
         return result;
     }
 

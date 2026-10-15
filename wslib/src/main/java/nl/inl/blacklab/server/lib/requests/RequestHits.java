@@ -20,7 +20,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -183,15 +182,16 @@ public final class RequestHits {
     public static RequestHits fromParamsCollocations(QueryParams qpar, boolean isCsv) {
         BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
-        Annotation annotation;
-        if (StringUtils.isEmpty(qpar.get(WsParam.ANNOTATION))) {
-            annotation = annotatedField.mainAnnotation();
-        } else {
-            annotation = annotatedField.annotation(qpar.get(WsParam.ANNOTATION));
-            if (annotation == null)
-                throw new BadRequest("UNKNOWN_ANNOTATION",
-                        "Annotation '" + qpar.get(WsParam.ANNOTATION) + "' not found in field '" +
-                                annotatedField.name() + "'.");
+        ContextSize context;
+        try {
+            context = qpar.has(WsParam.CONTEXT) ? ParamUtil.getContext(qpar) : ContextSize.ZERO;
+        } catch (IllegalArgumentException e) {
+            throw new BadRequest("INVALID_CONTEXT", e.getMessage(), e);
+        }
+        String parGroupBy = qpar.get(WsParam.GROUP_BY);
+        HitProperty groupBy = ParamUtil.getGroupBy(WebserviceOperation.HITS, annotatedField, parGroupBy, context);
+        if (groupBy == null) {
+            groupBy = new HitPropertyHitText(annotatedField.index(), annotatedField.mainAnnotation(), MatchSensitivity.INSENSITIVE);
         }
 
         // Determine what we're finding collocations for
@@ -213,19 +213,8 @@ public final class RequestHits {
 
         // Construct and parse the query that will yield the collocations
         String within = qpar.has(WsParam.WITHIN) ? "<" + qpar.get(WsParam.WITHIN) + "/>" : "";
-        ContextSize context;
-        try {
-            context = qpar.has(WsParam.CONTEXT) ? ParamUtil.getContext(qpar) : ContextSize.ZERO;
-        } catch (IllegalArgumentException e) {
-            throw new BadRequest("INVALID_CONTEXT", e.getMessage(), e);
-        }
         String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex, within);
         TextPattern textPattern = parseCollocationPattern(bcqlQuery);
-
-        // Determine group by
-        MatchSensitivity sensitivity = qpar.optBool(WsParam.SENSITIVE).orElse(false) ? MatchSensitivity.SENSITIVE :
-                MatchSensitivity.INSENSITIVE;
-        HitProperty groupBy = new HitPropertyHitText(index, annotation, sensitivity);
 
         // Determine group scorer
         Query filter = ParamUtil.filterQuery(qpar);
@@ -233,8 +222,7 @@ public final class RequestHits {
         config.put(HitGroupScorer.KEY_ID, qpar.opt(WsParam.SCORER_TYPE).orElse(HitGroupScorer.DEFAULT_TYPE_ID));
         config.put(HitGroupCollocationScorer.KEY_DOC_FILTER, filter);
         config.put(HitGroupCollocationScorer.KEY_PATTERN, parseCollocationPattern(findQuery));
-        config.put(HitGroupCollocationScorer.KEY_ANNOTATION, annotation.name());
-        config.put(HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString());
+        config.put(HitGroupCollocationScorer.KEY_GROUP_BY, groupBy);
         config.put(HitGroupCollocationScorer.KEY_COLL_TYPE, collocationType.toString());
         config.put(HitGroupCollocationScorer.KEY_REL_TYPE, findRelations ? relationTypeRegex : null);
         HitGroupScorer groupScorer;
@@ -338,7 +326,7 @@ public final class RequestHits {
                 qpar.opt(WsParam.SEARCH_FIELD).orElse(null));
         WebserviceOperation operation = ParamUtil.getOperation(qpar);
         HitProperty hitsGroupProperty = overrideGroupBy == null ?
-                ParamUtil.getHitsGroupProperty(operation, groupBy, annotatedField, contextSize) : overrideGroupBy;
+                ParamUtil.getGroupBy(operation, annotatedField, groupBy, contextSize) : overrideGroupBy;
         HitGroupScorer hitGroupScorer = overrideGroupScorer == null ?
                 ParamUtil.getHitGroupScorer(annotatedField, qpar.opt(WsParam.SCORER).orElse(null)) : overrideGroupScorer;
         TextPattern patternOriginal = ParamUtil.patternNoWithinContextTag(index,

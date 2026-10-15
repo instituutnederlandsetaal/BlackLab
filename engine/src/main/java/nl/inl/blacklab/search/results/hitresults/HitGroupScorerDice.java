@@ -3,8 +3,9 @@ package nl.inl.blacklab.search.results.hitresults;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.plugins.HitGroupScorerType;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 public class HitGroupScorerDice extends HitGroupScorerType {
 
@@ -31,10 +32,10 @@ public class HitGroupScorerDice extends HitGroupScorerType {
     }
 
     @Override
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+    public HitGroupScorer getCollocationScorer(AnnotatedField field, HitProperty groupBy, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
-        return new HitGroupCollocationScorer(collocateAnnotation, filter) {
+            String relationType, boolean loose) {
+        return new HitGroupCollocationScorer(groupBy, filter) {
             @Override
             public HitGroupScorerType getType() {
                 return HitGroupScorerDice.this;
@@ -42,7 +43,7 @@ public class HitGroupScorerDice extends HitGroupScorerType {
 
             @Override
             public double score(PropertyValue identity, long size) {
-                long collocateFrequency = getCollocateFrequency(identity, collocationType, relationType);
+                long collocateFrequency = getCollocateFrequency(field, identity, collocationType, relationType, loose);
                 long divisor = collocateFrequency + wordFrequency;
                 if (divisor == 0)
                     divisor = 1;

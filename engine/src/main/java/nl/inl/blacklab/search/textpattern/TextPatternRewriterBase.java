@@ -28,7 +28,7 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
         TextPattern rewrittenLeft = tp.getLeftClause().accept(this);
         TextPattern rewrittenRight = tp.getRightClause().accept(this);
         if (!rewrittenLeft.equals(tp.getLeftClause()) || !rewrittenRight.equals(tp.getRightClause())) {
-            return new TextPatternCompare(rewrittenLeft, rewrittenRight, tp.getOperator());
+            return new TextPatternCompare(rewrittenLeft, rewrittenRight, tp.getOperator(), tp.getSensitivity());
         }
         return tp;
     }
@@ -132,11 +132,6 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
     }
 
     @Override
-    public TextPattern visitRegex(TextPatternRegex tp) {
-        return tp;
-    }
-
-    @Override
     public TextPattern visitRelationTarget(RelationTarget relationTarget) {
         TextPattern rewrittenTarget = relationTarget.getTarget().accept(this);
         if (!rewrittenTarget.equals(relationTarget.getTarget())) {
@@ -187,11 +182,6 @@ public abstract class TextPatternRewriterBase implements TextPatternVisitor<Text
         if (!rewrittenAttributes.equals(tp.getAttributes())) {
             return new TextPatternTags(tp.getElementNameRegex(), rewrittenAttributes, tp.getAdjust(), tp.getCaptureAs());
         }
-        return tp;
-    }
-
-    @Override
-    public TextPattern visitTerm(TextPatternTerm tp) {
         return tp;
     }
 

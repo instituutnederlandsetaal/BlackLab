@@ -549,7 +549,7 @@ public class HitGroupsTokenFrequencies {
 
                     PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
 
-                    CompleteQuery completeQuery = new CompleteQuery(new TextPatternAnyToken(1), source.getFilterQuery());
+                    CompleteQuery completeQuery = new CompleteQuery(TextPatternAnyToken.ANY_SINGLE_TOKEN, source.getFilterQuery());
                     // NOTE: we're only calculating stats here, never storing hits, and we cannot store a query for
                     // each group that will yield the hits (because of e.g. NO_TERM groups), so we never store a query
                     // either.

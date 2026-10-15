@@ -12,6 +12,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,12 +26,14 @@ import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -390,6 +393,11 @@ public class ParamUtil {
                 } else if (key.equals(HitGroupCollocationScorer.KEY_PATTERN) && value instanceof String) {
                     // Parse BCQL pattern into a TextPattern object
                     value = BcqlQueryLanguageParser.parseQuery(value.toString());
+                } else if (key.equals(HitGroupCollocationScorer.KEY_GROUP_BY) && value instanceof String) {
+                    // Parse BCQL pattern gap data into a list of maps
+                    value = ParamUtil.getGroupBy(WebserviceOperation.HITS, field, value.toString(), null);
+                    if (value == null)
+                        value = new HitPropertyHitText(field.index(), field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
                 }
                 configParsed.put(key, value);
             }
@@ -408,16 +416,20 @@ public class ParamUtil {
                 .orElse(HitGroupScorer.NONE);
     }
 
-    public static HitProperty getHitsGroupProperty(WebserviceOperation operation, String groupBy,
-            AnnotatedField annotatedField, ContextSize context) {
-        if (groupBy == null || operation.isDocsOperation()) {
-            // No grouping requested or not a hits grouping
-            return null;
+    public static @Nullable HitProperty getGroupBy(WebserviceOperation operation, AnnotatedField annotatedField,
+            String groupBySpec, ContextSize context) {
+        HitProperty groupBy = null;
+        if (!StringUtils.isEmpty(groupBySpec) && !operation.isDocsOperation()) {
+            // Hits grouping requested
+            try {
+                groupBy = HitProperty.deserialize(annotatedField, groupBySpec, context);
+            } catch (IllegalArgumentException e) {
+                // leads to throw below
+            }
+            if (groupBy == null)
+                throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBySpec + "'.");
         }
-        HitProperty prop = HitProperty.deserialize(annotatedField, groupBy, context);
-        if (prop == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
-        return prop;
+        return groupBy;
     }
 
     public static Query filterQuery(QueryParams qpar) throws BlsException {

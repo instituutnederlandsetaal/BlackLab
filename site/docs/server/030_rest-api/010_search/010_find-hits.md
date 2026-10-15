@@ -36,8 +36,6 @@ Take a random sampling of hits. Note that this has to retrieve all hits (or at l
 | `samplenum`  | Exact number of hits to select. Chooses a random sample of all the hits found.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `sampleseed` | Signed long seed number for sampling. If given, uses this value to seed the random number generator, ensuring identical sampling results next time. Please note that, without sorting, hit order is undefined (if you repeat the query later, it may produce hits in a different order). So if you want true reproducability, you should always sort hits that you want to sample, ideally with multiple sort criteria so the sort is fully defined. Example: `sort=field:title,field:pid,hitposition` (`field:pid` because two documents might have the same title) |
 
-
-
 #### Parameters for sorting and grouping hits and faceting documents
 
 Hits can be grouped by various criteria (see below). Faceting can be performed on the matching documents.

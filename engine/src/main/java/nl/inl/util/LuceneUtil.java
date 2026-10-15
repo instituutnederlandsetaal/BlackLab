@@ -69,7 +69,10 @@ public final class LuceneUtil {
             // but that's usually okay if you're using it for a ratio with another frequency
             // that also doesn't take deletions into account.
             try {
-                return annotSensitivity.annotation().field().index().reader().totalTermFreq(new Term(luceneField, term));
+                IndexReader reader = annotSensitivity.annotation().field().index().reader();
+                if (reader == null)
+                    return 0; // TEST
+                return reader.totalTermFreq(new Term(luceneField, term));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

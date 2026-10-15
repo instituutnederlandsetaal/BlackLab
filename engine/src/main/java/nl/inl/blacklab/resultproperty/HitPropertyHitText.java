@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
 
@@ -52,7 +51,10 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     @Override
     @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
-        return original.withPattern(new TextPatternAnd(original.pattern(), propTextPattern));
+        TextPattern tp = original.pattern() == null ?
+                propTextPattern :
+                new TextPatternAnd(original.pattern(), propTextPattern);
+        return original.withPattern(tp);
     }
 
     @Override
