@@ -666,7 +666,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Ensure the correct fragment behaviour is set for each metadata field that occurs at the fragment level.
                 for (String field: metadata.keySet()) {
                     ensureFragmentBehaviour(field, (__) -> {
-                        ConfigMetadataField c = config.getMetadataField(field);
+                        ConfigMetadataField c = config.getMetadataFieldRecursive(field);
                         if (c != null) {
                             return c.getFragments();
                         }

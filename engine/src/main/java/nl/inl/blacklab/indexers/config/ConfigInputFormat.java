@@ -387,7 +387,7 @@ public class ConfigInputFormat {
         String pidField = corpusConfig.getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID);
         if (pidField != null) {
             // Make sure the pid field is declared in metadata
-            ConfigMetadataField f = getMetadataField(pidField);
+            ConfigMetadataField f = getMetadataFieldRecursive(pidField);
             if (f == null) {
                 messages.error("pidField '" + pidField + "' is not declared in any metadata block");
             } else {
@@ -616,9 +616,9 @@ public class ConfigInputFormat {
         return corpusConfig;
     }
 
-    public ConfigMetadataField getMetadataField(String fieldname) {
+    public ConfigMetadataField getMetadataFieldRecursive(String fieldname) {
         for (ConfigMetadataBlock bl : metadata) {
-            ConfigMetadataField f = bl.getMetadataField(fieldname);
+            ConfigMetadataField f = bl.getMetadataFieldRecursive(fieldname);
             if (f != null)
                 return f;
         }

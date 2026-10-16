@@ -316,7 +316,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
              * defined)
              */
             protected String processMetadataValue(String name, String value) {
-                ConfigMetadataField f = config.getMetadataField(name);
+                ConfigMetadataField f = config.getMetadataFieldRecursive(name);
                 if (f != null)
                     value = f.getCompiledProcessSteps().performSingle(value, metadataFieldValues);
                 return value;
@@ -357,7 +357,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                 value = StringUtil.trimWhitespace(value);
                 if (!value.isEmpty()) {
                     metadataFieldValues.computeIfAbsent(indexAsName, __ -> {
-                        ConfigMetadataField conf = config.getMetadataField(indexAsName);
+                        ConfigMetadataField conf = config.getMetadataFieldRecursive(indexAsName);
                         if (conf != null && conf.getSortValues()) {
                             return new TreeSet<>(BlackLab.defaultCollator()::compare);
                         } else {

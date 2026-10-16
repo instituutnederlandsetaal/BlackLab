@@ -105,8 +105,22 @@ public class ConfigMetadataBlock {
         this.defaultAnalyzer = defaultAnalyzer;
     }
 
-    public ConfigMetadataField getMetadataField(String fieldName) {
-        return fieldsByName.get(fieldName);
+    /**
+     * Get metadata field config by name, searching recursively through sub-blocks if necessary.
+     *
+     * @param fieldName field name
+     * @return metadata field config, or null if not found
+     */
+    public ConfigMetadataField getMetadataFieldRecursive(String fieldName) {
+        ConfigMetadataField f = fieldsByName.get(fieldName);
+        if (f == null) {
+            for (ConfigMetadataBlock b : blocks) {
+                f = b.getMetadataFieldRecursive(fieldName);
+                if (f != null)
+                    break;
+            }
+        }
+        return f;
     }
 
     @Override
