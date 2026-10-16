@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -79,10 +80,10 @@ class IndexerImpl implements DocWriter, Indexer {
     private InputFormat inputFormat;
 
     /** How to index metadata fields (tokenized) */
-    private BLFieldType metadataFieldTypeTokenized;
+    private IndexableFieldType metadataFieldTypeTokenized;
 
     /** How to index metadata fields (untokenized) */
-    private BLFieldType metadataFieldTypeUntokenized;
+    private IndexableFieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
     private final List<File> linkedFileDirs = new ArrayList<>();
@@ -166,8 +167,8 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private void initMetadataFieldTypes() {
-        metadataFieldTypeTokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(true);
-        metadataFieldTypeUntokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(false);
+        metadataFieldTypeTokenized = BLFieldType.metadata(true);
+        metadataFieldTypeUntokenized = BLFieldType.metadata(false);
     }
 
     private String formatError(String formatIdentifier) {
@@ -198,7 +199,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public BLFieldType metadataFieldType(boolean tokenized) {
+    public IndexableFieldType metadataFieldType(boolean tokenized) {
         return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
     }
 
@@ -321,7 +322,7 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-        BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
+        IndexableFieldType fieldType = BLFieldType.contentStore();
 
         currentDoc.addField(luceneFieldName, document.toString(), fieldType);
     }
@@ -436,11 +437,6 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public BLIndexObjectFactory indexObjectFactory() {
-        return indexWriter.indexObjectFactory();
-    }
-
-    @Override
     public boolean needsPrimaryValuePayloads() {
         return indexWriter.needsPrimaryValuePayloads();
     }
@@ -454,7 +450,7 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void debugForceMerge() {
         try {
-            ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
+            indexWriter().writer().getWriter().forceMerge(1);
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }

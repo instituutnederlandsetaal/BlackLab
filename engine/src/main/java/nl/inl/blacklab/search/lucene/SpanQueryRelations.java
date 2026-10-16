@@ -18,7 +18,7 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.index.BLFieldTypeLucene;
+import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -255,7 +255,7 @@ public class SpanQueryRelations extends BLSpanQuery {
             if (spans == null)
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationField.luceneField());
-            boolean primaryIndicator = BLFieldTypeLucene.doesFieldHaveForwardIndex(fieldInfo);
+            boolean primaryIndicator = BLFieldType.doesFieldHaveForwardIndex(fieldInfo);
             RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context).relationInfo();
             spans = new SpansRelations(baseField, relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs, relInfo, relationsStrategy);

@@ -16,8 +16,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
-import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -93,9 +91,6 @@ public final class BlackLabEngine implements AutoCloseable {
 
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
-
-    /** How to create indexing objects. By default, use the "direct to Lucene" implementation. */
-    private BLIndexObjectFactory indexObjectFactory = BLIndexObjectFactoryLucene.INSTANCE;
 
     /** Was close() called on this engine? */
     private boolean wasClosed;
@@ -329,9 +324,5 @@ public final class BlackLabEngine implements AutoCloseable {
         if (max < 1)
             throw new IllegalArgumentException("maxThreadsPerSearch must be at least 1 (got " + max + ")");
         this.maxThreadsPerSearch = max;
-    }
-
-    public BLIndexObjectFactory indexObjectFactory() {
-        return indexObjectFactory;
     }
 }

@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.index.BLInputDocumentLucene;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -38,17 +37,17 @@ public class TestSpanQueryFromFragments {
             IndexWriterConfig config = new IndexWriterConfig(new KeywordAnalyzer());
             config.setMergePolicy(NoMergePolicy.INSTANCE);
             try (IndexWriter writer = new IndexWriter(directory, config)) {
-                BLInputDocumentLucene plain = parent(3);
+                BLInputDocument plain = parent(3);
                 writer.addDocument(plain.getDocument());
                 writer.commit();
-                BLInputDocumentLucene fragment = new BLInputDocumentLucene(BLInputDocument.DocType.FRAGMENT);
+                BLInputDocument fragment = new BLInputDocument(BLInputDocument.DocType.FRAGMENT);
                 fragment.addIndexedAndDocValues(BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD, FIELD_NAME);
                 fragment.addNumericField(BLInputDocument.FRAG_FIELD_START, 1, false, false, true);
                 fragment.addNumericField(BLInputDocument.FRAG_FIELD_END, 2, false, false, true);
                 writer.addDocuments(List.of(fragment.getDocument(), parent(4).getDocument()));
                 writer.addDocument(parent(2).getDocument());
                 writer.commit();
-                writer.addDocument(new BLInputDocumentLucene(BLInputDocument.DocType.INDEXMETADATA).getDocument());
+                writer.addDocument(new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
             AnnotatedField field = Mockito.mock(AnnotatedField.class);
             Mockito.when(field.name()).thenReturn("contents");
@@ -74,8 +73,8 @@ public class TestSpanQueryFromFragments {
         }
     }
 
-    private static BLInputDocumentLucene parent(int length) {
-        BLInputDocumentLucene doc = new BLInputDocumentLucene(BLInputDocument.DocType.DOCUMENT);
+    private static BLInputDocument parent(int length) {
+        BLInputDocument doc = new BLInputDocument(BLInputDocument.DocType.DOCUMENT);
         doc.addNumericField(TOKEN_LENGTH_LUCENE_FIELD,
                 (int)BlackLabIndex.encodeTokenLengthField(length), false, false, true);
         return doc;

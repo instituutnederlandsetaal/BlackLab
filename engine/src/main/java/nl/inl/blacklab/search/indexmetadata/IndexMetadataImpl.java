@@ -31,6 +31,7 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
@@ -182,9 +183,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         private void updateMetadataDoc(BlackLabIndexWriter indexWriter, String metadataJson) throws IOException {
             // Create a metadata document with the metadata JSON, config format file,
             // and a marker field to we can find it again
-            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument(BLInputDocument.DocType.INDEXMETADATA);
+            BLInputDocument indexmetadataDoc = new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA);
             indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
-            indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
+            indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER,
+                    BLFieldType.INDEX_METADATA_MARKER_FIELD_TYPE);
             TermQuery query = new TermQuery(METADATA_DOC_QUERY.getTerm());
             indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc), true);
         }

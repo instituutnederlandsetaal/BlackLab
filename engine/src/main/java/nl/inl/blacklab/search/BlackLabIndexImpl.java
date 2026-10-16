@@ -25,7 +25,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.index.BLFieldTypeLucene;
+import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -131,7 +131,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
 
                 // Keep a list of non-content store fields
-                if (!BLFieldTypeLucene.isContentStoreField(fi))
+                if (!BLFieldType.isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
 
                 // Ignore:
@@ -147,7 +147,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
                 // so we can use the same one for searching.
                 if (!createNewIndex && isRelationsField(fi) && !relStratSet) {
                     try {
-                        relationsStrategy = BLFieldTypeLucene.getRelationsStrategy(fi);
+                        relationsStrategy = BLFieldType.getRelationsStrategy(fi);
                     } catch (Exception e) {
                         throw new ErrorOpeningIndex(e.getMessage(), e);
                     }

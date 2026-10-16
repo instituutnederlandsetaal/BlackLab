@@ -18,6 +18,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -26,7 +27,6 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
-import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -149,7 +149,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             }
 
             protected BLInputDocument createNewDocument(BLInputDocument.DocType docType) {
-                return getDocWriter().indexObjectFactory().createInputDocument(docType);
+                return new BLInputDocument(docType);
             }
 
             /**
@@ -294,7 +294,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 FieldType type = desc.type();
                 if (type != FieldType.NUMERIC) {
                     for (String value: values) {
-                        BLFieldType blFieldType = switch (type) {
+                        IndexableFieldType blFieldType = switch (type) {
                             case NUMERIC -> throw new IllegalArgumentException(
                                     "Numeric types should be indexed using IntField, etc.");
                             case TOKENIZED -> getDocWriter().metadataFieldType(true);
@@ -704,10 +704,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                         if (!fragsPerField.isEmpty()) {
                             // For each annotated field that has fragments...
                             MetadataField pidField = getDocWriter().metadata().metadataFields().pidField();
-                            BLFieldType untokenizedFieldType = getDocWriter().metadataFieldType(false);
                             if (pidField == null)
                                 throw new InvalidInputFormatConfig("Cannot store fragments, input format config .blf.yaml has no pidField configured");
-                            String pid = currentDoc.get(pidField.name());
                             for (Map.Entry<String, List<Fragment>> entry: fragsPerField.entrySet()) {
                                 String annotatedFieldName = entry.getKey();
                                 // Merge fragments with the same span, and chop overlapping fragments into non-overlapping fragments

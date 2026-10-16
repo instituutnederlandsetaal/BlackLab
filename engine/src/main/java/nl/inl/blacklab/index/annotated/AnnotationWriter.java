@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.api.list.primitive.IntList;
@@ -20,7 +21,6 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -212,7 +212,7 @@ public class AnnotationWriter {
         return ts;
     }
 
-    BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName, RelationsStrategy relationsStrategy) {
+    IndexableFieldType getFieldType(String sensitivityName, RelationsStrategy relationsStrategy) {
         boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
         // Main sensitivity of main annotation gets character offsets
@@ -220,13 +220,13 @@ public class AnnotationWriter {
         boolean offsets = includeOffsets && isMainSensitivity;
 
         // Main sensitivity of main annotation may get content store
-        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, relationsStrategy);
+        return BLFieldType.annotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, relationsStrategy);
     }
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
             IntList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
-            BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName, relationsStrategy);
+            IndexableFieldType fieldType = getFieldType(sensitivityName, relationsStrategy);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
             String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
                     annotationName, sensitivityName);

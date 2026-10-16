@@ -49,19 +49,17 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
-import nl.inl.blacklab.index.BLIndexWriterProxyLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -265,7 +263,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
             IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);
-            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter, this);
+            indexWriter = new BLIndexWriterProxy(luceneIndexWriter, this);
             if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
             reader = DirectoryReader.open(luceneIndexWriter, false, false);
@@ -273,11 +271,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             reader = openIndexForReading(indexLocation, traceIndexOpening());
         }
         shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
-    }
-
-    @Override
-    public BLIndexObjectFactory indexObjectFactory() {
-        return blackLab.indexObjectFactory();
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -485,7 +478,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (traceIndexOpening())
                 logger.debug("  IndexReader too...");
             reader = DirectoryReader.open(luceneIndexWriter, false, false);
-            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter, this);
+            indexWriter = new BLIndexWriterProxy(luceneIndexWriter, this);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
@@ -668,7 +661,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             return;
 
         try {
-            IndexWriter writer = ((BLIndexWriterProxyLucene) indexWriter).getWriter();
+            IndexWriter writer = indexWriter.getWriter();
             writer.getConfig().setMergePolicy(new TieredMergePolicy());
             writer.maybeMerge();
         } catch (IOException e) {
