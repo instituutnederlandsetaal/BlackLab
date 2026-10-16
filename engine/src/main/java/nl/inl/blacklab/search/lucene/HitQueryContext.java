@@ -142,8 +142,15 @@ public class HitQueryContext {
         return field;
     }
 
-    public AnnotatedField getDefaultField() {
-        return defaultField;
+    /**
+     * Get the name of the annotated field this part of the query searches.
+     * <p>
+     * Used for parallel corpora.
+     *
+     * @return the name of the field this part of the query searches
+     */
+    public String getDefaultFieldName() {
+        return defaultField.name();
     }
 
     /**

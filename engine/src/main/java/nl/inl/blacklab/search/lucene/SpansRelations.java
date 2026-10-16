@@ -123,8 +123,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String relClass = RelationUtil.classFromFullType(relationType);
         boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
-        AnnotatedField targetField = version.isEmpty() ? sourceField :
-                context.index().annotatedField(AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField().name(), version));
+        String annotatedFieldName = context.getDefaultFieldName();
+        String targetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedFieldName, version);
+        AnnotatedField targetField = version.isEmpty() ? sourceField : context.index().annotatedField(targetFieldName);
 
         // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.
         // If this is the case, we'll set target field per matched relation, based on the relation class
