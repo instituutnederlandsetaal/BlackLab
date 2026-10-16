@@ -1,7 +1,7 @@
 {
   "docInfos": {
     "parallel-1": {
-      "mayView": false,
+      "mayView": true,
       "metadata": {
         "fromInputFile": [
           "minimal-parallel.xml"

@@ -150,6 +150,13 @@ public class ResultDocContents {
             content = DocUtil.highlightContent(index, docId, hitsInDoc, startAtWord, endAtWord);
         }
 
+        if (content == null) {
+            // This can happen in a parallel corpus if the requested document version doesn't exist.
+            // In that case, we just return an empty string.
+            content = "";
+            return;
+        }
+
         // Make sure we have exactly one XML declaration
         Matcher m = XML_DECL.matcher(content);
         boolean hasXmlDeclaration = m.find();

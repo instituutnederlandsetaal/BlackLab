@@ -68,6 +68,11 @@ expectCorpusUrlUnchanged(corpus, 'docs', 'document metadata',
         '/docs/PBsve430');
 expectCorpusUrlUnchanged(corpus, 'docs', 'document contents',
         '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+// Parallel: fetch version; empty response if version missing
+expectCorpusUrlUnchanged('parallel', 'docs', 'document version',
+        '/docs/parallel-1/contents?field=de', 'application/xml');
+expectCorpusUrlUnchanged('parallel', 'docs', 'missing document version',
+        '/docs/parallel-2/contents', 'application/xml');
 
 // Doc snippet
 expectCorpusUrlUnchanged(corpus, 'docs', 'document snippet wordstart',

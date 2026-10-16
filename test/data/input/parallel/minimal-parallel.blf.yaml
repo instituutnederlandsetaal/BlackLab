@@ -1,5 +1,5 @@
 processor: saxon
-documentPath: /doc
+documentPath: /corpus/doc
 
 namespaces:
   xml: http://www.w3.org/XML/1998/namespace
@@ -59,6 +59,7 @@ annotatedFields:
 
 corpusConfig:
   displayName: parallel
+  contentViewable: true
 
 metadata:
   containerPath: .
