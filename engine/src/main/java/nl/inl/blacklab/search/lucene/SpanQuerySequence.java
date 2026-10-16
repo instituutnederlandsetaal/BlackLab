@@ -21,7 +21,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -369,8 +368,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = queryInfo.index();
-        boolean anyRewritten = performQueryOptimizations(index, cl);
+        boolean anyRewritten = performQueryOptimizations(reader, cl);
 
         // Optimize each clause, and flatten again if necessary
         // NOTE: this seems redundant because we've already flattened, and optimize() is only implemented by
@@ -391,7 +389,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));
     }
 
-    private boolean performQueryOptimizations(BlackLabIndex index, List<BLSpanQuery> cl) {
+    private boolean performQueryOptimizations(IndexReader reader, List<BLSpanQuery> cl) {
         // Flatten nested sequences.
         // This doesn't change the query because the sequence operator is associative.
         boolean anyRewritten = flattenSequence(cl);
@@ -408,7 +406,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
         // as dealing with each of these (sometimes frequent) terms, which can be significant.
-        anyRewritten |= combineAdjacentClauses(cl, index.reader(), ClauseCombiner.all());
+        anyRewritten |= combineAdjacentClauses(cl, reader, ClauseCombiner.all());
         return anyRewritten;
     }
 
@@ -417,8 +415,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = queryInfo.index();
-        boolean anyRewritten = performQueryOptimizations(index, cl);
+        boolean anyRewritten = performQueryOptimizations(reader, cl);
 
         // Rewrite each clause, and flatten again if necessary
         anyRewritten |= rewriteClauses(cl, reader);
