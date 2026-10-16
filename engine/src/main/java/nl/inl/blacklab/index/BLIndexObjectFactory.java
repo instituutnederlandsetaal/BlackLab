@@ -8,8 +8,8 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 /**
  * Factory object for objects related to indexing.
- * This interface is mainly responsible for supplying those objects that need to be aware of the type of index this is (solr or lucene), but do not need details specific to the shape and data in the index.
- * Currently the FieldType and IndexWriter (which is responsible for saving the documents to lucene/solr).
+ * This interface is mainly responsible for supplying those objects that need to be aware of the type of index this is (only lucene now), but do not need details specific to the shape and data in the index.
+ * Currently the FieldType and IndexWriter (which is responsible for saving the documents to lucene).
  */
 public interface BLIndexObjectFactory {
     BLInputDocument createInputDocument(BLInputDocument.DocType type);

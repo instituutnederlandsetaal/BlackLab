@@ -44,7 +44,7 @@ public class TestResultAutocomplete {
     public void testTokenizedAutocompleteParameterParsing() {
         Map<WsParam, String> parameterValues = Map.of();
         QueryParams.CorpusRefByName corpusRef = new QueryParams.CorpusRefByName("test-index");
-        QueryParamsMap paramsDefault = new QueryParamsMap(corpusRef, parameterValues, null, null,
+        QueryParamsMap paramsDefault = new QueryParamsMap(corpusRef, parameterValues, null,
                 Mockito.mock(BLSConfig.class), true);
         Assert.assertEquals("term", paramsDefault.get(WsParam.AUTOCOMPLETE_TYPE));
     }

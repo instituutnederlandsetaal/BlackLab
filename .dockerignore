@@ -2,10 +2,6 @@
 **/.env
 **/target
 
-# don't ignore blacklab-solr.jar, copy directly to image [dev]
-#!solr/target/blacklab-*.jar
-#!solr/target/lib/*.jar
-
 **/bin
 **/.settings
 **/.idea

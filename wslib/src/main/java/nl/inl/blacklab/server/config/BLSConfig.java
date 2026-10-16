@@ -69,9 +69,6 @@ public class BLSConfig {
     @JsonIgnore
     private BlackLabConfig blackLabConfig;
 
-    /** Are we using this from Solr? If so, don't check if we have any indexLocations (managed by Solr) */
-    private boolean solr;
-
     public List<String> getIndexLocations() {
         return indexLocations;
     }
@@ -214,13 +211,5 @@ public class BLSConfig {
     @SuppressWarnings("unused")
     public void setBLConfig(BlackLabConfig blackLabConfig) {
         this.blackLabConfig = blackLabConfig;
-    }
-
-    public void setIsSolr(boolean b) {
-        this.solr = b;
-    }
-
-    public boolean isSolr() {
-        return solr;
     }
 }

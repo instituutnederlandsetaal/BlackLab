@@ -38,19 +38,7 @@ services:
       - blacklab-data:/data
 
 
-  # BlackLab as a Solr component
-  solr:
-    profiles: [ "experimental" ]
-    image: instituutnederlandsetaal/blacklab-solr:${VERSION:-latest}
-    environment:
-      # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
-      - "SOLR_SECURITY_MANAGER_ENABLED=false"
-    build:
-      context: ..
-      dockerfile: solr/Dockerfile
-
-
-  # Reverse proxy to Solr or BLS
+  # Reverse proxy to BLS
   proxy:
     profiles: [ "tools" ]
     image: instituutnederlandsetaal/blacklab-proxy:${VERSION:-latest}
@@ -58,7 +46,7 @@ services:
       context: ..
       dockerfile: proxy/Dockerfile
     volumes:
-      # Configuration file (pointing to solr and specifying a default corpus name)
+      # Configuration file (pointing to BLS and specifying a default corpus name)
       - ../solr/proxy.yaml:/etc/blacklab/proxy.yaml
     ports:
       # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)

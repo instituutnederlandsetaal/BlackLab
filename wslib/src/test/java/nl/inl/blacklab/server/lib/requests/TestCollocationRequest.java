@@ -164,6 +164,6 @@ public class TestCollocationRequest {
         params.put(WsParam.PATTERN, "\"eat\"");
         params.putAll(values);
         QueryParams.CorpusRefByName corpusRef = new QueryParams.CorpusRefByName("test", testResolver);
-        return new QueryParamsMap(corpusRef, params, null, null, new BLSConfig(), false);
+        return new QueryParamsMap(corpusRef, params, null, new BLSConfig(), false);
     }
 }

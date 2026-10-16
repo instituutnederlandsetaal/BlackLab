@@ -154,7 +154,7 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
     return request.send()
 }
 
-if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement these functions yet
+if (process.env.SKIP_INDEXING_TESTS !== 'true') { // not all target implement these functions
 
     describe('Indexing tests', () => {
         it('create a new index', async () => {

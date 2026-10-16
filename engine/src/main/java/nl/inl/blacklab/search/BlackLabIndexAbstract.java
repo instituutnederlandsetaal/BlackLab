@@ -142,7 +142,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     private IndexSearcher indexSearcher;
 
     /**
-     * Directory where our index resides. May be null for already-opened IndexReader (Solr)
+     * Directory where our index resides.
      */
     private final File indexLocation;
 
@@ -184,8 +184,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      *
      * @param name name of the index
      * @param blackLab BlackLab engine
-     * @param reader if non-null: use this already-opened IndexReader. indexMode must be false in this case.
-     *               Used with Solr.
+     * @param reader if non-null: use this already-opened IndexReader. indexMode must be false in this case. Used with Solr (now removed).
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -198,10 +197,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     BlackLabIndexAbstract(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
-        this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr)
+        this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr, now removed)
         this.name = name;
         searchSettings = SearchSettings.DEFAULT;
-        boolean solrMode = false;
         try {
             this.indexMode = indexMode;
 
@@ -218,7 +216,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 // Only create analyzer if not in solr mode.
                 // indexModule == true && indexReader != null only ever happens in solr mode
                 // so if we're here, we're in solr mode, so do not create the analyzer.
-                if (indexMode) solrMode = true;
+                if (indexMode)
+                    throw new IllegalStateException("Solr no longer supported");
 
                 // We've been passed an already-opened IndexReader. Use that, don't open our own.
                 this.reader = reader;
@@ -241,12 +240,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // Ensure quick lookup of the segment we need
             leafReaderLookup = new LeafReaderLookupArray(this.reader);
 
-            // TODO abstract away this special solrMode parameter (which is used to avoid closing the reader if we're in solr mode)
-            // we should abstract out the creation of the objects that depend on the analyzer
-            // (such as the lucene writer) into the IndexObjectFactory
-            // so that we do not need this (ugly and brittle!) check here and can just call the function on whichever IndexObjectFactory
-            // we have and trust that it will do the right thing.
-            finishOpeningIndex(indexDir, createNewIndex, solrMode);
+            finishOpeningIndex(indexDir, createNewIndex);
             if (traceIndexOpening())
                 logger.debug("    (done with finishOpeningIndex)");
 
@@ -467,8 +461,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         }
     }
 
-    // TODO abstract away this special solrMode parameter (which is used to avoid closing the reader if we're in solr mode)
-    protected final void finishOpeningIndex(File indexDir, boolean createNewIndex, boolean solrMode)
+    protected final void finishOpeningIndex(File indexDir, boolean createNewIndex)
             throws IOException, ErrorOpeningIndex {
         isEmptyIndex = indexMetadata.isNewIndex();
 
@@ -481,25 +474,18 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         createAnalyzers();
 
         if (indexMode) {
-            if (!solrMode) {
-                if (indexWriter == null)
-                    throw new IllegalStateException("When not in solr mode, there must always be an indexWriter when in indexMode.");
-                // Re-open the IndexWriter with the analyzer we've created above (see comment above)
-                if (traceIndexOpening())
-                    logger.debug("  Re-opening IndexWriter with newly created analyzers...");
-                reader.close();
-                indexWriter.close();
-                IndexWriter luceneIndexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
-                if (traceIndexOpening())
-                    logger.debug("  IndexReader too...");
-                reader = DirectoryReader.open(luceneIndexWriter, false, false);
-                indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter, this);
-            } else {
-                // solr indexWriter doesn't require a lucene indexWriter, so pass null.
-                // TODO refactor this so that all lucene/solr specific code resides in lucene/solr specific classes
-                // the BlackLabIndex shouldn't have to be aware of the underlying implementation.
-                indexWriter = indexObjectFactory().indexWriterProxy(null, this);
-            }
+            if (indexWriter == null)
+                throw new IllegalStateException("There must always be an indexWriter when in indexMode.");
+            // Re-open the IndexWriter with the analyzer we've created above (see comment above)
+            if (traceIndexOpening())
+                logger.debug("  Re-opening IndexWriter with newly created analyzers...");
+            reader.close();
+            indexWriter.close();
+            IndexWriter luceneIndexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
+            if (traceIndexOpening())
+                logger.debug("  IndexReader too...");
+            reader = DirectoryReader.open(luceneIndexWriter, false, false);
+            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter, this);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,

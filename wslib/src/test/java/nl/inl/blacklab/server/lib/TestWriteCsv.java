@@ -48,7 +48,7 @@ public class TestWriteCsv {
         parameterValues.put(WsParam.CSV_DESCRIPTION, "Export for issue 655");
         parameterValues.put(WsParam.WAIT_FOR_TOTAL_COUNT, true);
         QueryParams.CorpusRefByName corpusRef = new QueryParams.CorpusRefByName("test-index");
-        QueryParamsMap params = new QueryParamsMap(corpusRef, null, parameterValues, null, null, true);
+        QueryParamsMap params = new QueryParamsMap(corpusRef, null, parameterValues, null, true);
         ResultSummaryNumHits summaryNumHits = new ResultSummaryNumHits(new ResultsStatsSaved(0), new ResultsStatsSaved(0),
                 true, null, null);
         ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(null, null, null, null, null, null,

@@ -13,7 +13,6 @@ import java.util.jar.Manifest;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
 
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
@@ -154,16 +153,12 @@ public final class BlackLab {
         return implicitInstance().openForWriting(directory, create, formatIdentifier);
     }
 
-    public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
-        return (BlackLabIndexWriter) implicitInstance().wrapIndexReader(indexName, reader, true);
-    }
-
     public static synchronized BlackLabEngine currentInstance() {
         if (explicitlyCreated)
             return BlackLabEngine.singleInstance();
         return implicitInstance();
     }
-    
+
     /**
      * Return the implicitly created instance of BlackLab.
      * 
@@ -189,19 +184,6 @@ public final class BlackLab {
 
     public static boolean isImplicitInstance(BlackLabEngine blackLabEngine) {
         return blackLabEngine == implicitInstance;
-    }
-
-    /**
-     * Given an index reader that was opened using BlackLab, return the
-     * corresponding BlackLab index object.
-     *
-     * @param reader index reader that was opened using BlackLab
-     * @param wrapIfNotFound if not found, should we create a new instance using the supplied reader?
-     * @return BlackLab index object
-     */
-    public static synchronized BlackLabIndex indexFromReader(String indexName, IndexReader reader, boolean wrapIfNotFound) {
-        ensureGlobalConfigApplied();
-        return BlackLabEngine.indexFromReader(indexName, reader, wrapIfNotFound, false);
     }
 
     /**

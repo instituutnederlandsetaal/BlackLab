@@ -7,9 +7,7 @@ chai.use(chaiHttp);
 const constants = require('./constants');
 const { expectUnchanged } = require("./compare-responses");
 
-const describeParallel = constants.INDEX_TYPE === "solr" ? describe.skip : describe;
-
-describeParallel('parallel adjusted alignment otherFields', () => {
+describe('parallel adjusted alignment otherFields', () => {
     it('response should include aligned field fragments', done => {
         chai.request(constants.SERVER_URL)
         .get(constants.URL_CORPUS_PARALLEL + '/hits')

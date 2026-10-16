@@ -14,9 +14,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * Generic interface for a BlackLab document being indexed.
  *
- * Either implemented using Lucene's Document class directly,
- * or through Solr's SolrInputDocument intermediary (which adds
- * schema validation, copyfields, etc.).
+ * Implemented using Lucene's Document class.
  */
 public interface BLInputDocument {
 

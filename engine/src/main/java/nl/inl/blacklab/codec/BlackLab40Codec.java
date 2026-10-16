@@ -9,17 +9,12 @@ import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
  * to accomodate our forward index and (optional) content store.
  *
  * This functions as an adapter that wraps a delegate
- * codec (usually the default Solr codec) and simply proxies
+ * codec (usually the default Lucene codec) and simply proxies
  * most requests to that codec. It will handle specific requests
  * itself, though, in this case the {@link #postingsFormat()} method
  * that returns the postings format object responsible for
  * saving/loading postings data (the actual inverted index, with
  * frequencies, offsets, payloads, etc.).
- *
- * This is referenced in Solr schema, e.g.:
- * <pre>
- * &lt;fieldType name="blacklab_text_example_test" class="solr.TextField" postingsFormat="BlackLab40"&gt;
- * </pre>
  *
  * This class is declared in META-INF/services/org.apache.lucene.codecs.Codec
  *

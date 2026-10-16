@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.lucene.search.Query;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -73,14 +71,13 @@ public interface QueryParams extends ParamsForResponse {
         if (operation != null && operation != WebserviceOperation.NONE) {
             typedParams.put(WsParam.OPERATION, operation.value());
         }
-        return new QueryParamsMap(corpusName, null, typedParams, null, config, debugMode);
+        return new QueryParamsMap(corpusName, null, typedParams, config, debugMode);
     }
 
     /** Get query parameters from a JSON structure */
     static QueryParamsMap fromJson(CorpusRefByName corpusName, WebserviceOperation operation, String json,
-            Query fallbackFilterQuery,
             BLSConfig config, boolean debugMode) throws JsonProcessingException {
-        return new QueryParamsMap(corpusName, null, ParamUtil.getTypedParams(operation, json), fallbackFilterQuery, config, debugMode);
+        return new QueryParamsMap(corpusName, null, ParamUtil.getTypedParams(operation, json), config, debugMode);
     }
 
     /** Config, for determing some parameter defaults */
@@ -88,9 +85,6 @@ public interface QueryParams extends ParamsForResponse {
 
     /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
     boolean debugMode();
-
-    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
-    default Query getFallbackFilterQuery() { return null; }
 
     String getCorpusName();
 
@@ -157,6 +151,6 @@ public interface QueryParams extends ParamsForResponse {
     default QueryParams withOverrides(Map<WsParam, Object> overrides) {
         Map<WsParam, Object> typedParams = new LinkedHashMap<>(getTypedParameters());
         typedParams.putAll(overrides);
-        return new QueryParamsMap(getCorpusRef(), null, typedParams, getFallbackFilterQuery(), config(), debugMode());
+        return new QueryParamsMap(getCorpusRef(), null, typedParams, config(), debugMode());
     }
 }

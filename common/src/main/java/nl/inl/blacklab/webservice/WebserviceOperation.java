@@ -6,8 +6,6 @@ import java.util.Optional;
  * All of the operations a BlackLab webservice supports.
  * <p>
  * Also records the BlackLab Server URL path and HTTP method.
- * The path doesn't apply to Solr, because Solr always uses the same path
- * and gets all info via parameters.
  */
 public enum WebserviceOperation {
     SERVER_INFO("server-info", BlsPath.EMPTY),
