@@ -3,14 +3,12 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.ThreadContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -44,10 +42,6 @@ public class UserRequestBls implements UserRequest {
 
     public UserRequestBls(HttpServletRequest request) {
         this.request = request;
-
-        // Pass requestId to instrumentationProvider
-        String requestId = BlsMain.get().getInstrumentationProvider().getRequestID(request).orElse("");
-        ThreadContext.put("requestId", requestId);
 
         // Parse the URL path
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");

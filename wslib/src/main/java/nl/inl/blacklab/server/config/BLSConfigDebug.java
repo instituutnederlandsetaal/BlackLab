@@ -16,12 +16,6 @@ public class BLSConfigDebug {
     /** Run all local requests in debug mode */
     boolean alwaysAllowDebugInfo = false;
 
-    /** For metrics gathering purpouses */
-    String metricsProvider = "";
-
-    /** For instrumentation purpouses */
-    String requestInstrumentationProvider = "";
-
     public List<String> getAddresses() {
         return addresses;
     }
@@ -36,23 +30,5 @@ public class BLSConfigDebug {
             return true;
         }
         return BlsUtils.wildcardIpsContain(addresses, ip);
-    }
-
-    public String getMetricsProvider() {
-        return metricsProvider;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMetricsProviderName(String metricsProviderName) {
-        this.metricsProvider = metricsProviderName;
-    }
-
-    public String getRequestInstrumentationProvider() {
-        return requestInstrumentationProvider;
-    }
-
-    @SuppressWarnings("unused")
-    public void setRequestInstrumentationProvider(String requestInstrumentationProvider) {
-        this.requestInstrumentationProvider = requestInstrumentationProvider;
     }
 }
