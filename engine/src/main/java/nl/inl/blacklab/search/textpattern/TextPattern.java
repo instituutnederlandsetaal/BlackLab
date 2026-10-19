@@ -11,7 +11,6 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -239,7 +238,7 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
-        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(new AnnotatedField.Ref(queryInfo.annotatedField()), queryInfo));
+        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo.field(), queryInfo));
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {

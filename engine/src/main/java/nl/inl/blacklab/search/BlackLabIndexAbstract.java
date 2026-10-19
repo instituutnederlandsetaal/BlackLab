@@ -606,13 +606,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField.Ref annotatedField, QueryInfo queryInfo) {
+    public QueryExecutionContext defaultExecutionContext(String annotatedField, QueryInfo queryInfo) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Unknown annotated field: null");
-        Annotation defaultSearchAnnotation = annotatedField.getAnnotatedField().defaultSearchAnnotation();
+        Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
-        return QueryExecutionContext.get(this, defaultSearchAnnotation, defaultMatchSensitivity, queryInfo);
+        return QueryExecutionContext.get(this, annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity, queryInfo);
     }
 
     @Override

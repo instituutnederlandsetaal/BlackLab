@@ -27,9 +27,9 @@ import nl.inl.blacklab.webservice.WsParam;
  */
 public class QueryExecutionContext {
 
-    public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation,
+    public static QueryExecutionContext get(BlackLabIndex index, String annotatedField, String annotation,
             MatchSensitivity matchSensitivity, QueryInfo queryInfo) {
-        return new QueryExecutionContext(index, annotation.field(), null, annotation.name(),
+        return new QueryExecutionContext(index, annotatedField, null, annotation,
                 matchSensitivity, null, null, false, queryInfo);
     }
 
@@ -40,7 +40,7 @@ public class QueryExecutionContext {
     private final QueryInfo queryInfo;
 
     /** Name of the annotated field we're searching. */
-    private final AnnotatedField field;
+    private final String field;
 
     /** Version of the document we're searching, or null if this is not a parallel corpus. */
     private final String version;
@@ -79,34 +79,33 @@ public class QueryExecutionContext {
      * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
      * @param queryInfo QueryInfo to use, or null to create a new one
      */
-    private QueryExecutionContext(BlackLabIndex index, AnnotatedField field, String version, String annotationName,
+    private QueryExecutionContext(BlackLabIndex index, String annotatedField, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
             QueryInfo queryInfo) throws InvalidQuery {
         this.index = index;
-        if (field == null)
+        if (annotatedField == null)
             throw new IllegalArgumentException("field == null");
-        this.field = version == null ? field : field.withParallelFieldVersion(version);
+        this.field = version == null ? annotatedField : AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedField, version);
         this.version = version;
-        this.annotationName = annotationName;
-        Annotation annotation = this.field.annotation(annotationName);
-        if (annotation == null)
-            throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + annotationName + " on field " + this.field);
+        AnnotatedField annotatedFieldDef = index.annotatedField(this.field);
+        this.annotationName = annotationName == null ?
+                annotatedFieldDef.defaultSearchAnnotation().name() : annotationName;
         this.requestedSensitivity = matchSensitivity;
-        sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
+        sensitivity = determineSensitivity(annotatedFieldDef, this.annotationName, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field.name()) : queryInfo;
+        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
     }
 
-    // @@@ TMP
-    public static QueryExecutionContext get(BlackLabIndex index, String fieldName) {
-        AnnotatedField field = index.annotatedField(fieldName);
-        if (field == null)
-            throw new FeatureNotPresentInCorpus("Field doesn't exist: " + fieldName);
-        Annotation annotation = field.mainAnnotation();
-        return new QueryExecutionContext(index, field, null, annotation.name(), MatchSensitivity.CASE_INSENSITIVE,
-                null, null, false, null);
+    private AnnotationSensitivity determineSensitivity(AnnotatedField annotatedField, String annotationName,
+            MatchSensitivity matchSensitivity) {
+        final AnnotationSensitivity sensitivity;
+        Annotation annotation = annotatedField.annotation(annotationName);
+        if (annotation == null)
+            throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + annotationName + " on field " + annotatedField.name());
+        sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
+        return sensitivity;
     }
 
     public MatchSensitivity getSensitivity() {
@@ -114,9 +113,9 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withField(String field) {
-        if (this.field.name().equals(field))
+        if (this.field.equals(field))
             return this;
-        return new QueryExecutionContext(index, index.annotatedField(field), version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 

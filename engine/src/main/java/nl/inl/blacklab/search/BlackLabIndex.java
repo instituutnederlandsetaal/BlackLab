@@ -433,7 +433,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to search
      * @return query execution context
      */
-    QueryExecutionContext defaultExecutionContext(AnnotatedField.Ref field, QueryInfo queryInfo);
+    QueryExecutionContext defaultExecutionContext(String field, QueryInfo queryInfo);
 
     /**
      * Get the collator being used for sorting.
