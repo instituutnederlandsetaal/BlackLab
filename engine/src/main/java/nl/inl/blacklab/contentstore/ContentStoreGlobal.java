@@ -10,7 +10,7 @@ import nl.inl.blacklab.codec.LeafReaderLookup;
  * <p>
  * Will forward any requests to the appropriate {@link ContentStoreSegmentReader}.
  */
-public class ContentStoreIntegrated implements ContentStore {
+public class ContentStoreGlobal implements ContentStore {
 
     /** Quickly look up the segment a document is stored in */
     private final LeafReaderLookup leafReaderLookup;
@@ -18,7 +18,7 @@ public class ContentStoreIntegrated implements ContentStore {
     /** Field we're accessing */
     private final String luceneField;
 
-    public ContentStoreIntegrated(LeafReaderLookup leafReaderLookup, String luceneField) {
+    public ContentStoreGlobal(LeafReaderLookup leafReaderLookup, String luceneField) {
         if (leafReaderLookup == null)
             throw new IllegalArgumentException("LeafReaderLookup cannot be null");
         if (luceneField == null || luceneField.isEmpty())

@@ -10,7 +10,7 @@ import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanFilter;
@@ -71,14 +71,14 @@ public class XFDebug implements ExtensionFunctionClass {
                         fiIndex = 0;
                     if (fiIndex == 0) {
                         // Resolve the first query using the forward index and the second using the inverted index
-                        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(
+                        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorGlobal(
                                 queryInfo.index(), a.getAnnotatedFieldName());
                         NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
                         return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_BACKWARD,
                                 fiAccessor);
                     } else {
                         // Resolve the second query using the forward index and the first using the inverted index
-                        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(
+                        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorGlobal(
                                 queryInfo.index(), a.getAnnotatedFieldName());
                         NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
                         return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b,

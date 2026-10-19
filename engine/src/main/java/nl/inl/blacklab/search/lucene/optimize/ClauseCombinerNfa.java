@@ -6,7 +6,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
@@ -262,7 +262,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(right.queryInfo().index(), right.getAnnotatedFieldName());
+            ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorGlobal(right.queryInfo().index(), right.getAnnotatedFieldName());
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
             return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_FORWARD, fiAccessor);
         }
@@ -273,7 +273,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(left.queryInfo().index(), left.getAnnotatedFieldName());
+        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorGlobal(left.queryInfo().index(), left.getAnnotatedFieldName());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
         return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_BACKWARD, fiAccessor);
     }

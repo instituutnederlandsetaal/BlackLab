@@ -22,14 +22,14 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
+import nl.inl.blacklab.contentstore.ContentStoreGlobal;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -172,7 +172,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     @Override
     protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
         String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
-        ContentStore cs = new ContentStoreIntegrated(leafReaderLookup, luceneField);
+        ContentStore cs = new ContentStoreGlobal(leafReaderLookup, luceneField);
         contentStores.put(field, cs);
     }
 
@@ -188,7 +188,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
-        return new ForwardIndexAccessorIntegrated(this, searchField);
+        return new ForwardIndexAccessorGlobal(this, searchField);
     }
 
     @Override
