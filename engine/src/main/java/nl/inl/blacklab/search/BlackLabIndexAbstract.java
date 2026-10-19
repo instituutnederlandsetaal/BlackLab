@@ -437,7 +437,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this, new AnnotatedField.Ref(mainAnnotatedField())), documentFilterQuery);
+        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField().name()), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -735,13 +735,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
             Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms);
-        return new TermFrequencyList(QueryInfo.create(this, new AnnotatedField.Ref(annotSensitivity.annotation().field())), freq, true);
+        return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field().name()), freq, true);
     }
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
-        return new SearchEmpty(QueryInfo.create(this, field, cacheToUse));
+        return new SearchEmpty(QueryInfo.create(this, field.name(), cacheToUse));
     }
 
     @Override

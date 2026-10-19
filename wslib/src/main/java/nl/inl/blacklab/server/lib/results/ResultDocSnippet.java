@@ -90,7 +90,7 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hitResults = HitResults.singleHit(QueryInfo.create(index, request.field()), luceneDocId, start, end);
+            hitResults = HitResults.singleHit(QueryInfo.create(index, request.field().name()), luceneDocId, start, end);
         }
 
         origContent = request.concordanceType() == ConcordanceType.CONTENT_STORE;

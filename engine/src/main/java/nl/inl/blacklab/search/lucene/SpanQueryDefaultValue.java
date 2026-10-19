@@ -55,7 +55,7 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
 
     @Override
     public String getRealField() {
-        return queryInfo.field().mainAnnotation().mainSensitivity().luceneField();
+        return queryInfo.annotatedField().mainAnnotation().mainSensitivity().luceneField();
     }
 
     @Override

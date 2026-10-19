@@ -16,10 +16,10 @@ public class TestSpanQueryAnd {
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        QueryInfo queryInfo = QueryInfo.create(index, index.annotatedField("contents2"));
-        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field().getName(), "bla"));
-        queryInfo = QueryInfo.create(index, index.annotatedField("contents"));
-        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field().getName(), "bla"));
+        QueryInfo queryInfo = QueryInfo.create(index, "contents2");
+        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field(), "bla"));
+        queryInfo = QueryInfo.create(index, "contents");
+        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field(), "bla"));
 
         // Different fields; will throw exception
         new SpanQueryAnd(first, second);

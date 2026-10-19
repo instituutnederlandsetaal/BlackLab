@@ -13,33 +13,21 @@ import nl.inl.blacklab.searches.SearchCacheMap;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, new AnnotatedField.Ref(index.mainAnnotatedField()), index.cache());
+        return create(index, index.mainAnnotatedField().name(), index.cache());
     }
 
-    public static QueryInfo create(BlackLabIndex index, String fieldName) {
-        return create(index, new AnnotatedField.Ref(index.annotatedField(fieldName)));
-    }
-
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField.Ref field) {
+    public static QueryInfo create(BlackLabIndex index, String field) {
         return create(index, field, index == null ? null : index.cache());
     }
 
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField.Ref field, SearchCache cacheToUse) {
+    public static QueryInfo create(BlackLabIndex index, String field, SearchCache cacheToUse) {
         return new QueryInfo(index, field, cacheToUse);
-    }
-
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
-        return create(index, new AnnotatedField.Ref(field), index == null ? null : index.cache());
-    }
-
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
-        return new QueryInfo(index, new AnnotatedField.Ref(field), cacheToUse);
     }
 
     private final BlackLabIndex index;
 
     /** The field these hits came from (will also be used as concordance field) */
-    private final AnnotatedField.Ref field;
+    private final String field;
 
     /** Cache to use for this query (either the main shared cache, or one just for this request that we'll dump after). */
     private final SearchCache cacheToUse;
@@ -47,7 +35,7 @@ public final class QueryInfo {
     /** How long executing certain parts of the operation took. */
     private final QueryTimings timings = new QueryTimings();
 
-    private QueryInfo(BlackLabIndex index, AnnotatedField.Ref field, SearchCache cacheToUse) {
+    private QueryInfo(BlackLabIndex index, String field, SearchCache cacheToUse) {
         super();
         this.index = index;
         this.field = field;
@@ -60,7 +48,7 @@ public final class QueryInfo {
     }
 
     /** @return field that was searched */
-    public AnnotatedField.Ref field() {
+    public String field() {
         return field;
     }
 
@@ -117,28 +105,19 @@ public final class QueryInfo {
      * Will return a new QueryInfo if the field differs from ours;
      * otherwise, will return this.
      *
-     * @param fieldName the field to set
-     * @return a QueryInfo with the specified field
-     */
-    public QueryInfo withField(String fieldName) {
-        return withField(new AnnotatedField.Ref(index.annotatedField(fieldName)));
-    }
-
-    /**
-     * Return QueryInfo with the specified field.
-     *
-     * Will return a new QueryInfo if the field differs from ours;
-     * otherwise, will return this.
-     *
      * @param field the field to set
      * @return a QueryInfo with the specified field
      */
-    public QueryInfo withField(AnnotatedField.Ref field) {
+    public QueryInfo withField(String field) {
         if (field == null)
             throw new IllegalArgumentException("field cannot be null");
         if (Objects.equals(this.field, field))
             return this;
         return QueryInfo.create(index, field, cacheToUse);
+    }
+
+    public AnnotatedField annotatedField() {
+        return index.annotatedField(field);
     }
 }
 

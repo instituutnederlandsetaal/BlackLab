@@ -96,7 +96,7 @@ public class QueryExecutionContext {
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
+        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field.name()) : queryInfo;
     }
 
     // @@@ TMP

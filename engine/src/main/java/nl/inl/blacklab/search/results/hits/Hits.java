@@ -55,7 +55,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         }
 
         public HitsContext(QueryInfo queryInfo) {
-            this(queryInfo.index(), queryInfo.field().getName(), MatchInfoDefs.EMPTY, null);
+            this(queryInfo.index(), queryInfo.field(), MatchInfoDefs.EMPTY, null);
         }
 
         public HitsContext(BlackLabIndex index, String field) {

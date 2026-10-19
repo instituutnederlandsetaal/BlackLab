@@ -82,7 +82,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
     
     public QueryInfo createDefaultQueryInfo() {
-        return QueryInfo.create(this, mainAnnotatedField());
+        return QueryInfo.create(this, mainAnnotatedField().name());
     }
 
     @Override

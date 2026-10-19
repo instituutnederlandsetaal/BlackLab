@@ -49,7 +49,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     protected SpanGuarantees guarantees;
 
     protected BLSpanQuery(QueryInfo queryInfo) {
-        this(queryInfo, queryInfo.field().getName());
+        this(queryInfo, queryInfo.field());
     }
 
     protected BLSpanQuery(QueryInfo queryInfo, String annotatedField) {

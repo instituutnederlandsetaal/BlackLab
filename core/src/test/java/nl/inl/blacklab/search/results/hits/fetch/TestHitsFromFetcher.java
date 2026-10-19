@@ -176,7 +176,7 @@ public class TestHitsFromFetcher {
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field().getName());
+        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {

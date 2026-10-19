@@ -76,8 +76,8 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         super(queryInfo);
         this.fragmentQuery = fragmentQuery;
         this.hitsInFragments = hitsInFragments;
-        this.luceneField = queryInfo.field().mainAnnotation().mainSensitivity().luceneField();
-        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(queryInfo.field().getName());
+        this.luceneField = queryInfo.annotatedField().mainAnnotation().mainSensitivity().luceneField();
+        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(queryInfo.field());
         this.behaviour = behaviour;
 
         fullDocsBitSetProducer = new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT));
@@ -301,7 +301,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 LeafReader reader = ctx.reader();
                 dvTokenLength = DocValues.getNumeric(reader, tokenLengthField);
                 dvFragAnnotatedField = DocValues.getSorted(reader, BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
-                String annotatedFieldName = queryInfo.field().getName();
+                String annotatedFieldName = queryInfo.field();
                 currentAnnotatedFieldOrd = dvFragAnnotatedField.lookupTerm(new BytesRef(annotatedFieldName));
                 dvFragStart = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_START);
                 dvFragEnd = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_END);

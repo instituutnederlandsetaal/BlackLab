@@ -132,7 +132,7 @@ public class HitGroup implements HitOrDocGroup {
     public synchronized HitResults storedResults() {
         if (needToFetchHits) {
             needToFetchHits = false;
-            storedResults = storedResults.queryInfo().index().find(storedResults.queryInfo().field().getAnnotatedField(), hitsInGroupQuery);
+            storedResults = storedResults.queryInfo().index().find(storedResults.queryInfo().annotatedField(), hitsInGroupQuery);
             hitsStats = storedResults.resultsStats();
             docsStats = storedResults.docsStats();
         }
