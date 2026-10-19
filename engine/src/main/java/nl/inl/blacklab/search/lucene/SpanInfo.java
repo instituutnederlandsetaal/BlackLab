@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Objects;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Position information about a relation's source and target
  */

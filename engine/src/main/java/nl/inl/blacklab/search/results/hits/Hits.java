@@ -17,7 +17,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -60,11 +59,6 @@ public interface Hits extends Iterable<EphemeralHit> {
 
         public HitsContext(BlackLabIndex index, String field) {
             this(index, field, MatchInfoDefs.EMPTY, null);
-        }
-
-        public static HitsContext fromHitQueryContext(HitQueryContext hitQueryContext,
-                LeafReaderContext leafReaderContext) {
-            return new HitsContext(hitQueryContext.index(), hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
         }
 
         public BlackLabIndex index() {

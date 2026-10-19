@@ -40,7 +40,6 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     /**
      * Convert the String representation of a HitProperty back into the HitProperty
      *
-     * @param index our index
      * @param field field we're searching
      * @param serialized the serialized object
      * @return the HitProperty object, or null if it could not be deserialized

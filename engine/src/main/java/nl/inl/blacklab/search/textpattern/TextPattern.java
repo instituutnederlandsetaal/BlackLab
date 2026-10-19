@@ -213,7 +213,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
-            return mf; //@@@ SHOULD HAVE BEEN DONE ALREADY  .withField(context.index(), context.field().name());
+            return mf;
         throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
 

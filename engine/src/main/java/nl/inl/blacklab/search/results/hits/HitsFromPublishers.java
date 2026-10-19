@@ -137,8 +137,6 @@ public class HitsFromPublishers extends HitsAbstract {
         }
     }
 
-    private final HitsContext context;
-
     /** Publishers we're collecting hits from */
     private final List<HitPublisher> publishers;
 
@@ -194,10 +192,10 @@ public class HitsFromPublishers extends HitsAbstract {
     private final Condition resultsChanged = lock.writeLock().newCondition();
 
     public HitsFromPublishers(List<? extends HitPublisher> publishers, SearchSettings searchSettings) {
+        super(publishers.get(0).context().withoutLeafReaderContext());
         if (publishers.isEmpty())
             throw new IllegalArgumentException("No publishers given");
         this.publishers = new ArrayList<>(publishers);
-        this.context = publishers.get(0).context().withoutLeafReaderContext();
         maxHitsToProcess = searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings.maxHitsToCount();
         // Keep track of hits

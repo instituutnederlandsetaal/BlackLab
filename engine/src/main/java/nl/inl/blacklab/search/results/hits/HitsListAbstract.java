@@ -41,13 +41,11 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         return true;
     }
 
-    final HitsContext context;
-
     /** Lock (for the classes that do locking; otherwise null) */
     ReadWriteLock lock;
 
     HitsListAbstract(Hits.HitsContext context) {
-        this.context = context;
+        super(context);
     }
 
     @Override
@@ -211,11 +209,6 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
             r.add(hit);
         }
         return r;
-    }
-
-    @Override
-    public HitsContext context() {
-        return context;
     }
 
     public void withReadLock(Consumer<Hits> cons) {
