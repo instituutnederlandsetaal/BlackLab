@@ -12,51 +12,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
  */
 public interface AnnotatedField extends Field {
 
-    /** Reference to an annotated field.
-     * Used to investigate which parts of the code actually need access to the field object,
-     * and which parts only need the name. Lower-level parts should ideally only need the name.
-     * This improves testability. Same for access to the index object. */
-    class Ref {
-        private final AnnotatedField annotatedField;
-
-        public Ref(BlackLabIndex index, String name) {
-            this.annotatedField = index.annotatedField(name);
-        }
-
-        public Ref(AnnotatedField field) {
-            this.annotatedField = field;
-        }
-
-        public String getName() {
-            return annotatedField.name();
-        }
-
-        public AnnotatedField getAnnotatedField() {
-            return annotatedField;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof Ref ref))
-                return false;
-            return Objects.equals(annotatedField, ref.annotatedField);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(annotatedField);
-        }
-
-        @Override
-        public String toString() {
-            return annotatedField.toString();
-        }
-
-        public Annotation mainAnnotation() {
-            return annotatedField.mainAnnotation();
-        }
-    }
-
     /**
      * Get the annotations for this field.
      *

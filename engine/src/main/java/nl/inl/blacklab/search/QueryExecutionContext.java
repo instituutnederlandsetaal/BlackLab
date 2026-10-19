@@ -259,6 +259,15 @@ public class QueryExecutionContext {
         return sensitivity.annotation().field();
     }
 
+    /**
+     * Return the annotated field we're searching.
+     *
+     * @return annotated field
+     */
+    public String fieldName() {
+        return field;
+    }
+
     public QueryInfo queryInfo() {
         return queryInfo;
     }

@@ -4,9 +4,9 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -16,7 +16,9 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private int groupIndex;
 
-    private final AnnotatedField.Ref field;
+    private final BlackLabIndex index;
+
+    private final String field;
 
     private final String annotationName;
 
@@ -30,13 +32,14 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private final MatchSensitivity sensitivity;
 
-    public MatchFilterTokenAnnotationEqualsString(AnnotatedField.Ref field, String groupName, String annotationName, String termString,
+    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, String termString,
                                                 MatchSensitivity sensitivity, String forwardIndexLuceneField) {
-        this(field, groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
+        this(index, field, groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
     }
 
-    public MatchFilterTokenAnnotationEqualsString(AnnotatedField.Ref field, String groupName, String annotationName, /*Annotation annotation,*/ String termString,
+    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, /*Annotation annotation,*/ String termString,
             MatchSensitivity sensitivity, int compareToSortPosition, String forwardIndexLuceneField) {
+        this.index = index;
         this.field = field;
         this.groupName = groupName;
         this.compareToTermString = termString;
@@ -127,8 +130,8 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         Terms terms = BLTerms.forSegment(context, luceneField).reader();
         int sortPosition = terms.termToSortPosition(compareToTermString, sensitivity);
 
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(field,
-                groupName, annotationName, /*annotation,*/ compareToTermString, sensitivity,
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(index, field,
+                groupName, annotationName, compareToTermString, sensitivity,
                 sortPosition, luceneField);
         mf.annotationIndex = annotationIndex;
         return mf;
