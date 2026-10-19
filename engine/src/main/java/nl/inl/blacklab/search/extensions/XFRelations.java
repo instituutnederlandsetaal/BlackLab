@@ -56,7 +56,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
-            RelationInfo.SpanMode spanMode, AnnotatedField targetField) {
+            RelationInfo.SpanMode spanMode, AnnotatedField.Ref targetField) {
         // Do we need to match a target, or don't we care?
         AnnotationSensitivity field = context.withRelationAnnotation()
                 .luceneFieldRef();
@@ -70,7 +70,7 @@ public class XFRelations implements ExtensionFunctionClass {
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
-                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, context.field(), spanMode, null);
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, new AnnotatedField.Ref(context.field()), spanMode, null);
             }
             return relAndTarget;
         } else {
@@ -213,11 +213,11 @@ public class XFRelations implements ExtensionFunctionClass {
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
                     String fieldOrVersion = (String) args.get(1);
                     AnnotatedField field = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion);
-                    if (relations.getAnnotatedField() == field) {
+                    if (relations.getAnnotatedField().equals(field)) {
                         // Nothing to do, just return query unchanged
                         return relations;
                     }
-                    return new SpanQueryOtherFieldHits(relations, field);
+                    return new SpanQueryOtherFieldHits(relations, new AnnotatedField.Ref(field));
                 });
 
         /*

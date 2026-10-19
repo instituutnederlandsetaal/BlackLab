@@ -180,7 +180,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     public static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
         if (clauses.length == 0)
-            return new SpanQueryNoHits(queryInfo, queryInfo.field().mainAnnotation().mainSensitivity().luceneField());
+            return new SpanQueryNoHits(queryInfo, queryInfo.field().getAnnotatedField().mainAnnotation().mainSensitivity().luceneField());
         if (clauses.length == 1)
             return BLSpanQuery.wrap(queryInfo, clauses[0]);
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];

@@ -39,7 +39,12 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /** Information such as our index, our search logger, etc. */
     protected QueryInfo queryInfo;
 
-    private final AnnotatedField annotatedField;
+    /** The annotated field that this query is searching in.
+     * (might differ from queryInfo.field() for parallel corpora, where parts of a query
+     *  may search in different versions of the same "parallel field", e.g. "contents__en"
+     *  and "contents__nl")
+     */
+    private final AnnotatedField.Ref annotatedField;
 
     protected SpanGuarantees guarantees;
 
@@ -47,7 +52,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         this(queryInfo, queryInfo.field());
     }
 
-    protected BLSpanQuery(QueryInfo queryInfo, AnnotatedField annotatedField) {
+    protected BLSpanQuery(QueryInfo queryInfo, AnnotatedField.Ref annotatedField) {
         assert queryInfo != null && annotatedField != null;
         this.queryInfo = queryInfo;
         this.annotatedField = annotatedField;
@@ -334,12 +339,16 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     @Override
     public String getField() {
         // Return only base name of annotated field!
-        return annotatedField.name(); //AnnotatedFieldNameUtil.getBaseName(getRealField());
+        return annotatedField.getName();
+    }
+
+    public AnnotatedField.Ref getAnnotatedFieldRef() {
+        return annotatedField;
     }
 
     public AnnotatedField getAnnotatedField() {
         // Return the annotated field that this query is searching in.
-        return annotatedField;
+        return annotatedField.getAnnotatedField();
     }
 
     /**

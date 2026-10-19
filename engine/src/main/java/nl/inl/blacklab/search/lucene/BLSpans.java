@@ -85,7 +85,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     /** If we're querying a parallel corpus, this may indicate that this part of the hit
      *  comes from a different anntotated field, e.g. contents__nl. */
-    private AnnotatedField overriddenField = null;
+    private AnnotatedField.Ref overriddenField = null;
 
     protected BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
@@ -123,7 +123,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *
      * @return the overridden field, or null if none
      */
-    public AnnotatedField getOverriddenField() {
+    public AnnotatedField.Ref getOverriddenField() {
         return overriddenField;
     }
 

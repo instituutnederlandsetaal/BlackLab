@@ -134,7 +134,7 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     private Map<String, String> attributes;
 
-    private AnnotatedField baseField;
+    private AnnotatedField.Ref baseField;
 
     private AnnotationSensitivity relationField;
 
@@ -154,13 +154,13 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     private boolean implicitCapture;
 
-    private AnnotatedField targetField;
+    private AnnotatedField.Ref targetField;
 
     private final RelationsStrategy relationsStrategy;
 
     public SpanQueryRelations(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
-            boolean implicitCapture, AnnotatedField targetField) {
+            boolean implicitCapture, AnnotatedField.Ref targetField) {
         super(queryInfo);
         this.relationsStrategy = queryInfo.index().getRelationsStrategy();
         if (relationField == null)
@@ -179,16 +179,16 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     public SpanQueryRelations(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs, boolean implicitCapture, AnnotatedField targetField) {
+            String captureAs, boolean implicitCapture, AnnotatedField.Ref targetField) {
         super(queryInfo);
         this.relationsStrategy = queryInfo.index().getRelationsStrategy();
         init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
 
     private void init(AnnotationSensitivity relationField, String relationType, Map<String, String> attributes, BLSpanQuery clause, Direction direction,
-            RelationInfo.SpanMode spanMode, String captureAs, boolean implicitCapture, AnnotatedField targetField) {
+            RelationInfo.SpanMode spanMode, String captureAs, boolean implicitCapture, AnnotatedField.Ref targetField) {
         this.relationField = relationField;
-        baseField = relationField.annotation().field();
+        this.baseField = new AnnotatedField.Ref(relationField.annotation().field());
         this.relationType = relationType;
         this.attributes = new HashMap<>(attributes == null ? Collections.emptyMap() : attributes);
         this.clause = clause;
@@ -259,7 +259,7 @@ public class SpanQueryRelations extends BLSpanQuery {
             RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context).relationInfo();
             spans = new SpansRelations(baseField, relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs, relInfo, relationsStrategy);
-            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.name().equals(field))
+            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.getName().equals(field))
                 spans = new SpansOverrideField(spans, targetField);
             return spans;
         }
@@ -328,14 +328,14 @@ public class SpanQueryRelations extends BLSpanQuery {
     @Override
     public String getField() {
         if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
-            return targetField.name();
-        return baseField.name();
+            return targetField.getName();
+        return baseField.getName();
     }
 
     @Override
     public String getRealField() {
         if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
-            return targetField.name(); // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
+            return targetField.getName(); // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
         return relationField.luceneField();
     }
 

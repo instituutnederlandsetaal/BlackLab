@@ -9,6 +9,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -178,7 +179,7 @@ public class MockSpans extends BLSpans {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
-                    aEnd[i], aEnd[i], 0, new MockAnnotatedField(), false);
+                    aEnd[i], aEnd[i], 0, new AnnotatedField.Ref(new MockAnnotatedField()), false);
             BytesRef payload = relationsStrategy.getPayloadCodec().serialize(relInfo);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);

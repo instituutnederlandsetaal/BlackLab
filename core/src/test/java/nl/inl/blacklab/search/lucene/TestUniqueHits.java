@@ -9,6 +9,7 @@ import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public class TestUniqueHits {
@@ -34,17 +35,17 @@ public class TestUniqueHits {
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
     RelationInfo[] aRelationInfo = {
-            RelationInfo.create(false, 10, 10, 11, 11, 0, new MockAnnotatedField(), false),
-            RelationInfo.create(false, 10, 10, 11, 11, 0, new MockAnnotatedField(), false),
-            RelationInfo.create(false, 10, 10, 11, 11, 0, new MockAnnotatedField(), false),
-            RelationInfo.create(false, 1, 1, 2, 2, 0, new MockAnnotatedField(), false),
-            RelationInfo.create(false, 1, 1, 1, 2, 0, new MockAnnotatedField(), false),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, MockAnnotatedField.ref(), false),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, MockAnnotatedField.ref(), false),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, MockAnnotatedField.ref(), false),
+            RelationInfo.create(false, 1, 1, 2, 2, 0, MockAnnotatedField.ref(), false),
+            RelationInfo.create(false, 1, 1, 1, 2, 0, MockAnnotatedField.ref(), false),
     };
 
     @Test
     public void testWithMatchInfoSpansUnique() throws IOException {
         BLSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
-        MockAnnotatedField f = new MockAnnotatedField();
+        AnnotatedField.Ref f = MockAnnotatedField.ref();
         BLSpans tags = new SpansRelations(f, "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
@@ -64,7 +65,7 @@ public class TestUniqueHits {
     public void testWithMatchInfoPerDocSortedSpans() throws IOException {
         MockSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
-        MockAnnotatedField field = new MockAnnotatedField();
+        AnnotatedField.Ref field = MockAnnotatedField.ref();
         BLSpans tags = new SpansRelations(field, "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());

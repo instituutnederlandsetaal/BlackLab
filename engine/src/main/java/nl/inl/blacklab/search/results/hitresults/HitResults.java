@@ -45,7 +45,7 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-        return new HitResultsList(queryInfo, Hits.fromLists(queryInfo.field(), docs, starts, ends));
+        return new HitResultsList(queryInfo, Hits.fromLists(queryInfo.field().getAnnotatedField(), docs, starts, ends));
     }
 
     static HitResults list(QueryInfo queryInfo, Hits hits) {
@@ -72,7 +72,7 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults empty(QueryInfo queryInfo) {
-        return new HitResultsList(queryInfo, Hits.empty(new Hits.HitsContext(queryInfo.field())));
+        return new HitResultsList(queryInfo, Hits.empty(new Hits.HitsContext(queryInfo.field().getAnnotatedField())));
     }
 
     /**

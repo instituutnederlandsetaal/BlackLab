@@ -1,10 +1,67 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Objects;
+
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 
-/** An annotated field */
+/** An annotated field.
+ *  <p>
+ *  In addition to what Field knows (index, name, settings, etc.) it knows
+ *  its annotations, including its main and search annotations, its token length
+ *  field, etc.
+ */
 public interface AnnotatedField extends Field {
+
+    /** Reference to an annotated field.
+     * Used to investigate which parts of the code actually need access to the field object,
+     * and which parts only need the name. Lower-level parts should ideally only need the name.
+     * This improves testability. Same for access to the index object. */
+    class Ref {
+        private final AnnotatedField annotatedField;
+
+        public Ref(BlackLabIndex index, String name) {
+            this.annotatedField = index.annotatedField(name);
+        }
+
+        public Ref(AnnotatedField field) {
+            this.annotatedField = field;
+        }
+
+        public String getName() {
+            return annotatedField.name();
+        }
+
+        public AnnotatedField getAnnotatedField() {
+            return annotatedField;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof Ref ref))
+                return false;
+            return Objects.equals(annotatedField, ref.annotatedField);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(annotatedField);
+        }
+
+        @Override
+        public String toString() {
+            return annotatedField.toString();
+        }
+
+        /** Return a reference to another annotated field in the same index.
+         *
+         * (we hope to eventually replace Ref with just the field name, in which case this method will not be needed anymore)
+         */
+        public Ref otherAnnotatedField(String newTargetFieldName) {
+            return new Ref(annotatedField.index().annotatedField(newTargetFieldName));
+        }
+    }
 
     /**
      * Get the annotations for this field.

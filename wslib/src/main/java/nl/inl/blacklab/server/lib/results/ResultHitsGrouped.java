@@ -137,7 +137,7 @@ public class ResultHitsGrouped {
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)
-                otherFields.add(def.getTargetField());
+                otherFields.add(def.getTargetField().getAnnotatedField());
         }
 
         ResultGroups groups1 = getGroups();

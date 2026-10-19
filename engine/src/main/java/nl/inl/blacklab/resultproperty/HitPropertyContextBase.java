@@ -161,16 +161,16 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
      * @return the annotation to use
      */
-    protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField overrideField) {
+    protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField.Ref overrideField) {
         if (overrideField != null && !overrideField.equals(annotation.field())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            annotation = overrideField.annotation(annotation.name());
+            annotation = overrideField.getAnnotatedField().annotation(annotation.name());
         }
         return annotation;
     }
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField.Ref overrideField) {
         super(prop, context, invert);
         this.index = context.hits() == null ? prop.index : context.hits().index();
         this.annotation = annotationOverrideField(prop.annotation, overrideField);

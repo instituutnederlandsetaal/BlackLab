@@ -84,7 +84,7 @@ public class HitGroup implements HitOrDocGroup {
             long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery,
             HitGroupScorer scorer) {
         HitResultsList results = new HitResultsList(queryInfo,
-                Hits.empty(new Hits.HitsContext(queryInfo.field())), totalDocuments,
+                Hits.empty(new Hits.HitsContext(queryInfo.field().getAnnotatedField())), totalDocuments,
                 totalSize, totalDocuments, maxStats);
         return new HitGroup(groupIdentity, results, totalSize, totalDocuments, hitsInGroupQuery, scorer);
     }
@@ -132,7 +132,7 @@ public class HitGroup implements HitOrDocGroup {
     public synchronized HitResults storedResults() {
         if (needToFetchHits) {
             needToFetchHits = false;
-            storedResults = storedResults.queryInfo().index().find(storedResults.queryInfo().field(), hitsInGroupQuery);
+            storedResults = storedResults.queryInfo().index().find(storedResults.queryInfo().field().getAnnotatedField(), hitsInGroupQuery);
             hitsStats = storedResults.resultsStats();
             docsStats = storedResults.docsStats();
         }

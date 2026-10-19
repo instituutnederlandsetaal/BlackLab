@@ -32,7 +32,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final AnnotatedField clauseField;
+    private final AnnotatedField.Ref clauseField;
 
     /** Whether or not the current hit should be included. */
     private FilterSpans.AcceptStatus filterResult = FilterSpans.AcceptStatus.YES;
@@ -43,7 +43,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
      * @param in       spans to adjust
      * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, AnnotatedField clauseField, RelationInfo.SpanMode spanMode,
+    public SpansRelationSpanAdjust(BLSpans in, AnnotatedField.Ref clauseField, RelationInfo.SpanMode spanMode,
             String adjustToCapture) {
         super(in, adjustToCapture != null ? SpanGuarantees.NONE : SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
         this.clauseField = clauseField;

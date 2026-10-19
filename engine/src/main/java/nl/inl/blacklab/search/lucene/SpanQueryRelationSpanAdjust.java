@@ -30,13 +30,13 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final AnnotatedField overriddenField;
+    private final AnnotatedField.Ref overriddenField;
 
     private final RelationInfo.SpanMode mode;
 
     private final String adjustToCapture;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, AnnotatedField overriddenField, RelationInfo.SpanMode mode,
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, AnnotatedField.Ref overriddenField, RelationInfo.SpanMode mode,
             String adjustToCapture) {
         super(clause.queryInfo);
         this.clause = clause;
@@ -115,8 +115,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedField(), mode, adjustToCapture);
-            if (overriddenField != null && !overriddenField.name().equals(clause.getField()))
+            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedFieldRef(), mode, adjustToCapture);
+            if (overriddenField != null && !overriddenField.getName().equals(clause.getField()))
                 spans = new SpansOverrideField(spans, overriddenField);
             return spans;
         }
@@ -152,14 +152,14 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     @Override
     public String getField() {
         if (overriddenField != null)
-            return overriddenField.name();
+            return overriddenField.getName();
         return clause.getField();
     }
 
     @Override
     public String getRealField() {
         if (overriddenField != null)
-            return overriddenField.name(); // not strictly correct, should be full Lucene field name with annotation and sensitivity
+            return overriddenField.getName(); // not strictly correct, should be full Lucene field name with annotation and sensitivity
         return clause.getRealField();
     }
 

@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
-    private final AnnotatedField targetField;
+    private final AnnotatedField.Ref targetField;
 
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
@@ -34,7 +34,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final AnnotatedField clauseField;
+    private final AnnotatedField.Ref clauseField;
 
     /**
      * Constructs a SpansRelationSpanAdjust.
@@ -43,7 +43,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
      * @param targetField other field to get hits for
      *
      */
-    public SpansOtherFieldHits(BLSpans in, AnnotatedField targetField, AnnotatedField clauseField) {
+    public SpansOtherFieldHits(BLSpans in, AnnotatedField.Ref targetField, AnnotatedField.Ref clauseField) {
         super(in, SpanQueryOtherFieldHits.createGuarantees());
         this.targetField = targetField;
         this.clauseField = clauseField;
@@ -134,7 +134,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    public AnnotatedField getOverriddenField() {
+    public AnnotatedField.Ref getOverriddenField() {
         return targetField;
     }
 

@@ -51,6 +51,10 @@ public class MockAnnotatedField implements AnnotatedField {
         }
     }
 
+    public static @NonNull Ref ref() {
+        return new Ref(new MockAnnotatedField());
+    }
+
     @Override
     public String name() {
         return this.name;

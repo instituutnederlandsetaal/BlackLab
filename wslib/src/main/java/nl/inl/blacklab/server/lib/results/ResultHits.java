@@ -269,9 +269,9 @@ public class ResultHits {
         MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
-            otherFields.add(def.getField());
+            otherFields.add(def.getField().getAnnotatedField());
             if (def.getTargetField() != null)
-                otherFields.add(def.getTargetField());
+                otherFields.add(def.getTargetField().getAnnotatedField());
         }
         otherFields.remove(hitResults.field());
         WindowStats window1 = window.windowStats();

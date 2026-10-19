@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
 
-    public static RelationListInfo create(List<RelationInfo> relations, AnnotatedField overriddenField) {
+    public static RelationListInfo create(List<RelationInfo> relations, AnnotatedField.Ref overriddenField) {
         return new RelationListInfo(relations, overriddenField);
     }
 
@@ -24,7 +24,7 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
 
     private final Integer spanEnd;
 
-    private RelationListInfo(List<RelationInfo> relations, AnnotatedField overriddenField) {
+    private RelationListInfo(List<RelationInfo> relations, AnnotatedField.Ref overriddenField) {
         super(overriddenField);
         this.relations = new ArrayList<>(relations);
         spanStart = relations.stream().map(RelationInfo::getSpanStart).min(Integer::compare).orElse(-1);
@@ -127,18 +127,18 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     @Override
-    public AnnotatedField getField() {
+    public AnnotatedField.Ref getField() {
         return relations.isEmpty() ? super.getField() : relations.get(0).getField();
     }
 
     @Override
-    public AnnotatedField getTargetField() {
+    public AnnotatedField.Ref getTargetField() {
         return relations.isEmpty() ? null : relations.get(0).getTargetField();
     }
 
     @Override
     public boolean isCrossFieldRelation() {
-        AnnotatedField targetField = getTargetField();
-        return targetField != null && targetField != getField();
+        AnnotatedField.Ref targetField = getTargetField();
+        return targetField != null && !targetField.equals(getField());
     }
 }

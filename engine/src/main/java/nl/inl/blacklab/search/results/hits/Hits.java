@@ -58,7 +58,7 @@ public interface Hits extends Iterable<EphemeralHit> {
 
         public static HitsContext fromHitQueryContext(HitQueryContext hitQueryContext,
                 LeafReaderContext leafReaderContext) {
-            return new HitsContext(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
+            return new HitsContext(hitQueryContext.getField().getAnnotatedField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
         }
 
         public BlackLabIndex index() {

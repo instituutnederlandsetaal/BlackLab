@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 class SpansOverrideField extends BLFilterDocsSpans<BLSpans> {
 
-    private final AnnotatedField overriddenField;
+    private final AnnotatedField.Ref overriddenField;
 
-    public SpansOverrideField(BLSpans clause, AnnotatedField overriddenField) {
+    public SpansOverrideField(BLSpans clause, AnnotatedField.Ref overriddenField) {
         super(clause, clause.guarantees());
         this.overriddenField = overriddenField;
     }

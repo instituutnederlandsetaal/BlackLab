@@ -21,19 +21,19 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  */
 public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
-    public static RelationInfo create(AnnotatedField sourceField) {
+    public static RelationInfo create(AnnotatedField.Ref sourceField) {
         return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, null, false);
     }
 
-    public static RelationInfo createWithFields(AnnotatedField sourceField, AnnotatedField targetField) {
+    public static RelationInfo createWithFields(AnnotatedField.Ref sourceField, AnnotatedField.Ref targetField) {
         return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, targetField, false);
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, AnnotatedField.Ref sourceField, boolean hasExtraInfoStored) {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, null, null, sourceField, null, hasExtraInfoStored);
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, AnnotatedField.Ref sourceField, boolean hasExtraInfoStored) {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, sourceField, null, hasExtraInfoStored);
     }
 
@@ -48,7 +48,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
      * @param field field this tag is from
      * @return the relation info object
      */
-    public static RelationInfo createTag(int start, int end, String tagName, AnnotatedField field) {
+    public static RelationInfo createTag(int start, int end, String tagName, AnnotatedField.Ref field) {
         return new RelationInfo(false, start, start, end, end,
                 RELATION_ID_NO_INFO, tagName, null, field, field,
                 false);
@@ -161,10 +161,10 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     private Map<String, List<String>> attributes;
 
     /** Field this points to (for non-parallel corpora, this will always be identical to source field). */
-    private AnnotatedField targetField;
+    private AnnotatedField.Ref targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            int relationId, String fullRelationType, Map<String, List<String>> attributes, AnnotatedField sourceField, AnnotatedField targetField, boolean hasExtraInfoStored) {
+            int relationId, String fullRelationType, Map<String, List<String>> attributes, AnnotatedField.Ref sourceField, AnnotatedField.Ref targetField, boolean hasExtraInfoStored) {
         super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
@@ -252,7 +252,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     @Override
-    public AnnotatedField getTargetField() {
+    public AnnotatedField.Ref getTargetField() {
         return targetField;
     }
 
@@ -320,9 +320,9 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
             // and the target field must then be the "contents__de" field.
             String relClass = RelationUtil.classFromFullType(fullRelationType);
             String version = AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
-            String newTargetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(getField().name(), version);
-            if (!newTargetFieldName.equals(targetField.name()))
-                targetField = targetField.index().annotatedField(newTargetFieldName);
+            String newTargetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(getField().getName(), version);
+            if (!newTargetFieldName.equals(targetField.getName()))
+                targetField = targetField.otherAnnotatedField(newTargetFieldName);
         }
     }
 
@@ -353,9 +353,9 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     private String toStringOptSourceTargetFields(String defaultField) {
-        if (getField().name().equals(defaultField)) {
+        if (getField().getName().equals(defaultField)) {
             // Source field is the default field, don't mention it separately
-            if (targetField.name().equals(defaultField)) {
+            if (targetField.getName().equals(defaultField)) {
                 // Both are default
                 return "";
             } else {

@@ -134,7 +134,7 @@ public class Kwics {
      */
     private static Map<AnnotatedField, int[]> updateMinMaxForMatchInfo(LeafReaderContext lrc, MatchInfo mi, AnnotatedField defaultField,
             Map<AnnotatedField, int[]> minMaxPerField, Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
-        AnnotatedField field = mi.getField();
+        AnnotatedField field = mi.getField().getAnnotatedField();
         boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
         if (field != defaultField) { // foreign KWICs only
             // By default, just use the match info span
@@ -151,7 +151,7 @@ public class Kwics {
         }
         if (mi instanceof RelationInfo rmi && !isTag) {
             // Relation targets (not just sources) should influence field context
-            AnnotatedField targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
+            AnnotatedField targetField = rmi.getTargetField() == null ? field : rmi.getTargetField().getAnnotatedField();
             if (targetField != defaultField) { // foreign KWICs only
                 afisPerField.computeIfAbsent(targetField, k ->
                         getAnnotationForwardIndexes(lrc, targetField));

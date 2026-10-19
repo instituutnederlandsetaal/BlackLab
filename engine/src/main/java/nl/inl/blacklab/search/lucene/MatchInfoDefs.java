@@ -22,7 +22,7 @@ public class MatchInfoDefs {
 
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
-        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField.Ref field, AnnotatedField.Ref targetField) {
             throw new UnsupportedOperationException("Cannot add to immutable object MatchInfoDefs.EMPTY");
         }
     };
@@ -55,7 +55,7 @@ public class MatchInfoDefs {
         return map;
     }
 
-    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField.Ref field, AnnotatedField.Ref targetField) {
         MatchInfo.Def e = new MatchInfo.Def(defs.size(), name, type, field, targetField);
         defs.add(e);
         return e;
@@ -65,7 +65,7 @@ public class MatchInfoDefs {
         return defs.get(i);
     }
 
-    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, AnnotatedField.Ref field, AnnotatedField.Ref targetField) {
         Optional<MatchInfo.Def> mi = defs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();

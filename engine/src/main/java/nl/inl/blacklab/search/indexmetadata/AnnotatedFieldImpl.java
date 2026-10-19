@@ -128,14 +128,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
 
-    /** (IGNORE; for compatiblity with old pre-release metadata, to remove eventually) */
-    @XmlTransient
-    private Map<String, Map<String, Long>> relations;
-
-    /** (IGNORE; for compatiblity with old pre-release metadata, to remove eventually) */
-    @XmlTransient
-    private boolean relationsInitialized;
-
     /** The available relation classes, types and their frequencies, plus attribute info. */
     @XmlTransient
     private RelationsStats cachedRelationsStats;
@@ -226,10 +218,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
-
-        // These are no longer used, but we need to keep them around for deserialization of some pre-release indexes
-        this.relations = null;
-        this.relationsInitialized = false;
     }
 
     /**
@@ -293,4 +281,20 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         return getClass().getName().compareTo(field.getClass().getName());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        // FieldImpl.equals() check index and field name and that the classes are the same, which is enough.
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        // FieldImpl.hashCode() uses index, field name and class name, which is enough.
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "AnnotatedField:" + name();
+    }
 }

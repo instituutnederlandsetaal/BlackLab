@@ -13,21 +13,29 @@ import nl.inl.blacklab.searches.SearchCacheMap;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, index.mainAnnotatedField(), index.cache());
+        return create(index, new AnnotatedField.Ref(index.mainAnnotatedField()), index.cache());
     }
 
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField.Ref field) {
         return create(index, field, index == null ? null : index.cache());
     }
 
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField.Ref field, SearchCache cacheToUse) {
         return new QueryInfo(index, field, cacheToUse);
+    }
+
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
+        return create(index, new AnnotatedField.Ref(field), index == null ? null : index.cache());
+    }
+
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
+        return new QueryInfo(index, new AnnotatedField.Ref(field), cacheToUse);
     }
 
     private final BlackLabIndex index;
 
     /** The field these hits came from (will also be used as concordance field) */
-    private final AnnotatedField field;
+    private final AnnotatedField.Ref field;
 
     /** Cache to use for this query (either the main shared cache, or one just for this request that we'll dump after). */
     private final SearchCache cacheToUse;
@@ -35,7 +43,7 @@ public final class QueryInfo {
     /** How long executing certain parts of the operation took. */
     private final QueryTimings timings = new QueryTimings();
 
-    private QueryInfo(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
+    private QueryInfo(BlackLabIndex index, AnnotatedField.Ref field, SearchCache cacheToUse) {
         super();
         this.index = index;
         this.field = field;
@@ -48,7 +56,7 @@ public final class QueryInfo {
     }
 
     /** @return field that was searched */
-    public AnnotatedField field() {
+    public AnnotatedField.Ref field() {
         return field;
     }
 
@@ -108,12 +116,12 @@ public final class QueryInfo {
      * @param field the field to set
      * @return a QueryInfo with the specified field
      */
-    public QueryInfo withField(AnnotatedField field) {
+    public QueryInfo withField(AnnotatedField.Ref field) {
         if (field == null)
             throw new IllegalArgumentException("field cannot be null");
         if (Objects.equals(this.field, field))
             return this;
-        return new QueryInfo(index, field, cacheToUse);
+        return QueryInfo.create(index, field, cacheToUse);
     }
 }
 

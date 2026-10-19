@@ -24,16 +24,16 @@ public class HitQueryContext {
     private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
-    private final AnnotatedField defaultField;
+    private final AnnotatedField.Ref defaultField;
 
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
-    private final AnnotatedField field;
+    private final AnnotatedField.Ref field;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField) {
+    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField.Ref defaultField) {
         this(index, spans, defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+    private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField.Ref defaultField, AnnotatedField.Ref field, MatchInfoDefs matchInfoDefs) {
         this.index = index;
         this.rootSpans = spans;
         this.defaultField = defaultField;
@@ -51,7 +51,7 @@ public class HitQueryContext {
         return new HitQueryContext(index, spans, defaultField, field, matchInfoDefs);
     }
 
-    public HitQueryContext withField(AnnotatedField overriddenField) {
+    public HitQueryContext withField(AnnotatedField.Ref overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
             result = new HitQueryContext(index, rootSpans, defaultField, overriddenField, matchInfoDefs);
@@ -96,7 +96,7 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, AnnotatedField.Ref field, AnnotatedField.Ref targetField) {
         return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 
@@ -138,7 +138,7 @@ public class HitQueryContext {
      *
      * @return the field this part of the query searches
      */
-    public AnnotatedField getField() {
+    public AnnotatedField.Ref getField() {
         return field;
     }
 
@@ -150,7 +150,7 @@ public class HitQueryContext {
      * @return the name of the field this part of the query searches
      */
     public String getDefaultFieldName() {
-        return defaultField.name();
+        return defaultField.getName();
     }
 
     /**

@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 public class TestSpansRelations {
 
     private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
-        return new SpansRelations(new MockAnnotatedField("test"), "test", a,
+        return new SpansRelations(MockAnnotatedField.ref(), "test", a,
                 hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "", null, RelationsStrategy.forNewIndex());
     }

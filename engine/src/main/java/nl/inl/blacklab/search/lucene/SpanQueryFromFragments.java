@@ -33,6 +33,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.Span;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -73,7 +74,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         super(queryInfo);
         this.fragmentQuery = fragmentQuery;
         this.hitsInFragments = hitsInFragments;
-        this.tokenLengthField = queryInfo.field().tokenLengthField();
+        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(queryInfo.field().getName());
         this.behaviour = behaviour;
 
         fullDocsBitSetProducer = new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT));
@@ -138,7 +139,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
     @Override
     public String getRealField() {
-        return queryInfo.field().mainAnnotation().mainSensitivity().luceneField();
+        return queryInfo.field().getAnnotatedField().mainAnnotation().mainSensitivity().luceneField();
     }
 
     @Override
@@ -297,7 +298,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 LeafReader reader = ctx.reader();
                 dvTokenLength = DocValues.getNumeric(reader, tokenLengthField);
                 dvFragAnnotatedField = DocValues.getSorted(reader, BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
-                String annotatedFieldName = queryInfo.field().name();
+                String annotatedFieldName = queryInfo.field().getName();
                 currentAnnotatedFieldOrd = dvFragAnnotatedField.lookupTerm(new BytesRef(annotatedFieldName));
                 dvFragStart = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_START);
                 dvFragEnd = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_END);

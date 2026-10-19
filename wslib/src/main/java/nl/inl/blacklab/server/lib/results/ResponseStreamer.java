@@ -470,9 +470,9 @@ public class ResponseStreamer {
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
                         if (def.getField() != searchField)
-                            ds.entry(KEY_FIELD_NAME, def.getField().name());
+                            ds.entry(KEY_FIELD_NAME, def.getField().getName());
                         if (def.getTargetField() != null && def.getTargetField() != searchField)
-                            ds.entry(KEY_TARGET_FIELD, def.getTargetField().name());
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField().getName());
                     }
                     ds.endMap().endDynEntry();
                 }

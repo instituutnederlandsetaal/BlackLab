@@ -114,7 +114,7 @@ public class HitPublisherSpans implements HitPublisher {
         maxToProcess = hitsStats.getMaxHitsToProcess();
         maxToCount = hitsStats.getMaxHitsToCount();
         this.docsStats = docsStats;
-        Hits.HitsContext context = new Hits.HitsContext(sourceHitQueryContext.getField(),
+        Hits.HitsContext context = new Hits.HitsContext(sourceHitQueryContext.getField().getAnnotatedField(),
                 sourceHitQueryContext.getMatchInfoDefs(), lrc);
         output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);

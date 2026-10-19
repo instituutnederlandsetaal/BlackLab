@@ -32,7 +32,7 @@ public abstract class ResultsAbstract implements Results {
 
     @Override
     public AnnotatedField field() {
-        return queryInfo.field();
+        return queryInfo.field().getAnnotatedField();
     }
 
     @Override

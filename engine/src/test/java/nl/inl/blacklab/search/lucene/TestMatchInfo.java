@@ -47,13 +47,13 @@ public class TestMatchInfo {
                 sourceEnd = targetEnd;
             }
             RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                    relationId, new MockAnnotatedField(), false);
+                    relationId, MockAnnotatedField.ref(), false);
 
             // Encode the payload
             byte[] payload = payloadCodec.serialize(matchInfo).bytes;
 
             // Decode it again
-            RelationInfo decoded = RelationInfo.create(new MockAnnotatedField());
+            RelationInfo decoded = RelationInfo.create(MockAnnotatedField.ref());
             payloadCodec.deserialize(sourceStart, new ByteArrayDataInput(payload), decoded);
 
             Assert.assertEquals(matchInfo, decoded);

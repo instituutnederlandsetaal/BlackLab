@@ -56,7 +56,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private final List<Integer> captureTargetAsIndex = new ArrayList<>();
 
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
-        private final AnnotatedField targetField;
+        private final AnnotatedField.Ref targetField;
 
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
@@ -71,7 +71,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private String captureTargetOverlapsAs = null;
 
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
-                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, AnnotatedField targetField,
+                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, AnnotatedField.Ref targetField,
                 boolean optionalMatch, BLSpans captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = new SpansBuffered(matchRelations);
             this.captureRelations = new SpansBuffered(captureRelations);

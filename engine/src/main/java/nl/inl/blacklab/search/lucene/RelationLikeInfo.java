@@ -17,9 +17,9 @@ public interface RelationLikeInfo {
 
     int getTargetEnd();
 
-    AnnotatedField getField();
+    AnnotatedField.Ref getField();
 
-    AnnotatedField getTargetField();
+    AnnotatedField.Ref getTargetField();
 
     boolean isCrossFieldRelation();
 }

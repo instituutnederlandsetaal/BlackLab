@@ -427,7 +427,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField()), documentFilterQuery);
+        return DocResults.fromQuery(QueryInfo.create(this, new AnnotatedField.Ref(mainAnnotatedField())), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -596,12 +596,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField, QueryInfo queryInfo) {
+    public QueryExecutionContext defaultExecutionContext(AnnotatedField.Ref annotatedField, QueryInfo queryInfo) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Unknown annotated field: null");
-        Annotation defaultSearchAnnotation = annotatedField.defaultSearchAnnotation();
+        Annotation defaultSearchAnnotation = annotatedField.getAnnotatedField().defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
-            throw new IllegalArgumentException("Default search annotation not found for " + annotatedField.name());
+            throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
         return QueryExecutionContext.get(this, defaultSearchAnnotation, defaultMatchSensitivity, queryInfo);
     }
 
@@ -725,7 +725,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
             Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms);
-        return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
+        return new TermFrequencyList(QueryInfo.create(this, new AnnotatedField.Ref(annotSensitivity.annotation().field())), freq, true);
     }
 
     @Override
