@@ -363,9 +363,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            IndexReader indexReader = reader();
             query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query)));
-            return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
+            return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }

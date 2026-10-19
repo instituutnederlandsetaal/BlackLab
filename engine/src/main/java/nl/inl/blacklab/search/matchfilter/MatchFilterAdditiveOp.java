@@ -106,7 +106,7 @@ public class MatchFilterAdditiveOp extends MatchFilter {
     }
 
     @Override
-    public MatchFilter withField(AnnotatedField field) {
+    public MatchFilter withField(AnnotatedField.Ref field) {
         return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.withField(field),
                 (x, y) -> new MatchFilterAdditiveOp(x, y, operator));
     }

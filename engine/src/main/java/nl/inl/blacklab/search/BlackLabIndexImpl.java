@@ -188,7 +188,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
-        return new ForwardIndexAccessorIntegrated(this, annotatedField(searchField));
+        return new ForwardIndexAccessorIntegrated(this, searchField);
     }
 
     @Override

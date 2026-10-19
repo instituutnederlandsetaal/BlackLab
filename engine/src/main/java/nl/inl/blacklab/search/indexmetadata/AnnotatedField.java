@@ -61,6 +61,18 @@ public interface AnnotatedField extends Field {
         public Ref otherAnnotatedField(String newTargetFieldName) {
             return new Ref(annotatedField.index().annotatedField(newTargetFieldName));
         }
+
+        public ForwardIndexAccessor forwardIndexAccessor() {
+            return new ForwardIndexAccessorIntegrated(annotatedField.index(), getName());
+        }
+
+        public String forwardIndexLuceneField(String annotationName) {
+            return getAnnotatedField().annotation(annotationName).forwardIndexSensitivity().luceneField();
+        }
+
+        public Annotation mainAnnotation() {
+            return annotatedField.mainAnnotation();
+        }
     }
 
     /**
@@ -126,7 +138,7 @@ public interface AnnotatedField extends Field {
     }
 
     default ForwardIndexAccessor forwardIndexAccessor() {
-        return new ForwardIndexAccessorIntegrated(index(), this);
+        return new ForwardIndexAccessorIntegrated(index(), name());
     }
 
     default AnnotatedField withParallelFieldVersion(String version) {

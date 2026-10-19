@@ -16,7 +16,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     private int annotationIndex = -1;
 
-    private AnnotatedField field;
+    private AnnotatedField.Ref field;
 
     public MatchFilterTokenAnnotation(String groupName, String annotationName) {
         this.groupName = groupName;
@@ -87,14 +87,14 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     @Override
-    public MatchFilter withField(AnnotatedField field) {
+    public MatchFilter withField(AnnotatedField.Ref field) {
         this.field = field;
         return super.withField(field);
     }
 
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotationName, str, sensitivity);
+                groupName, annotationName, str, sensitivity, field.forwardIndexLuceneField(annotationName));
         return mf.withField(field);
     }
 

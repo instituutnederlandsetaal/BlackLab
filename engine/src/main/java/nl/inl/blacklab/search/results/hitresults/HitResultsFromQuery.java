@@ -93,7 +93,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
                 if (traceOptimization)
                     logger.debug("Query before optimize()/rewrite(): {}", sourceQuery);
 
-                optimizedQuery = sourceQuery.optimize(index.reader());
+                optimizedQuery = sourceQuery.optimize(index);
                 if (traceOptimization)
                     logger.debug("Query after optimize(): {}", optimizedQuery);
 

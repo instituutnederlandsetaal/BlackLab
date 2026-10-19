@@ -56,6 +56,8 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** Field that gives us the document length in tokens */
     private final String tokenLengthField;
 
+    private final String luceneField;
+
     /** Whether to prefer full documents or fragments. */
     public enum Behaviour {
         /** If the the full document matches, return only that as a span.
@@ -74,6 +76,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         super(queryInfo);
         this.fragmentQuery = fragmentQuery;
         this.hitsInFragments = hitsInFragments;
+        this.luceneField = queryInfo.field().mainAnnotation().mainSensitivity().luceneField();
         this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(queryInfo.field().getName());
         this.behaviour = behaviour;
 
@@ -139,7 +142,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
     @Override
     public String getRealField() {
-        return queryInfo.field().getAnnotatedField().mainAnnotation().mainSensitivity().luceneField();
+        return luceneField;
     }
 
     @Override

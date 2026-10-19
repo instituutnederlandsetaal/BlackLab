@@ -63,7 +63,7 @@ public class MatchFilterNot extends MatchFilter {
     }
 
     @Override
-    public MatchFilter withField(AnnotatedField field) {
+    public MatchFilter withField(AnnotatedField.Ref field) {
         MatchFilter a2 = a.withField(field);
         if (a2 == a)
             return this;

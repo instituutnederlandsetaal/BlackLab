@@ -23,6 +23,8 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestSpanQueryFromFragments {
@@ -49,8 +51,13 @@ public class TestSpanQueryFromFragments {
                 writer.commit();
                 writer.addDocument(new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
+            AnnotationSensitivity sensitivity = Mockito.mock(AnnotationSensitivity.class);
+            Mockito.when(sensitivity.luceneField()).thenReturn("contents%word@i");
+            Annotation annot = Mockito.mock(Annotation.class);
+            Mockito.when(annot.mainSensitivity()).thenReturn(sensitivity);
             AnnotatedField field = Mockito.mock(AnnotatedField.class);
             Mockito.when(field.name()).thenReturn("contents");
+            Mockito.when(field.mainAnnotation()).thenReturn(annot);
             Mockito.when(field.tokenLengthField()).thenReturn(TOKEN_LENGTH_LUCENE_FIELD);
             QueryInfo queryInfo = QueryInfo.create(null, field);
             try (DirectoryReader reader = DirectoryReader.open(directory)) {

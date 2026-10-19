@@ -15,6 +15,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -170,11 +171,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * For now, only SpanQuerySequence overrides this to make sure certain clause
      * combinations are performed before rewrite().
      *
-     * @param reader index reader
+     * @param index index
      * @return optimized query
      * @throws IOException on error
      */
-    public BLSpanQuery optimize(IndexReader reader) throws IOException {
+    public BLSpanQuery optimize(BlackLabIndex index) throws IOException {
         return this; // by default, don't do any optimization
     }
 

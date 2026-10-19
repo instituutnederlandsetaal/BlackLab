@@ -20,37 +20,34 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private final String annotationName;
 
-    private final Annotation annotation;
+//    private final Annotation annotation;
+
+    private final String luceneField;
 
     private int annotationIndex = -1;
 
     private final String compareToTermString;
 
-    private int compareToSortPosition = -1;
+    private final int compareToSortPosition;
 
     private final MatchSensitivity sensitivity;
 
     public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, String termString,
-                                                MatchSensitivity sensitivity) {
+                                                MatchSensitivity sensitivity, String forwardIndexLuceneField) {
+        this(groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
+    }
+
+    public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, /*Annotation annotation,*/ String termString,
+            MatchSensitivity sensitivity, int compareToSortPosition, String forwardIndexLuceneField) {
         this.groupName = groupName;
         this.compareToTermString = termString;
         this.sensitivity = sensitivity;
-        this.annotationName = annotationName;
-        this.annotation = null; // annotation will be looked up later
-    }
 
-    public MatchFilterTokenAnnotationEqualsString(String groupName, Annotation annotation, String termString,
-            MatchSensitivity sensitivity) {
-        this.groupName = groupName;
-        this.compareToTermString = termString;
-        this.sensitivity = sensitivity;
-        this.annotationName = annotation.name();
-        this.annotation = annotation;
-    }
+        // We either get a name and will look up the annotation later, or we get an annotation and will use its name.
+        this.annotationName = annotationName;// == null ? annotation.name() : annotationName;
+//        this.annotation = annotation;
+        this.luceneField = forwardIndexLuceneField; //annotation == null ? null : annotation.forwardIndexSensitivity().luceneField();
 
-    public MatchFilterTokenAnnotationEqualsString(String groupName, Annotation annotation, String termString,
-            MatchSensitivity sensitivity, int compareToSortPosition) {
-        this(groupName, annotation, termString, sensitivity);
         this.compareToSortPosition = compareToSortPosition;
     }
 
@@ -60,7 +57,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     }
 
     private String annotationName() {
-        return annotation != null ? annotation.name() : annotationName;
+        return /*annotation != null ? annotation.name() : */annotationName;
     }
 
     @Override
@@ -118,12 +115,12 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     }
 
     @Override
-    public MatchFilter withField(AnnotatedField field) {
-        Annotation annotation = field.annotation(annotationName);
+    public MatchFilter withField(AnnotatedField.Ref field) {
+        Annotation annotation = field.getAnnotatedField().annotation(annotationName);
         if (annotation == null)
-            throw new FeatureNotPresentInCorpus("Annotation '" + annotationName + "' not found in field '" + field.name() + "'.");
+            throw new FeatureNotPresentInCorpus("Annotation '" + annotationName + "' not found in field '" + field.getName() + "'.");
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotation, compareToTermString, sensitivity);
+                groupName, annotationName, /*annotation,*/ compareToTermString, sensitivity, compareToSortPosition, luceneField);
         mf.annotationIndex = annotationIndex;
         return mf;
     }
@@ -138,14 +135,13 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     @Override
     public MatchFilter forSegment(LeafReaderContext context) {
         // Look up the sort position for the value we're comparing to.
-        assert annotation != null;
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        assert annotationName != null;
         Terms terms = BLTerms.forSegment(context, luceneField).reader();
         int sortPosition = terms.termToSortPosition(compareToTermString, sensitivity);
 
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotation, compareToTermString, sensitivity,
-                sortPosition);
+                groupName, annotationName, /*annotation,*/ compareToTermString, sensitivity,
+                sortPosition, luceneField);
         mf.annotationIndex = annotationIndex;
         return mf;
     }

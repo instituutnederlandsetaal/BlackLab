@@ -92,7 +92,7 @@ public abstract class MatchFilter implements TextPattern.EvalResult {
      * @param field the field to use
      * @return a copy of this MatchFilter with the given field
      */
-    public MatchFilter withField(AnnotatedField field) {
+    public MatchFilter withField(AnnotatedField.Ref field) {
         return this;
     }
 

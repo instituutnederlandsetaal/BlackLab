@@ -21,6 +21,7 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -278,12 +279,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return anyRewritten;
     }
 
-    static boolean optimizeClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {
+    static boolean optimizeClauses(List<BLSpanQuery> clauses, BlackLabIndex index) throws IOException {
         boolean anyRewritten = false;
         // Rewrite all clauses.
         for (int i = 0; i < clauses.size(); i++) {
             BLSpanQuery child = clauses.get(i);
-            BLSpanQuery rewritten = child.optimize(reader);
+            BLSpanQuery rewritten = child.optimize(index);
             if (child != rewritten) {
                 // Replace the child with the rewritten version
                 anyRewritten = true;
@@ -363,18 +364,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanQuery optimize(IndexReader reader) throws IOException {
+    public BLSpanQuery optimize(BlackLabIndex index) throws IOException {
         //super.optimize(reader);
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        boolean anyRewritten = performQueryOptimizations(reader, cl);
+        boolean anyRewritten = performQueryOptimizations(index.reader(), cl);
 
         // Optimize each clause, and flatten again if necessary
         // NOTE: this seems redundant because we've already flattened, and optimize() is only implemented by
         // SpanQuerySequence - could we get rid of optimize() and just do all this in rewrite(), before rewriting each
         // clause?
-        anyRewritten |= optimizeClauses(cl, reader);
+        anyRewritten |= optimizeClauses(cl, index);
 
         // If there's just one clause (left), return that directly
         // (regardless of whether anything was rewritten)

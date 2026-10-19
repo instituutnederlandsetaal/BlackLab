@@ -11,7 +11,6 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
 /**
@@ -22,7 +21,7 @@ import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 @ThreadSafe
 public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract {
 
-    public ForwardIndexAccessorIntegrated(BlackLabIndex index, AnnotatedField searchField) {
+    public ForwardIndexAccessorIntegrated(BlackLabIndex index, String searchField) {
         super(index, searchField);
     }
 

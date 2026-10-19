@@ -103,6 +103,13 @@ public class QueryExecutionContext {
         return sensitivity.sensitivity();
     }
 
+    public QueryExecutionContext withField(String field) {
+        if (this.field.name().equals(field))
+            return this;
+        return new QueryExecutionContext(index, index.annotatedField(field), version, annotationName, requestedSensitivity,
+                defaultRelationClass, captures, inConstraint, queryInfo);
+    }
+
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             annotation = sensitivity.annotation();
