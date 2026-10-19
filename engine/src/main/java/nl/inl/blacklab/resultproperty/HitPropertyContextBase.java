@@ -88,7 +88,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
+            if (mi.getField().getAnnotatedField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
@@ -162,7 +162,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @return the annotation to use
      */
     protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField.Ref overrideField) {
-        if (overrideField != null && !overrideField.equals(annotation.field())) {
+        if (overrideField != null && !overrideField.getAnnotatedField().equals(annotation.field())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
             annotation = overrideField.getAnnotatedField().annotation(annotation.name());
         }

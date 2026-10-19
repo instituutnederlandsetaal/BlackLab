@@ -137,7 +137,7 @@ public class Output {
             // For relations, we have to either highlight the source or the target, which may be in different
             // fields.
 
-            boolean isSourceField = rel.getField().equals(annotatedField);
+            boolean isSourceField = rel.getField().getAnnotatedField().equals(annotatedField);
             if ((pos == rel.getSourceStart() || pos + 1 == rel.getSourceEnd()) && isSourceField) {
                 // Highlight relation source
                 start = rel.getSourceStart();
@@ -150,14 +150,14 @@ public class Output {
                 String optRelType = (name.contains(relType) ? "" : " " + relType);
                 nameSuffix = optRelType + " →";
             }
-            boolean isTargetField = rel.getTargetField().equals(annotatedField);
+            boolean isTargetField = rel.getTargetField().getAnnotatedField().equals(annotatedField);
             if ((pos == rel.getTargetStart() || pos + 1 == rel.getTargetEnd()) && isTargetField) {
                 // Highlight relation target
                 start = rel.getTargetStart();
                 end = rel.getTargetEnd();
                 namePrefix = "→";
             }
-        } else if (mi.getField().equals(annotatedField)) {
+        } else if (mi.getField().getAnnotatedField().equals(annotatedField)) {
             // Match info is in this field; not a relation, so just use the full span
             start = mi.getSpanStart();
             end = mi.getSpanEnd();

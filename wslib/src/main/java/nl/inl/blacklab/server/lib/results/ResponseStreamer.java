@@ -469,9 +469,9 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (def.getField() != searchField)
+                        if (def.getField().getAnnotatedField() != searchField)
                             ds.entry(KEY_FIELD_NAME, def.getField().getName());
-                        if (def.getTargetField() != null && def.getTargetField() != searchField)
+                        if (def.getTargetField() != null && def.getTargetField().getAnnotatedField() != searchField)
                             ds.entry(KEY_TARGET_FIELD, def.getTargetField().getName());
                     }
                     ds.endMap().endDynEntry();
@@ -788,7 +788,7 @@ public class ResponseStreamer {
         }
 
         // If there's any match info for this field, include it here
-        optMatchInfos(matchInfos, mi -> mi.getField().equals(searchField));
+        optMatchInfos(matchInfos, mi -> mi.getField().getAnnotatedField().equals(searchField));
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
@@ -836,7 +836,7 @@ public class ResponseStreamer {
                     {
                         ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
                         ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
-                        optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
+                        optMatchInfos(matchInfos, mi -> mi.getField().getAnnotatedField().equals(field));
                         ds.startEntry(KEY_BEFORE);
                         ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
                         ds.endEntry();
@@ -974,7 +974,7 @@ public class ResponseStreamer {
 
             if (!relationInfo.getField().equals(relationInfo.getTargetField())) {
                 // Report targetField for cross-field relations
-                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField());
+                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField().getName());
             }
         }
         ds.endMap();
