@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 /**
  * Provides per-hit query-wide context, such as captured groups.
@@ -24,16 +23,16 @@ public class HitQueryContext {
     private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
-    private final AnnotatedField.Ref defaultField;
+    private final String defaultField;
 
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
-    private final AnnotatedField.Ref field;
+    private final String field;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField.Ref defaultField) {
+    public HitQueryContext(BlackLabIndex index, BLSpans spans, String defaultField) {
         this(index, spans, defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField.Ref defaultField, AnnotatedField.Ref field, MatchInfoDefs matchInfoDefs) {
+    private HitQueryContext(BlackLabIndex index, BLSpans spans, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.index = index;
         this.rootSpans = spans;
         this.defaultField = defaultField;
@@ -52,10 +51,6 @@ public class HitQueryContext {
     }
 
     public HitQueryContext withField(String overriddenField) {
-        return withField(overriddenField != null ? new AnnotatedField.Ref(index, overriddenField) : null);
-    }
-
-    public HitQueryContext withField(AnnotatedField.Ref overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
             result = new HitQueryContext(index, rootSpans, defaultField, overriddenField, matchInfoDefs);
@@ -85,7 +80,7 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name, MatchInfo.Type type) {
-        return registerMatchInfo(name, type, getField().getName(), null);
+        return registerMatchInfo(name, type, getField(), null);
     }
 
     /**
@@ -142,7 +137,7 @@ public class HitQueryContext {
      *
      * @return the field this part of the query searches
      */
-    public AnnotatedField.Ref getField() {
+    public String getField() {
         return field;
     }
 
@@ -154,7 +149,7 @@ public class HitQueryContext {
      * @return the name of the field this part of the query searches
      */
     public String getDefaultFieldName() {
-        return defaultField.getName();
+        return defaultField;
     }
 
     /**

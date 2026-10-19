@@ -13,7 +13,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -30,13 +29,13 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final AnnotatedField.Ref overriddenField;
+    private final String overriddenField;
 
     private final RelationInfo.SpanMode mode;
 
     private final String adjustToCapture;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, AnnotatedField.Ref overriddenField, RelationInfo.SpanMode mode,
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, String overriddenField, RelationInfo.SpanMode mode,
             String adjustToCapture) {
         super(clause.queryInfo);
         this.clause = clause;
@@ -116,7 +115,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             if (spans == null)
                 return null;
             spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedFieldName(), mode, adjustToCapture);
-            if (overriddenField != null && !overriddenField.getName().equals(clause.getField()))
+            if (overriddenField != null && !overriddenField.equals(clause.getField()))
                 spans = new SpansOverrideField(spans, overriddenField);
             return spans;
         }
@@ -152,14 +151,14 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     @Override
     public String getField() {
         if (overriddenField != null)
-            return overriddenField.getName();
+            return overriddenField;
         return clause.getField();
     }
 
     @Override
     public String getRealField() {
         if (overriddenField != null)
-            return overriddenField.getName(); // not strictly correct, should be full Lucene field name with annotation and sensitivity
+            return overriddenField; // not strictly correct, should be full Lucene field name with annotation and sensitivity
         return clause.getRealField();
     }
 

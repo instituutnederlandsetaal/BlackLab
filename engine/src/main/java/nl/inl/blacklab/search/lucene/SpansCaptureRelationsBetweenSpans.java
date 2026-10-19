@@ -89,7 +89,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         void setHitQueryContext(HitQueryContext context) {
             matchRelations.setHitQueryContext(context);
             captureRelations.setHitQueryContext(context);
-            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField().getName(), targetField);
+            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
 
             HitQueryContext targetContext = context.withField(targetField);
             for (String captureName: captureTargetAs) {
@@ -101,7 +101,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             if (capturerTargetOverlaps != null) {
                 capturerTargetOverlaps.setHitQueryContext(targetContext);
                 capturedTargetOverlapsIndex = targetContext.registerMatchInfo(captureTargetOverlapsAs,
-                        MatchInfo.Type.LIST_OF_RELATIONS, context.getField().getName(), targetField);
+                        MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
             }
         }
 

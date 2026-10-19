@@ -14,7 +14,6 @@ import nl.inl.blacklab.plugins.param.PMultiple;
 import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -56,7 +55,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
-            RelationInfo.SpanMode spanMode, AnnotatedField.Ref targetField) {
+            RelationInfo.SpanMode spanMode, String targetField) {
         // Do we need to match a target, or don't we care?
         AnnotationSensitivity field = context.withRelationAnnotation()
                 .luceneFieldRef();
@@ -70,7 +69,7 @@ public class XFRelations implements ExtensionFunctionClass {
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
-                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, new AnnotatedField.Ref(context.field()), spanMode, null);
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, context.field().name(), spanMode, null);
             }
             return relAndTarget;
         } else {

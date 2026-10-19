@@ -11,7 +11,6 @@ import org.apache.lucene.search.ScoreMode;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -64,7 +63,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
 
         ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, new AnnotatedField.Ref(index.annotatedField(sourceQuery.getAnnotatedFieldName())));
+        HitQueryContext hitQueryContext = new HitQueryContext(index, null, sourceQuery.getAnnotatedFieldName());
         for (LeafReaderContext lrc: index.reader().leaves()) {
             publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
         }

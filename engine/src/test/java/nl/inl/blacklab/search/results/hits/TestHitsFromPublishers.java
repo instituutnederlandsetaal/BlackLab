@@ -19,7 +19,6 @@ import java.util.function.BooleanSupplier;
 
 import org.junit.Test;
 
-import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.fetch.HitPublisher;
 import nl.inl.blacklab.search.results.hits.fetch.HitSubscriber;
@@ -31,7 +30,7 @@ public class TestHitsFromPublishers {
      * immediately or remain open depending on the test.
      */
     private static final class ControlledPublisher implements HitPublisher {
-        private final Hits.HitsContext context = new Hits.HitsContext(new MockAnnotatedField());
+        private final Hits.HitsContext context = new Hits.HitsContext(null, "test");
         private final boolean finish;
         private HitSubscriber subscriber;
         private boolean published;
@@ -76,7 +75,7 @@ public class TestHitsFromPublishers {
      * count, hit, completion, or failure callbacks explicitly.
      */
     private static final class ManualPublisher implements HitPublisher {
-        private final Hits.HitsContext context = new Hits.HitsContext(new MockAnnotatedField());
+        private final Hits.HitsContext context = new Hits.HitsContext(null, "test");
         private final Hits hit = Hits.single(context, 0, 0, 1);
         private final CountDownLatch activated = new CountDownLatch(1);
         private HitSubscriber subscriber;

@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * A Spans that makes sure clauses below it get the overridden field in their HitQueryContext.
  *
@@ -11,9 +9,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 class SpansOverrideField extends BLFilterDocsSpans<BLSpans> {
 
-    private final AnnotatedField.Ref overriddenField;
+    private final String overriddenField;
 
-    public SpansOverrideField(BLSpans clause, AnnotatedField.Ref overriddenField) {
+    public SpansOverrideField(BLSpans clause, String overriddenField) {
         super(clause, clause.guarantees());
         this.overriddenField = overriddenField;
     }

@@ -6,7 +6,6 @@ import org.apache.lucene.queries.spans.Spans;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -48,7 +47,7 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new SpansUnique(tags);
-        HitQueryContext context = new HitQueryContext(new MockBlackLabIndex(), null, MockAnnotatedField.ref());
+        HitQueryContext context = new HitQueryContext(new MockBlackLabIndex(), null, "test");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
         spans.setHitQueryContext(context);
 
@@ -67,7 +66,7 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
-        HitQueryContext context = new HitQueryContext(new MockBlackLabIndex(), null, MockAnnotatedField.ref());
+        HitQueryContext context = new HitQueryContext(new MockBlackLabIndex(), null, "test");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
         spans.setHitQueryContext(context);
 

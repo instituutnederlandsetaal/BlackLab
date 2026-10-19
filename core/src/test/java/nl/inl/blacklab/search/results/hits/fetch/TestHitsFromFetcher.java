@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestHitsFromFetcher {
-    public static final Hits.HitsContext DUMMY_CONTEXT = new Hits.HitsContext(null, MatchInfoDefs.EMPTY, null);
+    public static final Hits.HitsContext DUMMY_CONTEXT = new Hits.HitsContext(null,"test", MatchInfoDefs.EMPTY, null);
 
     public final TestIndex testIndex = TestIndex.get();
 
@@ -176,7 +176,7 @@ public class TestHitsFromFetcher {
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
+        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field().getName());
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {

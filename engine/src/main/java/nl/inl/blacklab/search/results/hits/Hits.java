@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -41,32 +42,37 @@ public interface Hits extends Iterable<EphemeralHit> {
     Logger logger = LogManager.getLogger(Hits.class);
 
     /** Context for our hit: field, match info definitions and segment they came from (or null if global) */
-    record HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
-        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+    record HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+        public HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+            this.index = index;
             this.field = field;
             this.matchInfoDefs = matchInfoDefs != null ? matchInfoDefs : MatchInfoDefs.EMPTY;
             this.leafReaderContext = leafReaderContext;
         }
 
-        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-            this(field, matchInfoDefs, null);
+        public HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs) {
+            this(index, field, matchInfoDefs, null);
         }
 
-        public HitsContext(AnnotatedField field) {
-            this(field, MatchInfoDefs.EMPTY, null);
+        public HitsContext(QueryInfo queryInfo) {
+            this(queryInfo.index(), queryInfo.field().getName(), MatchInfoDefs.EMPTY, null);
+        }
+
+        public HitsContext(BlackLabIndex index, String field) {
+            this(index, field, MatchInfoDefs.EMPTY, null);
         }
 
         public static HitsContext fromHitQueryContext(HitQueryContext hitQueryContext,
                 LeafReaderContext leafReaderContext) {
-            return new HitsContext(hitQueryContext.getField().getAnnotatedField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
+            return new HitsContext(hitQueryContext.index(), hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
         }
 
         public BlackLabIndex index() {
-            return field.index();
+            return index;
         }
 
         public HitsContext withoutLeafReaderContext() {
-            return new HitsContext(field, matchInfoDefs, null);
+            return new HitsContext(index, field, matchInfoDefs, null);
         }
     }
 
@@ -80,7 +86,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(new HitsContext(field), lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new HitsContext(field.index(), field.name(), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
     }
 
     static Hits single(HitsContext context, int doc, int matchStart, int matchEnd) {
@@ -98,7 +104,7 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return list of match info definitions
      */
     default AnnotatedField field() {
-        return context().field();
+        return index().annotatedField(context().field());
     }
 
     default BlackLabIndex index() {

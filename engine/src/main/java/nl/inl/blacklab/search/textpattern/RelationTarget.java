@@ -7,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
@@ -91,7 +90,7 @@ public class RelationTarget extends TextPattern {
                 captureName,
                 implicitCapture,
                 spanMode,
-                new AnnotatedField.Ref(targetContext.field())
+                targetContext.field().name()
         );
         if (opInfo.isNegate())
             translated = new SpanQueryNot(translated);
