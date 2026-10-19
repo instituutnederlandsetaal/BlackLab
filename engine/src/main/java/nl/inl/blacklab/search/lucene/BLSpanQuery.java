@@ -343,13 +343,12 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         return annotatedField.getName();
     }
 
-    public AnnotatedField.Ref getAnnotatedFieldRef() {
-        return annotatedField;
+    public String getAnnotatedFieldName() {
+        return annotatedField.getName();
     }
 
-    public AnnotatedField getAnnotatedField() {
-        // Return the annotated field that this query is searching in.
-        return annotatedField.getAnnotatedField();
+    public AnnotatedField.Ref getAnnotatedFieldRef() {
+        return annotatedField;
     }
 
     /**

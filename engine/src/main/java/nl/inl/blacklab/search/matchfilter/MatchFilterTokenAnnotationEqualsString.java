@@ -3,12 +3,10 @@ package nl.inl.blacklab.search.matchfilter;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.exceptions.FeatureNotPresentInCorpus;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -18,9 +16,9 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private int groupIndex;
 
-    private final String annotationName;
+    private final AnnotatedField.Ref field;
 
-//    private final Annotation annotation;
+    private final String annotationName;
 
     private final String luceneField;
 
@@ -32,13 +30,14 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private final MatchSensitivity sensitivity;
 
-    public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, String termString,
+    public MatchFilterTokenAnnotationEqualsString(AnnotatedField.Ref field, String groupName, String annotationName, String termString,
                                                 MatchSensitivity sensitivity, String forwardIndexLuceneField) {
-        this(groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
+        this(field, groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
     }
 
-    public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, /*Annotation annotation,*/ String termString,
+    public MatchFilterTokenAnnotationEqualsString(AnnotatedField.Ref field, String groupName, String annotationName, /*Annotation annotation,*/ String termString,
             MatchSensitivity sensitivity, int compareToSortPosition, String forwardIndexLuceneField) {
+        this.field = field;
         this.groupName = groupName;
         this.compareToTermString = termString;
         this.sensitivity = sensitivity;
@@ -115,17 +114,6 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     }
 
     @Override
-    public MatchFilter withField(AnnotatedField.Ref field) {
-        Annotation annotation = field.getAnnotatedField().annotation(annotationName);
-        if (annotation == null)
-            throw new FeatureNotPresentInCorpus("Annotation '" + annotationName + "' not found in field '" + field.getName() + "'.");
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotationName, /*annotation,*/ compareToTermString, sensitivity, compareToSortPosition, luceneField);
-        mf.annotationIndex = annotationIndex;
-        return mf;
-    }
-
-    @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         if (annotationName != null) {
             annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
@@ -139,7 +127,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         Terms terms = BLTerms.forSegment(context, luceneField).reader();
         int sortPosition = terms.termToSortPosition(compareToTermString, sensitivity);
 
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(field,
                 groupName, annotationName, /*annotation,*/ compareToTermString, sensitivity,
                 sortPosition, luceneField);
         mf.annotationIndex = annotationIndex;

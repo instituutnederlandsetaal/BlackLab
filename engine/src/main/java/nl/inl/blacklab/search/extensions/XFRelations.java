@@ -213,7 +213,7 @@ public class XFRelations implements ExtensionFunctionClass {
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
                     String fieldOrVersion = (String) args.get(1);
                     String field = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion).name();
-                    if (relations.getAnnotatedFieldRef().getName().equals(field)) {
+                    if (relations.getAnnotatedFieldName().equals(field)) {
                         // Nothing to do, just return query unchanged
                         return relations;
                     }

@@ -227,7 +227,7 @@ public interface BlackLabIndex extends AutoCloseable {
     //---------------------------------------------------------------------------
 
     default HitResults find(AnnotatedField field, CompleteQuery query) {
-        QueryInfo queryInfo = QueryInfo.create(this, new AnnotatedField.Ref(field));
+        QueryInfo queryInfo = QueryInfo.create(this, field.name());
         BLSpanQuery spanQuery = query.pattern().toQuery(queryInfo, query.filter());
         return find(spanQuery);
     }
@@ -251,9 +251,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    default HitResults find(BLSpanQuery query, SearchSettings settings) {
-        return find(QueryInfo.create(this, fieldFromQuery(query)), query, settings);
-    }
+    HitResults find(BLSpanQuery query, SearchSettings settings);
 
     HitResults find(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings);
 
@@ -384,10 +382,6 @@ public interface BlackLabIndex extends AutoCloseable {
 
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedField(fieldName);
-    }
-
-    default AnnotatedField.Ref fieldFromQuery(BLSpanQuery q) {
-        return q.getAnnotatedFieldRef();
     }
 
     default AnnotatedField mainAnnotatedField() {

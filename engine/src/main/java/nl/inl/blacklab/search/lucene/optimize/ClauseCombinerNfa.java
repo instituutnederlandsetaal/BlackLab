@@ -262,7 +262,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(right.queryInfo().index(), right.getAnnotatedFieldRef().getName());
+            ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(right.queryInfo().index(), right.getAnnotatedFieldName());
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
             return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_FORWARD, fiAccessor);
         }
@@ -273,7 +273,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(left.queryInfo().index(), left.getAnnotatedFieldRef().getName());
+        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(left.queryInfo().index(), left.getAnnotatedFieldName());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
         return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_BACKWARD, fiAccessor);
     }

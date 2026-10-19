@@ -99,6 +99,16 @@ public class QueryExecutionContext {
         this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
     }
 
+    // @@@ TMP
+    public static QueryExecutionContext get(BlackLabIndex index, String fieldName) {
+        AnnotatedField field = index.annotatedField(fieldName);
+        if (field == null)
+            throw new FeatureNotPresentInCorpus("Field doesn't exist: " + fieldName);
+        Annotation annotation = field.mainAnnotation();
+        return new QueryExecutionContext(index, field, null, annotation.name(), MatchSensitivity.CASE_INSENSITIVE,
+                null, null, false, null);
+    }
+
     public MatchSensitivity getSensitivity() {
         return sensitivity.sensitivity();
     }

@@ -3,10 +3,14 @@ package nl.inl.blacklab.search.lucene;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -39,6 +43,15 @@ public class MatchInfoDefs {
 
     public MatchInfoDefs(List<MatchInfo.Def> defs) {
         this.defs.addAll(defs);
+    }
+
+    public @NonNull Set<String> getOtherFields(String searchField) {
+        Set<String> otherFields = new HashSet<>();
+        for (MatchInfo.Def def : currentList()) {
+            if (def.getTargetField() != null && !def.getTargetField().getName().equals(searchField))
+                otherFields.add(def.getTargetField().getName());
+        }
+        return otherFields;
     }
 
     public Map<String, MatchInfo> getMap(MatchInfo[] matchInfo, boolean omitEmptyCaptures) {

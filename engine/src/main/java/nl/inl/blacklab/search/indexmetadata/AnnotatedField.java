@@ -3,8 +3,6 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Objects;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 
 /** An annotated field.
  *  <p>
@@ -58,16 +56,8 @@ public interface AnnotatedField extends Field {
          *
          * (we hope to eventually replace Ref with just the field name, in which case this method will not be needed anymore)
          */
-        public Ref otherAnnotatedField(String newTargetFieldName) {
+        public Ref otherField(String newTargetFieldName) {
             return new Ref(annotatedField.index().annotatedField(newTargetFieldName));
-        }
-
-        public ForwardIndexAccessor forwardIndexAccessor() {
-            return new ForwardIndexAccessorIntegrated(annotatedField.index(), getName());
-        }
-
-        public String forwardIndexLuceneField(String annotationName) {
-            return getAnnotatedField().annotation(annotationName).forwardIndexSensitivity().luceneField();
         }
 
         public Annotation mainAnnotation() {
@@ -135,10 +125,6 @@ public interface AnnotatedField extends Field {
         if (offsetsSensitivity == null)
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
         return offsetsSensitivity.luceneField();
-    }
-
-    default ForwardIndexAccessor forwardIndexAccessor() {
-        return new ForwardIndexAccessorIntegrated(index(), name());
     }
 
     default AnnotatedField withParallelFieldVersion(String version) {

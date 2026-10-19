@@ -322,7 +322,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
             String version = AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
             String newTargetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(getField().getName(), version);
             if (!newTargetFieldName.equals(targetField.getName()))
-                targetField = targetField.otherAnnotatedField(newTargetFieldName);
+                targetField = targetField.otherField(newTargetFieldName);
         }
     }
 

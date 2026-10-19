@@ -46,15 +46,6 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         this.guarantees = createGuarantees();
     }
 
-    private static AnnotatedField firstNonNull(AnnotatedField... fields) {
-        for (AnnotatedField field : fields) {
-            if (field != null) {
-                return field;
-            }
-        }
-        return null;
-    }
-
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = clause.rewrite(reader);
@@ -137,7 +128,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     public String getField() {
         if (targetField != null)
             return targetField.getName();
-        return clause.getAnnotatedFieldRef().getName();
+        return clause.getAnnotatedFieldName();
     }
 
     @Override

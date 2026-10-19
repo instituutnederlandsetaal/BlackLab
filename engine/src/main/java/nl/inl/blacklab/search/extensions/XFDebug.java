@@ -72,14 +72,14 @@ public class XFDebug implements ExtensionFunctionClass {
                     if (fiIndex == 0) {
                         // Resolve the first query using the forward index and the second using the inverted index
                         ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(
-                                queryInfo.index(), a.getAnnotatedFieldRef().getName());
+                                queryInfo.index(), a.getAnnotatedFieldName());
                         NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
                         return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_BACKWARD,
                                 fiAccessor);
                     } else {
                         // Resolve the second query using the forward index and the first using the inverted index
                         ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(
-                                queryInfo.index(), a.getAnnotatedFieldRef().getName());
+                                queryInfo.index(), a.getAnnotatedFieldName());
                         NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
                         return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b,
                                 SpanQueryFiSeq.DIR_FORWARD,

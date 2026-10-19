@@ -18,7 +18,8 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     private AnnotatedField.Ref field;
 
-    public MatchFilterTokenAnnotation(String groupName, String annotationName) {
+    public MatchFilterTokenAnnotation(AnnotatedField.Ref field, String groupName, String annotationName) {
+        this.field = field;
         this.groupName = groupName;
         if (annotationName == null)
             throw new IllegalArgumentException("annotationName cannot be null");
@@ -86,16 +87,11 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         return this;
     }
 
-    @Override
-    public MatchFilter withField(AnnotatedField.Ref field) {
-        this.field = field;
-        return super.withField(field);
-    }
-
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotationName, str, sensitivity, field.forwardIndexLuceneField(annotationName));
-        return mf.withField(field);
+        String forwardIndexLuceneField = field.getAnnotatedField().annotation(annotationName)
+                .forwardIndexSensitivity().luceneField();
+        return new MatchFilterTokenAnnotationEqualsString(field,
+                groupName, annotationName, str, sensitivity, forwardIndexLuceneField);
     }
 
     public MatchFilter matchOtherTokenSameAnnotation(String otherGroupName, MatchSensitivity sensitivity) {

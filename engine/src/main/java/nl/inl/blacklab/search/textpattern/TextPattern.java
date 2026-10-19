@@ -11,7 +11,6 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -214,7 +213,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
-            return mf.withField(new AnnotatedField.Ref(context.field()));
+            return mf; //@@@ SHOULD HAVE BEEN DONE ALREADY  .withField(context.index(), context.field().name());
         throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
 

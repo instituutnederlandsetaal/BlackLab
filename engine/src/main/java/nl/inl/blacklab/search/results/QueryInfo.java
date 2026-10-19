@@ -16,6 +16,10 @@ public final class QueryInfo {
         return create(index, new AnnotatedField.Ref(index.mainAnnotatedField()), index.cache());
     }
 
+    public static QueryInfo create(BlackLabIndex index, String fieldName) {
+        return create(index, new AnnotatedField.Ref(index.annotatedField(fieldName)));
+    }
+
     public static QueryInfo create(BlackLabIndex index, AnnotatedField.Ref field) {
         return create(index, field, index == null ? null : index.cache());
     }

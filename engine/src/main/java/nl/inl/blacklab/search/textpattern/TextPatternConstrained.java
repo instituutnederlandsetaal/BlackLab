@@ -34,7 +34,7 @@ public class TextPatternConstrained extends TextPattern {
     @Override
     public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         BLSpanQuery translate = clause.toQuery(context);
-        String fieldName = translate.getAnnotatedFieldRef().getName();
+        String fieldName = translate.getAnnotatedFieldName();
         context = context.withField(fieldName);
         ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorIntegrated(context.index(), fieldName);
         MatchFilter constraintFilter = constraint.toMatchFilter(context.withInConstraint());

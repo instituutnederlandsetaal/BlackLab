@@ -447,12 +447,12 @@ public class ResponseStreamer {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            AnnotatedField searchField = summaryFields.getSearchField();
-            ds.entry(KEY_FIELD_NAME, searchField.name());
+            String searchField = summaryFields.getSearchField();
+            ds.entry(KEY_FIELD_NAME, searchField);
             if (!summaryFields.getOtherFields().isEmpty()) {
                 ds.startEntry(KEY_OTHER_FIELDS).startList();
-                for (AnnotatedField field: summaryFields.getOtherFields()) {
-                    ds.item(KEY_FIELD_NAME, field.name());
+                for (String field: summaryFields.getOtherFields()) {
+                    ds.item(KEY_FIELD_NAME, field);
                 }
                 ds.endList().endEntry();
             }
@@ -469,9 +469,9 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (def.getField().getAnnotatedField() != searchField)
+                        if (!def.getField().getName().equals(searchField))
                             ds.entry(KEY_FIELD_NAME, def.getField().getName());
-                        if (def.getTargetField() != null && def.getTargetField().getAnnotatedField() != searchField)
+                        if (def.getTargetField() != null && !def.getTargetField().getName().equals(searchField))
                             ds.entry(KEY_TARGET_FIELD, def.getTargetField().getName());
                     }
                     ds.endMap().endDynEntry();
@@ -714,7 +714,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid);
                 }
 
-                hit(docPid, hit, hitResults.field(), matchInfos, result.getContextSettings().size(),
+                hit(docPid, hit, hitResults.field().name(), matchInfos, result.getContextSettings().size(),
                         result.getConcordanceContext(),
                         result.getAnnotationsToList());
             }
@@ -723,7 +723,7 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, EphemeralHit hit, String searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
@@ -754,12 +754,11 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        AnnotatedField searchField = hitsList.field();
-        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
+        outputHitOrSnippet(docPid, hit, hitsList.field().name(), matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, EphemeralHit hit, String searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -788,7 +787,7 @@ public class ResponseStreamer {
         }
 
         // If there's any match info for this field, include it here
-        optMatchInfos(matchInfos, mi -> mi.getField().getAnnotatedField().equals(searchField));
+        optMatchInfos(matchInfos, mi -> mi.getField().getName().equals(searchField));
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML

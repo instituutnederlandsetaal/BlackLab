@@ -355,6 +355,17 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         task.finishTask();
     }
 
+    /**
+     * Find hits for a pattern in a field.
+     *
+     * @param query the pattern to find
+     * @param settings search settings, or null for default
+     * @return the hits found
+     */
+    public HitResults find(BLSpanQuery query, SearchSettings settings) {
+        return find(QueryInfo.create(this, query.getAnnotatedFieldName()), query, settings);
+    }
+
     @Override
     public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
         return HitResults.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
@@ -363,7 +374,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query)));
+            query.setQueryInfo(QueryInfo.create(this, query.getAnnotatedFieldName()));
             return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);

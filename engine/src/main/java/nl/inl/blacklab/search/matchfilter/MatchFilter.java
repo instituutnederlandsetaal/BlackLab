@@ -7,7 +7,6 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -84,16 +83,6 @@ public abstract class MatchFilter implements TextPattern.EvalResult {
             return parent; // nothing changed; return the original object
         // One or both clauses were rewritten; create a new object
         return creater.apply(rewritten1, rewritten2);
-    }
-
-    /**
-     * Create a copy of this MatchFilter with the given field.
-     *
-     * @param field the field to use
-     * @return a copy of this MatchFilter with the given field
-     */
-    public MatchFilter withField(AnnotatedField.Ref field) {
-        return this;
     }
 
     /**

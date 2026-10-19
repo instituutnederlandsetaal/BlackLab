@@ -4,7 +4,6 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
@@ -59,11 +58,6 @@ public class MatchFilterOr extends MatchFilter {
     public void setHitQueryContext(HitQueryContext context) {
         a.setHitQueryContext(context);
         b.setHitQueryContext(context);
-    }
-
-    @Override
-    public MatchFilter withField(AnnotatedField.Ref field) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.withField(field), MatchFilterOr::new);
     }
 
     @Override
