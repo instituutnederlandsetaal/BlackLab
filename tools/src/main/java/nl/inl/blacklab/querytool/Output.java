@@ -137,7 +137,7 @@ public class Output {
             // For relations, we have to either highlight the source or the target, which may be in different
             // fields.
 
-            boolean isSourceField = rel.getField().getAnnotatedField().equals(annotatedField);
+            boolean isSourceField = rel.getField().equals(annotatedField.name());
             if ((pos == rel.getSourceStart() || pos + 1 == rel.getSourceEnd()) && isSourceField) {
                 // Highlight relation source
                 start = rel.getSourceStart();
@@ -150,14 +150,14 @@ public class Output {
                 String optRelType = (name.contains(relType) ? "" : " " + relType);
                 nameSuffix = optRelType + " →";
             }
-            boolean isTargetField = rel.getTargetField().getAnnotatedField().equals(annotatedField);
+            boolean isTargetField = rel.getTargetField().equals(annotatedField.name());
             if ((pos == rel.getTargetStart() || pos + 1 == rel.getTargetEnd()) && isTargetField) {
                 // Highlight relation target
                 start = rel.getTargetStart();
                 end = rel.getTargetEnd();
                 namePrefix = "→";
             }
-        } else if (mi.getField().getAnnotatedField().equals(annotatedField)) {
+        } else if (mi.getField().equals(annotatedField.name())) {
             // Match info is in this field; not a relation, so just use the full span
             start = mi.getSpanStart();
             end = mi.getSpanEnd();
@@ -515,18 +515,18 @@ public class Output {
                         Collections.emptyMap());
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
-                Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
+                Map<String, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {
                     EphemeralHit fhit = new EphemeralHit();
-                    for (Map.Entry<AnnotatedField, Kwic> e: fkwics.entrySet()) {
-                        AnnotatedField annotatedField = e.getKey();
+                    for (Map.Entry<String, Kwic> e: fkwics.entrySet()) {
+                        String annotatedField = e.getKey();
                         Kwic kwic = e.getValue();
                         int doc = hit.doc();
                         int start = kwic.fragmentStartInDoc();
                         int end = kwic.fragmentEndInDoc();
                         fhit.set(doc, start, end, hit.matchInfos());
-                        hitToShow.addForeign(annotatedField.name(),
-                                showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                        hitToShow.addForeign(annotatedField,
+                                showHitFromForwardIndex(fhit, kwic, matchInfo, index.annotatedField(annotatedField)));
                     }
                 }
             } else {

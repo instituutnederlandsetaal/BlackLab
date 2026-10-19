@@ -8,8 +8,6 @@ import java.util.Objects;
 
 import org.apache.lucene.queries.spans.FilterSpans;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Captures all relations between the hits from two clauses.
  *
@@ -56,7 +54,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private final List<Integer> captureTargetAsIndex = new ArrayList<>();
 
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
-        private final AnnotatedField.Ref targetField;
+        private final String targetField;
 
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
@@ -71,7 +69,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private String captureTargetOverlapsAs = null;
 
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
-                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, AnnotatedField.Ref targetField,
+                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, String targetField,
                 boolean optionalMatch, BLSpans captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = new SpansBuffered(matchRelations);
             this.captureRelations = new SpansBuffered(captureRelations);
@@ -91,7 +89,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         void setHitQueryContext(HitQueryContext context) {
             matchRelations.setHitQueryContext(context);
             captureRelations.setHitQueryContext(context);
-            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
+            captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField().getName(), targetField);
 
             HitQueryContext targetContext = context.withField(targetField);
             for (String captureName: captureTargetAs) {
@@ -103,7 +101,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             if (capturerTargetOverlaps != null) {
                 capturerTargetOverlaps.setHitQueryContext(targetContext);
                 capturedTargetOverlapsIndex = targetContext.registerMatchInfo(captureTargetOverlapsAs,
-                        MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
+                        MatchInfo.Type.LIST_OF_RELATIONS, context.getField().getName(), targetField);
             }
         }
 

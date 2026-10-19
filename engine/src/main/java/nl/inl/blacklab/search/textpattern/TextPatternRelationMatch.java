@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
@@ -97,7 +96,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
                 context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(), targetQuery,
-                new AnnotatedField.Ref(targetContext.field()), captureName, relationType, opInfo.isOptionalMatch(),
+                targetContext.field().name(), captureName, relationType, opInfo.isOptionalMatch(),
                 null, null);
     }
 

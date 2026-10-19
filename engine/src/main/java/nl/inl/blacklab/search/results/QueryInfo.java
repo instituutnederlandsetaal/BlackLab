@@ -117,6 +117,19 @@ public final class QueryInfo {
      * Will return a new QueryInfo if the field differs from ours;
      * otherwise, will return this.
      *
+     * @param fieldName the field to set
+     * @return a QueryInfo with the specified field
+     */
+    public QueryInfo withField(String fieldName) {
+        return withField(new AnnotatedField.Ref(index.annotatedField(fieldName)));
+    }
+
+    /**
+     * Return QueryInfo with the specified field.
+     *
+     * Will return a new QueryInfo if the field differs from ours;
+     * otherwise, will return this.
+     *
      * @param field the field to set
      * @return a QueryInfo with the specified field
      */

@@ -52,14 +52,6 @@ public interface AnnotatedField extends Field {
             return annotatedField.toString();
         }
 
-        /** Return a reference to another annotated field in the same index.
-         *
-         * (we hope to eventually replace Ref with just the field name, in which case this method will not be needed anymore)
-         */
-        public Ref otherField(String newTargetFieldName) {
-            return new Ref(annotatedField.index().annotatedField(newTargetFieldName));
-        }
-
         public Annotation mainAnnotation() {
             return annotatedField.mainAnnotation();
         }

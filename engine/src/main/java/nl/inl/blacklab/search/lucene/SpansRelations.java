@@ -16,7 +16,6 @@ import org.apache.lucene.store.ByteArrayDataInput;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -75,7 +74,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     private final boolean spansMayIncludeRoots = true;
 
-    private final AnnotatedField.Ref sourceField;
+    private final String sourceField;
 
     /** For this query, could target field vary with each hit?
      *
@@ -100,7 +99,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param spanMode                      what span to return for the relations found
      * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
-    public SpansRelations(AnnotatedField.Ref sourceField, String relationType, BLSpans relationsMatches,
+    public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         super(relationsMatches,
@@ -125,7 +124,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
         String annotatedFieldName = context.getDefaultFieldName();
         String targetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedFieldName, version);
-        AnnotatedField.Ref targetField = version.isEmpty() ? sourceField : new AnnotatedField.Ref(context.index().annotatedField(targetFieldName));
+        String targetField = version.isEmpty() ? sourceField : targetFieldName;
 
         // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.
         // If this is the case, we'll set target field per matched relation, based on the relation class
@@ -207,7 +206,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             if (info.mayHaveInfoInRelationIndex()) {
                 // Get them from relation info index
                 int infoRelationId = info.getRelationId();
-                String f = relInfo.relationsField(info.getField().getName());
+                String f = relInfo.relationsField(info.getField());
                 attributes = relInfo.getAttributes(f, docId, infoRelationId);
             } else {
                 // No extra info was stored, no need to check

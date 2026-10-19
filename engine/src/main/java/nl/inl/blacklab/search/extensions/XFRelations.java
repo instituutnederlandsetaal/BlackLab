@@ -217,7 +217,7 @@ public class XFRelations implements ExtensionFunctionClass {
                         // Nothing to do, just return query unchanged
                         return relations;
                     }
-                    return new SpanQueryOtherFieldHits(relations, new AnnotatedField.Ref(queryInfo.index(), field));
+                    return new SpanQueryOtherFieldHits(relations, field);
                 });
 
         /*

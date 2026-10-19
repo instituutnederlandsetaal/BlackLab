@@ -134,7 +134,7 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     private Map<String, String> attributes;
 
-    private AnnotatedField.Ref baseField;
+    private String baseField;
 
     private AnnotationSensitivity relationField;
 
@@ -188,7 +188,7 @@ public class SpanQueryRelations extends BLSpanQuery {
     private void init(AnnotationSensitivity relationField, String relationType, Map<String, String> attributes, BLSpanQuery clause, Direction direction,
             RelationInfo.SpanMode spanMode, String captureAs, boolean implicitCapture, AnnotatedField.Ref targetField) {
         this.relationField = relationField;
-        this.baseField = new AnnotatedField.Ref(relationField.annotation().field());
+        this.baseField = relationField.annotation().field().name();
         this.relationType = relationType;
         this.attributes = new HashMap<>(attributes == null ? Collections.emptyMap() : attributes);
         this.clause = clause;
@@ -329,7 +329,7 @@ public class SpanQueryRelations extends BLSpanQuery {
     public String getField() {
         if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
             return targetField.getName();
-        return baseField.getName();
+        return baseField;
     }
 
     @Override

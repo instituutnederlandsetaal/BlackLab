@@ -466,7 +466,7 @@ public class AnnotationWriter {
         int relationId = relationsStrategy.getRelationId(this, endPos, attributes);
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
         RelationInfo relationInfo = RelationInfo.create(false, startPos, startPos,
-                endPos, endPos, relationId, new AnnotatedField.Ref(field()), hasExtraInfoStored);
+                endPos, endPos, relationId, field().name(), hasExtraInfoStored);
         String fullRelationType;
         fullRelationType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, relationInfo);
@@ -478,7 +478,7 @@ public class AnnotationWriter {
           //getNextRelationId(attributes != null && !attributes.isEmpty());
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
         RelationInfo relationInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd,
-                targetStart, targetEnd, relationId, new AnnotatedField.Ref(field()), hasExtraInfoStored);
+                targetStart, targetEnd, relationId, field().name(), hasExtraInfoStored);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort

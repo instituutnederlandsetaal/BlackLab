@@ -15,7 +15,6 @@ import org.apache.lucene.queries.spans.SpanWeight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -40,7 +39,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     /** Combination of relation and target queries */
     public static class Target {
 
-        public static Target get(QueryInfo queryInfo, AnnotationSensitivity relationField, BLSpanQuery target, AnnotatedField.Ref targetField,
+        public static Target get(QueryInfo queryInfo, AnnotationSensitivity relationField, BLSpanQuery target, String targetField,
                 String captureRelsAs, String relationType, boolean optionalMatch, BLSpanQuery captureTargetOverlaps, String captureTargetOverlapsAs) {
 
             // Determine what relations to capture based on the class of the matching regex, if any
@@ -78,7 +77,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
          */
         private final BLSpanQuery target;
 
-        private final AnnotatedField.Ref targetField;
+        private final String targetField;
 
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
@@ -89,7 +88,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Name for target spans captured in case of ==> with-spans(_) */
         private final String captureTargetOverlapsAs;
 
-        private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, AnnotatedField.Ref targetField,
+        private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField,
                 String captureAs, boolean optionalMatch, BLSpanQuery captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
@@ -226,7 +225,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         private final List<String> captureTargetAs;
 
         /** Target field for capture. */
-        private final AnnotatedField.Ref targetField;
+        private final String targetField;
 
         /** Span the relation targets must be inside of (or null if we don't care) */
         private final BLSpanWeight target;
@@ -241,7 +240,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         private final String captureTargetOverlapsAs;
 
         public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target,
-                String captureAs, List<String> captureTargetAs, AnnotatedField.Ref targetField, boolean optionalMatch,
+                String captureAs, List<String> captureTargetAs, String targetField, boolean optionalMatch,
                 BLSpanWeight captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;

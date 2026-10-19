@@ -115,7 +115,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedFieldRef(), mode, adjustToCapture);
+            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedFieldName(), mode, adjustToCapture);
             if (overriddenField != null && !overriddenField.getName().equals(clause.getField()))
                 spans = new SpansOverrideField(spans, overriddenField);
             return spans;

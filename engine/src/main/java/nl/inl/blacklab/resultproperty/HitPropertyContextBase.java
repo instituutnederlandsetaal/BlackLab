@@ -88,7 +88,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().getAnnotatedField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
+            if (mi.getField().equals(field.name()) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
@@ -161,16 +161,16 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
      * @return the annotation to use
      */
-    protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField.Ref overrideField) {
-        if (overrideField != null && !overrideField.getAnnotatedField().equals(annotation.field())) {
+    protected static Annotation annotationOverrideField(Annotation annotation, String overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            annotation = overrideField.getAnnotatedField().annotation(annotation.name());
+            annotation = annotation.field().index().annotatedField(overrideField).annotation(annotation.name());
         }
         return annotation;
     }
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField.Ref overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, String overrideField) {
         super(prop, context, invert);
         this.index = context.hits() == null ? prop.index : context.hits().index();
         this.annotation = annotationOverrideField(prop.annotation, overrideField);

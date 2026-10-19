@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -36,27 +37,27 @@ public class Kwics {
     private final Map<PermanentHit, Kwic> kwics;
 
     /** KWICs in other fields (for parallel corpora), or null if none. */
-    private Map<PermanentHit, Map<AnnotatedField, Kwic>> foreignKwics = null;
+    private Map<PermanentHit, Map<String, Kwic>> foreignKwics = null;
 
     public Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
         // Get the concordances
-        kwics = retrieveKwics(hits, contextSize, hits.field());
+        kwics = retrieveKwics(hits, contextSize, hits.field().name());
 
         // Get the concordances for other fields (for parallel corpora), if there are any
         foreignKwics = retrieveForeignKwics(hits, contextSize);
     }
 
-    private Map<PermanentHit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
-        Map<PermanentHit, Map<AnnotatedField, Kwic>> foreignKwics = null;
-        AnnotatedField defaultField = hits.field();
+    private Map<PermanentHit, Map<String, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
+        Map<PermanentHit, Map<String, Kwic>> foreignKwics = null;
+        String defaultField = hits.field().name();
         for (LeafReaderContext lrc: hits.index().reader().leaves()) {
-            Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
+            Map<String, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
             for (Iterator<EphemeralHit> it = hits.segmentIterator(lrc); it.hasNext(); ) {
                 EphemeralHit hit = it.next();
-                Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"
+                Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
                 MatchInfo[] matchInfo = hit.matchInfos();
                 if (matchInfo != null) {
                     MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
@@ -70,13 +71,13 @@ public class Kwics {
                         boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
                                 def != null && def.getName()
                                 .endsWith(SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT);
-                        minMaxPerField = updateMinMaxForMatchInfo(lrc, mi, defaultField, minMaxPerField,
+                        minMaxPerField = updateMinMaxForMatchInfo(hits.index(), lrc, mi, defaultField, minMaxPerField,
                                 afisPerField, isTargetHit);
                     }
 
                     if (minMaxPerField != null) {
-                        Map<AnnotatedField, Kwic> kwics = new HashMap<>();
-                        for (Map.Entry<AnnotatedField, int[]> e: minMaxPerField.entrySet()) {
+                        Map<String, Kwic> kwics = new HashMap<>();
+                        for (Map.Entry<String, int[]> e: minMaxPerField.entrySet()) {
                             int[] minMax = e.getValue();
                             int matchStart = minMax[0];
                             int matchEnd = minMax[1];
@@ -87,7 +88,7 @@ public class Kwics {
                                 snippetStart = matchStart - contextSize.getMaxSnippetLength() / 2;
                             }
 
-                            AnnotatedField field = e.getKey();
+                            String field = e.getKey();
                             List<AnnotationForwardIndex> afis = afisPerField.get(field);
                             Hits singleHit = Hits.single(hits.context(), hit.doc(), matchStart, matchEnd);
                             ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd,
@@ -132,14 +133,14 @@ public class Kwics {
      * @param afisPerField the AnnotForwardIndex for each foreign field we've seen will be added to this
      * @return updated map of min/max positions per field
      */
-    private static Map<AnnotatedField, int[]> updateMinMaxForMatchInfo(LeafReaderContext lrc, MatchInfo mi, AnnotatedField defaultField,
-            Map<AnnotatedField, int[]> minMaxPerField, Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
-        AnnotatedField field = mi.getField().getAnnotatedField();
+    private static Map<String, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, LeafReaderContext lrc, MatchInfo mi, String defaultField,
+            Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
+        String field = mi.getField();
         boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
-        if (field != defaultField) { // foreign KWICs only
+        if (!field.equals(defaultField)) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
-            afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(lrc, field));
+            afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(index, lrc, field));
             if (isTargetHit) {
                 // Special __@target capture that is actually the foreign hit we're looking for.
                 // Keep track of the min/max positions of the match in each foreign field
@@ -151,10 +152,10 @@ public class Kwics {
         }
         if (mi instanceof RelationInfo rmi && !isTag) {
             // Relation targets (not just sources) should influence field context
-            AnnotatedField targetField = rmi.getTargetField() == null ? field : rmi.getTargetField().getAnnotatedField();
-            if (targetField != defaultField) { // foreign KWICs only
+            String targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
+            if (!targetField.equals(defaultField)) { // foreign KWICs only
                 afisPerField.computeIfAbsent(targetField, k ->
-                        getAnnotationForwardIndexes(lrc, targetField));
+                        getAnnotationForwardIndexes(index, lrc, targetField));
             }
         }
         return minMaxPerField;
@@ -184,7 +185,7 @@ public class Kwics {
      * @param hit the hit
      * @return foreign KWICs for this hit, or null if none
      */
-    public Map<AnnotatedField, Kwic> getForeignKwics(Hit hit) {
+    public Map<String, Kwic> getForeignKwics(Hit hit) {
         return foreignKwics == null ? null : foreignKwics.get(hit);
     }
 
@@ -200,7 +201,7 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private static Map<PermanentHit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
+    private static Map<PermanentHit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, String field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
 
@@ -218,7 +219,7 @@ public class Kwics {
                 // Make sure we have the correct segment forward index
                 LeafReaderContext lrc = hits.index().getLeafReaderContext(lastDocId);
                 if (forwardIndexes == null || lrc.docBase != prevDocBase) {
-                    forwardIndexes = getAnnotationForwardIndexes(lrc, field);
+                    forwardIndexes = getAnnotationForwardIndexes(hits.index(), lrc, field);
                     prevDocBase = lrc.docBase;
                 }
 
@@ -235,7 +236,7 @@ public class Kwics {
         if (hits.size() - firstIndexWithCurrentDocId > 0) {
             LeafReaderContext lrc = hits.index().getLeafReaderContext(hits.doc(firstIndexWithCurrentDocId));
             if (forwardIndexes == null || lrc.docBase != prevDocBase)
-                forwardIndexes = getAnnotationForwardIndexes(lrc, field);
+                forwardIndexes = getAnnotationForwardIndexes(hits.index(), lrc, field);
             List<Annotation> annotations = getAnnotations(hits.index(), forwardIndexes);
             Contexts.makeKwicsSingleDocForwardIndex(
                     hits.sublist(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId),
@@ -250,16 +251,18 @@ public class Kwics {
         return new GlobalDocIdAdapter(FieldForwardIndex.get(lrc, luceneField), lrc.docBase);
     }
 
-    private static List<AnnotationForwardIndex> getAnnotationForwardIndexes(LeafReaderContext lrc, AnnotatedField field) {
-        List<AnnotationForwardIndex> forwardIndexes = new ArrayList<>(field.annotations().size());
-        forwardIndexes.add(getFi(lrc, field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)));
-        for (Annotation annotation: field.annotations()) {
-            if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(
+    private static List<AnnotationForwardIndex> getAnnotationForwardIndexes(BlackLabIndex index, LeafReaderContext lrc, String field) {
+        AnnotatedField annotatedField = index.annotatedField(field);
+        Annotations annotations = annotatedField.annotations();
+        List<AnnotationForwardIndex> forwardIndexes = new ArrayList<>(annotations.size());
+        forwardIndexes.add(getFi(lrc, annotatedField.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)));
+        for (Annotation annotation: annotations) {
+            if (annotation.hasForwardIndex() && !annotation.equals(annotatedField.mainAnnotation()) && !annotation.name().equals(
                     AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 forwardIndexes.add(getFi(lrc, annotation));
             }
         }
-        forwardIndexes.add(getFi(lrc, field.mainAnnotation()));
+        forwardIndexes.add(getFi(lrc, annotatedField.mainAnnotation()));
         return forwardIndexes;
     }
 }

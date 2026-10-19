@@ -19,7 +19,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -45,15 +44,15 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      *  may search in different versions of the same "parallel field", e.g. "contents__en"
      *  and "contents__nl")
      */
-    private final AnnotatedField.Ref annotatedField;
+    private final String annotatedField;
 
     protected SpanGuarantees guarantees;
 
     protected BLSpanQuery(QueryInfo queryInfo) {
-        this(queryInfo, queryInfo.field());
+        this(queryInfo, queryInfo.field().getName());
     }
 
-    protected BLSpanQuery(QueryInfo queryInfo, AnnotatedField.Ref annotatedField) {
+    protected BLSpanQuery(QueryInfo queryInfo, String annotatedField) {
         assert queryInfo != null && annotatedField != null;
         this.queryInfo = queryInfo;
         this.annotatedField = annotatedField;
@@ -340,15 +339,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     @Override
     public String getField() {
         // Return only base name of annotated field!
-        return annotatedField.getName();
+        return annotatedField;
     }
 
     public String getAnnotatedFieldName() {
-        return annotatedField.getName();
-    }
-
-    public AnnotatedField.Ref getAnnotatedFieldRef() {
-        return annotatedField;
+        return getField();
     }
 
     /**

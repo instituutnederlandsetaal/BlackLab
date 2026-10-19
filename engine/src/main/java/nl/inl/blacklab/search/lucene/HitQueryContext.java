@@ -51,6 +51,10 @@ public class HitQueryContext {
         return new HitQueryContext(index, spans, defaultField, field, matchInfoDefs);
     }
 
+    public HitQueryContext withField(String overriddenField) {
+        return withField(overriddenField != null ? new AnnotatedField.Ref(index, overriddenField) : null);
+    }
+
     public HitQueryContext withField(AnnotatedField.Ref overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
@@ -81,7 +85,7 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name, MatchInfo.Type type) {
-        return registerMatchInfo(name, type, getField(), null);
+        return registerMatchInfo(name, type, getField().getName(), null);
     }
 
     /**
@@ -96,7 +100,7 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, AnnotatedField.Ref field, AnnotatedField.Ref targetField) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
         return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 

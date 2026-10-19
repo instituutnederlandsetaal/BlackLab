@@ -469,10 +469,10 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (!def.getField().getName().equals(searchField))
-                            ds.entry(KEY_FIELD_NAME, def.getField().getName());
-                        if (def.getTargetField() != null && !def.getTargetField().getName().equals(searchField))
-                            ds.entry(KEY_TARGET_FIELD, def.getTargetField().getName());
+                        if (!def.getField().equals(searchField))
+                            ds.entry(KEY_FIELD_NAME, def.getField());
+                        if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField());
                     }
                     ds.endMap().endDynEntry();
                 }
@@ -787,7 +787,7 @@ public class ResponseStreamer {
         }
 
         // If there's any match info for this field, include it here
-        optMatchInfos(matchInfos, mi -> mi.getField().getName().equals(searchField));
+        optMatchInfos(matchInfos, mi -> mi.getField().equals(searchField));
 
         if (concordanceContext.isConcordances()) {
             // Add concordance from original XML
@@ -825,17 +825,17 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, List.of()).endEntry();
                 }
             }
-            Map<AnnotatedField, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+            Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
             if (foreignKwics != null) {
                 ds.startEntry(KEY_OTHER_FIELDS).startMap();
-                for (Map.Entry<AnnotatedField, Kwic> e: foreignKwics.entrySet()) {
-                    AnnotatedField field = e.getKey();
+                for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                    String field = e.getKey();
                     Kwic kwic = e.getValue();
-                    ds.startDynEntry(field.name()).startMap();
+                    ds.startDynEntry(field).startMap();
                     {
                         ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
                         ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
-                        optMatchInfos(matchInfos, mi -> mi.getField().getAnnotatedField().equals(field));
+                        optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
                         ds.startEntry(KEY_BEFORE);
                         ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
                         ds.endEntry();
@@ -973,7 +973,7 @@ public class ResponseStreamer {
 
             if (!relationInfo.getField().equals(relationInfo.getTargetField())) {
                 // Report targetField for cross-field relations
-                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField().getName());
+                ds.entry(KEY_TARGET_FIELD, relationInfo.getTargetField());
             }
         }
         ds.endMap();

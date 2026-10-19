@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 public class SpanInfo extends MatchInfo {
 
-    public static SpanInfo create(int start, int end, AnnotatedField.Ref overriddenField) {
+    public static SpanInfo create(int start, int end, String overriddenField) {
         return new SpanInfo(start, end, overriddenField);
     }
 
@@ -17,7 +17,7 @@ public class SpanInfo extends MatchInfo {
 
     int end;
 
-    private SpanInfo(int start, int end, AnnotatedField.Ref overriddenField) {
+    private SpanInfo(int start, int end, String overriddenField) {
         super(overriddenField);
         this.start = start;
         this.end = end;

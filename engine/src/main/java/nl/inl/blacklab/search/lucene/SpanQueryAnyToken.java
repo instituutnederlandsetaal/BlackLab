@@ -15,7 +15,6 @@ import org.apache.lucene.search.ScoreMode;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.LuceneUtil;
@@ -89,7 +88,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     final String luceneField;
 
     public SpanQueryAnyToken(QueryInfo queryInfo, int min, int max, String luceneField) {
-        super(queryInfo, new AnnotatedField.Ref(queryInfo.index(), AnnotatedFieldNameUtil.getBaseName(luceneField)));
+        super(queryInfo, AnnotatedFieldNameUtil.getBaseName(luceneField));
         if (min < 0)
             throw new IllegalArgumentException("min cannot be negative");
         if (max < 1)

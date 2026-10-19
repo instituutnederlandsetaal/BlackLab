@@ -5,8 +5,6 @@ import java.util.Arrays;
 
 import org.apache.lucene.queries.spans.FilterSpans;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Adjust relations spans to match source, target, or entire relation.
  */
@@ -32,7 +30,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final AnnotatedField.Ref clauseField;
+    private final String clauseField;
 
     /** Whether or not the current hit should be included. */
     private FilterSpans.AcceptStatus filterResult = FilterSpans.AcceptStatus.YES;
@@ -43,7 +41,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
      * @param in       spans to adjust
      * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, AnnotatedField.Ref clauseField, RelationInfo.SpanMode spanMode,
+    public SpansRelationSpanAdjust(BLSpans in, String clauseField, RelationInfo.SpanMode spanMode,
             String adjustToCapture) {
         super(in, adjustToCapture != null ? SpanGuarantees.NONE : SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
         this.clauseField = clauseField;
