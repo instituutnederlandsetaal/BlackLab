@@ -92,8 +92,8 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        String forwardIndexLuceneField = index.annotatedField(field).annotation(annotationName)
-                .forwardIndexLuceneField();
+        String forwardIndexLuceneField = index.annotatedField(field).annotation(annotationName).mainSensitivity()
+                .luceneField();
         return new MatchFilterTokenAnnotationEqualsString(index, field,
                 groupName, annotationName, str, sensitivity, forwardIndexLuceneField);
     }

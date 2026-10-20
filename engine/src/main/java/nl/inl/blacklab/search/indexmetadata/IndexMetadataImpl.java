@@ -626,7 +626,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
             AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.name());
             for (MatchSensitivity matchSensitivity: annotationWriter.sensitivitySuffixes()) {
-                annotation.addAlternative(matchSensitivity);
+                annotation.addSensitivity(matchSensitivity);
             }
             if (annotationWriter.includeOffsets())
                 annotation.setOffsetsMatchSensitivity(annotationWriter.mainSensitivity());
@@ -770,7 +770,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             continue;
                         CorpusSize.Count fieldCount = countPerField.get(field.name());
                         // Add up token counts for all the documents
-                        String luceneField = annot.forwardIndexLuceneField();
+                        String luceneField = annot.mainSensitivity().luceneField();
                         AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                         int docLength = (int) fi.docLength(segmentDocId);
                         if (docLength > 0) {

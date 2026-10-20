@@ -50,8 +50,7 @@ public record RequestTermFrequencies(
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         if (sensitive == null)
             sensitive = defaultToSensitive;
-        MatchSensitivity matchSensitivity = MatchSensitivity.caseAndDiacriticsSensitive(
-                sensitive);
+        MatchSensitivity matchSensitivity = sensitive ? MatchSensitivity.SENSITIVE : MatchSensitivity.INSENSITIVE;
         WebserviceOperations.ensureHasSensitivity(annotation, matchSensitivity);
         return annotation.sensitivity(matchSensitivity);
     }

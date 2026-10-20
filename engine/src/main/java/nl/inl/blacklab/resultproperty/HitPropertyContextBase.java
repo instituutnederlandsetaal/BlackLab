@@ -187,7 +187,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     void initForwardIndex() {
-        luceneField = annotation.forwardIndexLuceneField();
+        luceneField = annotation.mainSensitivity().luceneField();
         if (isGlobal() || context.toGlobal()) {
             // To produce global term ids, we need the global forward index
             forwardIndex = index.forwardIndex(annotation);

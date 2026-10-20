@@ -279,7 +279,9 @@ public class WebserviceOperations {
      */
     public static TermFrequencyList getCollocations(RequestOldCollocations requestOldCollocations, HitResults hitResults) {
         Annotation annotation = hitResults.field().mainAnnotation();
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(requestOldCollocations.sensitive());
+        MatchSensitivity sensitivity = requestOldCollocations.sensitive() ?
+                MatchSensitivity.SENSITIVE :
+                MatchSensitivity.INSENSITIVE;
         ensureHasSensitivity(annotation, sensitivity);
         ContextSize contextSize = requestOldCollocations.contextSize();
         return hitResults.collocations(annotation, contextSize, sensitivity, true);

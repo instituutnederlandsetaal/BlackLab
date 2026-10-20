@@ -45,6 +45,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
@@ -381,20 +382,19 @@ public final class LuceneUtil {
      * @param fieldName the field
      * @param prefix the prefix we're looking for (null or empty string for all
      *            terms)
-     * @param sensitive match case-sensitively or not?
+     * @param sensitivity match case-/diacritics-sensitively or not?
      * @param maxResults max. number of results to return (or -1 for all)
      * @return the matching terms
      */
     public static List<String> findTermsByPrefix(IndexReader index, String fieldName,
-            String prefix, boolean sensitive, long maxResults) {
+            String prefix, MatchSensitivity sensitivity, long maxResults) {
         boolean allTerms = prefix == null || prefix.isEmpty();
         if (allTerms) {
             prefix = "";
-            sensitive = true; // don't do unnecessary work in this case
+            sensitivity = MatchSensitivity.SENSITIVE; // don't do unnecessary work in this case
         }
         try {
-            if (!sensitive)
-                prefix = StringUtil.stripAccents(prefix).toLowerCase();
+            prefix = sensitivity.desensitize(prefix);
             Set<String> results = new TreeSet<>();
             
             outerLoop:
@@ -417,8 +417,7 @@ public final class LuceneUtil {
                         break outerLoop;
                     
                     String termText = term.utf8ToString();
-                    boolean startsWithPrefix = allTerms || (sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
-                            : termText.startsWith(prefix));
+                    boolean startsWithPrefix = allTerms || sensitivity.desensitize(termText).startsWith(prefix);
                     if (!startsWithPrefix) {
                         // Doesn't match prefix or different field; no more matches
                         break;

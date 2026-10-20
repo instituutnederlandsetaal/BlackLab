@@ -65,7 +65,12 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public boolean hasSensitivity(MatchSensitivity sensitivity) {
-        return false;
+        return sensitivity == MatchSensitivity.INSENSITIVE;
+    }
+
+    @Override
+    public AnnotationSensitivity mainSensitivity() {
+        return sensitivity(MatchSensitivity.INSENSITIVE);
     }
 
     @Override

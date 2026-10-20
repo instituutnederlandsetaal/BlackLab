@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collection;
 import java.util.Set;
 
+import org.jspecify.annotations.NonNull;
+
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -45,6 +47,7 @@ public interface Annotation extends TextPattern.EvalResult {
      * @param sensitivity desired sensitivity
      * @return reference to the specified sensitivity.
      */
+    @NonNull
     AnnotationSensitivity sensitivity(MatchSensitivity sensitivity);
 
     /**
@@ -72,32 +75,18 @@ public interface Annotation extends TextPattern.EvalResult {
     int hashCode();
 
     /**
-     * Get the alternative that has the forward index.
-     *
-     * @return alternative with the forward index
-     * @throws RuntimeException if annotation has no forward index
-     */
-    default String forwardIndexLuceneField() {
-        if (!hasForwardIndex())
-            throw new UnsupportedOperationException("Annotation has no forward index: " + name());
-        return mainSensitivity().luceneField();
-    }
-
-    /**
      * Get the main sensitivity.
      *
      * If the field has a forward index, content store and/or offsets,
      * they will be stored in this sensitivity.
      *
+     * It will always be the SENSITIVE sensitivity if that is available,
+     * otherwise the INSENSITIVE sensitivity.
+     *
      * @return main sensitivity
      * @throws RuntimeException if annotation has no forward index
      */
-    default AnnotationSensitivity mainSensitivity() {
-        if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
-            return sensitivity(MatchSensitivity.SENSITIVE);
-        } else
-            return sensitivity(MatchSensitivity.INSENSITIVE);
-    }
+    AnnotationSensitivity mainSensitivity();
 
     /**
      * Get the sensitivity setting that corresponds to the available sensitivities.

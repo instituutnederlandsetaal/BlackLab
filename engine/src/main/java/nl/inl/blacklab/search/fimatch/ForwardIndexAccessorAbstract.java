@@ -46,7 +46,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
             if (annotation.hasForwardIndex()) {
                 annotationIndexes.put(annotation.name(), i);
                 annotations.add(annotation.name());
-                luceneFields.add(annotation.forwardIndexLuceneField());
+                luceneFields.add(annotation.mainSensitivity().luceneField());
                 i++;
             }
         }

@@ -357,7 +357,7 @@ public class HitGroupsTokenFrequencies {
                         AnnotationForwardIndex[] forwardIndexes = new FieldForwardIndex[hitProperties.size()];
                         int hitPropIndex = 0;
                         for (AnnotInfo annot : hitProperties) {
-                            String luceneField = annot.annotation.forwardIndexLuceneField();
+                            String luceneField = annot.annotation.mainSensitivity().luceneField();
                             forwardIndexes[hitPropIndex] = FieldForwardIndex.get(lrc, luceneField);
                             hitPropIndex++;
                         }

@@ -183,7 +183,7 @@ public class Contexts {
 
         //AnnotForwardIndex fi = hits.index().annotationForwardIndex(annotation);
         AnnotationForwardIndex fi = null;
-        String luceneField = annotation.forwardIndexLuceneField();
+        String luceneField = annotation.mainSensitivity().luceneField();
 
         // Get the context
         // Group hits per document

@@ -110,7 +110,7 @@ public class ExportForwardIndex {
             for (Annotation annotation: annotatedField.annotations()) {
                 if (SKIP_ANNOTATIONS.contains(annotation.name()) || !annotation.hasForwardIndex())
                     continue;
-                String luceneField = annotation.forwardIndexLuceneField();
+                String luceneField = annotation.mainSensitivity().luceneField();
                 LeafReaderContext lrc = index.getLeafReaderContext(docId);
                 AnnotationForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
                 int docLength = (int) fi.docLength(docId - lrc.docBase);
@@ -137,7 +137,7 @@ public class ExportForwardIndex {
             System.out.println("  " + annotation.name());
             Set<String> allTerms = new TreeSet<>();
             for (LeafReaderContext lrc: index.reader().leaves()) {
-                String luceneField = annotatedField.mainAnnotation().forwardIndexLuceneField();
+                String luceneField = annotatedField.mainAnnotation().mainSensitivity().luceneField();
                 Terms r = BLTerms.forSegment(lrc, luceneField).reader();
                 for (int i = 0; i < r.numberOfTerms(); i++) {
                     allTerms.add(r.get(i));
