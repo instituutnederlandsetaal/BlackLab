@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,6 @@ import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermVectors;
@@ -33,7 +33,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.jspecify.annotations.Nullable;
 
@@ -43,7 +42,6 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ParallelDocTask;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -279,46 +277,6 @@ public final class LuceneUtil {
         }
     }
 
-    /**
-     * Check if a Lucene field has offsets stored.
-     *
-     * @param reader our index
-     * @param fieldName field to check
-     * @return true iff field has offsets
-     */
-    public static boolean hasOffsets(IndexReader reader, String fieldName) {
-        // Iterate over documents in the index until we find a annotation
-        // for this annotated field that has stored character offsets. This is
-        // our main annotation.
-
-        // Note that we can't simply retrieve the field from a document and
-        // check the FieldType to see if it has offsets or not, as that information
-        // is incorrect at search time (always set to false, even if it has offsets).
-
-        Bits liveDocs = MultiBits.getLiveDocs(reader);
-        for (int n = 0; n < reader.maxDoc(); n++) {
-            if (liveDocs == null || liveDocs.get(n)) {
-                try {
-                    Terms terms = reader.getTermVector(n, fieldName);
-                    if (terms == null) {
-                        // No term vector; probably not stored in this document.
-                        continue;
-                    }
-                    if (terms.hasOffsets()) {
-                        // This field has offsets stored. Must be the main alternative.
-                        return true;
-                    }
-                    // This alternative has no offsets stored. Don't look at any more
-                    // documents, go to the next alternative.
-                    break;
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
-                }
-            }
-        }
-        return false;
-    }
-
     /** Handle a term. */
     @FunctionalInterface
     public interface TermHandler {
@@ -344,10 +302,8 @@ public final class LuceneUtil {
      * @param handler called to handle terms found, until it returns false (or we run out of terms)
      */
     public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
-    	boolean allTerms = startFrom == null || startFrom.isEmpty();
-        if (allTerms) {
-        	startFrom = "";
-        }
+    	if (startFrom == null)
+            startFrom = "";
         try {
             outerLoop:
             for (LeafReaderContext leafReader : index.leaves()) {
@@ -358,11 +314,13 @@ public final class LuceneUtil {
                     continue;
                 }
                 TermsEnum termsEnum = terms.iterator();
-                BytesRef brPrefix = new BytesRef(startFrom.getBytes(LUCENE_DEFAULT_CHARSET));
-                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
-
-                if (seekStatus == TermsEnum.SeekStatus.END) {
-                    continue;
+                if (!startFrom.isEmpty()) {
+                    BytesRef brPrefix = new BytesRef(startFrom.getBytes(LUCENE_DEFAULT_CHARSET));
+                    TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+                    if (seekStatus == TermsEnum.SeekStatus.END)
+                        continue;
+                } else {
+                    termsEnum.next();
                 }
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                     String termText = term.utf8ToString();
@@ -437,12 +395,12 @@ public final class LuceneUtil {
      * Get term frequencies for an annotation in a subset of documents.
      *
      * @param documentFilterQuery document filter, or null for all documents
-     * @param annotSensitivity field to get frequencies for
+     * @param luceneField field to get frequencies for
      * @param searchTerms list of terms to get frequencies for, or null for all terms
      * @return term frequencies
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
+            String luceneField, Set<String> searchTerms) {
         try {
             Weight weight = null;
             if (documentFilterQuery != null) {
@@ -460,7 +418,6 @@ public final class LuceneUtil {
                     throw new InvalidIndex("arc.reader() == null");
 
                 LeafReader reader = arc.reader();
-                String field = annotSensitivity.luceneField();
                 if (weight != null) { // retrieve term frequency per matched document
                     Scorer scorer = weight.scorer(arc);
                     if (scorer == null) { // no matched documents
@@ -469,16 +426,16 @@ public final class LuceneUtil {
                     DocIdSetIterator documentIterator = scorer.iterator();
                     int doc;
                     while ((doc = documentIterator.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
-                        Terms terms = reader.getTermVector(doc, field);
+                        Terms terms = reader.getTermVector(doc, luceneField);
                         if (terms == null) {
-                            throw new IllegalArgumentException("Field " + field + " has no Terms");
+                            throw new IllegalArgumentException("Field " + luceneField + " has no Terms");
                         }
 
                         getTermFrequencies(terms.iterator(), searchTerms, freq);
                     }
                 } else {
                     // all documents - use the fast path
-                    getTermFrequencies(reader.terms(field).iterator(), searchTerms, freq);
+                    getTermFrequencies(reader.terms(luceneField).iterator(), searchTerms, freq);
                 }
             }
 
@@ -566,10 +523,10 @@ public final class LuceneUtil {
     }
 
     public static class SimpleDocIdCollector extends SimpleCollector {
-        private final List<Integer> docIds;
+        private final Collection<Integer> docIds;
         private int docBase;
 
-        public SimpleDocIdCollector(List<Integer> docIds) {
+        public SimpleDocIdCollector(Collection<Integer> docIds) {
             this.docIds = docIds;
         }
 

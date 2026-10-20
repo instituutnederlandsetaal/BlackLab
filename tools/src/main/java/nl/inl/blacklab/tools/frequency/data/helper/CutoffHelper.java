@@ -35,8 +35,8 @@ public record CutoffHelper(
             final var t = new Timer();
             final var sensitivity = annotation.sensitivity(MatchSensitivity.SENSITIVE);
             final var searcher = new IndexSearcher(index.reader());
-            final Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity,
-                    Collections.emptySet());
+            final Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null,
+                    sensitivity.luceneField(), Collections.emptySet());
             // Only save the strings when the frequency is above the cutoff
             for (final Map.Entry<String, Integer> entry: termFrequenciesMap.entrySet()) {
                 if (entry.getValue() >= cfg.cutoff().count()) {
