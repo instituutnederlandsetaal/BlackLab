@@ -97,9 +97,9 @@ public class DocIndexerSaxonTest {
             QueryInfo qi = QueryInfo.create(index);
             
             // Build Lucene field name for pos annotation (insensitive)
-            String posField = AnnotatedFieldNameUtil.annotationField("contents", "pos", MatchSensitivity.INSENSITIVE.luceneFieldSuffix());
+            String posField = AnnotatedFieldNameUtil.luceneName("contents", "pos", MatchSensitivity.INSENSITIVE);
             // head is a subannotation of pos, so the field name includes the parent name
-            String headField = AnnotatedFieldNameUtil.annotationField("contents", "pos" + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + "head", MatchSensitivity.INSENSITIVE.luceneFieldSuffix());
+            String headField = AnnotatedFieldNameUtil.luceneName("contents", "pos" + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + "head", MatchSensitivity.INSENSITIVE);
 
             // Search for the first part
             BLSpanQuery q = new BLSpanTermQuery(qi, new Term(posField, "adp(type=pre)"));

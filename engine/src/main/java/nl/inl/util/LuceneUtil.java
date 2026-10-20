@@ -57,19 +57,18 @@ public final class LuceneUtil {
     private LuceneUtil() {} // utility class
 
     /** Determine how often a term occurs in a field in the index */
-    public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term,
+    public static long getTermFrequency(BlackLabIndex index, String luceneField, String term,
             Query docFilter, boolean accurateButSlower) {
-        String luceneField = annotSensitivity.luceneField();
         if (docFilter != null || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
-            return getTermFrequencyIterOverDocs(annotSensitivity, term, docFilter, luceneField);
+            return getTermFrequencyIterOverDocs(index, term, docFilter, luceneField);
         } else {
             // Just use totalTermFreq. This doesn't take deleted documents into account,
             // but that's usually okay if you're using it for a ratio with another frequency
             // that also doesn't take deletions into account.
             try {
-                IndexReader reader = annotSensitivity.annotation().field().index().reader();
+                IndexReader reader = index.reader();
                 if (reader == null)
                     return 0; // TEST
                 return reader.totalTermFreq(new Term(luceneField, term));
@@ -79,9 +78,8 @@ public final class LuceneUtil {
         }
     }
 
-    private static long getTermFrequencyIterOverDocs(AnnotationSensitivity annotSensitivity, String term, Query docFilter,
+    private static long getTermFrequencyIterOverDocs(BlackLabIndex index, String term, Query docFilter,
             String luceneField) {
-        BlackLabIndex index = annotSensitivity.annotation().field().index();
         Weight filterWeight = determineFilterWeight(docFilter, index.searcher());
 
         BytesRef bytesRef = new BytesRef(term);

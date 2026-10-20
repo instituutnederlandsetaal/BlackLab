@@ -40,20 +40,18 @@ public class ForwardIndexAccessorGlobal extends ForwardIndexAccessorAbstract {
 
         protected final LeafReaderContext readerContext;
 
-        private final BlackLabPostingsReader postingsReader;
-
         private final DocFieldLengthGetter lengthGetter;
 
         private final List<AnnotationForwardIndex> fiPerSegment = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            postingsReader = BlackLabPostingsReader.forSegment(readerContext);
+            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(readerContext);
             for (String luceneField: luceneFields) {
                 AnnotationForwardIndex e = postingsReader.forwardIndex(luceneField);
                 fiPerSegment.add(e);
             }
-            lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
+            lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField);
         }
 
         @Override

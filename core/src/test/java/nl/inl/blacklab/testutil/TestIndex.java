@@ -405,7 +405,7 @@ public class TestIndex implements AutoCloseable {
 
     public Terms getTermsSegment(Annotation annotation) {
         LeafReaderContext lrc = index.getLeafReaderContext(0);
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        String luceneField = annotation.forwardIndexLuceneField();
         return BLTerms.forSegment(lrc, luceneField).reader();
     }
 

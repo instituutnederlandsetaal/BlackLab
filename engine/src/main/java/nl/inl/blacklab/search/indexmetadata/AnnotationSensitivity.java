@@ -23,6 +23,7 @@ public interface AnnotationSensitivity {
     MatchSensitivity sensitivity();
 
     default String luceneField() {
-        return AnnotatedFieldNameUtil.annotationSensitivity(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
+        Annotation annotation = annotation();
+        return AnnotatedFieldNameUtil.luceneName(annotation.field().name(), annotation.name(), sensitivity());
     }
 }

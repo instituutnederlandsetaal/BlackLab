@@ -89,7 +89,7 @@ public record PropContext(Hits hits, LeafReaderContext lrc, boolean toGlobal, Ma
     public Terms terms(Annotation annotation) {
         if (lrc == null)
             return annotation.field().index().forwardIndex(annotation).terms(); // use global terms
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        String luceneField = annotation.forwardIndexLuceneField();
         return BLTerms.forSegment(lrc, luceneField).reader();
     }
 }

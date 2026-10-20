@@ -37,7 +37,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         this(index, field, groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
     }
 
-    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, /*Annotation annotation,*/ String termString,
+    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, String termString,
             MatchSensitivity sensitivity, int compareToSortPosition, String forwardIndexLuceneField) {
         this.index = index;
         this.field = field;
@@ -48,7 +48,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         // We either get a name and will look up the annotation later, or we get an annotation and will use its name.
         this.annotationName = annotationName;// == null ? annotation.name() : annotationName;
 //        this.annotation = annotation;
-        this.luceneField = forwardIndexLuceneField; //annotation == null ? null : annotation.forwardIndexSensitivity().luceneField();
+        this.luceneField = forwardIndexLuceneField; //annotation == null ? null : annotation.forwardIndexLuceneField();
 
         this.compareToSortPosition = compareToSortPosition;
     }

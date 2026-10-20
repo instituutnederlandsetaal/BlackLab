@@ -247,7 +247,7 @@ public class Kwics {
     }
 
     private static AnnotationForwardIndex getFi(LeafReaderContext lrc, Annotation annotation) {
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        String luceneField = annotation.forwardIndexLuceneField();
         return new GlobalDocIdAdapter(FieldForwardIndex.get(lrc, luceneField), lrc.docBase);
     }
 

@@ -102,7 +102,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     
     @Override
     public String toString() {
-        return luceneFieldPrefix();
+        return "Annotation[" + field().name() + "." + name() + "]";
     }
 
     @Override
@@ -134,7 +134,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
         AnnotationSensitivity s = sensitivitiesMap.get(sensitivity);
         if (s == null)
-            throw new FeatureNotPresentInCorpus("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
+            throw new FeatureNotPresentInCorpus("Specified sensitivity " + AnnotatedFieldNameUtil.luceneName(field.name(), name(), sensitivity) + " not present");
         return s;
     }
 

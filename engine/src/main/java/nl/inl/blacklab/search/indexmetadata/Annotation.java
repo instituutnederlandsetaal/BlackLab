@@ -59,14 +59,6 @@ public interface Annotation extends TextPattern.EvalResult {
     boolean isInternal();
 
     /**
-     * Return the Lucene field prefix for this annotation.
-     * @return Lucene field prefix
-     */
-    default String luceneFieldPrefix() {
-        return AnnotatedFieldNameUtil.annotationField(field().name(), name());
-    }
-
-    /**
      * Get names of the subannotations for this annotation.
      * 
      * @return names of annotations that are considered subannotations of this annotation
@@ -85,10 +77,10 @@ public interface Annotation extends TextPattern.EvalResult {
      * @return alternative with the forward index
      * @throws RuntimeException if annotation has no forward index
      */
-    default AnnotationSensitivity forwardIndexSensitivity() {
+    default String forwardIndexLuceneField() {
         if (!hasForwardIndex())
             throw new UnsupportedOperationException("Annotation has no forward index: " + name());
-        return mainSensitivity();
+        return mainSensitivity().luceneField();
     }
 
     /**

@@ -8,8 +8,7 @@ import java.util.Objects;
 
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -28,7 +27,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     protected final BlackLabIndex index;
 
     /** Field name, e.g. "contents" */
-    protected final AnnotatedField annotatedField;
+    protected final String annotatedField;
 
     /** The annotations (indexed by annotation index) */
     protected final List<String> annotations = new ArrayList<>();
@@ -41,7 +40,16 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
 
     protected ForwardIndexAccessorAbstract(BlackLabIndex index, String searchField) {
         this.index = index;
-        this.annotatedField = index.annotatedField(searchField);
+        this.annotatedField = searchField;
+        int i = 0;
+        for (Annotation annotation: index.annotatedField(searchField).annotations()) {
+            if (annotation.hasForwardIndex()) {
+                annotationIndexes.put(annotation.name(), i);
+                annotations.add(annotation.name());
+                luceneFields.add(annotation.forwardIndexLuceneField());
+                i++;
+            }
+        }
     }
 
     /**
@@ -51,21 +59,8 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
      * @return index for this annotation
      */
     @Override
-    public synchronized int getAnnotationIndex(String annotation) {
-        Integer n = annotationIndexes.get(annotation);
-        if (n == null) {
-            // Assign number and store reference to forward index
-            n = annotationIndexes.size();
-            annotationIndexes.put(annotation, n);
-            annotations.add(annotation);
-
-            AnnotationSensitivity forwardIndexSensitivity = annotatedField.annotation(annotation)
-                    .forwardIndexSensitivity();
-            String forwardIndexLuceneField = forwardIndexSensitivity.luceneField();
-
-            luceneFields.add(forwardIndexLuceneField);
-        }
-        return n;
+    public int getAnnotationIndex(String annotation) {
+        return annotationIndexes.get(annotation);
     }
 
     protected int numberOfAnnotations() {

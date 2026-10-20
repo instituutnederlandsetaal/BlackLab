@@ -59,8 +59,8 @@ public class TestIndexFormats {
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();
-        wordFi = word.forwardIndexSensitivity().luceneField();
-        posFi = contents.annotation("pos").forwardIndexSensitivity().luceneField();
+        wordFi = word.forwardIndexLuceneField();
+        posFi = contents.annotation("pos").forwardIndexLuceneField();
         wordTerms = testIndex.getTermsSegment(word);
     }
 

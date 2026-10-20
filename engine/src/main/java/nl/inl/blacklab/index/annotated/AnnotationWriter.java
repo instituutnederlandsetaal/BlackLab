@@ -78,10 +78,10 @@ public class AnnotationWriter {
      * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
      */
-    private final Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
+    private final Map<MatchSensitivity, TokenFilterAdder> sensitivities = new HashMap<>();
 
     /** The main sensitivity (the one that gets character offsets if desired) */
-    private String mainSensitivity;
+    private MatchSensitivity mainSensitivity;
 
     /** The annotation name */
     private final String annotationName;
@@ -98,7 +98,7 @@ public class AnnotationWriter {
     /** If this is a relations annotation: the indexing strategy to use. Otherwise null. */
     private final RelationsStrategy relationsStrategy;
 
-    public String mainSensitivity() {
+    public MatchSensitivity mainSensitivity() {
         return mainSensitivity;
     }
 
@@ -140,19 +140,19 @@ public class AnnotationWriter {
         mainSensitivity = null;
         if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
             // Add sensitive sensitivity
-            mainSensitivity = MatchSensitivity.SENSITIVE.luceneFieldSuffix();
+            mainSensitivity = MatchSensitivity.SENSITIVE;
             sensitivities.put(mainSensitivity, null);
         }
         if (sensitivity != AnnotationSensitivities.ONLY_SENSITIVE) {
             // Add insensitive sensitivity
-            sensitivities.put(MatchSensitivity.INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, true));
+            sensitivities.put(MatchSensitivity.INSENSITIVE, new DesensitizerAdder(true, true));
             if (mainSensitivity == null)
-                mainSensitivity = MatchSensitivity.INSENSITIVE.luceneFieldSuffix();
+                mainSensitivity = MatchSensitivity.INSENSITIVE;
         }
         if (sensitivity == AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE) {
             // Add case-insensitive and diacritics-insensitive sensitivity
-            sensitivities.put(MatchSensitivity.CASE_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, false));
-            sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(false, true));
+            sensitivities.put(MatchSensitivity.CASE_INSENSITIVE, new DesensitizerAdder(true, false));
+            sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE, new DesensitizerAdder(false, true));
         }
 
         this.includeOffsets = includeOffsets;
@@ -165,11 +165,11 @@ public class AnnotationWriter {
         maximumValueLength = BlackLab.config().getIndexing().getMaxValueLength();
     }
 
-    public Collection<String> sensitivitySuffixes() {
+    public Collection<MatchSensitivity> sensitivitySuffixes() {
         return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
+    TokenStream tokenStream(MatchSensitivity sensitivity, IntList startChars, IntList endChars) {
         boolean debugMode = AnnotationWriter.class.desiredAssertionStatus();
         if (relationsStrategy instanceof RelationsStrategySeparateTerms &&
                 annotationName.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
@@ -196,7 +196,7 @@ public class AnnotationWriter {
         } else {
             ts = new TokenStreamFromList(values, increments, payloads);
         }
-        TokenFilterAdder filterAdder = sensitivities.get(sensitivityName);
+        TokenFilterAdder filterAdder = sensitivities.get(sensitivity);
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
 
@@ -212,8 +212,8 @@ public class AnnotationWriter {
         return ts;
     }
 
-    IndexableFieldType getFieldType(String sensitivityName, RelationsStrategy relationsStrategy) {
-        boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
+    IndexableFieldType getFieldType(MatchSensitivity sensitivity, RelationsStrategy relationsStrategy) {
+        boolean isMainSensitivity = sensitivity.equals(mainSensitivity);
 
         // Main sensitivity of main annotation gets character offsets
         // (if it's the main annotation of an annotated field)
@@ -225,11 +225,11 @@ public class AnnotationWriter {
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
             IntList endChars) {
-        for (String sensitivityName : sensitivities.keySet()) {
-            IndexableFieldType fieldType = getFieldType(sensitivityName, relationsStrategy);
-            TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
-            String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
-                    annotationName, sensitivityName);
+        for (MatchSensitivity sensitivity : sensitivities.keySet()) {
+            IndexableFieldType fieldType = getFieldType(sensitivity, relationsStrategy);
+            TokenStream tokenStream = tokenStream(sensitivity, startChars, endChars);
+            String luceneFieldName = AnnotatedFieldNameUtil.luceneName(annotatedFieldName,
+                    annotationName, sensitivity);
             doc.addAnnotationField(luceneFieldName, tokenStream, fieldType);
         }
     }

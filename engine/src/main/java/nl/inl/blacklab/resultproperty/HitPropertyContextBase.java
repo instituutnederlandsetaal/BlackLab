@@ -75,10 +75,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * the source or the target, or both, might be in this field)
      *
      * @param hit our hit
-     * @param field foreign field we're interested in
+     * @param annotatedField foreign field we're interested in
      * @return array of length 2, containing start and end positions for the hit in this field
      */
-    protected int[] getForeignHitStartEnd(EphemeralHit hit, AnnotatedField field) {
+    protected int[] getForeignHitStartEnd(EphemeralHit hit, String annotatedField) {
         assert hit != null : "Need a hit";
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos == null)
@@ -88,7 +88,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().equals(field.name()) && mi.getType() == MatchInfo.Type.SPAN &&
+            if (mi.getField().equals(annotatedField) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
@@ -187,7 +187,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     void initForwardIndex() {
-        luceneField = annotation.forwardIndexSensitivity().luceneField();
+        luceneField = annotation.forwardIndexLuceneField();
         if (isGlobal() || context.toGlobal()) {
             // To produce global term ids, we need the global forward index
             forwardIndex = index.forwardIndex(annotation);
@@ -374,6 +374,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return Objects.hash(super.hashCode(), annotation, sensitivity, index);
     }
 
+    /** Refine the given query with the given text pattern (extracted from a PropertyValue). */
     RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
         throw new UnsupportedOperationException();
     }
