@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-
 /**
  * Provides per-hit query-wide context, such as captured groups.
  * <p>
@@ -11,9 +9,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
  * groups will store a reference to this context and use it later.
  */
 public class HitQueryContext {
-
-    /** The index we're searching. */
-    private final BlackLabIndex index;
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
@@ -25,12 +20,11 @@ public class HitQueryContext {
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
     private final String field;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans, String defaultField) {
-        this(index, defaultField, defaultField, new MatchInfoDefs());
+    public HitQueryContext(String defaultField) {
+        this(defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(BlackLabIndex index, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
-        this.index = index;
+    private HitQueryContext(String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
@@ -38,14 +32,10 @@ public class HitQueryContext {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    public BlackLabIndex index() {
-        return index;
-    }
-
     public HitQueryContext withField(String overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(index, defaultField, overriddenField, matchInfoDefs);
+            result = new HitQueryContext(defaultField, overriddenField, matchInfoDefs);
         }
         return result;
     }

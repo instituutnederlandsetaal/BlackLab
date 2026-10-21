@@ -155,8 +155,8 @@ public class TestHitPublisher {
             ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         LeafReaderContext lrc = mock(LeafReaderContext.class);
         when(lrc.reader()).thenReturn(mock(LeafReader.class));
-        HitQueryContext sourceHitQueryContext = new HitQueryContext(null, null, "test");
-        return new HitPublisherSpans(lrc, weight, sourceHitQueryContext, executor,
+        HitQueryContext sourceHitQueryContext = new HitQueryContext("test");
+        return new HitPublisherSpans(null, lrc, weight, sourceHitQueryContext, executor,
                 hitsStats, docsStats);
     }
 

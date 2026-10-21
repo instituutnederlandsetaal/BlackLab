@@ -176,11 +176,11 @@ public class TestHitsFromFetcher {
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
+        HitQueryContext hitQueryContext = new HitQueryContext(queryInfo.field());
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(index, lrc, weight, hitQueryContext, service, hitsStats, docsStats));
         }
         return publishers;
     }

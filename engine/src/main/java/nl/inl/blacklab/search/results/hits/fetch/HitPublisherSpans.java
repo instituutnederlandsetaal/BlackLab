@@ -11,6 +11,7 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -101,7 +102,7 @@ public class HitPublisherSpans implements HitPublisher {
     private volatile boolean needAllHits;
 
     /** Lazy Hits interface to a single Spans object. */
-    public HitPublisherSpans(LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext hitQueryContext,
+    public HitPublisherSpans(BlackLabIndex index, LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext hitQueryContext,
             ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         this.weight = weight;
         this.hitQueryContext = hitQueryContext;
@@ -111,7 +112,7 @@ public class HitPublisherSpans implements HitPublisher {
         maxToProcess = hitsStats.getMaxHitsToProcess();
         maxToCount = hitsStats.getMaxHitsToCount();
         this.docsStats = docsStats;
-        Hits.HitsContext context = new Hits.HitsContext(hitQueryContext.index(), hitQueryContext.getField(),
+        Hits.HitsContext context = new Hits.HitsContext(index, hitQueryContext.getField(),
                 hitQueryContext.getMatchInfoDefs(), lrc);
         output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
