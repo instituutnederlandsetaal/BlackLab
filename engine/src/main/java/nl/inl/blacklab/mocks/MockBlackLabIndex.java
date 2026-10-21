@@ -37,7 +37,6 @@ import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -340,11 +339,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
         throw new UnsupportedOperationException();
     }
 

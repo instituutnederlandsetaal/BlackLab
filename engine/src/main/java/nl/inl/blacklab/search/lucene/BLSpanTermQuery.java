@@ -167,7 +167,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
             String fieldName = comp[0];
             assert comp.length > 1;
             String annotationName = comp[1];
-            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(annotationName).hasForwardIndex();
+            hasForwardIndex = queryInfo.indexForQuery().hasForwardIndex(fieldName, annotationName);
             hasForwardIndexDetermined = true;
         }
         return hasForwardIndex;

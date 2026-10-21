@@ -236,7 +236,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         }
         if (results == null || results.getLimitValues() < limitValues) {
             // We either don't have cached relationsStats, or the limitValues value is too low.
-            results = new RelationsStats(index.getRelationsStrategy(), limitValues);
+            results = new RelationsStats(RelationsStrategySeparateTerms.INSTANCE, limitValues);
 
             // Look up the correct field for the _relation annotation (depending on whether it
             // was indexed sensitively or insensitively)
@@ -253,7 +253,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
             LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                     null, results::addIndexedTerm);
-            if (results.isEmpty() && index.getRelationsStrategy() instanceof RelationsStrategySeparateTerms) {
+            if (results.isEmpty()) {
                 // older dev index without relation info terms, use older version of method
                 LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                         null, results::addIndexedTerm_OLD);

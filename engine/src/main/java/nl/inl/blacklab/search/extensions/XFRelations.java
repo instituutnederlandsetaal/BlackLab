@@ -211,7 +211,7 @@ public class XFRelations implements ExtensionFunctionClass {
                         throw new IllegalArgumentException("rfield() requires a query and a field or version name as arguments");
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
                     String fieldOrVersion = (String) args.get(1);
-                    String field = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion).name();
+                    String field = queryInfo.indexForQuery().fullAnnotatedFieldName(fieldOrVersion);
                     if (relations.getAnnotatedFieldName().equals(field)) {
                         // Nothing to do, just return query unchanged
                         return relations;

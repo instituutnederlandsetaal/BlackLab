@@ -22,7 +22,6 @@ import org.apache.lucene.util.automaton.RegExp;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -230,7 +229,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     public BLSpanQuery getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes) {
         // Construct the clause from the field, relation type and attributes
-        List<String> regexes = searchRegexes(queryInfo.index(), relationTypeRegex, attributes);
+        List<String> regexes = searchRegexes(relationTypeRegex, attributes);
         assert regexes.size() == (attributes == null ? 0 : attributes.size()) + 1;
         List<BLSpanQuery> queries = new ArrayList<>();
         for (String regex: regexes) {
@@ -253,7 +252,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @return regexes to find this relation (first is the type, rest are attributes)
      */
     @Override
-    public List<String> searchRegexes(BlackLabIndex index, String fullRelationTypeRegex,
+    public List<String> searchRegexes(String fullRelationTypeRegex,
             Map<String, String> attributes) {
         String typeRegex = RelationUtil.optParRegex(fullRelationTypeRegex);
         if (attributes == null || attributes.isEmpty())

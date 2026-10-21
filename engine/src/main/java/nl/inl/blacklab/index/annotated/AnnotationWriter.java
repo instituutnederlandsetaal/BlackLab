@@ -131,7 +131,7 @@ public class AnnotationWriter {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
-        relationsStrategy = name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME) ? fieldWriter.getRelationsStrategy() : null;
+        relationsStrategy = name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME) ? RelationsStrategySeparateTerms.INSTANCE : null;
         this.sensitivitySetting = sensitivity;
         if (fieldWriter.field() != null) {
             annotation = fieldWriter.field().annotation(annotationName);
@@ -511,10 +511,6 @@ public class AnnotationWriter {
         if (!maybeExtraInfo)
             return RelationInfo.RELATION_ID_NO_INFO;
         return nextRelationId++;
-    }
-
-    public RelationsStrategy getRelationsStrategy() {
-        return relationsStrategy;
     }
 
     public int getRelationIdAtIndex(int tagIndex) {

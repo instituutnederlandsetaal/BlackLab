@@ -118,7 +118,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             throw new IllegalStateException("Search already started");
         started = true;
         peekValue = search.peekObject(this);
-        future = search.queryInfo().index().blackLab().searchExecutorService().submit(this::executeSearch);
+        future = search.queryInfo().indexForQuery().blackLab().searchExecutorService().submit(this::executeSearch);
     }
 
     /** Perform the requested search.

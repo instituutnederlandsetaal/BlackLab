@@ -288,7 +288,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     private DocResults(QueryInfo queryInfo, Query query) {
         this(queryInfo);
         this.query = query;
-        if (queryInfo.index().isFragmentQuery(query)) {
+        if (index().isFragmentQuery(query)) {
             // The query can yield fragments as well as full documents. "Upcast" to only full documents.
             query = upcastFragmentsToFullDocuments(query);
         }

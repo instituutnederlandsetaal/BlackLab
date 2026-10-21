@@ -31,19 +31,18 @@ import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.QueryParserProvider;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -120,9 +119,6 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /** Get our index type (always integrated now). */
     IndexType getType();
-
-    /** Get the strategy to use for indexing/searching relations. */
-    RelationsStrategy getRelationsStrategy();
 
     LeafReaderLookup getLeafReaderLookup();
 
@@ -642,4 +638,30 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return true if the query might match a fragment, false if it definitely cannot
      */
     boolean isFragmentQuery(Query query);
+
+    default BlackLabIndexForQuery forQuery() {
+        return new BlackLabIndexForQuery() {
+
+            @Override
+            public String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
+                return annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
+            }
+
+            @Override
+            public boolean hasForwardIndex(String annotatedField, String annotation) {
+                return annotatedField(annotatedField).annotation(annotation).hasForwardIndex();
+            }
+
+            @Override
+            public ForwardIndexAccessor forwardIndexAccessor(String annotatedField) {
+                return new ForwardIndexAccessorGlobal(
+                        BlackLabIndex.this, annotatedField);
+            }
+
+            @Override
+            public BlackLabEngine blackLab() {
+                return BlackLabIndex.this.blackLab();
+            }
+        };
+    }
 }

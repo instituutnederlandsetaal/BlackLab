@@ -522,7 +522,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
                 // which has no source, so we index it at its target.
                 int indexAtPosition = sourceSpan.start() >= 0 ? sourceSpan.start() : targetSpan.start();
-                RelationsStrategy relationsStrategy = getDocWriter().getRelationsStrategy();
+                RelationsStrategy relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
                 // For separate terms: always assign relationId even if no attributes, because it is needed for matching
                 boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
                 BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);

@@ -97,12 +97,6 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         }
     }
 
-    /** Get the strategy to use for indexing/searching relations. */
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
-        return relationsStrategy;
-    }
-
     BlackLabIndexImpl(String name, BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         super(name, blackLab, indexDir, indexMode, createNewIndex, config);

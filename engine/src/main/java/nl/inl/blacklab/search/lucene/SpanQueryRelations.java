@@ -22,6 +22,7 @@ import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -161,7 +162,7 @@ public class SpanQueryRelations extends BLSpanQuery {
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
             boolean implicitCapture, String targetField) {
         super(queryInfo);
-        this.relationsStrategy = queryInfo.index().getRelationsStrategy();
+        this.relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
         if (relationField == null)
             throw new IllegalArgumentException("relationFieldName must be non-empty");
         if (spanMode == RelationInfo.SpanMode.ALL_SPANS)
@@ -180,7 +181,7 @@ public class SpanQueryRelations extends BLSpanQuery {
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, boolean implicitCapture, String targetField) {
         super(queryInfo);
-        this.relationsStrategy = queryInfo.index().getRelationsStrategy();
+        this.relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
         init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
 

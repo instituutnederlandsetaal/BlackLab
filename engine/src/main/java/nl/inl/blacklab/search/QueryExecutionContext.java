@@ -70,7 +70,6 @@ public class QueryExecutionContext {
     /**
      * Construct a query execution context object.
      *
-     * @param index the index object
      * @param annotatedField the annotated field to search
      * @param version the version to search (if this is a parallel corpus; otherwise null)
      * @param annotationName the annotation to search

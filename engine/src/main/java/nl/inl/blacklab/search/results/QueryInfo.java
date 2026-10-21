@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.Objects;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheMap;
@@ -45,6 +46,10 @@ public final class QueryInfo {
     /** @return the index that was searched. */
     public BlackLabIndex index() {
         return index;
+    }
+
+    public BlackLabIndexForQuery indexForQuery() {
+        return index.forQuery();
     }
 
     /** @return field that was searched */

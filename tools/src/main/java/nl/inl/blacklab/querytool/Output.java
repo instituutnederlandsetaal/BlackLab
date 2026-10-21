@@ -487,7 +487,7 @@ public class Output {
     }
 
     public void hits(HitResults total, HitResults window, QueryToolImpl queryTool) {
-        BlackLabIndex index = window.queryInfo().index();
+        BlackLabIndex index = total.index();
 
         if (!isShowConc()) {
             if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
@@ -641,7 +641,7 @@ public class Output {
     }
 
     public void docs(DocResults window, long docsCounted) {
-        BlackLabIndex index = window.queryInfo().index();
+        BlackLabIndex index = window.index();
         // Compile hits display info and calculate necessary width of left context column
         String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;

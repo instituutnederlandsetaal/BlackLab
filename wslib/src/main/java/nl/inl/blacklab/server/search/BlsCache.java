@@ -152,7 +152,7 @@ public class BlsCache implements SearchCache {
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
-            if (entry.getValue().search().queryInfo().index() == index) {
+            if (entry.getValue().search().queryInfo().indexForQuery() == index) {
                 entry.getValue().cancel(true);
                 it.remove();
             }
