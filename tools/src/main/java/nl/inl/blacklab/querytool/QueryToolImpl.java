@@ -461,7 +461,7 @@ public class QueryToolImpl {
             output.line("Filter cleared.");
         } else {
             try {
-                filterQuery = LuceneUtil.parseLuceneQuery(index, arguments, index.analyzer(), "title");
+                filterQuery = LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), arguments, index.analyzer(), "title");
                 output.line("Filter created: " + filterQuery);
                 output.verbose(filterQuery.getClass().getName());
             } catch (ParseException e) {

@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -434,6 +435,10 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return query execution context
      */
     QueryExecutionContext defaultExecutionContext(String field, QueryInfo queryInfo);
+
+    default QueryExecutionContext defaultExecutionContext(QueryInfo queryInfo) {
+        return defaultExecutionContext(queryInfo.field(), queryInfo);
+    }
 
     /**
      * Get the collator being used for sorting.

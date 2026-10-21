@@ -15,9 +15,6 @@ public class HitQueryContext {
     /** The index we're searching. */
     private final BlackLabIndex index;
 
-    /** Root of the BLSpans tree for this query. */
-    private BLSpans rootSpans;
-
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
     private final MatchInfoDefs matchInfoDefs;
@@ -29,12 +26,11 @@ public class HitQueryContext {
     private final String field;
 
     public HitQueryContext(BlackLabIndex index, BLSpans spans, String defaultField) {
-        this(index, spans, defaultField, defaultField, new MatchInfoDefs());
+        this(index, defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(BlackLabIndex index, BLSpans spans, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
+    private HitQueryContext(BlackLabIndex index, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.index = index;
-        this.rootSpans = spans;
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
@@ -46,28 +42,12 @@ public class HitQueryContext {
         return index;
     }
 
-    public HitQueryContext withSpans(BLSpans spans) {
-        return new HitQueryContext(index, spans, defaultField, field, matchInfoDefs);
-    }
-
     public HitQueryContext withField(String overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(index, rootSpans, defaultField, overriddenField, matchInfoDefs);
+            result = new HitQueryContext(index, defaultField, overriddenField, matchInfoDefs);
         }
         return result;
-    }
-
-    /**
-     * Set our Spans object.
-     * <p>
-     * Used when manually iterating through the index segments, because we go
-     * through several Spans for a single query.
-     *
-     * @param spans our new spans
-     */
-    public void setSpans(BLSpans spans) {
-        this.rootSpans = spans;
     }
 
     /**
@@ -106,17 +86,6 @@ public class HitQueryContext {
      */
     public synchronized int numberOfMatchInfos() {
         return matchInfoDefs.currentSize();
-    }
-
-    /**
-     * Retrieve all the captured group information.
-     * <p>
-     * Used by Hits.
-     *
-     * @param matchInfo array to place the captured group information into
-     */
-    public void getMatchInfo(MatchInfo[] matchInfo) {
-        rootSpans.getMatchInfo(matchInfo);
     }
 
     /**

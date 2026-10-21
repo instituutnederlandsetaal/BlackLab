@@ -27,19 +27,20 @@ import nl.inl.blacklab.webservice.WsParam;
  */
 public class QueryExecutionContext {
 
-    public static QueryExecutionContext get(BlackLabIndex index, String annotatedField, String annotation,
+    public static QueryExecutionContext get(String annotatedField, String annotation,
             MatchSensitivity matchSensitivity, QueryInfo queryInfo) {
-        return new QueryExecutionContext(index, annotatedField, null, annotation,
+        return new QueryExecutionContext(annotatedField, null, annotation,
                 matchSensitivity, null, null, false, queryInfo);
     }
-
-    /** The index object, representing the BlackLab index */
-    private final BlackLabIndex index;
 
     /** Our query info object */
     private final QueryInfo queryInfo;
 
-    /** Name of the annotated field we're searching. */
+    /** Name of the annotated field we're searching.
+     * <p>
+     * Note that this may differ from queryInfo.field() if this is a parallel corpus and we're
+     * searching a different version.
+     */
     private final String field;
 
     /** Version of the document we're searching, or null if this is not a parallel corpus. */
@@ -70,7 +71,7 @@ public class QueryExecutionContext {
      * Construct a query execution context object.
      *
      * @param index the index object
-     * @param field the annotated field to search
+     * @param annotatedField the annotated field to search
      * @param version the version to search (if this is a parallel corpus; otherwise null)
      * @param annotationName the annotation to search
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
@@ -79,15 +80,16 @@ public class QueryExecutionContext {
      * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
      * @param queryInfo QueryInfo to use, or null to create a new one
      */
-    private QueryExecutionContext(BlackLabIndex index, String annotatedField, String version, String annotationName,
+    private QueryExecutionContext(String annotatedField, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
             QueryInfo queryInfo) throws InvalidQuery {
-        this.index = index;
+        if (queryInfo == null)
+            throw new IllegalArgumentException("queryInfo == null");
         if (annotatedField == null)
             throw new IllegalArgumentException("field == null");
         this.field = version == null ? annotatedField : AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedField, version);
         this.version = version;
-        AnnotatedField annotatedFieldDef = index.annotatedField(this.field);
+        AnnotatedField annotatedFieldDef = queryInfo.index().annotatedField(this.field);
         this.annotationName = annotationName == null ?
                 annotatedFieldDef.defaultSearchAnnotation().name() : annotationName;
         this.requestedSensitivity = matchSensitivity;
@@ -95,7 +97,7 @@ public class QueryExecutionContext {
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
+        this.queryInfo = queryInfo;
     }
 
     private AnnotationSensitivity determineSensitivity(AnnotatedField annotatedField, String annotationName,
@@ -115,7 +117,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withField(String field) {
         if (this.field.equals(field))
             return this;
-        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
@@ -126,7 +128,7 @@ public class QueryExecutionContext {
             matchSensitivity = requestedSensitivity;
         if (annotation == sensitivity.annotation() && matchSensitivity == requestedSensitivity)
             return this;
-        return new QueryExecutionContext(index, field, version, annotation.name(), matchSensitivity,
+        return new QueryExecutionContext(field, version, annotation.name(), matchSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
@@ -156,7 +158,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withDocVersion(String version) {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
-        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
@@ -169,7 +171,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withDefaultRelationClass(String relClass) {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
-        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
                 relClass, captures, inConstraint, queryInfo);
     }
 
@@ -233,7 +235,7 @@ public class QueryExecutionContext {
     }
 
     public BlackLabIndex index() {
-        return index;
+        return queryInfo.index();
     }
 
     /**
@@ -297,7 +299,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withInConstraint() {
         if (inConstraint)
             return this;
-        return new QueryExecutionContext(index, field, version, annotationName,
+        return new QueryExecutionContext(field, version, annotationName,
                 requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
     }
 }

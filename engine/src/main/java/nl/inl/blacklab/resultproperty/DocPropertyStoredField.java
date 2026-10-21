@@ -185,7 +185,7 @@ public class DocPropertyStoredField extends DocProperty {
                 String strValue = "\"" + value.toString().replace("\"", "\\\"") + "\"";
                 try {
                     Analyzer analyzer = BuiltinAnalyzers.fromString(metadataField.analyzerName()).getAnalyzer();
-                    return LuceneUtil.parseLuceneQuery(index, strValue, analyzer, fieldName);
+                    return LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), strValue, analyzer, fieldName);
                 } catch (ParseException e) {
                     return null;
                 }

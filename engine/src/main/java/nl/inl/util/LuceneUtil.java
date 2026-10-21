@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +21,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermVectors;
 import org.apache.lucene.index.Terms;
@@ -33,6 +35,7 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
+import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.jspecify.annotations.Nullable;
 
@@ -40,12 +43,11 @@ import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 public final class LuceneUtil {
 
@@ -56,20 +58,20 @@ public final class LuceneUtil {
     private LuceneUtil() {} // utility class
 
     /** Determine how often a term occurs in a field in the index */
-    public static long getTermFrequency(BlackLabIndex index, String luceneField, String term,
+    public static long getTermFrequency(IndexSearcher searcher, String luceneField, String term,
             Query docFilter, boolean accurateButSlower) {
         if (docFilter != null || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
-            return getTermFrequencyIterOverDocs(index, term, docFilter, luceneField);
+            return getTermFrequencyIterOverDocs(searcher, term, docFilter, luceneField);
         } else {
             // Just use totalTermFreq. This doesn't take deleted documents into account,
             // but that's usually okay if you're using it for a ratio with another frequency
             // that also doesn't take deletions into account.
             try {
-                IndexReader reader = index.reader();
-                if (reader == null)
+                if (searcher == null)
                     return 0; // TEST
+                IndexReader reader = searcher.getIndexReader();
                 return reader.totalTermFreq(new Term(luceneField, term));
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -77,13 +79,13 @@ public final class LuceneUtil {
         }
     }
 
-    private static long getTermFrequencyIterOverDocs(BlackLabIndex index, String term, Query docFilter,
+    private static long getTermFrequencyIterOverDocs(IndexSearcher searcher, String term, Query docFilter,
             String luceneField) {
-        Weight filterWeight = determineFilterWeight(docFilter, index.searcher());
+        Weight filterWeight = determineFilterWeight(docFilter, searcher);
 
         BytesRef bytesRef = new BytesRef(term);
         LongAdder count = new LongAdder();
-        index.forEachDocument((ParallelDocTask) lrc -> {
+        forEachDocument(searcher.getIndexReader(), true, true, (ParallelDocTask) lrc -> {
             try {
                 Scorer scorer = docFilter == null ? null : filterWeight.scorer(lrc);
                 DocIdSetIterator docIt = docFilter == null ? null :
@@ -128,6 +130,46 @@ public final class LuceneUtil {
         return filterWeight;
     }
 
+    public static void forEachDocument(IndexReader reader, boolean onlyRegularDocs, boolean parallel, DocTask task) {
+        task.initializeTask();
+        List<LeafReaderContext> leaves = reader.leaves();
+        Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
+        stream.forEach(lrc -> {
+            SortedDocValues dvDocType;
+            try {
+                LeafReader leafReader = lrc.reader();
+                dvDocType = onlyRegularDocs ? leafReader.getSortedDocValues(BLInputDocument.DOC_TYPE_FIELD_NAME) : null;
+                int ordDocTypeRegularDocument = -1;
+                if (dvDocType != null) {
+                    ordDocTypeRegularDocument = dvDocType.lookupTerm(new BytesRef(BLInputDocument.DocType.DOCUMENT.getValue()));
+                }
+                DocTask.SegmentTask segTask = task.segmentDocTask(lrc);
+                Bits liveDocs = leafReader.getLiveDocs();
+                int maxDoc = leafReader.maxDoc();
+                for (int docId = 0; docId < maxDoc; docId++) {
+                    boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+                    if (isLiveDoc) {
+                        boolean processDocType;
+                        if (onlyRegularDocs) {
+                            assert dvDocType != null;
+                            int result = dvDocType.advance(docId);
+                            assert result == docId;
+                            processDocType = dvDocType.ordValue() == ordDocTypeRegularDocument;
+                        } else {
+                            processDocType = true;
+                        }
+                        if (processDocType) {
+                            segTask.document(docId);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new InvalidIndex(e);
+            }
+        });
+        task.finishTask();
+    }
+
     /**
      * Query parser that will correctly produce numeric range queries for numeric fields.
      * <p>
@@ -136,11 +178,11 @@ public final class LuceneUtil {
      * a query touches a field that is actually numeric.
      */
     private static class FieldTypeAwareQueryParser extends QueryParser {
-        private final MetadataFields metadataFields;
+        private final FieldType.Getter fieldTypeGetter;
 
-        public FieldTypeAwareQueryParser(MetadataFields metadataFields, String defaultField, Analyzer analyzer) {
+        public FieldTypeAwareQueryParser(FieldType.Getter fieldTypeGetter, String defaultField, Analyzer analyzer) {
             super(defaultField, analyzer);
-            this.metadataFields = metadataFields;
+            this.fieldTypeGetter = fieldTypeGetter;
         }
 
         @Override
@@ -151,8 +193,7 @@ public final class LuceneUtil {
         }
 
         private boolean isNumericField(String fieldName) {
-            MetadataField f = metadataFields == null ? null : metadataFields.get(fieldName);
-            return f != null && f.type() == FieldType.NUMERIC;
+            return fieldTypeGetter.typeOf(fieldName) == FieldType.NUMERIC;
         }
 
         @Override
@@ -193,10 +234,9 @@ public final class LuceneUtil {
      * @return the query
      * @throws ParseException on syntax error
      */
-    public static Query parseLuceneQuery(BlackLabIndex index, String luceneQuery, Analyzer analyzer, String defaultField)
+    public static Query parseLuceneQuery(FieldType.Getter fieldTypeGetter, String luceneQuery, Analyzer analyzer, String defaultField)
             throws ParseException {
-        MetadataFields metadataFields = index == null ? null : index.metadataFields();
-        QueryParser qp = new FieldTypeAwareQueryParser(metadataFields, defaultField, analyzer);
+        QueryParser qp = new FieldTypeAwareQueryParser(fieldTypeGetter, defaultField, analyzer);
         qp.setAllowLeadingWildcard(true);
         return qp.parse(luceneQuery);
     }

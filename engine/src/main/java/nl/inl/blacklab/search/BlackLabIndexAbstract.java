@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +20,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.NoMergePolicy;
@@ -127,13 +124,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     private IndexReader reader;
 
     /**
-     * Are we responsible for closing the IndexReader?
-     * <p>
-     * True if we were the ones opening it, false if we wrapped an existing one.
-     */
-    private boolean shouldCloseIndex;
-
-    /**
      * The Lucene IndexSearcher, for dealing with non-SpanQueries (for per-document
      * scoring)
      */
@@ -192,7 +182,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexAbstract(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexAbstract(String name, BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr, now removed)
@@ -210,20 +200,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (!indexMode && createNewIndex)
                 throw new IllegalArgumentException("Cannot create new index, not in index mode");
 
-            if (reader != null) {
-                // Only create analyzer if not in solr mode.
-                // indexModule == true && indexReader != null only ever happens in solr mode
-                // so if we're here, we're in solr mode, so do not create the analyzer.
-                if (indexMode)
-                    throw new IllegalStateException("Solr no longer supported");
-
-                // We've been passed an already-opened IndexReader. Use that, don't open our own.
-                this.reader = reader;
-                shouldCloseIndex = false; // IndexReader was already open, so we shouldn't close it
-            } else {
-                // No IndexReader opened yet; do so now.
-                openIndex(createNewIndex);
-            }
+            openIndex(createNewIndex);
             assert this.reader != null;
 
             // Determine the index structure
@@ -270,7 +247,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         } else {
             reader = openIndexForReading(indexLocation, traceIndexOpening());
         }
-        shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -330,29 +306,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public void forEachDocument(DocTask task) {
-        forEachDocument(task.isThreadSafe(), task);
+        LuceneUtil.forEachDocument(reader(), true, task.isThreadSafe(), task);
     }
 
     @Override
     public void forEachDocument(boolean parallel, DocTask task) {
-        task.initializeTask();
-        List<LeafReaderContext> leaves = reader.leaves();
-        Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
-        int metadataDocId = metadata().metadataDocId();
-        stream.forEach(lrc -> {
-            DocTask.SegmentTask segTask = task.segmentDocTask(lrc);
-            LeafReader reader1 = lrc.reader();
-            Bits liveDocs = reader1.getLiveDocs();
-            int maxDoc = reader1.maxDoc();
-            for (int docId = 0; docId < maxDoc; docId++) {
-                boolean isMetadataDoc = lrc.docBase + docId == metadataDocId;
-                boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
-                if (!isMetadataDoc && isLiveDoc) { // Only count live documents
-                    segTask.document(docId);
-                }
-            }
-        });
-        task.finishTask();
+        LuceneUtil.forEachDocument(reader(), true, parallel, task);
     }
 
     /**
@@ -573,9 +532,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         }
         try {
             blackLab.removeIndex(this);
-            if (shouldCloseIndex) {
-                reader.close();
-            }
+            reader.close();
             if (indexWriter != null) {
                 // Perform natural merges if deferred merge feature is enabled
                 if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEFER_SEGMENT_MERGES_DURING_INDEXING))) {
@@ -608,11 +565,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public QueryExecutionContext defaultExecutionContext(String annotatedField, QueryInfo queryInfo) {
         if (annotatedField == null)
-            throw new IllegalArgumentException("Unknown annotated field: null");
+            throw new IllegalArgumentException("Annotated field must not be null");
+        if (queryInfo == null)
+            queryInfo = QueryInfo.create(this, annotatedField);
         Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
-        return QueryExecutionContext.get(this, annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity, queryInfo);
+        return QueryExecutionContext.get(annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity, queryInfo);
     }
 
     @Override

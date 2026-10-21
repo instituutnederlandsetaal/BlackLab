@@ -91,7 +91,7 @@ public class TestCollocationScorers {
         AnnotationSensitivity lemma = index.mainAnnotatedField().annotation("lemma")
                 .sensitivity(MatchSensitivity.INSENSITIVE);
 
-        Assert.assertEquals(4, LuceneUtil.getTermFrequency(index, lemma.luceneField(), "the", filter, false));
+        Assert.assertEquals(4, LuceneUtil.getTermFrequency(index.searcher(), lemma.luceneField(), "the", filter, false));
         CorpusSize corpusSize = index.queryDocuments(filter).subcorpusSize();
         Assert.assertEquals(25, corpusSize.getTotalCount().getTokens());
         Assert.assertEquals(25,

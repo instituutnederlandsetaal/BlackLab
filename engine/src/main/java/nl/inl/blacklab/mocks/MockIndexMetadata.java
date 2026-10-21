@@ -71,7 +71,7 @@ public class MockIndexMetadata implements IndexMetadata {
                 throw new UnsupportedOperationException();
             }
         };
-        List<MetadataField> metas = List.of();
+        List<MetadataField> metas = List.of(new MockMetadataField("author"));
         this.metadataFields = new MetadataFields() {
 
             @Override

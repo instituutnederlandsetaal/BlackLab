@@ -10,12 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
@@ -24,7 +28,9 @@ import org.jspecify.annotations.NonNull;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -34,13 +40,23 @@ public class TestLuceneUtil {
 
     BlackLabIndex index = testIndex.index();
 
+    IndexSearcher searcher = index.searcher();
+
     AnnotatedField mainAnnotatedField = index.mainAnnotatedField();
 
     int uniqueTermsInIndex = index.forwardIndex(mainAnnotatedField).get(mainAnnotatedField.mainAnnotation()).terms().numberOfTerms();
 
     String mainLuceneField = index.mainAnnotatedField().mainAnnotation().mainSensitivity().luceneField();
 
-    final String FIELD_TITLE = "title";
+    private static final String FIELD_TITLE = "title";
+
+    private static final String FIELD_NUMBER = "number";
+
+    private static final FieldType.Getter FIELD_TYPE_GETTER = name -> switch (name) {
+        case FIELD_NUMBER -> FieldType.NUMERIC;
+        case FIELD_TITLE -> FieldType.TOKENIZED;
+        default -> throw new IllegalStateException();
+    };
 
     @Test
     public void testGetTermFrequency() {
@@ -51,9 +67,9 @@ public class TestLuceneUtil {
 
     private void assertTermFreq(int expected, String the, Query docFilter) {
         // fast and slow versions should return the same result if there are no deleted docs
-        long freq = LuceneUtil.getTermFrequency(index, mainLuceneField, the, docFilter, false);
+        long freq = LuceneUtil.getTermFrequency(searcher, mainLuceneField, the, docFilter, false);
         assertEquals(expected, freq);
-        long freq2 = LuceneUtil.getTermFrequency(index, mainLuceneField, the, docFilter, true);
+        long freq2 = LuceneUtil.getTermFrequency(searcher, mainLuceneField, the, docFilter, true);
         assertEquals(expected, freq2);
     }
 
@@ -66,16 +82,25 @@ public class TestLuceneUtil {
         assertParseLuceneQueryPhrase(" noot  mies ");
     }
 
+    @Test
+    public void testParseLuceneQueryNumeric() throws ParseException {
+        int value = 42;
+        String queryStr = FIELD_NUMBER + ":\"" + value + "\"";
+        Query query = LuceneUtil.parseLuceneQuery(FIELD_TYPE_GETTER, queryStr, index.analyzer(), mainLuceneField);
+        Query expected = IntPoint.newRangeQuery(FIELD_NUMBER, value, value);
+        assertEquals(expected, query);
+    }
+
     private void assertParseLuceneQueryPhrase(String phrase) throws ParseException {
         String queryStr = FIELD_TITLE + ":\"" + phrase + "\"";
-        Query query = LuceneUtil.parseLuceneQuery(index, queryStr, index.analyzer(), mainLuceneField);
+        Query query = LuceneUtil.parseLuceneQuery(FIELD_TYPE_GETTER, queryStr, index.analyzer(), mainLuceneField);
         Query expected = new PhraseQuery(FIELD_TITLE, phrase.trim().split("\\s+"));
         assertEquals(expected, query);
     }
 
     private void assertParseLuceneQueryTerms(String... terms) throws ParseException {
         String queryStr = FIELD_TITLE + ":(" + String.join(" ", terms) + ")";
-        Query query = LuceneUtil.parseLuceneQuery(index, queryStr, index.analyzer(), mainLuceneField);
+        Query query = LuceneUtil.parseLuceneQuery(FIELD_TYPE_GETTER, queryStr, index.analyzer(), mainLuceneField);
         if (terms.length > 1) {
             BooleanQuery.Builder expected = new BooleanQuery.Builder();
             for (String term: terms) {
@@ -185,6 +210,39 @@ public class TestLuceneUtil {
         assertEquals(1, expectedDocIds.size()); // one doc id should be missing (the index metadata document)
     }
 
+    @Test
+    public void testForEachDocument() {
+        int maxDoc = index.reader().maxDoc();
+        for (boolean onlyRegularDocs : new boolean[] { false, true }) {
+            for (boolean threadSafe: new boolean[] { false, true }) {
+                AtomicInteger n = new AtomicInteger(0);
+                DocTask docTask = getDocTask(threadSafe, maxDoc, n);
+                LuceneUtil.forEachDocument(index.reader(), onlyRegularDocs, threadSafe, docTask);
+                int numberOfDocs = index.metadata().documentCount();
+                if (!onlyRegularDocs)
+                    numberOfDocs += 1; // index metadata document
+                assertEquals(numberOfDocs, n.get());
+            }
+        }
+    }
 
+    private @NonNull DocTask getDocTask(boolean threadSafe, int maxDoc, AtomicInteger n) {
+        DocTask docTask = new DocTask() {
+
+            @Override
+            public boolean isThreadSafe() {
+                return threadSafe;
+            }
+
+            @Override
+            public SegmentTask segmentDocTask(LeafReaderContext lrc) {
+                return docId -> {
+                    assertTrue(docId >= 0 && docId + lrc.docBase <= maxDoc);
+                    n.incrementAndGet();
+                };
+            }
+        };
+        return docTask;
+    }
 
 }

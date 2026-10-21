@@ -27,14 +27,11 @@ public class HitPublisherSpans implements HitPublisher {
     /** Set until initialized (needed to get spans); null afterwards */
     private BLSpanWeight weight;
 
-    /** Set until initialized (needed to construct own hitQueryContext); null afterwards */
-    private HitQueryContext sourceHitQueryContext;
-
     /** Has initialize() been called? */
     private boolean isInitialized = false;
 
     /** Our own hit query context */
-    private HitQueryContext hitQueryContext;
+    private final HitQueryContext hitQueryContext;
 
     /** How many match infos there are in the hitQueryContext */
     private int numMatchInfos;
@@ -104,18 +101,18 @@ public class HitPublisherSpans implements HitPublisher {
     private volatile boolean needAllHits;
 
     /** Lazy Hits interface to a single Spans object. */
-    public HitPublisherSpans(LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext sourceHitQueryContext,
+    public HitPublisherSpans(LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext hitQueryContext,
             ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         this.weight = weight;
-        this.sourceHitQueryContext = sourceHitQueryContext;
+        this.hitQueryContext = hitQueryContext;
         this.spans = null;
         this.executorService = executorService;
         this.hitsStats = hitsStats;
         maxToProcess = hitsStats.getMaxHitsToProcess();
         maxToCount = hitsStats.getMaxHitsToCount();
         this.docsStats = docsStats;
-        Hits.HitsContext context = new Hits.HitsContext(sourceHitQueryContext.index(), sourceHitQueryContext.getField(),
-                sourceHitQueryContext.getMatchInfoDefs(), lrc);
+        Hits.HitsContext context = new Hits.HitsContext(hitQueryContext.index(), hitQueryContext.getField(),
+                hitQueryContext.getMatchInfoDefs(), lrc);
         output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
     }
@@ -160,10 +157,8 @@ public class HitPublisherSpans implements HitPublisher {
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
-            // Get query context for this spans and register it with our query.
+            // Register the query context with our query.
             // Then determine the number of match infos (query registers match infos with the context)
-            hitQueryContext = this.sourceHitQueryContext.withSpans(this.spans);
-            this.sourceHitQueryContext = null;
             this.spans.setHitQueryContext(hitQueryContext);
             this.numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
@@ -274,7 +269,7 @@ public class HitPublisherSpans implements HitPublisher {
                 assert hit.end_ >= 0;
                 if (numMatchInfos > 0) {
                     hit.matchInfos_ = new MatchInfo[numMatchInfos];
-                    hitQueryContext.getMatchInfo(hit.matchInfos_);
+                    spans.getMatchInfo(hit.matchInfos_);
                 }
                 boolean atDocBoundary = hit.doc_ != prevHit.doc_;
 

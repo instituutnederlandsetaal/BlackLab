@@ -43,7 +43,7 @@ public abstract class FrequencyCounter {
         final var docIds = new IntArrayList();
         if (cfg.filter() != null) {
             try {
-                final var q = LuceneUtil.parseLuceneQuery(index, cfg.filter(), index.analyzer(), "");
+                final var q = LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), cfg.filter(), index.analyzer(), "");
                 index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
             } catch (final ParseException e) {
                 throw new RuntimeException(e);

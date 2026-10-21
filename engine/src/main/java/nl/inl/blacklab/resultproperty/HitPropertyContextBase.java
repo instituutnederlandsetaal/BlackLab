@@ -53,7 +53,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** [SEGMENT/GLOBAL] Stores the sort order for the relevant context tokens for each hit index */
     private BigList<int[]> contextSortOrder;
 
-    protected Annotation annotation;
+    protected final Annotation annotation;
 
     protected final MatchSensitivity sensitivity;
 
@@ -172,36 +172,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
     protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, String overrideField) {
         super(prop, context, invert);
+        this.name = prop.name;
+        this.serializeName = prop.serializeName;
         this.index = context.hits() == null ? prop.index : context.hits().index();
         this.annotation = annotationOverrideField(prop.annotation, overrideField);
         this.sensitivity = prop.sensitivity;
-        this.name = prop.name;
-        this.serializeName = prop.serializeName;
         this.compareInReverse = prop.compareInReverse;
-        if (prop.context.equals(context)) {
-            // Same context; reuse context arrays
-            copyContext(prop);
-        } else {
-            initForwardIndex();
-        }
-    }
-
-    void initForwardIndex() {
-        luceneField = annotation.mainSensitivity().luceneField();
-        if (isGlobal() || context.toGlobal()) {
-            // To produce global term ids, we need the global forward index
-            forwardIndex = index.forwardIndex(annotation);
-        } else {
-            // Use the forward index for the segment we're in
-            forwardIndex = FieldForwardIndex.get(context.lrc(), luceneField);
-        }
-    }
-
-    private void copyContext(HitPropertyContextBase prop) {
-        luceneField = prop.luceneField;
-        forwardIndex = prop.forwardIndex;
-        contextTermId = prop.contextTermId;
-        contextSortOrder = prop.contextSortOrder;
+        initFi(prop, context);
     }
 
     protected HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
@@ -213,7 +190,26 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
-        initForwardIndex();
+        initFi(null, null);
+    }
+
+    private void initFi(HitPropertyContextBase prop, PropContext context) {
+        if (prop != null && prop.context.equals(context)) {
+            // Same context; reuse context arrays
+            luceneField = prop.luceneField;
+            forwardIndex = prop.forwardIndex;
+            contextTermId = prop.contextTermId;
+            contextSortOrder = prop.contextSortOrder;
+        } else {
+            luceneField = annotation.mainSensitivity().luceneField();
+            if (isGlobal() || this.context.toGlobal()) {
+                // To produce global term ids, we need the global forward index
+                forwardIndex = index.forwardIndex(annotation);
+            } else {
+                // Use the forward index for the segment we're in
+                forwardIndex = FieldForwardIndex.get(this.context.lrc(), luceneField);
+            }
+        }
     }
 
     public Annotation getAnnotation() {

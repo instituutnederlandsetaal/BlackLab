@@ -10,7 +10,6 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
@@ -104,9 +103,9 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         return relationsStrategy;
     }
 
-    BlackLabIndexImpl(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexImpl(String name, BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config);
+        super(name, blackLab, indexDir, indexMode, createNewIndex, config);
 
         // See if this is an old external index. If so, delete the version file,
         // forward indexes and content stores.
