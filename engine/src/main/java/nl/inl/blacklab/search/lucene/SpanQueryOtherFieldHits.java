@@ -12,6 +12,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -27,8 +28,6 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     public static QueryInfo getQueryInfo(QueryInfo queryInfo, String targetField) {
-        if (queryInfo == null)
-            return null;
         return targetField == null ? queryInfo : queryInfo.withField(targetField);
     }
 
@@ -36,9 +35,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
 
     private final String targetField;
 
-    public SpanQueryOtherFieldHits(BLSpanQuery clause, String targetField) {
-        super(getQueryInfo(clause.queryInfo, targetField),
-                targetField != null ? targetField : clause.getAnnotatedFieldName());
+    public SpanQueryOtherFieldHits(BLSpanQuery clause, @NonNull String targetField) {
+        super(getQueryInfo(clause.queryInfo, targetField));
         this.clause = clause;
         this.targetField = targetField;
 

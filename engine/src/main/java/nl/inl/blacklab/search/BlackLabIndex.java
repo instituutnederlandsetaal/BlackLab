@@ -18,6 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.jspecify.annotations.NonNull;
 
 import com.ibm.icu.text.Collator;
 
@@ -643,7 +644,7 @@ public interface BlackLabIndex extends AutoCloseable {
         return new BlackLabIndexForQuery() {
 
             @Override
-            public String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
+            public @NonNull String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
                 return annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
             }
 

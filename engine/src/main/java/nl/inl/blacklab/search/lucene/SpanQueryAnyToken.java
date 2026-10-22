@@ -88,7 +88,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     final String luceneField;
 
     public SpanQueryAnyToken(QueryInfo queryInfo, int min, int max, String luceneField) {
-        super(queryInfo, AnnotatedFieldNameUtil.getBaseName(luceneField));
+        super(queryInfo.withField(AnnotatedFieldNameUtil.getBaseName(luceneField)));
         if (min < 0)
             throw new IllegalArgumentException("min cannot be negative");
         if (max < 1)

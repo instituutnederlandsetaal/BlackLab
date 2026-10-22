@@ -49,13 +49,9 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     protected SpanGuarantees guarantees;
 
     protected BLSpanQuery(QueryInfo queryInfo) {
-        this(queryInfo, queryInfo.field());
-    }
-
-    protected BLSpanQuery(QueryInfo queryInfo, String annotatedField) {
-        assert queryInfo != null && annotatedField != null;
+        assert queryInfo != null && queryInfo.field() != null;
         this.queryInfo = queryInfo;
-        this.annotatedField = annotatedField;
+        this.annotatedField = queryInfo.field();
     }
     
     /**
