@@ -135,7 +135,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
                 } else if (defVal == VALUE_ANY_SPAN) {
                     // Special case: any span (usually meaning "don't care")
                     defVal = context.index()
-                            .tagQuery(context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(),
+                            .tagQuery(context.queryInfo(), context.withRelationAnnotation().annotationSensitivity(),
                                     RelationUtil.ANY_TYPE_REGEX, null,
                                     TextPatternTags.Adjust.FULL_TAG, null, false);
                 }

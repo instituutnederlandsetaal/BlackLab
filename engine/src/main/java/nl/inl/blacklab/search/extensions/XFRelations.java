@@ -57,8 +57,7 @@ public class XFRelations implements ExtensionFunctionClass {
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
             RelationInfo.SpanMode spanMode, String targetField) {
         // Do we need to match a target, or don't we care?
-        AnnotationSensitivity field = context.withRelationAnnotation()
-                .luceneFieldRef();
+        AnnotationSensitivity field = context.withRelationAnnotation().annotationSensitivity();
         if (BLSpanQuery.isAnyNGram(matchTarget))
             matchTarget = null;
         if (matchTarget != null) {
@@ -236,7 +235,7 @@ public class XFRelations implements ExtensionFunctionClass {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     String captureAs = context.ensureUniqueCapture((String) args.get(1));
                     String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2), context);
-                    AnnotationSensitivity field = context.withRelationAnnotation().luceneFieldRef();
+                    AnnotationSensitivity field = context.withRelationAnnotation().annotationSensitivity();
                     return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
                 });
     }

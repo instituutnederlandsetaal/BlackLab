@@ -65,7 +65,7 @@ public class QueryExecutionContext {
     private final Set<String> captures;
 
     /** Are we currently in a constraint (e.g. after :: )? */
-    boolean inConstraint;
+    private final boolean inConstraint;
 
     /**
      * Construct a query execution context object.
@@ -101,16 +101,50 @@ public class QueryExecutionContext {
 
     private AnnotationSensitivity determineSensitivity(AnnotatedField annotatedField, String annotationName,
             MatchSensitivity matchSensitivity) {
-        final AnnotationSensitivity sensitivity;
         Annotation annotation = annotatedField.annotation(annotationName);
         if (annotation == null)
             throw new FeatureNotPresentInCorpus("Annotation doesn't exist: " + annotationName + " on field " + annotatedField.name());
-        sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
-        return sensitivity;
+        return getAppropriateSensitivity(annotation, matchSensitivity);
     }
 
-    public MatchSensitivity getSensitivity() {
-        return sensitivity.sensitivity();
+    /**
+     * Return sensitivity to use.
+     *
+     * Because not all annotations have all sensitivities, we may have to fall back to a different one.
+     *
+     * @param annotation annotation to search
+     * @param requestedSensitivity what sensitivity we'd ideally like
+     * @return sensitivity to use
+     */
+    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation,
+            MatchSensitivity requestedSensitivity) {
+        switch (requestedSensitivity) {
+        case INSENSITIVE:
+            // search insensitive if available
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+            return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+        case SENSITIVE:
+            // search fully-sensitive if available
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+        case DIACRITICS_INSENSITIVE:
+            // search diacritics-insensitive if available
+            if (annotation.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+        case CASE_INSENSITIVE:
+        default:
+            // search case-insensitive if available
+            if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.CASE_INSENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+        }
     }
 
     public QueryExecutionContext withField(String field) {
@@ -174,48 +208,20 @@ public class QueryExecutionContext {
                 relClass, captures, inConstraint, queryInfo);
     }
 
-    public String optDesensitize(String value) {
-        return sensitivity.sensitivity().desensitize(value);
+    /** Get new context with inConstraint set to true */
+    public QueryExecutionContext withInConstraint() {
+        if (inConstraint)
+            return this;
+        return new QueryExecutionContext(field, version, annotationName,
+                requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
     }
 
-    /**
-     * Return sensitivity to use.
-     *
-     * Because not all annotations have all sensitivities, we may have to fall back to a different one.
-     *
-     * @param annotation annotation to search
-     * @param requestedSensitivity what sensitivity we'd ideally like
-     * @return sensitivity to use
-     */
-    private static AnnotationSensitivity getAppropriateSensitivity(Annotation annotation,
-            MatchSensitivity requestedSensitivity) {
-        switch (requestedSensitivity) {
-        case INSENSITIVE:
-            // search insensitive if available
-            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-            return annotation.sensitivity(MatchSensitivity.SENSITIVE);
-        case SENSITIVE:
-            // search fully-sensitive if available
-            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
-            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-        case DIACRITICS_INSENSITIVE:
-            // search diacritics-insensitive if available
-            if (annotation.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE);
-            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
-            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-        case CASE_INSENSITIVE:
-        default:
-            // search case-insensitive if available
-            if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.CASE_INSENSITIVE);
-            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
-                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
-            return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-        }
+    public BlackLabIndex index() {
+        return queryInfo.index();
+    }
+
+    public MatchSensitivity getSensitivity() {
+        return sensitivity.sensitivity();
     }
 
     /**
@@ -229,26 +235,8 @@ public class QueryExecutionContext {
         return sensitivity.luceneField();
     }
 
-    public AnnotationSensitivity luceneFieldRef() {
+    public AnnotationSensitivity annotationSensitivity() {
         return sensitivity;
-    }
-
-    public BlackLabIndex index() {
-        return queryInfo.index();
-    }
-
-    /**
-     * Get the overridden default relation class.
-     *
-     * @return default relation class, or null if not overridden
-     */
-    public String resolveDefaultRelationClass() {
-        // If overridden (e.g. using @rc=al): return that.
-        // Otherwise determine the default for this index and use that
-        return defaultRelationClass != null ?
-                defaultRelationClass :
-                index().getRelationsStats(field(), WsParam.DEF_VAL_LIMIT_VALUES)
-                        .getDefaultClass();
     }
 
     /**
@@ -273,17 +261,6 @@ public class QueryExecutionContext {
         return queryInfo;
     }
 
-    public String ensureUniqueCapture(String captureBaseName) {
-        String capture = captureBaseName;
-        int i = 2;
-        while (captures.contains(capture)) {
-            capture = captureBaseName + i;
-            i++;
-        }
-        captures.add(capture);
-        return capture;
-    }
-
     /** Are we currently in a constraint (e.g. after :: )?
      *
      * TextPatterns before the :: will evaluate to BLSpanQueries,
@@ -294,11 +271,28 @@ public class QueryExecutionContext {
         return inConstraint;
     }
 
-    /** Get new context with inConstraint set to true */
-    public QueryExecutionContext withInConstraint() {
-        if (inConstraint)
-            return this;
-        return new QueryExecutionContext(field, version, annotationName,
-                requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
+    /**
+     * Get the overridden default relation class.
+     *
+     * @return default relation class, or null if not overridden
+     */
+    public String resolveDefaultRelationClass() {
+        // If overridden (e.g. using @rc=al): return that.
+        // Otherwise determine the default for this index and use that
+        return defaultRelationClass != null ?
+                defaultRelationClass :
+                index().getRelationsStats(field(), WsParam.DEF_VAL_LIMIT_VALUES)
+                        .getDefaultClass();
+    }
+
+    public String ensureUniqueCapture(String captureBaseName) {
+        String capture = captureBaseName;
+        int i = 2;
+        while (captures.contains(capture)) {
+            capture = captureBaseName + i;
+            i++;
+        }
+        captures.add(capture);
+        return capture;
     }
 }

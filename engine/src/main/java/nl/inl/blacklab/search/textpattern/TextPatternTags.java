@@ -70,7 +70,7 @@ public class TextPatternTags extends TextPattern {
     public EvalResult evaluate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
-        String optDesensitizedElNameRegex = context.optDesensitize(elementNameRegex);
+        String optDesensitizedElNameRegex = context.getSensitivity().desensitize(elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, TextPattern> e : attributes.entrySet()) {
             TextPattern tp = e.getValue();
@@ -84,7 +84,7 @@ public class TextPatternTags extends TextPattern {
             } else {
                 throw new IllegalArgumentException("Attribute value must evaluate to a string or int range");
             }
-            attrOptIns.put(e.getKey(), context.optDesensitize(regex));
+            attrOptIns.put(e.getKey(), context.getSensitivity().desensitize(regex));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
@@ -98,7 +98,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.queryInfo(), context.luceneFieldRef(),
+        return context.index().tagQuery(context.queryInfo(), context.annotationSensitivity(),
                 optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto, implicitCapture);
     }
 

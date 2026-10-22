@@ -247,7 +247,8 @@ You can think of these as properties needed for a phase in the whole search proc
 
 - used during translation of `TextPattern` to `BLSpanQuery`
 - should really be renamed to e.g.`TextPatternTranslationContext`, but that could break plugins
-- knows `QueryInfo`, current parallel version, annotation, sensitivity, def.rel.class, inconstraint
+- knows `QueryInfo`, current parallel version, annotation, sensitivity, def.rel.class, capture names, 
+  inconstraint
 
 ### MISSING? Context for actually executing the query
 

@@ -31,7 +31,7 @@ public class QueryFunctionFuzzy extends QueryFunction {
         int prefixLength = (Integer) parameters.get(2);
         if (maxEdits < 0 || prefixLength < 0)
             throw new IllegalArgumentException("fuzzy(word, maxEdits=2, prefixLength=0) takes non-negative integers as its last two args");
-        Term term = new Term(context.luceneField(), context.optDesensitize(word));
+        Term term = new Term(context.luceneField(), context.getSensitivity().desensitize(word));
         return new SpanFuzzyQuery(context.queryInfo(), term, maxEdits, prefixLength);
     }
 

@@ -104,8 +104,9 @@ public class TextPatternCompare extends TextPattern {
             if (rewrittenPseudoAnnot != null)
                 return rewrittenPseudoAnnot.toQuery(context);
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
+            String value1 = context.getSensitivity().desensitize(value);
             return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
-                    context.optDesensitize(context.optDesensitize(value))));
+                    context.getSensitivity().desensitize(value1)));
         } else {
             // Regex query.
             if (stripped.regex().equals(value) && stripped.sensitivity().equals(sensitivity)) {
@@ -121,7 +122,7 @@ public class TextPatternCompare extends TextPattern {
 
         // We're dealing with an actual regex query.
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-        String valueDesensitized = context.optDesensitize(value);
+        String valueDesensitized = context.getSensitivity().desensitize(value);
 
         // Lucene's regex engine requires double quotes to be escaped, unlike most others.
         // Escape double quotes
