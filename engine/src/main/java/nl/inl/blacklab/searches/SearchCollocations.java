@@ -16,8 +16,8 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
         super(source);
     }
 
-    protected SearchCollocations(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    protected SearchCollocations(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
 
     /**
@@ -27,7 +27,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations sortBy(ResultProperty sortBy) {
-        return new SearchCollocationsSorted(queryInfo(), this, sortBy);
+        return new SearchCollocationsSorted(this, sortBy);
     }
 
     /**
@@ -37,7 +37,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations sample(SampleParameters par) {
-        return new SearchCollocationsSampled(queryInfo(), timings(), this, par);
+        return new SearchCollocationsSampled(this, par);
     }
 
     /**
@@ -48,7 +48,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations filter(ResultProperty property, PropertyValue value) {
-        return new SearchCollocationsFiltered(queryInfo(), timings(), this, property, value);
+        return new SearchCollocationsFiltered(this, property, value);
     }
 
     /**
@@ -59,6 +59,6 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations window(long first, long number) {
-        return new SearchCollocationsWindow(queryInfo(), timings(), this, first, number);
+        return new SearchCollocationsWindow(this, first, number);
     }
 }

@@ -16,8 +16,8 @@ public class SearchCollocationsWindow extends SearchCollocations {
     private final long first;
     private final long number;
 
-    protected SearchCollocationsWindow(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, long first, long number) {
-        super(queryInfo, timings);
+    protected SearchCollocationsWindow(SearchCollocations source, long first, long number) {
+        super(source);
         this.source = source;
         this.first = first;
         this.number = number;

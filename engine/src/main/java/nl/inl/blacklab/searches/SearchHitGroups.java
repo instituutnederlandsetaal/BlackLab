@@ -14,8 +14,8 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
         super(source);
     }
 
-    protected SearchHitGroups(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    protected SearchHitGroups(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
 
     /**

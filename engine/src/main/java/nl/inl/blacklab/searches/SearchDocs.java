@@ -16,8 +16,8 @@ public abstract class SearchDocs extends SearchForResults<DocResults> {
         super(source);
     }
 
-    protected SearchDocs(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    protected SearchDocs(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
     
     /**

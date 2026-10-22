@@ -25,24 +25,24 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     private final QueryInfo queryInfo;
 
     /** How long executing certain parts of the operation took. */
-    private final QueryTimings timings;
+    private final SearchContext context;
 
     protected AbstractSearch(Search<?> source) {
-        this(source.queryInfo(), source.timings());
+        this(source.queryInfo(), source.context());
     }
 
-    protected AbstractSearch(QueryInfo queryInfo) {
-        this(queryInfo, new QueryTimings());
+    protected AbstractSearch(QueryInfo queryInfo, SearchCache cache) {
+        this(queryInfo, new SearchContext(cache));
     }
 
-    protected AbstractSearch(QueryInfo queryInfo, QueryTimings timings) {
+    protected AbstractSearch(QueryInfo queryInfo, SearchContext context) {
         this.queryInfo = queryInfo;
-        this.timings = timings;
+        this.context = context;
     }
 
     @Override
     public SearchCacheEntry<R> executeAsync(boolean allowQueue) {
-        return queryInfo.cache().getAsync(this, allowQueue);
+        return context.cache().getAsync(this, allowQueue);
     }
 
     /**
@@ -132,8 +132,13 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
+    public SearchContext context() {
+        return context;
+    }
+
+    @Override
     public QueryTimings timings() {
-        return timings;
+        return context.timings();
     }
 
     @Override

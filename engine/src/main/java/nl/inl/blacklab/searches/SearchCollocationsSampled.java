@@ -15,8 +15,8 @@ public class SearchCollocationsSampled extends SearchCollocations {
 
     private final SampleParameters sampleParameters;
 
-    public SearchCollocationsSampled(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, SampleParameters sampleParameters) {
-        super(queryInfo, timings);
+    public SearchCollocationsSampled(SearchCollocations source, SampleParameters sampleParameters) {
+        super(source);
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

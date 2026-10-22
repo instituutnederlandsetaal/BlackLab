@@ -64,6 +64,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchCacheMap;
@@ -700,7 +701,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
-        return new SearchEmpty(QueryInfo.create(this, field.name(), cacheToUse));
+        return new SearchEmpty(QueryInfo.create(this, field.name()), new Search.SearchContext(cacheToUse));
     }
 
     @Override

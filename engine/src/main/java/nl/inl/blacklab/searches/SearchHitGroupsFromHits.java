@@ -70,7 +70,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         } else {
             // Do we need to store the hits per group, or can we find them later using a group-specific query?
             boolean storeHits = !mustStoreHits && prop.canRefineQuery() || source.getCombinedSpanFilterQuery() == null;
-            boolean hitsInCache = queryInfo().cache().containsKey(source);
+            boolean hitsInCache = context().cache().containsKey(source);
             if (storeHits || hitsInCache) {
                 // We need to store the hits, or the hits are already cached.
                 // Just find all the hits and group them.

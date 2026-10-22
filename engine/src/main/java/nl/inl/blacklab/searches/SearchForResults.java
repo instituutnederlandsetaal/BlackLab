@@ -14,8 +14,8 @@ public abstract class SearchForResults<R extends Results> extends AbstractSearch
         super(source);
     }
 
-    SearchForResults(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    SearchForResults(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
 
     /**

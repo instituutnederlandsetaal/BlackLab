@@ -140,6 +140,22 @@ public interface Search<R extends SearchResult> {
 
     QueryInfo queryInfo();
 
+    /**
+     * @param timings Query timings to use for this query
+     * @param cache Cache to use for this query (either the main shared cache, or
+     *              one just for this request that we'll dump after). */
+    record SearchContext(QueryTimings timings, SearchCache cache) {
+        public SearchContext(SearchCache cache) {
+            this(new QueryTimings(), cache);
+        }
+        public SearchContext(QueryTimings timings, SearchCache cache) {
+            this.timings = timings == null ? new QueryTimings() : timings;
+            this.cache = cache == null ? new SearchCacheMap() : cache;
+        }
+    }
+
+    SearchContext context();
+
     QueryTimings timings();
 
     @Override

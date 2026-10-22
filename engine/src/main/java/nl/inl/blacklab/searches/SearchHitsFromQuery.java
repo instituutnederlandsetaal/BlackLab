@@ -19,8 +19,8 @@ public class SearchHitsFromQuery extends SearchHits {
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromQuery(QueryInfo queryInfo, QueryTimings timings, CompleteQuery completeQuery, SearchSettings searchSettings) {
-        super(queryInfo, timings);
+    public SearchHitsFromQuery(QueryInfo queryInfo, SearchContext context, CompleteQuery completeQuery, SearchSettings searchSettings) {
+        super(queryInfo, context);
         if (completeQuery == null)
             throw new IllegalArgumentException("Must specify a query");
         this.completeQuery = completeQuery;

@@ -13,7 +13,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
     private final SearchCollocations source;
     private final ResultProperty property;
 
-    public SearchCollocationsSorted(QueryInfo queryInfo, SearchCollocations source, ResultProperty property) {
+    public SearchCollocationsSorted(SearchCollocations source, ResultProperty property) {
         super(source);
         this.source = source;
         this.property = property;

@@ -10,8 +10,8 @@ public class SearchDocsFromQuery extends SearchDocs {
 
     private final Query query;
 
-    public SearchDocsFromQuery(QueryInfo queryInfo, QueryTimings timings, Query query) {
-        super(queryInfo, timings);
+    public SearchDocsFromQuery(QueryInfo queryInfo, SearchContext context, Query query) {
+        super(queryInfo, context);
         this.query = query;
     }
 

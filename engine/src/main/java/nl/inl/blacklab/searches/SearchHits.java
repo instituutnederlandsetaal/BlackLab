@@ -23,8 +23,8 @@ public abstract class SearchHits extends SearchForResults<HitResults> {
         super(source);
     }
 
-    protected SearchHits(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    protected SearchHits(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
     
     /**

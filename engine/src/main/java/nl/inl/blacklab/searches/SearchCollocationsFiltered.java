@@ -18,8 +18,8 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     private final PropertyValue value;
 
-    protected SearchCollocationsFiltered(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, ResultProperty property, PropertyValue value) {
-        super(queryInfo, timings);
+    protected SearchCollocationsFiltered(SearchCollocations source, ResultProperty property, PropertyValue value) {
+        super(source);
         this.source = source;
         this.property = property;
         this.value = value;

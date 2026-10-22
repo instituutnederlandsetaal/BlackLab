@@ -15,8 +15,8 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class SearchCustom<S extends Search<T>, T extends SearchResult> extends AbstractSearch<T> {
 
-    protected SearchCustom(QueryInfo queryInfo, QueryTimings timings) {
-        super(queryInfo, timings);
+    protected SearchCustom(QueryInfo queryInfo, SearchContext context) {
+        super(queryInfo, context);
     }
     
     /**

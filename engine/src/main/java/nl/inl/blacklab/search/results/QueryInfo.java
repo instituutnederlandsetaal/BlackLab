@@ -14,15 +14,11 @@ import nl.inl.blacklab.searches.SearchCacheMap;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, index.mainAnnotatedField().name(), index.cache());
+        return create(index, index.mainAnnotatedField().name());
     }
 
     public static QueryInfo create(BlackLabIndex index, String field) {
-        return create(index, field, index == null ? null : index.cache());
-    }
-
-    public static QueryInfo create(BlackLabIndex index, String field, SearchCache cacheToUse) {
-        return new QueryInfo(index, field, cacheToUse);
+        return new QueryInfo(index, field);
     }
 
     private final BlackLabIndex index;
@@ -30,14 +26,10 @@ public final class QueryInfo {
     /** The field these hits came from (will also be used as concordance field) */
     private final String field;
 
-    /** Cache to use for this query (either the main shared cache, or one just for this request that we'll dump after). */
-    private final SearchCache cacheToUse;
-
-    private QueryInfo(BlackLabIndex index, String field, SearchCache cacheToUse) {
+    private QueryInfo(BlackLabIndex index, String field) {
         super();
         this.index = index;
         this.field = field;
-        this.cacheToUse = cacheToUse == null ? new SearchCacheMap() : cacheToUse;
     }
 
     /** @return the index that was searched. */
@@ -52,11 +44,6 @@ public final class QueryInfo {
     /** @return field that was searched */
     public String field() {
         return field;
-    }
-
-    /** @return what cache should we use for this query? (i.e. main or disposable) */
-    public SearchCache cache() {
-        return cacheToUse;
     }
 
     @Override
@@ -104,7 +91,7 @@ public final class QueryInfo {
             throw new IllegalArgumentException("field cannot be null");
         if (Objects.equals(this.field, field))
             return this;
-        return QueryInfo.create(index, field, cacheToUse);
+        return QueryInfo.create(index, field);
     }
 
     public AnnotatedField annotatedField() {
