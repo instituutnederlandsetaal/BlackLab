@@ -14,12 +14,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * Captures all relations between the hits from two clauses.
  *
  * This is used to capture cross-field (alignment) relations in a parallel corpus.
- *
- * FIXME ? right now, subsequent spans from the source Spans may not overlap!
- *   If they do overlap, some relations may be skipped over.
- *   We should cache (some) relations from the source span so we can be sure we return all
- *   of them, even if the source spans overlap. Use SpansInBuckets or maybe a rewindable
- *   Spans view on top of that class? See comment below for a possible solution.
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
