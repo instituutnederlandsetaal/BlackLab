@@ -17,9 +17,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 /**
  * Captures all relations within a match info span.
- *
- * CAUTION: the match info spans we're trying to capture relations in
- * may not overlap! If they do overlap, some relations may be skipped over.
  */
 public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
 

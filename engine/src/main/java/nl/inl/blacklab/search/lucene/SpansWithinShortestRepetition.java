@@ -23,7 +23,7 @@ class SpansWithinShortestRepetition extends BLSpans {
     private final SpansInBucketsPerDocument filterUnit;
 
     /** Relations to capture */
-    private final BLSpans relations;
+    private final SpansCaptureRelationsWithinSpan.RelationsCapturer relations;
 
     /** What match info to capture the list of relations under */
     private final String captureRelsAs;
@@ -77,7 +77,7 @@ class SpansWithinShortestRepetition extends BLSpans {
         super(SpanQueryPositionFilter.createGuarantees(producer.guarantees()));
         this.producer = BLSpans.ensureSortedUnique(producer);
         this.filterUnit = SpansInBucketsPerDocument.sorted(filterUnit);
-        this.relations = relations;
+        this.relations = new SpansCaptureRelationsWithinSpan.RelationsCapturer(relations);
         this.captureRelsAs = captureRelsAs;
         this.adjustLeading = adjustLeading;
         this.adjustTrailing = adjustTrailing;
@@ -347,6 +347,7 @@ class SpansWithinShortestRepetition extends BLSpans {
     public void passSpansContextToClauses(SpansContext context) {
         producer.setSpansContext(context);
         filterUnit.setSpansContext(context);
+        relations.setSpansContext(context);
         captureRelsIndex = context.registerMatchInfo(captureRelsAs, MatchInfo.Type.LIST_OF_RELATIONS);
     }
 
@@ -360,7 +361,7 @@ class SpansWithinShortestRepetition extends BLSpans {
         int end = filterUnit.endPosition(lastFilterHit);
         List<RelationInfo> capturedRelations = new ArrayList<>();
         try {
-            SpansCaptureRelationsWithinSpan.captureRelationsWithinSpan(docId, start, end, relations, capturedRelations);
+            relations.captureRelationsWithinSpan(docId, start, end, capturedRelations);
             RelationListInfo relationListInfo = RelationListInfo.create(capturedRelations, getOverriddenField());
             matchInfo[captureRelsIndex] = relationListInfo;
         } catch (IOException e) {
