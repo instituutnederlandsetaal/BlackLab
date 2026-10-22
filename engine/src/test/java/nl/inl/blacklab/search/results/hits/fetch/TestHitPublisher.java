@@ -33,6 +33,7 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.SpansContext;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsAbstract;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
@@ -231,7 +232,7 @@ public class TestHitPublisher {
     // Subscribers joining after completion still receive the terminal callback and final flush state.
     @Test
     public void lateSubscribersReceiveTheTerminalNotification() {
-        HitPublisherOutput output = new HitPublisherOutput(new Hits.Context(null, "test"));
+        HitPublisherOutput output = new HitPublisherOutput(new Hits.Context(IndexAndField.get(null, "test")));
         output.flush();
         output.complete();
         RecordingSubscriber late = new RecordingSubscriber();
@@ -312,7 +313,7 @@ public class TestHitPublisher {
         for (RuntimeException failure: failures) {
             // Mock a publisher that will fail when subscribed to, and wrap it in a filter.
             HitPublisher source = mock(HitPublisher.class);
-            when(source.context()).thenReturn(new Hits.Context(null, "test"));
+            when(source.context()).thenReturn(new Hits.Context(IndexAndField.get(null, "test")));
             HitPublisherFilter publisher = new HitPublisherFilter(source, mock(HitFilter.class));
 
             // Verify that the HitPublisherFilter called source.subscribe(...) exactly once,
@@ -369,7 +370,7 @@ public class TestHitPublisher {
     public void performPerPublisherCompletesForStaticPublishers() {
         {
             // Empty hits object
-            Hits retained = Hits.empty(new Hits.Context(null, "test"));
+            Hits retained = Hits.empty(new Hits.Context(IndexAndField.get(null, "test")));
 
             // Set up a mock publisher that returns a static empty Hits object when getStatic() is called.
             HitPublisher staticSource = mock(HitPublisher.class);
@@ -386,7 +387,7 @@ public class TestHitPublisher {
     @Test
     public void performPerPublisherCompletesForAsynchronousStreamingPublishers() {
         // Empty hits object
-        Hits retained = Hits.empty(new Hits.Context(null, "test"));
+        Hits retained = Hits.empty(new Hits.Context(IndexAndField.get(null, "test")));
 
         // Set up a mock publisher that simulates asynchronous streaming by calling start(), flush(), and done()
         // on the subscriber in a separate thread.
@@ -705,7 +706,7 @@ public class TestHitPublisher {
     @Test(timeout = 5000)
     public void subscriberJoiningDuringPublicationReplaysPublishedHits() throws Exception {
         // Set up batch of two hits
-        Hits.Context context = new Hits.Context(null, "test");
+        Hits.Context context = new Hits.Context(IndexAndField.get(null, "test"));
         HitsMutable batch = HitsMutable.create(context, -1, false, false);
         batch.add(0, 0, 1, null);
         batch.add(1, 0, 1, null);
@@ -775,7 +776,7 @@ public class TestHitPublisher {
     // Concurrent getStatic callers all unblock with the same fully completed retained result.
     @Test(timeout = 5000)
     public void multipleStaticWaitersShareTheCompletedRetainedView() throws Exception {
-        Hits.Context context = new Hits.Context(null, "test");
+        Hits.Context context = new Hits.Context(IndexAndField.get(null, "test"));
         HitPublisherOutput output = new HitPublisherOutput(context);
         ExecutorService waiters = Executors.newFixedThreadPool(2);
         CountDownLatch ready = new CountDownLatch(2);
@@ -795,7 +796,7 @@ public class TestHitPublisher {
     // Count-only updates are accumulated and replayed as totals to subscribers that join later.
     @Test
     public void lateSubscriberReceivesCumulativeCountOnlyTotals() {
-        HitPublisherOutput output = new HitPublisherOutput(new Hits.Context(null, "test"));
+        HitPublisherOutput output = new HitPublisherOutput(new Hits.Context(IndexAndField.get(null, "test")));
         RecordingSubscriber early = new RecordingSubscriber();
         output.subscribe(early);
         output.counted(2, 1);
@@ -814,7 +815,7 @@ public class TestHitPublisher {
     @Test
     public void filteredPublicationAndCatchUpUseFilteredCounts() {
         HitPublisher source = mock(HitPublisher.class);
-        Hits.Context context = new Hits.Context(null, "test");
+        Hits.Context context = new Hits.Context(IndexAndField.get(null, "test"));
         when(source.context()).thenReturn(context);
         HitFilter filter = mock(HitFilter.class);
         when(filter.forSegment(any(), any(), any())).thenReturn(filter);

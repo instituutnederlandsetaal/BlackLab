@@ -80,8 +80,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
         blackLab.registerIndex(null, this);
     }
     
-    public IndexAndField createDefaultIndexAndField() {
-        return IndexAndField.get(this, mainAnnotatedField().name());
+    public IndexAndField defaultIndexAndField() {
+        return indexAndField(mainAnnotatedField().name());
     }
 
     @Override
@@ -107,7 +107,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public TextPatternContext defaultExecutionContext(String field, IndexAndField indexAndField) {
         if (indexAndField == null)
-            indexAndField = IndexAndField.get(this, field);
+            indexAndField = indexAndField(field);
         return TextPatternContext.get(field,
                 annotatedField(field).defaultSearchAnnotation().name(),
                 MatchSensitivity.INSENSITIVE, indexAndField);

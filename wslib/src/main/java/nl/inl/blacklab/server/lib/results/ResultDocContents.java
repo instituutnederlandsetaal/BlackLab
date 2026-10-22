@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -135,7 +136,7 @@ public class ResultDocContents {
         Hits hitsInDoc;
         AnnotatedField fieldToShow = request.field();
         if (hitResults == null) {
-            hitsInDoc = Hits.empty(new Hits.Context(index, fieldToShow.name()));
+            hitsInDoc = Hits.empty(new Hits.Context(IndexAndField.get(index, fieldToShow.name())));
         } else {
             hitsInDoc = hitResults.getHits().filteredByDocId(docId);
         }

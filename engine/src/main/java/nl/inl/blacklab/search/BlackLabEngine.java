@@ -316,17 +316,14 @@ public final class BlackLabEngine implements AutoCloseable {
     /**
      * Get the appropriate search executor service for the given number of threads.
      *
-     * If the number of threads is 2 or more, we use the regular
-     * search executor service. If the number of threads is 1, we just use a
-     * CurrentThreadExecutorService.
+     * If the number of threads is 1 or less, we use a CurrentThreadExecutorService.
+     * If the number of threads is 2 or more, we use the regular search executor service.
      *
      * @param numThreads number of threads to use for searching
      * @return the executor service
      */
     public ExecutorService searchExecutorService(int numThreads) {
-        return numThreads >= 2
-                ? searchExecutorService()
-                : new CurrentThreadExecutorService();
+        return numThreads <= 1 ? new CurrentThreadExecutorService() : searchExecutorService();
     }
 
     public int maxThreadsPerSearch() {

@@ -17,6 +17,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestHitPropertySerialize {
@@ -25,7 +26,8 @@ public class TestHitPropertySerialize {
 
     private static final MockTerms terms = new MockTerms("aap", "noot", "mies");
 
-    private static final Hits hits = Hits.empty(new Hits.Context(mockIndex, mockIndex.mainAnnotatedField().name()));
+    private static final Hits hits = Hits.empty(new Hits.Context(
+            IndexAndField.get(mockIndex, mockIndex.mainAnnotatedField().name())));
 
     private static Annotation lemmaAnnotation;
 

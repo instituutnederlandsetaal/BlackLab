@@ -72,7 +72,7 @@ public final class IndexAndField {
             throw new IllegalArgumentException("field cannot be null");
         if (Objects.equals(this.field, field))
             return this;
-        return IndexAndField.get(index, field);
+        return new IndexAndField(index, field);
     }
 }
 

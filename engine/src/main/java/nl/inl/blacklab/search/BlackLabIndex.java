@@ -224,8 +224,12 @@ public interface BlackLabIndex extends AutoCloseable {
     // Search the index
     //---------------------------------------------------------------------------
 
+    default IndexAndField indexAndField(String field) {
+        return IndexAndField.get(this, field);
+    }
+
     default HitResults find(AnnotatedField field, CompleteQuery query) {
-        IndexAndField indexAndField = IndexAndField.get(this, field.name());
+        IndexAndField indexAndField = indexAndField(field.name());
         BLSpanQuery spanQuery = query.pattern().toQuery(indexAndField, query.filter());
         return find(spanQuery);
     }

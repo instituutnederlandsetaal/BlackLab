@@ -56,10 +56,6 @@ public interface Hits extends Iterable<EphemeralHit> {
             this(indexAndField, MatchInfoDefs.EMPTY, null);
         }
 
-        public Context(BlackLabIndex index, String field) {
-            this(IndexAndField.get(index, field), MatchInfoDefs.EMPTY, null);
-        }
-
         public BlackLabIndex index() {
             return indexAndField.index();
         }

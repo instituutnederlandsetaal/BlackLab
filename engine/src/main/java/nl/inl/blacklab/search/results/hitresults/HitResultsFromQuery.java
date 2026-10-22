@@ -10,6 +10,7 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
@@ -59,9 +60,10 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         List<HitPublisher> publishers = new ArrayList<>();
         BlackLabIndex index = indexAndField.index();
         BLSpanWeight weight = rewriteAndCreateWeight(index, sourceQuery, searchSettings.fiMatchFactor());
-        int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
+        BlackLabEngine engine = BlackLab.engine();
+        int nThreads = Math.min(numberOfThreads, Math.max(engine.maxThreadsPerSearch(), 1));
 
-        ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
+        ExecutorService service = new SearchPool(engine.searchExecutorService(nThreads), nThreads);
         SpansContext spansContext = new SpansContext(sourceQuery.getAnnotatedFieldName());
         for (LeafReaderContext lrc: index.reader().leaves()) {
             publishers.add(new HitPublisherSpans(index, lrc, weight, spansContext, service, hitsStats, docsStats));

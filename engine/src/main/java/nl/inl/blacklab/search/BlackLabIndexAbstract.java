@@ -330,7 +330,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            query.setIndexAndField(IndexAndField.get(this, query.getAnnotatedFieldName()));
+            query.setIndexAndField(indexAndField(query.getAnnotatedFieldName()));
             return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
@@ -393,7 +393,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(IndexAndField.get(this, mainAnnotatedField().name()), documentFilterQuery);
+        return DocResults.fromQuery(indexAndField(mainAnnotatedField().name()), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -564,7 +564,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         if (annotatedField == null)
             throw new IllegalArgumentException("Annotated field must not be null");
         if (indexAndField == null)
-            indexAndField = IndexAndField.get(this, annotatedField);
+            indexAndField = indexAndField(annotatedField);
         Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
@@ -692,12 +692,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
             Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity.luceneField(), terms);
-        return new TermFrequencyList(IndexAndField.get(this, annotSensitivity.annotation().field().name()), freq, true);
+        return new TermFrequencyList(indexAndField(annotSensitivity.annotation().field().name()), freq, true);
     }
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        IndexAndField indexAndField = IndexAndField.get(this, field.name());
+        IndexAndField indexAndField = indexAndField(field.name());
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
         return new SearchEmpty(new Search.Context(indexAndField, cacheToUse));
     }
