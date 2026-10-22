@@ -44,13 +44,11 @@ public final class BlackLabEngine implements AutoCloseable {
     public static final int POOL_TERMINATE_WAIT_SEC = 10;
 
     /**
-     * All BlackLabEngines that have been instantiated, so we can close them on shutdown.
+     * The single BlackLabEngine instance, so we can close it on shutdown.
      */
-    private static final Set<BlackLabEngine> engines = new HashSet<>();
+    private static BlackLabEngine instance = null;
 
-    /**
-     * Map from IndexReader to BlackLab, for use from inside SpanQuery/Spans classes
-     */
+    /** Indexes to close when this engine is closed. */
     private static final Set<BlackLabIndex> openIndexes = new HashSet<>();
 
     /** When autodetecting maxThreadsPerSearch, divide #CPUs by this number */
@@ -64,10 +62,9 @@ public final class BlackLabEngine implements AutoCloseable {
 
     /** Close all opened engines */
     static synchronized void closeAll() {
-        List<BlackLabEngine> copy = new ArrayList<>(engines);
-        engines.clear();
-        for (BlackLabEngine engine : copy) {
-            engine.close();
+        if (instance != null) {
+            instance.close();
+            instance = null;
         }
     }
 
@@ -92,12 +89,17 @@ public final class BlackLabEngine implements AutoCloseable {
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
 
+    /** Were we implicitly created? If so, also implicitly close when the last index is closed */
+    private boolean implicit;
+
     /** Was close() called on this engine? */
     private boolean wasClosed;
 
-    BlackLabEngine(int maxThreadsPerSearch) {
-        synchronized (engines) {
-            engines.add(this);
+    BlackLabEngine(int maxThreadsPerSearch, boolean implicit) {
+        synchronized (BlackLabEngine.class) {
+            if (instance != null)
+                throw new IllegalStateException("There can be only one BlackLabEngine instance");
+            instance = this;
         }
         initializationExecutorService = Executors.newSingleThreadExecutor(runnable -> {
             Thread worker = Executors.defaultThreadFactory().newThread(runnable);
@@ -115,6 +117,7 @@ public final class BlackLabEngine implements AutoCloseable {
 
         this.maxThreadsPerSearch = maxThreadsPerSearch < 0 ? chooseDefaultMaxThreadsPerSearch() :
                 maxThreadsPerSearch;
+        this.implicit = implicit;
     }
 
     public static int chooseDefaultMaxThreadsPerSearch() {
@@ -123,10 +126,22 @@ public final class BlackLabEngine implements AutoCloseable {
         return n;
     }
 
-    public static BlackLabEngine singleInstance() {
-        if (engines.size() != 1)
+    public static synchronized BlackLabEngine singleInstance() {
+        if (instance == null)
             throw new IllegalStateException("There must be exactly one engine for this method to be used");
-        return engines.iterator().next();
+        return instance;
+    }
+
+    public static synchronized BlackLabEngine getOrCreateImplicit() {
+        if (instance == null) {
+            // -1 = choose max. threads per operation automatically
+            return new BlackLabEngine(-1, true);
+        }
+        return instance;
+    }
+
+    public static BlackLabEngine create(int maxThreadsPerSearch) {
+        return new BlackLabEngine(maxThreadsPerSearch, false);
     }
 
     /**
@@ -189,6 +204,9 @@ public final class BlackLabEngine implements AutoCloseable {
     public synchronized void close() {
         if (wasClosed)
             return;
+        synchronized (BlackLabEngine.class) {
+            instance = null;
+        }
         wasClosed = true;
         closeExecutorPool(searchExecutorService);
         closeExecutorPool(initializationExecutorService);
@@ -197,9 +215,6 @@ public final class BlackLabEngine implements AutoCloseable {
             for (BlackLabIndex index: copy) {
                 index.close();
             }
-        }
-        synchronized (engines) {
-            engines.remove(this);
         }
     }
 
@@ -282,13 +297,9 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public synchronized void removeIndex(BlackLabIndex index) {
         openIndexes.remove(index);
-        if (BlackLab.isImplicitInstance(this) && openIndexes.isEmpty()) {
+        if (implicit && openIndexes.isEmpty()) {
             // We are the implicit instance and our last searcher has been closed. Clean up.
-            try {
-                close();
-            } finally {
-                BlackLab.discardImplicitInstance();
-            }
+            close();
         }
     }
 

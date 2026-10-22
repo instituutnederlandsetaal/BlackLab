@@ -63,7 +63,7 @@ public class TestMetadataFragments {
 
     @BeforeClass
     public static void initializeBlackLab() {
-        BlackLab.implicitInstance();
+        BlackLab.engine();
     }
 
     @Before

@@ -31,7 +31,7 @@ public class DocIndexerSaxonTest {
 
     @BeforeClass
     public static void beforeClass() {
-        BlackLab.implicitInstance(); // init plugin system
+        BlackLab.engine(); // init plugin system
     }
 
     @Before

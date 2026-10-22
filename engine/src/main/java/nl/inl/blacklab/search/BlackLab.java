@@ -57,17 +57,6 @@ public final class BlackLab {
 
     /** Suffix for an config override file name (so e.g. blacklab.override.yaml or blacklab-server.override.yaml) */
     public static final String OVERRIDE_FILE_SUFFIX = ".override";
-
-    /**
-     * If client doesn't explicitly create a BlackLab instance, one will be instantiated
-     * automatically.
-     */
-    private static BlackLabEngine implicitInstance = null;
-    
-    /**
-     * Have we called create()? If so, don't create an implicit instance, but throw an exception.
-     */
-    private static boolean explicitlyCreated = false;
     
     /** Cache for getConfigDirs() */
     private static List<File> configDirs;
@@ -102,14 +91,11 @@ public final class BlackLab {
      */
     public static BlackLabEngine createEngine(int maxThreadsPerSearch) {
         ensureGlobalConfigApplied();
-        if (implicitInstance != null)
-            throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
-        explicitlyCreated = true;
-        return new BlackLabEngine(maxThreadsPerSearch);
+        return BlackLabEngine.create(maxThreadsPerSearch);
     }
 
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
-        return implicitInstance().open(dir);
+        return engine().open(dir);
     }
 
     /**
@@ -122,7 +108,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex)
             throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(indexDir, createNewIndex);
+        return engine().openForWriting(indexDir, createNewIndex);
     }
 
     /**
@@ -137,7 +123,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(indexDir, createNewIndex, config);
+        return engine().openForWriting(indexDir, createNewIndex, config);
     }
 
     /**
@@ -150,40 +136,17 @@ public final class BlackLab {
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(directory, create, formatIdentifier);
-    }
-
-    public static synchronized BlackLabEngine currentInstance() {
-        if (explicitlyCreated)
-            return BlackLabEngine.singleInstance();
-        return implicitInstance();
+        return engine().openForWriting(directory, create, formatIdentifier);
     }
 
     /**
-     * Return the implicitly created instance of BlackLab.
-     * 
-     * Only used by BlackLabIndex if no BlackLab instance is provided during opening.
-     * The instance will have 4 search threads.
-     * 
-     * @return implicitly instantiated BlackLab instance
+     * Return the BlackLabEngine instance. If none exists, create one implicitly.
+     *
+     * @return BlackLabEngine instance
      */
-    public static synchronized BlackLabEngine implicitInstance() {
+    public static synchronized BlackLabEngine engine() {
         ensureGlobalConfigApplied();
-        if (explicitlyCreated)
-            throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
-        if (implicitInstance == null) {
-            // -1 = choose max. threads per operation automatically
-            implicitInstance = new BlackLabEngine(-1);
-        }
-        return implicitInstance;
-    }
-
-    public static synchronized void discardImplicitInstance() {
-        implicitInstance = null;
-    }
-
-    public static boolean isImplicitInstance(BlackLabEngine blackLabEngine) {
-        return blackLabEngine == implicitInstance;
+        return BlackLabEngine.getOrCreateImplicit();
     }
 
     /**
