@@ -175,13 +175,13 @@ public class XmlHighlighter {
     private StringBuilder b;
 
     /** Remove empty <hl></hl> tags after highlighting? */
-    private boolean removeEmptyHlTags = true;
+    private final boolean removeEmptyHlTags;
 
     /**
      * How to fix well-formedness problems? If true, we remove the unbalanced tags;
      * if false (the default) we add extra tags at the start or end to rebalance it.
      */
-    private UnbalancedTagsStrategy unbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+    private final UnbalancedTagsStrategy unbalancedTagsStrategy;
 
     /** Currently open highlights in order of start position. */
     private final List<TagLocation> currentHighlightStarts = new ArrayList<>();
@@ -190,6 +190,19 @@ public class XmlHighlighter {
      * Used to prevent outputting empty highlight tags.
      */
     private final List<TagLocation> highlightsJustOpened = new ArrayList<>();
+
+    public XmlHighlighter() {
+        this(UnbalancedTagsStrategy.ADD_TAG, true);
+    }
+
+    public XmlHighlighter(UnbalancedTagsStrategy unbalancedTagsStrategy) {
+        this(unbalancedTagsStrategy, true);
+    }
+
+    public XmlHighlighter(UnbalancedTagsStrategy unbalancedTagsStrategy, boolean removeEmptyHlTags) {
+        this.unbalancedTagsStrategy = unbalancedTagsStrategy;
+        this.removeEmptyHlTags = removeEmptyHlTags;
+    }
 
     /**
      * Given XML content and a sorted list of existing tags and highlight tags to be
@@ -585,16 +598,6 @@ public class XmlHighlighter {
     }
 
     /**
-     * Set whether or not to remove empty <hl></hl> tags at the end of highlighting
-     * (which can form due to the process).
-     *
-     * @param c true iff empty hl tags should be removed
-     */
-    public void setRemoveEmptyHlTags(boolean c) {
-        removeEmptyHlTags = c;
-    }
-
-    /**
      * Make a cut XML fragment well-formed.
      * <p>
      * The only requirement is that tags are intact (i.e. xmlFragment doesn't start
@@ -609,15 +612,6 @@ public class XmlHighlighter {
      */
     public String makeWellFormed(String xmlFragment) {
         return highlight(xmlFragment, null, 0);
-    }
-
-    /**
-     * Set how to fix well-formedness problems.
-     * 
-     * @param strategy what to do when encountering unbalanced tags.
-     */
-    public void setUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
-        this.unbalancedTagsStrategy = strategy;
     }
 
 }

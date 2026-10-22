@@ -29,8 +29,6 @@ import nl.inl.util.XmlHighlighter.HitCharSpan;
  */
 public class DocUtil {
 
-    // @@@ HIER BEZIG
-
     private DocUtil() {
     }
 
@@ -162,7 +160,7 @@ public class DocUtil {
         }
     }
 
-    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
+    private static List<HitCharSpan> getCharacterOffsets(IndexReader reader, int docId, Hits hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
@@ -177,7 +175,7 @@ public class DocUtil {
         int[] startPos = Arrays.copyOf(starts, starts.length);
         int[] endPos = Arrays.copyOf(ends, ends.length);
 
-        characterOffsets(index.reader(), docId, hits.field(), starts, ends, true);
+        characterOffsets(reader, docId, hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -189,7 +187,7 @@ public class DocUtil {
     /**
      * Convert start/end word positions to char positions.
      *
-     * @param index our index
+     * @param reader our index
      * @param docId document id
      * @param field field to use
      * @param startAtWord where to start getting the content (-1 for start of
@@ -236,13 +234,13 @@ public class DocUtil {
      */
     public static String contentsByCharPos(BlackLabIndex index, int docId, Document d, Field field, int startAtChar, int endAtChar) {
         try {
-            if (!field.hasContentStore()) {
+            if (field.hasContentStore()) {
+                return index.contentStore(field).retrieveParts(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
+            } else {
                 String fieldName = field.contentsFieldName();
                 if (d == null)
                     d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
-            } else {
-                return index.contentStore(field).retrieveParts(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -281,9 +279,8 @@ public class DocUtil {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
             if (!hits.isEmpty()) // if hits == null, we still want the highlighter to make it well-formed
-                hitSpans = getCharacterOffsets(index, docId, hits);
-            XmlHighlighter hl = new XmlHighlighter();
-            hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
+                hitSpans = getCharacterOffsets(index.reader(), docId, hits);
+            XmlHighlighter hl = new XmlHighlighter(index.defaultUnbalancedTagsStrategy());
             content = hl.highlight(content, hitSpans, highlightFromOffset);
         }
         return content;

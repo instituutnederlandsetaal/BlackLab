@@ -126,8 +126,8 @@ public class Concordances {
      * @return the concordances
      */
     private static Map<PermanentHit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
-        XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
+        // used to make fragments well-formed
+        XmlHighlighter hl = new XmlHighlighter(hits.index().defaultUnbalancedTagsStrategy());
 
         // Group hits per document
         MutableIntObjectMap<HitsMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
