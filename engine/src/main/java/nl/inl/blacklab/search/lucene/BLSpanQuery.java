@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
@@ -37,10 +37,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
     /** Information such as our index, our search logger, etc. */
-    protected QueryInfo queryInfo;
+    protected IndexAndField indexAndField;
 
     /** The annotated field that this query is searching in.
-     * (might differ from queryInfo.field() for parallel corpora, where parts of a query
+     * (might differ from indexAndField.field() for parallel corpora, where parts of a query
      *  may search in different versions of the same "parallel field", e.g. "contents__en"
      *  and "contents__nl")
      */
@@ -48,10 +48,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     protected SpanGuarantees guarantees;
 
-    protected BLSpanQuery(QueryInfo queryInfo) {
-        assert queryInfo != null && queryInfo.field() != null;
-        this.queryInfo = queryInfo;
-        this.annotatedField = queryInfo.field();
+    protected BLSpanQuery(IndexAndField indexAndField) {
+        assert indexAndField != null && indexAndField.field() != null;
+        this.indexAndField = indexAndField;
+        this.annotatedField = indexAndField.field();
     }
     
     /**
@@ -64,16 +64,16 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
      * @return resulting BLSpanQuery, or the input query if it was one already
      */
-    public static BLSpanQuery wrap(QueryInfo queryInfo, SpanQuery spanQuery) {
+    public static BLSpanQuery wrap(IndexAndField indexAndField, SpanQuery spanQuery) {
         if (spanQuery instanceof BLSpanQuery) {
             // Already BL-derived, no wrapper needed.
             return (BLSpanQuery) spanQuery;
         } else if (spanQuery instanceof SpanOrQuery) {
             // Translate to a BLSpanOrQuery, recursively translating the clauses.
-            return BLSpanOrQuery.from(queryInfo, (SpanOrQuery) spanQuery);
+            return BLSpanOrQuery.from(indexAndField, (SpanOrQuery) spanQuery);
         } else if (spanQuery instanceof SpanTermQuery) {
             // Translate to a BLSpanTermQuery.
-            return BLSpanTermQuery.from(queryInfo, (SpanTermQuery) spanQuery);
+            return BLSpanTermQuery.from(indexAndField, (SpanTermQuery) spanQuery);
         } else {
             // After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
             throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
@@ -352,14 +352,14 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /**
      * Set the query info object.
      *
-     * @param queryInfo query info object
+     * @param indexAndField query info object
      */
-    public void setQueryInfo(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;
+    public void setQueryInfo(IndexAndField indexAndField) {
+        this.indexAndField = indexAndField;
     }
 
-    public QueryInfo queryInfo() {
-        return queryInfo;
+    public IndexAndField indexAndField() {
+        return indexAndField;
     }
 
     @Override

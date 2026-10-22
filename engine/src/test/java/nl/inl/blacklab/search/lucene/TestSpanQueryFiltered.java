@@ -6,16 +6,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 public class TestSpanQueryFiltered {
 
     @Test
     public void testEquals() {
-        QueryInfo queryInfo = QueryInfo.create(new MockBlackLabIndex());
-        SpanQueryFiltered a = new SpanQueryFiltered(new BLSpanTermQuery(queryInfo, new Term("contents", "bla")), new TermQuery(new Term("author", "Zwets")));
-        SpanQueryFiltered b = new SpanQueryFiltered(new BLSpanTermQuery(queryInfo, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));
-        SpanQueryFiltered c = new SpanQueryFiltered(new BLSpanTermQuery(queryInfo, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));
+        IndexAndField indexAndField = IndexAndField.create(new MockBlackLabIndex());
+        SpanQueryFiltered a = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Zwets")));
+        SpanQueryFiltered b = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));
+        SpanQueryFiltered c = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));
         Assert.assertNotEquals(a, b);
         Assert.assertEquals(b, c);
     }

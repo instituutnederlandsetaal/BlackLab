@@ -7,20 +7,20 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 public class TestSpanQueryAnd {
 
-    private QueryInfo queryInfo;
+    private IndexAndField indexAndField;
 
     @SuppressWarnings("unused")
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        QueryInfo queryInfo = QueryInfo.create(index, "contents2");
-        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field(), "bla"));
-        queryInfo = QueryInfo.create(index, "contents");
-        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field(), "bla"));
+        IndexAndField indexAndField = IndexAndField.create(index, "contents2");
+        BLSpanTermQuery first = new BLSpanTermQuery(indexAndField, new Term(indexAndField.field(), "bla"));
+        indexAndField = IndexAndField.create(index, "contents");
+        BLSpanTermQuery second = new BLSpanTermQuery(indexAndField, new Term(indexAndField.field(), "bla"));
 
         // Different fields; will throw exception
         new SpanQueryAnd(first, second);
@@ -28,10 +28,10 @@ public class TestSpanQueryAnd {
 
     @Test
     public void testAnnotatedFieldDifferentProperties() {
-        QueryInfo queryInfo = QueryInfo.create(new MockBlackLabIndex());
-        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(AnnotatedFieldNameUtil.luceneName("contents",
+        IndexAndField indexAndField = IndexAndField.create(new MockBlackLabIndex());
+        BLSpanTermQuery first = new BLSpanTermQuery(indexAndField, new Term(AnnotatedFieldNameUtil.luceneName("contents",
                 "prop1", MatchSensitivity.SENSITIVE), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(AnnotatedFieldNameUtil.luceneName("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(indexAndField, new Term(AnnotatedFieldNameUtil.luceneName("contents",
                 "prop2", MatchSensitivity.SENSITIVE), "bla"));
 
         // No exception here because both are properties of annotated field "field"

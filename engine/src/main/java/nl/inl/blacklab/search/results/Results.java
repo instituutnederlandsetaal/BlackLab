@@ -20,7 +20,7 @@ public interface Results extends SearchResult {
      *
      * @return query info
      */
-    QueryInfo queryInfo();
+    IndexAndField indexAndField();
 
     AnnotatedField field();
 

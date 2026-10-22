@@ -43,7 +43,7 @@ public class TextPatternWithinTagContext extends TextPattern {
     public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         EvalResult result = filterUnit.evaluate(context);
         if (result instanceof BLSpanQuery filterQuery) {
-            return new SpanQueryWithinShortestRepetition(context.queryInfo(), producer.toQuery(context), filterQuery,
+            return new SpanQueryWithinShortestRepetition(context.indexAndField(), producer.toQuery(context), filterQuery,
                     context.withRelationAnnotation().annotationSensitivity(), captureAs);
         } else if (result instanceof ConstraintValueList cvl) {
             // Apply multiple filters in sequence
@@ -51,7 +51,7 @@ public class TextPatternWithinTagContext extends TextPattern {
             BLSpanQuery resultQuery = producer.toQuery(context);
             for (Object item: cvl.getValue()) {
                 if (item instanceof BLSpanQuery filterQuery) {
-                    resultQuery = new SpanQueryWithinShortestRepetition(context.queryInfo(), resultQuery, filterQuery,
+                    resultQuery = new SpanQueryWithinShortestRepetition(context.indexAndField(), resultQuery, filterQuery,
                             context.withRelationAnnotation().annotationSensitivity(), captureAs);
                 } else {
                     throw new InvalidQuery("Non-query filter parameter to 'within tag context' filter: " + item);

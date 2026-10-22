@@ -150,7 +150,7 @@ public class SimpleFastPerRequestCache implements SearchCache {
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
         logger.info("Removing searches for index: {}", index.name());
-        searchCache.asMap().keySet().removeIf(s -> s.queryInfo().index() == index);
+        searchCache.asMap().keySet().removeIf(s -> s.indexAndField().index() == index);
     }
 
     @Override

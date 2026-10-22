@@ -14,7 +14,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.jspecify.annotations.NonNull;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Determine foreign hits from a specific field.
@@ -27,8 +27,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
-    public static QueryInfo getQueryInfo(QueryInfo queryInfo, String targetField) {
-        return targetField == null ? queryInfo : queryInfo.withField(targetField);
+    public static IndexAndField getQueryInfo(IndexAndField indexAndField, String targetField) {
+        return targetField == null ? indexAndField : indexAndField.withField(targetField);
     }
 
     private final BLSpanQuery clause;
@@ -36,7 +36,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     private final String targetField;
 
     public SpanQueryOtherFieldHits(BLSpanQuery clause, @NonNull String targetField) {
-        super(getQueryInfo(clause.queryInfo, targetField));
+        super(getQueryInfo(clause.indexAndField, targetField));
         this.clause = clause;
         this.targetField = targetField;
 
@@ -146,8 +146,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(clause.getAnnotatedFieldName() == null ? queryInfo : queryInfo.withField(clause.getAnnotatedFieldName()));
+    public void setQueryInfo(IndexAndField indexAndField) {
+        super.setQueryInfo(indexAndField);
+        clause.setQueryInfo(clause.getAnnotatedFieldName() == null ? indexAndField : indexAndField.withField(clause.getAnnotatedFieldName()));
     }
 }

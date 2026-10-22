@@ -9,7 +9,7 @@ import java.util.Map;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.stats.MaxStats;
@@ -29,8 +29,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
 
     private ResultsStats stats;
 
-    public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
-        super(queryInfo);
+    public TermFrequencyList(IndexAndField indexAndField, Map<String, Integer> wordFreq, boolean sort) {
+        super(indexAndField);
         if (wordFreq.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
@@ -46,8 +46,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
         calculateTotalFrequency();
     }
 
-    TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
-        super(queryInfo);
+    TermFrequencyList(IndexAndField indexAndField, List<TermFrequency> list) {
+        super(indexAndField);
         if (list.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
@@ -102,7 +102,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
     public TermFrequencyList subList(long fromIndex, long toIndex) {
         if (fromIndex < 0 || toIndex < 0 || fromIndex > results.size() || toIndex > results.size())
             throw new IllegalArgumentException("index out of range");
-        return new TermFrequencyList(queryInfo(), results.subList((int)fromIndex, (int)toIndex));
+        return new TermFrequencyList(indexAndField(), results.subList((int)fromIndex, (int)toIndex));
     }
 
     @Override

@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.util.UtilsForTesting;
 import nl.inl.util.fileprocessor.FileReference;
@@ -94,7 +94,7 @@ public class DocIndexerSaxonTest {
 
         // 3. Verify
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
-            QueryInfo qi = QueryInfo.create(index);
+            IndexAndField qi = IndexAndField.create(index);
             
             // Build Lucene field name for pos annotation (insensitive)
             String posField = AnnotatedFieldNameUtil.luceneName("contents", "pos", MatchSensitivity.INSENSITIVE);

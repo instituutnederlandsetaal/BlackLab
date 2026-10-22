@@ -56,7 +56,7 @@ import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
@@ -1244,7 +1244,7 @@ public class ResponseStreamer {
     public static void explain(DataStream ds, AnnotatedField searchField, TextPattern tp) {
         BlackLabIndex index = searchField.index();
         try {
-            BLSpanQuery q = tp.toQuery(QueryInfo.create(index, searchField.name()));
+            BLSpanQuery q = tp.toQuery(IndexAndField.create(index, searchField.name()));
             QueryExplanation explanation = index.explain(q);
             ds.startEntry("explanation").startMap()
                     .entry("originalQuery", explanation.originalQuery())

@@ -11,33 +11,29 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public abstract class ResultsAbstract implements Results {
 
     /** Information about the original query: index, field, max settings, max stats. */
-    protected final QueryInfo queryInfo;
+    protected final IndexAndField indexAndField;
 
-    protected ResultsAbstract(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;
+    protected ResultsAbstract(IndexAndField indexAndField) {
+        this.indexAndField = indexAndField;
     }
 
     /**
-     * Get information about the original query.
-     *
-     * This includes the index, field, max. settings, and max. stats
-     * (whether the max. settings were reached).
-     *
-     * @return query info
+     * Get index and field information.
+     * @return index and field information
      */
     @Override
-    public QueryInfo queryInfo() {
-        return queryInfo;
+    public IndexAndField indexAndField() {
+        return indexAndField;
     }
 
     @Override
     public AnnotatedField field() {
-        return queryInfo.annotatedField();
+        return indexAndField.annotatedField();
     }
 
     @Override
     public BlackLabIndex index() {
-        return queryInfo.index();
+        return indexAndField.index();
     }
 
     public abstract String toString();

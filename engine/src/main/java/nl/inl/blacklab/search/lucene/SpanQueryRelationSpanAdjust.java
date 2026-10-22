@@ -13,7 +13,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Adjust relation spans to match source, target, or entire relation.
@@ -37,7 +37,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     public SpanQueryRelationSpanAdjust(BLSpanQuery clause, String overriddenField, RelationInfo.SpanMode mode,
             String adjustToCapture) {
-        super(clause.queryInfo);
+        super(clause.indexAndField);
         this.clause = clause;
         this.overriddenField = overriddenField;
         this.mode = mode;
@@ -173,8 +173,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(queryInfo);
+    public void setQueryInfo(IndexAndField indexAndField) {
+        super.setQueryInfo(indexAndField);
+        clause.setQueryInfo(indexAndField);
     }
 }

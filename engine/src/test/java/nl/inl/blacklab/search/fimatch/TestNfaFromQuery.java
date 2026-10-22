@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 public class TestNfaFromQuery {
 
@@ -203,7 +203,7 @@ public class TestNfaFromQuery {
     }
 
     private static BLSpanTermQuery term(String w) {
-        return new BLSpanTermQuery(QueryInfo.create(new MockBlackLabIndex()), new Term("contents%word@i", w));
+        return new BLSpanTermQuery(IndexAndField.create(new MockBlackLabIndex()), new Term("contents%word@i", w));
     }
 
     private static SpanQuerySequence seq(BLSpanQuery... clauses) {
@@ -219,7 +219,7 @@ public class TestNfaFromQuery {
     }
 
     private static SpanQueryAnyToken any(int min, int max) {
-        return new SpanQueryAnyToken(QueryInfo.create(new MockBlackLabIndex()), min, max, "contents%word@i");
+        return new SpanQueryAnyToken(IndexAndField.create(new MockBlackLabIndex()), min, max, "contents%word@i");
     }
 
     private static BLSpanQuery exp(BLSpanQuery clause, Direction direction, int min, int max) {

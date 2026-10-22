@@ -51,7 +51,7 @@ import nl.inl.blacklab.search.lucene.SpanGuarantees;
 import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Matches the union of its clauses.
@@ -171,18 +171,18 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
-    private static @Nullable QueryInfo queryInfoFromClauses(BLSpanQuery[] clauses) {
+    private static @Nullable IndexAndField queryInfoFromClauses(BLSpanQuery[] clauses) {
         if (clauses.length == 0 || clauses[0] == null)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
-        return clauses[0].queryInfo();
+        return clauses[0].indexAndField();
     }
 
-    public static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {
+    public static BLSpanQuery from(IndexAndField indexAndField, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
         if (clauses.length == 0)
-            return new SpanQueryNoHits(queryInfo, queryInfo.annotatedField().mainAnnotation().mainSensitivity().luceneField());
+            return new SpanQueryNoHits(indexAndField, indexAndField.annotatedField().mainAnnotation().mainSensitivity().luceneField());
         if (clauses.length == 1)
-            return BLSpanQuery.wrap(queryInfo, clauses[0]);
+            return BLSpanQuery.wrap(indexAndField, clauses[0]);
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
         String field = null;
         boolean allInSameField = true;
@@ -200,7 +200,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     }
                 }
             }
-            blClauses[i] = BLSpanQuery.wrap(queryInfo, clauses[i]);
+            blClauses[i] = BLSpanQuery.wrap(indexAndField, clauses[i]);
         }
         BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
         if (allSimpleTerms && allInSameField)
@@ -309,7 +309,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
         // Node need not be rewritten; return as-is
         if (inner.getClauses().length == 1) {
-            return BLSpanQuery.wrap(queryInfo, inner.getClauses()[0]);
+            return BLSpanQuery.wrap(indexAndField, inner.getClauses()[0]);
         }
         return this;
     }

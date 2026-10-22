@@ -1,8 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import net.sf.saxon.functions.Abs;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**

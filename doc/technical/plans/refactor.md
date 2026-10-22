@@ -52,7 +52,7 @@ TestResultAutocomplete would not need to mock BLSConfig to test that QueryParams
 
 Much of the BlackLab Server code relies on the availability of various objects: `BlsMain`, `BLSConfig`, `SearchManager`, `IndexManager`, `Index`.
 
-For actual querying: `QueryInfo` which links to `BlackLabIndex`, `AnnotatedField` and `SearchCache`.
+For actual querying: `IndexAndField` which links to `BlackLabIndex`, `AnnotatedField` and `SearchCache`.
 
 All this makes testing classes separately challenging, requiring mocks or special code for tests (i.e. `index == null ? null : index.mainAnnotation()`).
 

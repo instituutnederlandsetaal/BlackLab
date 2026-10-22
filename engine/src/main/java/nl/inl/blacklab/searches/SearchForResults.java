@@ -1,6 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
 

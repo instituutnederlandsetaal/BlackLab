@@ -5,7 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.search.TextPatternContext;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** A QueryFunction instantiated by passing it a lambda. */
@@ -22,8 +22,8 @@ public class QueryFunctionLambda extends QueryFunction {
     @Override
     protected TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         // context will be null when evaluting constraints during matching
-        QueryInfo queryInfo = context == null ? null : context.queryInfo();
-        return func.apply(queryInfo, context, parameters);
+        IndexAndField indexAndField = context == null ? null : context.indexAndField();
+        return func.apply(indexAndField, context, parameters);
     }
 
 }

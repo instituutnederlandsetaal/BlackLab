@@ -22,7 +22,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 public class TestSpanQueryFromFragments {
 
@@ -49,10 +49,10 @@ public class TestSpanQueryFromFragments {
                 writer.addDocument(new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
             BlackLabIndex index = new MockBlackLabIndex();
-            QueryInfo queryInfo = QueryInfo.create(index, "contents");
+            IndexAndField indexAndField = IndexAndField.create(index, "contents");
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 assertEquals(3, reader.leaves().size());
-                var query = new SpanQueryFromFragments(queryInfo, new MatchAllDocsQuery(), null,
+                var query = new SpanQueryFromFragments(indexAndField, new MatchAllDocsQuery(), null,
                         SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
                 var weight = query.createWeight(new IndexSearcher(reader), ScoreMode.COMPLETE_NO_SCORES, 1);
                 BLSpans plain = weight.getSpans(reader.leaves().get(0), SpanWeight.Postings.POSITIONS);

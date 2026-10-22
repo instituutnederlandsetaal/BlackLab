@@ -82,7 +82,7 @@ public class RelationTarget extends TextPattern {
         }
 
         BLSpanQuery translated = XFRelations.createRelationQuery(
-                context.queryInfo(),
+                context.indexAndField(),
                 context,
                 relationType,
                 targetNoDefVal.toQuery(targetContext),

@@ -34,7 +34,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.Span;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Converts documents and fragments results into spans.
@@ -72,12 +72,12 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** The behaviour of the span query (whether to prefer full documents or fragments) */
     private final Behaviour behaviour;
 
-    public SpanQueryFromFragments(QueryInfo queryInfo, Query fragmentQuery, BLSpanQuery hitsInFragments, Behaviour behaviour) {
-        super(queryInfo);
+    public SpanQueryFromFragments(IndexAndField indexAndField, Query fragmentQuery, BLSpanQuery hitsInFragments, Behaviour behaviour) {
+        super(indexAndField);
         this.fragmentQuery = fragmentQuery;
         this.hitsInFragments = hitsInFragments;
-        this.luceneField = queryInfo.annotatedField().mainAnnotation().mainSensitivity().luceneField();
-        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(queryInfo.field());
+        this.luceneField = indexAndField.annotatedField().mainAnnotation().mainSensitivity().luceneField();
+        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(indexAndField.field());
         this.behaviour = behaviour;
 
         fullDocsBitSetProducer = new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT));
@@ -88,7 +88,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         Query frRewr = fragmentQuery.rewrite(reader);
         BLSpanQuery hitsRewr = hitsInFragments == null ? null : hitsInFragments.rewrite(reader);
         if (frRewr != fragmentQuery || hitsRewr != hitsInFragments) {
-            return new SpanQueryFromFragments(queryInfo, frRewr, hitsRewr, behaviour);
+            return new SpanQueryFromFragments(indexAndField, frRewr, hitsRewr, behaviour);
         }
         return this;
     }
@@ -301,7 +301,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 LeafReader reader = ctx.reader();
                 dvTokenLength = DocValues.getNumeric(reader, tokenLengthField);
                 dvFragAnnotatedField = DocValues.getSorted(reader, BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
-                String annotatedFieldName = queryInfo.field();
+                String annotatedFieldName = indexAndField.field();
                 currentAnnotatedFieldOrd = dvFragAnnotatedField.lookupTerm(new BytesRef(annotatedFieldName));
                 dvFragStart = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_START);
                 dvFragEnd = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_END);

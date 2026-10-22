@@ -9,7 +9,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hits.Group;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.MaxStats;
@@ -52,7 +52,7 @@ public class HitGroup implements HitOrDocGroup {
     /** This group's score, as calculated by some scorer function. */
     private final Double score;
 
-    public static List<HitGroup> listFromBasicGroups(QueryInfo queryInfo, Map<PropertyValue, Group> groupings,
+    public static List<HitGroup> listFromBasicGroups(IndexAndField indexAndField, Map<PropertyValue, Group> groupings,
             CompleteQuery query, HitProperty groupedBy, boolean storeResults, HitGroupScorer scorer) {
         List<HitGroup> groups = new ArrayList<>(groupings.size());
         for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
@@ -61,17 +61,17 @@ public class HitGroup implements HitOrDocGroup {
             HitGroup group;
             CompleteQuery hitsInGroupQuery = grouped.getHitsInGroupQuery();
             if (hitsInGroupQuery == null && query != null && groupedBy != null) {
-                hitsInGroupQuery = groupedBy.refine(queryInfo.index(), query, groupId).orElseThrow();
+                hitsInGroupQuery = groupedBy.refine(indexAndField.index(), query, groupId).orElseThrow();
             }
             if (storeResults || hitsInGroupQuery == null) {
                 // Store results
-                group = new HitGroup(groupId, new HitResultsList(queryInfo, grouped.getStoredHits(),
+                group = new HitGroup(groupId, new HitResultsList(indexAndField, grouped.getStoredHits(),
                         grouped.getStoredHits().countDocs(),
                         grouped.getTotalNumberOfHits(), grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED),
                         grouped.getTotalNumberOfHits(), grouped.getTotalNumberOfDocs(), hitsInGroupQuery, scorer);
             } else {
                 // Don't store results.
-                group = withoutResults(queryInfo, groupId, grouped.getTotalNumberOfHits(),
+                group = withoutResults(indexAndField, groupId, grouped.getTotalNumberOfHits(),
                         grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED, hitsInGroupQuery,
                         scorer);
             }
@@ -80,11 +80,11 @@ public class HitGroup implements HitOrDocGroup {
         return groups;
     }
 
-    public static HitGroup withoutResults(QueryInfo queryInfo, PropertyValue groupIdentity,
+    public static HitGroup withoutResults(IndexAndField indexAndField, PropertyValue groupIdentity,
             long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery,
             HitGroupScorer scorer) {
-        HitResultsList results = new HitResultsList(queryInfo,
-                Hits.empty(new Hits.Context(queryInfo)), totalDocuments,
+        HitResultsList results = new HitResultsList(indexAndField,
+                Hits.empty(new Hits.Context(indexAndField)), totalDocuments,
                 totalSize, totalDocuments, maxStats);
         return new HitGroup(groupIdentity, results, totalSize, totalDocuments, hitsInGroupQuery, scorer);
     }
@@ -112,7 +112,7 @@ public class HitGroup implements HitOrDocGroup {
         }
         if (storedResults.size() > THRESHOLD_STORE_HITS && hitsInGroupQuery != null) {
             // Very large group of hits, and we can reconstruct them later if needed using the query.
-            this.storedResults = HitResults.empty(storedResults.queryInfo());
+            this.storedResults = HitResults.empty(storedResults.indexAndField());
             this.hitsInGroupQuery = hitsInGroupQuery;
             needToFetchHits = true;
         } else {
@@ -132,7 +132,7 @@ public class HitGroup implements HitOrDocGroup {
     public synchronized HitResults storedResults() {
         if (needToFetchHits) {
             needToFetchHits = false;
-            storedResults = storedResults.queryInfo().index().find(storedResults.queryInfo().annotatedField(), hitsInGroupQuery);
+            storedResults = storedResults.indexAndField().index().find(storedResults.indexAndField().annotatedField(), hitsInGroupQuery);
             hitsStats = storedResults.resultsStats();
             docsStats = storedResults.docsStats();
         }

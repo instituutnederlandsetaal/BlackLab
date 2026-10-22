@@ -3,7 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -121,18 +121,18 @@ public interface Search<R extends SearchResult> {
     @Override
     int hashCode();
 
-    QueryInfo queryInfo();
+    IndexAndField indexAndField();
 
     /**
      * @param timings Query timings to use for this query
      * @param cache Cache to use for this query (either the main shared cache, or
      *              one just for this request that we'll dump after). */
-    record Context(QueryInfo queryInfo, QueryTimings timings, SearchCache cache) {
-        public Context(QueryInfo queryInfo, SearchCache cache) {
-            this(queryInfo, new QueryTimings(), cache);
+    record Context(IndexAndField indexAndField, QueryTimings timings, SearchCache cache) {
+        public Context(IndexAndField indexAndField, SearchCache cache) {
+            this(indexAndField, new QueryTimings(), cache);
         }
-        public Context(QueryInfo queryInfo, QueryTimings timings, SearchCache cache) {
-            this.queryInfo = queryInfo;
+        public Context(IndexAndField indexAndField, QueryTimings timings, SearchCache cache) {
+            this.indexAndField = indexAndField;
             this.timings = timings == null ? new QueryTimings() : timings;
             this.cache = cache == null ? new SearchCacheMap() : cache;
         }

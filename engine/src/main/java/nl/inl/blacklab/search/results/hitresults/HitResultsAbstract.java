@@ -18,7 +18,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.ResultsAbstract;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
@@ -74,8 +74,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         return sample;
     }
 
-    public HitResultsAbstract(QueryInfo queryInfo) {
-        super(queryInfo);
+    public HitResultsAbstract(IndexAndField indexAndField) {
+        super(indexAndField);
     }
 
     /**
@@ -96,7 +96,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         Hits window = hits.sublist(first, windowSize);
         boolean hasNext = hits.sizeAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
-        return new HitResultsList(queryInfo(), window, windowStats, null,
+        return new HitResultsList(indexAndField(), window, windowStats, null,
                 this.resultsStats(), this.docsStats());
     }
 
@@ -123,14 +123,14 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
 
         ResultsStats hitsStats = new ResultsStatsSaved(sample.size());
         ResultsStats docsStats = new ResultsStatsSaved(docsInSample.getValue());
-        return new HitResultsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
+        return new HitResultsList(indexAndField(), sample, null, sampleParameters, hitsStats, docsStats);
     }
 
     @Override
     public HitResults sorted(HitProperty sortBy) {
         Hits hits = getHits().getStatic(); // ensure all read
         HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(hits, new ConcurrentHashMap<>()));
-        return new HitResultsList(queryInfo(), hits.sorted(sortByWithContext), null, null,
+        return new HitResultsList(indexAndField(), hits.sorted(sortByWithContext), null, null,
                 resultsStats(), docsStats());
     }
 
@@ -143,10 +143,10 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         Map<PropertyValue, Group> groupedHits = getHits().grouped(groupBy, maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)
-        QueryInfo queryInfo = queryInfo();
-        List<HitGroup> hitGroups = HitGroup.listFromBasicGroups(queryInfo, groupedHits, null,
+        IndexAndField indexAndField = indexAndField();
+        List<HitGroup> hitGroups = HitGroup.listFromBasicGroups(indexAndField, groupedHits, null,
                 null, true, scorer);
-        return new HitGroups(queryInfo(), hitGroups, groupBy, null, null,
+        return new HitGroups(indexAndField(), hitGroups, groupBy, null, null,
                 resultsStats().save(), docsStats().save(), scorer);
     }
 
@@ -159,7 +159,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults filter(HitProperty property, PropertyValue value) {
-        return new HitResultsFiltered(queryInfo(), getHits(), property, value);
+        return new HitResultsFiltered(indexAndField(), getHits(), property, value);
     }
 
     /**
@@ -185,7 +185,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public DocResults perDocResults(long maxHits) {
-        return DocResults.fromHits(queryInfo(), getHits(), maxHits);
+        return DocResults.fromHits(indexAndField(), getHits(), maxHits);
     }
 
     @Override

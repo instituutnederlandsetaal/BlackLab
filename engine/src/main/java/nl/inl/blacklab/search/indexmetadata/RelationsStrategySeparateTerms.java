@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactorySameRelationId;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.util.StringUtil;
 
 /**
@@ -226,7 +226,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public BLSpanQuery getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
+    public BLSpanQuery getRelationsQuery(IndexAndField indexAndField, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes) {
         // Construct the clause from the field, relation type and attributes
         List<String> regexes = searchRegexes(relationTypeRegex, attributes);
@@ -234,7 +234,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         List<BLSpanQuery> queries = new ArrayList<>();
         for (String regex: regexes) {
             RegexpQuery regexpQuery = new RegexpQuery(new Term(relationField.luceneField(), regex), RegExp.COMPLEMENT);
-            queries.add(new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery));
+            queries.add(new BLSpanMultiTermQueryWrapper<>(indexAndField, regexpQuery));
         }
         SpanQueryAnd q =  new SpanQueryAnd(queries);
         q.setFilter(SpansAndFilterFactorySameRelationId.INSTANCE);

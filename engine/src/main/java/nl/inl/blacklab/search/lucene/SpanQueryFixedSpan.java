@@ -15,7 +15,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * A query matching a fixed, predetermined span for every matching document.
@@ -47,8 +47,8 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
 
     private final int end;
 
-    public SpanQueryFixedSpan(QueryInfo queryInfo, String luceneField, int start, int end) {
-        super(queryInfo);
+    public SpanQueryFixedSpan(IndexAndField indexAndField, String luceneField, int start, int end) {
+        super(indexAndField);
         this.luceneField = luceneField;
         this.start = start;
         this.end = end;
@@ -255,7 +255,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryAnyToken(queryInfo, 1, 1, luceneField);
+        return new SpanQueryAnyToken(indexAndField, 1, 1, luceneField);
     }
 
     @Override

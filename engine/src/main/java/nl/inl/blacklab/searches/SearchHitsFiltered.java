@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -82,7 +81,7 @@ public class SearchHitsFiltered extends SearchHits {
     @Override
     public CompleteQuery getCompleteQuery() {
         if (property.canRefineQuery()) {
-            return property.refine(queryInfo().index(), source.getCompleteQuery(), value).orElseThrow();
+            return property.refine(indexAndField().index(), source.getCompleteQuery(), value).orElseThrow();
         }
         return super.getCompleteQuery();
     }

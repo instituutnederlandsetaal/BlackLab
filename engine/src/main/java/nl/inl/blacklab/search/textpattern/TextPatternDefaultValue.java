@@ -52,7 +52,7 @@ public class TextPatternDefaultValue extends TextPattern {
 
     @Override
     public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
-        return new SpanQueryDefaultValue(context.queryInfo(), context.luceneField());
+        return new SpanQueryDefaultValue(context.indexAndField(), context.luceneField());
     }
 
     @Override

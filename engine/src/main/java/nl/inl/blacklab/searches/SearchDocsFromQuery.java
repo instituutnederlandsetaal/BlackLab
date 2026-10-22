@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsFromQuery extends SearchDocs {
@@ -16,7 +15,7 @@ public class SearchDocsFromQuery extends SearchDocs {
 
     @Override
     public DocResults executeInternal(ActiveSearch<DocResults> activeSearch) {
-        return queryInfo().index().queryDocuments(query);
+        return indexAndField().index().queryDocuments(query);
     }
     
     @Override

@@ -17,7 +17,7 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Captures all relations between the hits from two clauses.
@@ -39,7 +39,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     /** Combination of relation and target queries */
     public static class Target {
 
-        public static Target get(QueryInfo queryInfo, AnnotationSensitivity relationField, BLSpanQuery target, String targetField,
+        public static Target get(IndexAndField indexAndField, AnnotationSensitivity relationField, BLSpanQuery target, String targetField,
                 String captureRelsAs, String relationType, boolean optionalMatch, BLSpanQuery captureTargetOverlaps, String captureTargetOverlapsAs) {
 
             // Determine what relations to capture based on the class of the matching regex, if any
@@ -47,16 +47,16 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             String anyType = relClass.isEmpty() ? RelationUtil.ANY_TYPE_REGEX :
                     RelationUtil.fullType(relClass, RelationUtil.ANY_TYPE_REGEX);
 
-            return new Target(getRelationsQuery(queryInfo, relationField, relationType),
-                    getRelationsQuery(queryInfo, relationField, anyType), target, targetField,
+            return new Target(getRelationsQuery(indexAndField, relationField, relationType),
+                    getRelationsQuery(indexAndField, relationField, anyType), target, targetField,
                     captureRelsAs, optionalMatch, captureTargetOverlaps, captureTargetOverlapsAs);
         }
 
-        private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField,
+        private static SpanQueryRelations getRelationsQuery(IndexAndField indexAndField, AnnotationSensitivity relationField,
                 String relationType) {
             // Note that we use span mode source, because that's what we'll primarily be filtering on.
             // Once we find a relation matching the current source span, we'll check if target matches as well.
-            SpanQueryRelations relations = new SpanQueryRelations(queryInfo, relationField, relationType,
+            SpanQueryRelations relations = new SpanQueryRelations(indexAndField, relationField, relationType,
                     Collections.emptyMap(), SpanQueryRelations.Direction.BOTH_DIRECTIONS,
                     RelationInfo.SpanMode.SOURCE, "", false, null);
             return relations;

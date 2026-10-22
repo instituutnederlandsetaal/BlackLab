@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * A SpanQuery for an AND NOT query. Produces all spans matching all the
@@ -195,11 +195,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
 
-    private static @Nullable QueryInfo determineQueryInfo(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
+    private static @Nullable IndexAndField determineQueryInfo(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         if (include != null && !include.isEmpty())
-            return include.get(0).queryInfo;
+            return include.get(0).indexAndField;
         if (exclude != null && !exclude.isEmpty())
-            return exclude.get(0).queryInfo;
+            return exclude.get(0).indexAndField;
         throw new IllegalStateException("AND(NOT)/RSPAN query without clauses");
     }
 
@@ -297,7 +297,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             if (rewrCl.isEmpty()) {
                 // All clauses were any token repetitions.
                 return reapplyCaptures(savedCaptures,
-                        new SpanQueryAnyToken(queryInfo, minMax[0], minMax[1], includeWithoutCaptures.get(0).getRealField()));
+                        new SpanQueryAnyToken(indexAndField, minMax[0], minMax[1], includeWithoutCaptures.get(0).getRealField()));
             }
         }
 
@@ -587,13 +587,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
+    public void setQueryInfo(IndexAndField indexAndField) {
+        super.setQueryInfo(indexAndField);
         for (BLSpanQuery cl: include) {
-            cl.setQueryInfo(queryInfo);
+            cl.setQueryInfo(indexAndField);
         }
         for (BLSpanQuery cl: exclude) {
-            cl.setQueryInfo(queryInfo);
+            cl.setQueryInfo(indexAndField);
         }
     }
 }

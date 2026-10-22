@@ -131,11 +131,11 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
                 Object defVal = getDefaultParameterValue(i);
                 if (defVal == VALUE_QUERY_ANY_NGRAM) {
                     // Special case: any n-gram (usually meaning "don't care")
-                    defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
+                    defVal = SpanQueryAnyToken.anyNGram(context.indexAndField(), context.luceneField());
                 } else if (defVal == VALUE_ANY_SPAN) {
                     // Special case: any span (usually meaning "don't care")
                     defVal = context.index()
-                            .tagQuery(context.queryInfo(), context.withRelationAnnotation().annotationSensitivity(),
+                            .tagQuery(context.indexAndField(), context.withRelationAnnotation().annotationSensitivity(),
                                     RelationUtil.ANY_TYPE_REGEX, null,
                                     TextPatternTags.Adjust.FULL_TAG, null, false);
                 }

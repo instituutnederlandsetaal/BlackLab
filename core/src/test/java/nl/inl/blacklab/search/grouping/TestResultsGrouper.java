@@ -7,7 +7,7 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
@@ -23,7 +23,7 @@ public class TestResultsGrouper {
     @Test
     public void testGrouper() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        HitResults hitResults = HitResults.list(QueryInfo.create(index), doc, start, end);
+        HitResults hitResults = HitResults.list(IndexAndField.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT, HitGroupScorer.NONE);
 

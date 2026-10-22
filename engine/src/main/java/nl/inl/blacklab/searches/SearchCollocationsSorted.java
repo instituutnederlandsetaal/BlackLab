@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Search operation that yields collocations.

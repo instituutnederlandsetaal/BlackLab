@@ -282,7 +282,7 @@ class QueryFunctionWordOrReverse extends QueryFunction {
     }
 
     BLSpanQuery term(TextPatternContext context, String field, String value) {
-        return BLSpanQuery.wrap(context.queryInfo(), new SpanTermQuery(new Term(field, value)))
+        return BLSpanQuery.wrap(context.indexAndField(), new SpanTermQuery(new Term(field, value)))
     }
 
     BLSpanQuery applyFunc(TextPatternContext context, List<Object> parameters) {

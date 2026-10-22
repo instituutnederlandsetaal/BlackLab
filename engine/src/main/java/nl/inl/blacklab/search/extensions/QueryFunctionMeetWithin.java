@@ -109,7 +109,7 @@ public class QueryFunctionMeetWithin extends QueryFunction {
         // e.g. meet("find", "near", 2, 5) means near is 2-5 tokens after find
         // query becomes: "find" (?= []{1, 4} "near")
         SpanQueryAnyToken gap = contextStart == 1 && contextEnd == 1 ? null :
-                new SpanQueryAnyToken(context.queryInfo(), contextStart - 1, contextEnd - 1,
+                new SpanQueryAnyToken(context.indexAndField(), contextStart - 1, contextEnd - 1,
                         context.luceneField());
         List<BLSpanQuery> clauses = new ArrayList<>(List.of(findClause, nearClause));
         if (gap != null)
@@ -151,7 +151,7 @@ public class QueryFunctionMeetWithin extends QueryFunction {
             BLSpanQuery nearClause, boolean negateNear, int contextStart, int contextEnd, BLSpanQuery withinClause) {
         // e.g. meet("find", "near", -5, -2) means near is 2-5 tokens before find
         // query becomes: (?<= "near" []{1,4} ) "find"
-        SpanQueryAnyToken gap = contextStart == -1 && contextEnd == -1 ? null : new SpanQueryAnyToken(context.queryInfo(), -contextEnd - 1, -contextStart - 1,
+        SpanQueryAnyToken gap = contextStart == -1 && contextEnd == -1 ? null : new SpanQueryAnyToken(context.indexAndField(), -contextEnd - 1, -contextStart - 1,
                 context.luceneField());
         List<BLSpanQuery> clauses = new ArrayList<>(List.of(nearClause, findClause));
         if (gap != null)

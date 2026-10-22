@@ -105,7 +105,7 @@ public class TextPatternCompare extends TextPattern {
                 return rewrittenPseudoAnnot.toQuery(context);
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
             String value1 = context.getSensitivity().desensitize(value);
-            return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
+            return new BLSpanTermQuery(context.indexAndField(), new Term(context.luceneField(),
                     context.getSensitivity().desensitize(value1)));
         } else {
             // Regex query.
@@ -131,7 +131,7 @@ public class TextPatternCompare extends TextPattern {
         try {
             Term term = new Term(context.luceneField(), valueDesensitized);
             RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
-            return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
+            return new BLSpanMultiTermQueryWrapper<>(context.indexAndField(), regexpQuery);
         } catch (IllegalArgumentException e) {
             throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {

@@ -11,7 +11,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.QueryVisitor;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default
@@ -44,10 +44,10 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         return "";
     }
 
-    private static QueryInfo getQueryInfo(Collection<BLSpanQuery> clauses) {
+    private static IndexAndField getQueryInfo(Collection<BLSpanQuery> clauses) {
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
-                return clause.queryInfo;
+                return clause.indexAndField;
         }
         return null;
     }
@@ -126,11 +126,11 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
     
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
+    public void setQueryInfo(IndexAndField indexAndField) {
+        super.setQueryInfo(indexAndField);
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
-                clause.setQueryInfo(queryInfo);
+                clause.setQueryInfo(indexAndField);
         }
     }
 }

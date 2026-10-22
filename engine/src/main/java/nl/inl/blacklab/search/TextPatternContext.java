@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.webservice.WsParam;
 
 /**
@@ -29,17 +29,17 @@ import nl.inl.blacklab.webservice.WsParam;
 public class TextPatternContext {
 
     public static TextPatternContext get(String annotatedField, String annotation,
-            MatchSensitivity matchSensitivity, QueryInfo queryInfo) {
+            MatchSensitivity matchSensitivity, IndexAndField indexAndField) {
         return new TextPatternContext(annotatedField, null, annotation,
-                matchSensitivity, null, null, false, queryInfo);
+                matchSensitivity, null, null, false, indexAndField);
     }
 
     /** Our query info object */
-    private final QueryInfo queryInfo;
+    private final IndexAndField indexAndField;
 
     /** Name of the annotated field we're searching.
      * <p>
-     * Note that this may differ from queryInfo.field() if this is a parallel corpus and we're
+     * Note that this may differ from indexAndField.field() if this is a parallel corpus and we're
      * searching a different version.
      */
     private final String field;
@@ -78,18 +78,18 @@ public class TextPatternContext {
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
      * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
-     * @param queryInfo QueryInfo to use, or null to create a new one
+     * @param indexAndField IndexAndField to use, or null to create a new one
      */
     private TextPatternContext(String annotatedField, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
-            QueryInfo queryInfo) throws InvalidQuery {
-        if (queryInfo == null)
-            throw new IllegalArgumentException("queryInfo == null");
+            IndexAndField indexAndField) throws InvalidQuery {
+        if (indexAndField == null)
+            throw new IllegalArgumentException("indexAndField == null");
         if (annotatedField == null)
             throw new IllegalArgumentException("field == null");
         this.field = version == null ? annotatedField : AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedField, version);
         this.version = version;
-        AnnotatedField annotatedFieldDef = queryInfo.index().annotatedField(this.field);
+        AnnotatedField annotatedFieldDef = indexAndField.index().annotatedField(this.field);
         this.annotationName = annotationName == null ?
                 annotatedFieldDef.defaultSearchAnnotation().name() : annotationName;
         this.requestedSensitivity = matchSensitivity;
@@ -97,7 +97,7 @@ public class TextPatternContext {
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        this.queryInfo = queryInfo;
+        this.indexAndField = indexAndField;
     }
 
     private AnnotationSensitivity determineSensitivity(AnnotatedField annotatedField, String annotationName,
@@ -152,7 +152,7 @@ public class TextPatternContext {
         if (this.field.equals(field))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures, inConstraint, queryInfo);
+                defaultRelationClass, captures, inConstraint, indexAndField);
     }
 
     public TextPatternContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
@@ -163,7 +163,7 @@ public class TextPatternContext {
         if (annotation == sensitivity.annotation() && matchSensitivity == requestedSensitivity)
             return this;
         return new TextPatternContext(field, version, annotation.name(), matchSensitivity,
-                defaultRelationClass, captures, inConstraint, queryInfo);
+                defaultRelationClass, captures, inConstraint, indexAndField);
     }
 
     public TextPatternContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
@@ -193,7 +193,7 @@ public class TextPatternContext {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures, inConstraint, queryInfo);
+                defaultRelationClass, captures, inConstraint, indexAndField);
     }
 
     /**
@@ -206,7 +206,7 @@ public class TextPatternContext {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                relClass, captures, inConstraint, queryInfo);
+                relClass, captures, inConstraint, indexAndField);
     }
 
     /** Get new context with inConstraint set to true */
@@ -214,11 +214,11 @@ public class TextPatternContext {
         if (inConstraint)
             return this;
         return new TextPatternContext(field, version, annotationName,
-                requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
+                requestedSensitivity, defaultRelationClass, captures, true, indexAndField);
     }
 
     public BlackLabIndex index() {
-        return queryInfo.index();
+        return indexAndField.index();
     }
 
     public MatchSensitivity getSensitivity() {
@@ -258,8 +258,8 @@ public class TextPatternContext {
         return field;
     }
 
-    public QueryInfo queryInfo() {
-        return queryInfo;
+    public IndexAndField indexAndField() {
+        return indexAndField;
     }
 
     /** Are we currently in a constraint (e.g. after :: )?

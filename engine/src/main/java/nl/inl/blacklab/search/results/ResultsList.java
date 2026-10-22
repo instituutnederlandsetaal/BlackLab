@@ -17,8 +17,8 @@ public abstract class ResultsList<T> extends ResultsAbstract {
     /** The results. */
     protected List<T> results;
 
-    protected ResultsList(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected ResultsList(IndexAndField indexAndField) {
+        super(indexAndField);
         results = new ArrayList<>();
     }
 

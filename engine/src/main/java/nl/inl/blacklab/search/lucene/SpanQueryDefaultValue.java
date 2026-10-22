@@ -8,7 +8,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Returns either the leading edge or trailing edge of the specified query.
@@ -22,15 +22,15 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
 
     private final String luceneField;
 
-    public SpanQueryDefaultValue(QueryInfo queryInfo, String luceneField) {
-        super(queryInfo);
+    public SpanQueryDefaultValue(IndexAndField indexAndField, String luceneField) {
+        super(indexAndField);
         this.guarantees = SpanGuarantees.NONE;
         this.luceneField = luceneField;
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        return SpanQueryAnyToken.anyNGram(queryInfo, luceneField);
+        return SpanQueryAnyToken.anyNGram(indexAndField, luceneField);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
 
     @Override
     public String getRealField() {
-        return queryInfo.annotatedField().mainAnnotation().mainSensitivity().luceneField();
+        return indexAndField.annotatedField().mainAnnotation().mainSensitivity().luceneField();
     }
 
     @Override

@@ -311,7 +311,7 @@ public class Contexts {
         }
 
         // Transfer from map to list
-        return new TermFrequencyList(hitResults.queryInfo(), wordFreq, sort);
+        return new TermFrequencyList(hitResults.indexAndField(), wordFreq, sort);
     }
 
 }

@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
@@ -156,9 +156,9 @@ public class TestHitsFromFetcher {
     @Test
     public void testSublist() throws IOException {
         BlackLabIndex index = testIndex.index();
-        QueryInfo queryInfo = QueryInfo.create(index);
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(queryInfo, patternQuery);
+        IndexAndField indexAndField = IndexAndField.create(index);
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(indexAndField, 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(indexAndField, patternQuery);
         Hits whole = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         int subListStart = 11;
         int subListLength = 15;
@@ -169,14 +169,14 @@ public class TestHitsFromFetcher {
         }
     }
 
-    private static List<HitPublisher> getPublishers(QueryInfo queryInfo, BLSpanQuery patternQuery)
+    private static List<HitPublisher> getPublishers(IndexAndField indexAndField, BLSpanQuery patternQuery)
             throws IOException {
-        BlackLabIndex index = queryInfo.index();
+        BlackLabIndex index = indexAndField.index();
         BLSpanWeight weight = patternQuery.createWeight(index.searcher(),
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(queryInfo.field());
+        HitQueryContext hitQueryContext = new HitQueryContext(indexAndField.field());
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {
@@ -187,9 +187,9 @@ public class TestHitsFromFetcher {
 
     @Test
     public void testSort() throws IOException {
-        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(queryInfo, patternQuery);
+        IndexAndField indexAndField = IndexAndField.create(testIndex.index());
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(indexAndField, 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(indexAndField, patternQuery);
         Hits unsorted = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
         Hits sorted = unsorted.sorted(sortBy);

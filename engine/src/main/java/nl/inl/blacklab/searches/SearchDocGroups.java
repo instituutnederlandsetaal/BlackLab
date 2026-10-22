@@ -2,8 +2,6 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 

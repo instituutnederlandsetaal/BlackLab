@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -116,8 +116,8 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
-    public QueryInfo queryInfo() {
-        return context.queryInfo();
+    public IndexAndField indexAndField() {
+        return context.indexAndField();
     }
 
     protected Context context() {

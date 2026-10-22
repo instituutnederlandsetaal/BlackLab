@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -36,7 +35,7 @@ public class SearchHitsFromQuery extends SearchHits {
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
         QueryTimings timings = timings().start();
         try {
-            return queryInfo().index().find(queryInfo(), getCombinedSpanFilterQuery(), searchSettings);
+            return indexAndField().index().find(indexAndField(), getCombinedSpanFilterQuery(), searchSettings);
         } finally {
             timings.record("fetch");
         }
@@ -69,7 +68,7 @@ public class SearchHitsFromQuery extends SearchHits {
 
     @Override
     public BLSpanQuery getCombinedSpanFilterQuery() {
-        return completeQuery.pattern().toQuery(queryInfo(), completeQuery.filter());
+        return completeQuery.pattern().toQuery(indexAndField(), completeQuery.filter());
     }
 
     @Override

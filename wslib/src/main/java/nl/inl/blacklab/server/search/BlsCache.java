@@ -152,7 +152,7 @@ public class BlsCache implements SearchCache {
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
-            if (entry.getValue().search().queryInfo().indexForQuery() == index) {
+            if (entry.getValue().search().indexAndField().indexForQuery() == index) {
                 entry.getValue().cancel(true);
                 it.remove();
             }
@@ -183,7 +183,7 @@ public class BlsCache implements SearchCache {
     public synchronized <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         //if (trace) logger.debug("getFromCache({}, allowQueue={})", search, allowQueue);
         BlsCacheEntry<R> future;
-        boolean useCache = /*search.queryInfo().useCache() &&*/ !cacheDisabled;
+        boolean useCache = /*search.indexAndField().useCache() &&*/ !cacheDisabled;
         future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
         if (future == null) {
             logger.debug("not found in cache, starting search: " + search);

@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.util.StringUtil;
 
 /**
@@ -233,20 +233,20 @@ public abstract class TextPattern implements TextPatternStruct {
         throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
-        return toQuery(queryInfo, null);
+    public BLSpanQuery toQuery(IndexAndField indexAndField) throws InvalidQuery {
+        return toQuery(indexAndField, null);
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
-        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo));
+    public BLSpanQuery toQuery(IndexAndField indexAndField, Query filter) throws InvalidQuery {
+        EvalResult result = evaluate(indexAndField.index().defaultExecutionContext(indexAndField));
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
             if (filter != null) {
                 // Can the filter yield fragments or only regular (full) documents?
-                if (queryInfo.index().isFragmentQuery(filter)) {
+                if (indexAndField.index().isFragmentQuery(filter)) {
                     // Adapt the filter query to a spanquery and use within to find hits within documents/fragments
-                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(queryInfo, filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
+                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(indexAndField, filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
                     spanQuery = new SpanQueryPositionFilter(spanQuery, filterSpanQuery, SpanFilter.WITHIN, false);
                 } else {
                     // Not a fragment query; use regular SpanQueryFiltered

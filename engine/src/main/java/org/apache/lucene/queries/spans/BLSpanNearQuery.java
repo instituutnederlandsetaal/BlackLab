@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Matches spans which are near one another. One can specify <i>slop</i>, the maximum number of
@@ -88,7 +88,7 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
         public Builder addGap(int width) {
             if (!ordered)
                 throw new IllegalArgumentException("Gaps can only be added to ordered near queries");
-            this.clauses.add(new SpanGapQuery(clauses.get(0).queryInfo(), field, width));
+            this.clauses.add(new SpanGapQuery(clauses.get(0).indexAndField(), field, width));
             return this;
         }
 
@@ -141,7 +141,7 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
      * @param inOrder   true if order is important
      */
     public BLSpanNearQuery(BLSpanQuery[] clausesIn, int slop, boolean inOrder) {
-        super(clausesIn[0].queryInfo());
+        super(clausesIn[0].indexAndField());
         this.clauses = new ArrayList<>(clausesIn.length);
         for (BLSpanQuery clause: clausesIn) {
             if (this.field == null) { // check field
@@ -349,8 +349,8 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
         private final String field;
         private final int width;
 
-        public SpanGapQuery(QueryInfo queryInfo, String field, int width) {
-            super(queryInfo);
+        public SpanGapQuery(IndexAndField indexAndField, String field, int width) {
+            super(indexAndField);
             this.field = field;
             this.width = width;
         }

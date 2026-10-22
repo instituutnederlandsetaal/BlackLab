@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.extensions;
 import java.util.List;
 
 import nl.inl.blacklab.search.TextPatternContext;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
@@ -11,5 +11,5 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  * Such a function takes a number of arguments and returns a BLSpanQuery.
  */
 public interface ExtensionFunction {
-    TextPattern.EvalResult apply(QueryInfo queryInfo, TextPatternContext context, List<Object> args);
+    TextPattern.EvalResult apply(IndexAndField indexAndField, TextPatternContext context, List<Object> args);
 }

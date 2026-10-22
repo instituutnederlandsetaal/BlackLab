@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
@@ -88,7 +88,7 @@ public class BatchQuery {
                     Timer t = new Timer();
                     System.out.print(strQuery + "\t");
                     BLQueryParser parser = index.getQueryParser("bcql");
-                    BLSpanQuery query = parser.parse(strQuery).pattern().toQuery(QueryInfo.create(index));
+                    BLSpanQuery query = parser.parse(strQuery).pattern().toQuery(IndexAndField.create(index));
                     Hits hits = index.find(query, null).getHits();
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {

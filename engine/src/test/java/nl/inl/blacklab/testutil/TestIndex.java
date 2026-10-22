@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -343,7 +343,7 @@ public class TestIndex implements AutoCloseable {
         try {
             BLQueryParser parser = index.getQueryParser("bcql");
             BLSpanQuery query = parser.parse(pattern).pattern()
-                    .toQuery(QueryInfo.create(index), filter);
+                    .toQuery(IndexAndField.create(index), filter);
             return index.find(query, null)
                     .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));
         } catch (InvalidQuery e) {

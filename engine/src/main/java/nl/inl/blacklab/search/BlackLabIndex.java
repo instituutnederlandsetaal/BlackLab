@@ -45,7 +45,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
@@ -115,7 +115,7 @@ public interface BlackLabIndex extends AutoCloseable {
                 .count().execute().countedTotal();
     }
 
-    BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
+    BLSpanQuery tagQuery(IndexAndField indexAndField, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
 
     /** Get our index type (always integrated now). */
@@ -225,8 +225,8 @@ public interface BlackLabIndex extends AutoCloseable {
     //---------------------------------------------------------------------------
 
     default HitResults find(AnnotatedField field, CompleteQuery query) {
-        QueryInfo queryInfo = QueryInfo.create(this, field.name());
-        BLSpanQuery spanQuery = query.pattern().toQuery(queryInfo, query.filter());
+        IndexAndField indexAndField = IndexAndField.create(this, field.name());
+        BLSpanQuery spanQuery = query.pattern().toQuery(indexAndField, query.filter());
         return find(spanQuery);
     }
 
@@ -251,7 +251,7 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     HitResults find(BLSpanQuery query, SearchSettings settings);
 
-    HitResults find(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings);
+    HitResults find(IndexAndField indexAndField, BLSpanQuery spanQuery, SearchSettings searchSettings);
 
     /**
      * Perform a document query only (no hits)
@@ -431,10 +431,10 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to search
      * @return query execution context
      */
-    TextPatternContext defaultExecutionContext(String field, QueryInfo queryInfo);
+    TextPatternContext defaultExecutionContext(String field, IndexAndField indexAndField);
 
-    default TextPatternContext defaultExecutionContext(QueryInfo queryInfo) {
-        return defaultExecutionContext(queryInfo.field(), queryInfo);
+    default TextPatternContext defaultExecutionContext(IndexAndField indexAndField) {
+        return defaultExecutionContext(indexAndField.field(), indexAndField);
     }
 
     /**

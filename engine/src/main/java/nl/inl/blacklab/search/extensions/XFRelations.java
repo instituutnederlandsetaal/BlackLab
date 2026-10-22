@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.util.StringUtil;
 
@@ -53,7 +53,7 @@ public class XFRelations implements ExtensionFunctionClass {
     /** Default for relations captured using rcapture() */
     private static final String DEFAULT_RCAP_NAME = "captured_rels";
 
-    public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, TextPatternContext context, String relationType,
+    public static BLSpanQuery createRelationQuery(IndexAndField indexAndField, TextPatternContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
             RelationInfo.SpanMode spanMode, String targetField) {
         // Do we need to match a target, or don't we care?
@@ -62,7 +62,7 @@ public class XFRelations implements ExtensionFunctionClass {
             matchTarget = null;
         if (matchTarget != null) {
             // Ensure relation matches given target, then adjust to the requested span mode
-            BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, null,
+            BLSpanQuery rel = new SpanQueryRelations(indexAndField, field, relationType, null,
                     direction, RelationInfo.SpanMode.TARGET, captureAs, implicitCapture, targetField);
             BLSpanQuery relAndTarget = new SpanQueryAnd(List.of(rel, matchTarget));
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
@@ -73,7 +73,7 @@ public class XFRelations implements ExtensionFunctionClass {
             return relAndTarget;
         } else {
             // No target to match; we can just return the relation matches with the correct span mode right away
-            return new SpanQueryRelations(queryInfo, field, relationType, null,
+            return new SpanQueryRelations(indexAndField, field, relationType, null,
                     direction, spanMode, captureAs, implicitCapture, targetField);
         }
     }
@@ -101,7 +101,7 @@ public class XFRelations implements ExtensionFunctionClass {
                         PEnum.of("direction", SpanQueryRelations.Direction.class)),
                 Arrays.asList(StringUtil.REGEX_ANY_NON_EMPTY_VALUE, QueryFunction.VALUE_QUERY_ANY_NGRAM,
                         "source", "", "both"),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     String relationType = (String) args.get(0);
                     BLSpanQuery matchTarget = (BLSpanQuery) args.get(1);
                     RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
@@ -118,7 +118,7 @@ public class XFRelations implements ExtensionFunctionClass {
                         implicitCapture = true;
                     }
 
-                    return createRelationQuery(queryInfo, context, relationType, matchTarget, direction, captureAs, implicitCapture, spanMode,
+                    return createRelationQuery(indexAndField, context, relationType, matchTarget, direction, captureAs, implicitCapture, spanMode,
                             null);
                 });
 
@@ -128,7 +128,7 @@ public class XFRelations implements ExtensionFunctionClass {
             "Perform and AND operation with the additional requirement that clauses match unique relations",
             List.of(PList.optional("queries", PList.Validator.ALL_QUERIES)),
             List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM),
-            (QueryInfo queryInfo, TextPatternContext context, List<Object> parameters) -> {
+            (IndexAndField indexAndField, TextPatternContext context, List<Object> parameters) -> {
                     if (parameters.isEmpty())
                         throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
                     List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {
@@ -154,7 +154,7 @@ public class XFRelations implements ExtensionFunctionClass {
                 List.of(queryOrMatchInfo,
                         PEnum.of("spanMode", RelationInfo.SpanMode.class)),
                 Arrays.asList(null, "full"),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     if (args.size() < 2)
                         throw new IllegalArgumentException("rspan() requires a query and a span mode as arguments");
                     Object subject = args.get(0);
@@ -189,7 +189,7 @@ public class XFRelations implements ExtensionFunctionClass {
                 List.of(PQuery.required("query"),
                         PString.identifier("captureName", true)),
                 Arrays.asList(null, null),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     if (args.size() < 2)
                         throw new IllegalArgumentException("cspan() requires a query and a capture name as arguments");
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
@@ -205,12 +205,12 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register("rfield", "Get the hits from a specific parallel field/version",
                 List.of(PQuery.required("query"),
                         PString.identifier("fieldOrVersion", true)), List.of(),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     if (args.size() < 2)
                         throw new IllegalArgumentException("rfield() requires a query and a field or version name as arguments");
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
                     String fieldOrVersion = (String) args.get(1);
-                    String field = queryInfo.indexForQuery().fullAnnotatedFieldName(fieldOrVersion);
+                    String field = indexAndField.indexForQuery().fullAnnotatedFieldName(fieldOrVersion);
                     if (relations.getAnnotatedFieldName().equals(field)) {
                         // Nothing to do, just return query unchanged
                         return relations;
@@ -229,14 +229,14 @@ public class XFRelations implements ExtensionFunctionClass {
                 List.of(PQuery.required("query"),
                         PString.identifier("captureAs"), PString.any("relationType")),
                 Arrays.asList(null, DEFAULT_RCAP_NAME, REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     if (args.isEmpty())
                         throw new IllegalArgumentException("rcapture() requires at least a query");
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     String captureAs = context.ensureUniqueCapture((String) args.get(1));
                     String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2), context);
                     AnnotationSensitivity field = context.withRelationAnnotation().annotationSensitivity();
-                    return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
+                    return new SpanQueryCaptureRelationsWithinSpan(indexAndField, field, query, null, captureAs, relationType);
                 });
     }
 

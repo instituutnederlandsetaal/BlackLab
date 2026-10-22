@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -24,13 +24,13 @@ public interface HitResults extends Results {
     /**
      * Construct a Hits object from a SpanQuery.
      *
-     * @param queryInfo      information about the original query
+     * @param indexAndField      information about the original query
      * @param query          the query to execute to get the hits
      * @param searchSettings settings such as max. hits to process/count
      * @return hits found
      */
-    static HitResults fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
-        return new HitResultsFromQuery(queryInfo, query, searchSettings);
+    static HitResults fromSpanQuery(IndexAndField indexAndField, BLSpanQuery query, SearchSettings searchSettings) {
+        return new HitResultsFromQuery(indexAndField, query, searchSettings);
     }
 
     /**
@@ -38,41 +38,41 @@ public interface HitResults extends Results {
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
      *
-     * @param queryInfo information about the original query
+     * @param indexAndField information about the original query
      * @param docs      doc ids
      * @param starts    hit starts
      * @param ends      hit ends
      * @return hits found
      */
-    static HitResults list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-        return new HitResultsList(queryInfo, Hits.fromLists(queryInfo.annotatedField(), docs, starts, ends));
+    static HitResults list(IndexAndField indexAndField, int[] docs, int[] starts, int[] ends) {
+        return new HitResultsList(indexAndField, Hits.fromLists(indexAndField.annotatedField(), docs, starts, ends));
     }
 
-    static HitResults list(QueryInfo queryInfo, Hits hits) {
-        return new HitResultsList(queryInfo, hits);
+    static HitResults list(IndexAndField indexAndField, Hits hits) {
+        return new HitResultsList(indexAndField, hits);
     }
 
     /**
      * Return a Hits object with a single hit
      *
-     * @param queryInfo   query info
+     * @param indexAndField   query info
      * @param luceneDocId Lucene document id
      * @param start       start of hit
      * @param end         end of hit
      * @return hits object
      */
-    static HitResults singleHit(QueryInfo queryInfo, int luceneDocId, int start, int end) {
-        return list(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
+    static HitResults singleHit(IndexAndField indexAndField, int luceneDocId, int start, int end) {
+        return list(indexAndField, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
     }
 
     /**
      * Construct an immutable empty Hits object.
      *
-     * @param queryInfo query info
+     * @param indexAndField query info
      * @return hits found
      */
-    static HitResults empty(QueryInfo queryInfo) {
-        return new HitResultsList(queryInfo, Hits.empty(new Hits.Context(queryInfo)));
+    static HitResults empty(IndexAndField indexAndField) {
+        return new HitResultsList(indexAndField, Hits.empty(new Hits.Context(indexAndField)));
     }
 
     /**

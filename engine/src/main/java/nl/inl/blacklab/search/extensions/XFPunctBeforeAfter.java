@@ -27,13 +27,13 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
         QueryExtensions.register("punctBefore", "Find punctuation before a token",
             List.of(PString.any("regex")),
                 List.of(REGEX_ANY_NON_WS),
-            (queryInfo, context, args) ->
+            (indexAndField, context, args) ->
                     getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS)
         );
         QueryExtensions.register("punctAfter", "Find punctuation after a token",
             List.of(PString.any("regex")),
             List.of(REGEX_ANY_NON_WS),
-            (queryInfo, context, args) -> {
+            (indexAndField, context, args) -> {
                 BLSpanQuery punctQuery = getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS);
                 return new SpanQueryAdjustHits(punctQuery, -1, -1);
             }

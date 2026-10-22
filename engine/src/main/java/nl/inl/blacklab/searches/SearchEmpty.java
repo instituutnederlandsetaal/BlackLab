@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -25,7 +24,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     public SearchHits find(CompleteQuery query, SearchSettings searchSettings) {
         if (searchSettings == null) {
             // If no settings given, use the default
-            searchSettings = queryInfo().index().searchSettings();
+            searchSettings = indexAndField().index().searchSettings();
         }
         return new SearchHitsFromQuery(context(), query, searchSettings);
     }

@@ -7,7 +7,7 @@ import java.util.Map;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**
@@ -17,8 +17,8 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
  */
 public class DocGroup implements HitOrDocGroup {
     
-    public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
-        return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);
+    public static DocGroup fromList(IndexAndField indexAndField, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
+        return new DocGroup(indexAndField, groupIdentity, storedResults, totalDocuments, totalTokens);
     }
 
     protected final PropertyValue groupIdentity;
@@ -35,9 +35,9 @@ public class DocGroup implements HitOrDocGroup {
 
     private long storedHits;
 
-    protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
+    protected DocGroup(IndexAndField indexAndField, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
         this.groupIdentity = groupIdentity;
-        this.storedResults = DocResults.fromList(queryInfo, storedResults, null, null);
+        this.storedResults = DocResults.fromList(indexAndField, storedResults, null, null);
         resultStats = this.storedResults.resultsStats();
         numberOfStoredResults = this.storedResults.size();
         this.totalSize = totalDocuments;

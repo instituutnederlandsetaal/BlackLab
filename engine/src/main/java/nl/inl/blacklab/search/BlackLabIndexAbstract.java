@@ -59,7 +59,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
@@ -323,18 +323,18 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      * @return the hits found
      */
     public HitResults find(BLSpanQuery query, SearchSettings settings) {
-        return find(QueryInfo.create(this, query.getAnnotatedFieldName()), query, settings);
+        return find(IndexAndField.create(this, query.getAnnotatedFieldName()), query, settings);
     }
 
     @Override
-    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
-        return HitResults.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
+    public HitResults find(IndexAndField indexAndField, BLSpanQuery query, SearchSettings settings) {
+        return HitResults.fromSpanQuery(indexAndField, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            query.setQueryInfo(QueryInfo.create(this, query.getAnnotatedFieldName()));
+            query.setQueryInfo(IndexAndField.create(this, query.getAnnotatedFieldName()));
             return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
@@ -397,7 +397,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField().name()), documentFilterQuery);
+        return DocResults.fromQuery(IndexAndField.create(this, mainAnnotatedField().name()), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -564,15 +564,16 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public TextPatternContext defaultExecutionContext(String annotatedField, QueryInfo queryInfo) {
+    public TextPatternContext defaultExecutionContext(String annotatedField, IndexAndField indexAndField) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Annotated field must not be null");
-        if (queryInfo == null)
-            queryInfo = QueryInfo.create(this, annotatedField);
+        if (indexAndField == null)
+            indexAndField = IndexAndField.create(this, annotatedField);
         Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
-        return TextPatternContext.get(annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity, queryInfo);
+        return TextPatternContext.get(annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity,
+                indexAndField);
     }
 
     @Override
@@ -695,14 +696,14 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
             Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity.luceneField(), terms);
-        return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field().name()), freq, true);
+        return new TermFrequencyList(IndexAndField.create(this, annotSensitivity.annotation().field().name()), freq, true);
     }
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        QueryInfo queryInfo = QueryInfo.create(this, field.name());
+        IndexAndField indexAndField = IndexAndField.create(this, field.name());
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
-        return new SearchEmpty(new Search.Context(queryInfo, cacheToUse));
+        return new SearchEmpty(new Search.Context(indexAndField, cacheToUse));
     }
 
     @Override

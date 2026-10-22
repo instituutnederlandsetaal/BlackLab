@@ -39,6 +39,6 @@ public interface ResultGroups {
      * 
      * @return query info
      */
-    QueryInfo queryInfo();
+    IndexAndField indexAndField();
 
 }

@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
@@ -43,22 +43,22 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     /** Global view on our segment hits */
     private final HitsFromPublishers hits;
 
-    protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    protected HitResultsFromQuery(IndexAndField indexAndField, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
-        super(SpanQueryOtherFieldHits.getQueryInfo(queryInfo, sourceQuery.getAnnotatedFieldName()));
-        sourceQuery.setQueryInfo(this.queryInfo);
+        super(SpanQueryOtherFieldHits.getQueryInfo(indexAndField, sourceQuery.getAnnotatedFieldName()));
+        sourceQuery.setQueryInfo(this.indexAndField);
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;
         ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
-        List<HitPublisher> publishers = getHitPublishers(this.queryInfo, sourceQuery, searchSettings, hitsStats, docsStats);
+        List<HitPublisher> publishers = getHitPublishers(this.indexAndField, sourceQuery, searchSettings, hitsStats, docsStats);
         hits = new HitsFromPublishers(publishers, searchSettings);
     }
 
-    public static List<HitPublisher> getHitPublishers(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    public static List<HitPublisher> getHitPublishers(IndexAndField indexAndField, BLSpanQuery sourceQuery,
             SearchSettings searchSettings, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         List<HitPublisher> publishers = new ArrayList<>();
-        BlackLabIndex index = queryInfo.index();
+        BlackLabIndex index = indexAndField.index();
         BLSpanWeight weight = rewriteAndCreateWeight(index, sourceQuery, searchSettings.fiMatchFactor());
         int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
 

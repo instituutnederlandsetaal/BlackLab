@@ -19,7 +19,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -60,7 +60,7 @@ public class TestParallel {
     private HitResults find(String pattern) throws InvalidQuery {
         BLQueryParser parser = testIndex.index().getQueryParser("bcql");
         BLSpanQuery query = parser.parse(pattern).pattern()
-                .toQuery(QueryInfo.create(testIndex.index(), testIndex.index().mainAnnotatedField().name()));
+                .toQuery(IndexAndField.create(testIndex.index(), testIndex.index().mainAnnotatedField().name()));
         return testIndex.index().find(query, null);
     }
 

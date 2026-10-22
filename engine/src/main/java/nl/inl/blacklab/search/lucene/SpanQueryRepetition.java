@@ -111,19 +111,19 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             // Repeating anytoken clause can sometimes be expressed as simple anytoken clause
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
-                return new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
+                return new SpanQueryAnyToken(indexAndField, min, max, base.getRealField());
             } else if (min == 0 && max == 1 && tp.min == 0) {
                 // Making an already optional (tp.min == 0) anytoken clause optional again
                 return tp;
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
-                return new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
+                return new SpanQueryAnyToken(indexAndField, n, n, base.getRealField());
             }
         } else if (baseRewritten.guarantees().isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it
             // (note the check for min > 0 above, because position filter cannot match the empty sequence)
-            BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(queryInfo, 1, 1, base.getRealField()), min, max);
+            BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(indexAndField, 1, 1, base.getRealField()), min, max);
             container = container.rewrite(reader);
             return new SpanQueryPositionFilter(container, baseRewritten.inverted(),
                     SpanFilter.CONTAINING, true);

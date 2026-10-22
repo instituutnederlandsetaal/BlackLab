@@ -5,7 +5,6 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextPart;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies;
@@ -32,7 +31,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * This saves a large amount of memory and time, but transforms the query into more of a statistical view on the data
      * because the individual hits are lost. If this is a problem, set mustStoreHits to true.
      *
-     * @param queryInfo query info
+     * @param indexAndField query info
      * @param hitsSearch search to group hits from
      * @param groupBy what to group by
      * @param maxResultsToStorePerGroup maximum number of results to store (if any are stored)

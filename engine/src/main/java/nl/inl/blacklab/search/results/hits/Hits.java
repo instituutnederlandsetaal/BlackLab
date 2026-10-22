@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -53,8 +53,8 @@ public interface Hits extends Iterable<EphemeralHit> {
             this(index, field, matchInfoDefs, null);
         }
 
-        public Context(QueryInfo queryInfo) {
-            this(queryInfo.index(), queryInfo.field(), MatchInfoDefs.EMPTY, null);
+        public Context(IndexAndField indexAndField) {
+            this(indexAndField.index(), indexAndField.field(), MatchInfoDefs.EMPTY, null);
         }
 
         public Context(BlackLabIndex index, String field) {

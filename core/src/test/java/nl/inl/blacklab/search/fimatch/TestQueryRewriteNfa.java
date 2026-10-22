@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -56,7 +56,7 @@ public class TestQueryRewriteNfa {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            BLSpanQuery q = getPatternFromCql(cql).toQuery(QueryInfo.create(index));
+            BLSpanQuery q = getPatternFromCql(cql).toQuery(IndexAndField.create(index));
             QueryExplanation explanation = index.explain(q);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();

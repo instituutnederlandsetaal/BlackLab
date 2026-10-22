@@ -39,7 +39,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -101,8 +101,8 @@ public class TestSearches {
     @Test
     public void testFilteredQuery() {
         List<String> expected = Arrays.asList("[The] quick", "over [the] lazy");
-        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
+        IndexAndField indexAndField = IndexAndField.create(testIndex.index());
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(indexAndField, new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
         Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
     }

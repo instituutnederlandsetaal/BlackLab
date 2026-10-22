@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult.CountType;

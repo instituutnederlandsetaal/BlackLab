@@ -25,7 +25,7 @@ public class XFSpans implements ExtensionFunctionClass {
                 List.of(PQuery.required("query"),
                         PQuery.required("spans"), PString.identifier("captureAs")),
                 Arrays.asList(null, QueryFunction.VALUE_ANY_SPAN, FUNC_WITH_SPANS),
-                (queryInfo, context, args) -> {
+                (indexAndField, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     BLSpanQuery spans = (BLSpanQuery) args.get(1);
                     String captureAs = context.ensureUniqueCapture((String) args.get(2));
