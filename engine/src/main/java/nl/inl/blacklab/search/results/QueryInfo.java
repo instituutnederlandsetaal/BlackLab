@@ -33,9 +33,6 @@ public final class QueryInfo {
     /** Cache to use for this query (either the main shared cache, or one just for this request that we'll dump after). */
     private final SearchCache cacheToUse;
 
-    /** How long executing certain parts of the operation took. */
-    private final QueryTimings timings = new QueryTimings();
-
     private QueryInfo(BlackLabIndex index, String field, SearchCache cacheToUse) {
         super();
         this.index = index;
@@ -60,17 +57,6 @@ public final class QueryInfo {
     /** @return what cache should we use for this query? (i.e. main or disposable) */
     public SearchCache cache() {
         return cacheToUse;
-    }
-
-    /** Get timings objects.
-     *
-     * Describes how long executing certain parts of the operation took.
-     * Mostly useful for debugging.
-     *
-     * @return the query timings object
-     */
-    public QueryTimings timings() {
-        return timings;
     }
 
     @Override

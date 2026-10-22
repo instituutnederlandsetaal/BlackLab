@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /**
@@ -14,8 +15,8 @@ public class SearchCollocationsSampled extends SearchCollocations {
 
     private final SampleParameters sampleParameters;
 
-    public SearchCollocationsSampled(QueryInfo queryInfo, SearchCollocations source, SampleParameters sampleParameters) {
-        super(queryInfo);
+    public SearchCollocationsSampled(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, SampleParameters sampleParameters) {
+        super(queryInfo, timings);
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

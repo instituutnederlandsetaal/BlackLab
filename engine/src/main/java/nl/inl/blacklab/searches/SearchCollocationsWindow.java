@@ -5,6 +5,7 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 
 /**
  * Search operation that yields collocations.
@@ -15,8 +16,8 @@ public class SearchCollocationsWindow extends SearchCollocations {
     private final long first;
     private final long number;
 
-    public SearchCollocationsWindow(QueryInfo queryInfo, SearchCollocations source, long first, long number) {
-        super(queryInfo);
+    protected SearchCollocationsWindow(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, long first, long number) {
+        super(queryInfo, timings);
         this.source = source;
         this.first = first;
         this.number = number;

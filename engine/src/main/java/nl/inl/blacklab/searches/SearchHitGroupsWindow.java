@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A search operation that yields groups of hits.
@@ -15,8 +14,8 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
     private final long first;
     private final long number;
 
-    public SearchHitGroupsWindow(QueryInfo queryInfo, SearchHitGroups source, long first, long number) {
-        super(queryInfo);
+    public SearchHitGroupsWindow(SearchHitGroups source, long first, long number) {
+        super(source);
         this.source = source;
         this.first = first;
         this.number = number;

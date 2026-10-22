@@ -753,7 +753,7 @@ public class QueryToolImpl {
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
-            timings = search.queryInfo().timings();
+            timings = search.timings();
 
             if (alwaysSortBy != null) {
                 search = search.sort(HitProperty.deserialize(contentsField, alwaysSortBy, contextSize));

@@ -3,14 +3,15 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 
 /** A search that yields groups of documents. */
 public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
 
-    protected SearchDocGroups(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected SearchDocGroups(Search<?> source) {
+        super(source);
     }
     
     /**
@@ -22,7 +23,7 @@ public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
     public SearchDocGroups sort(DocGroupProperty sortBy) {
         if (sortBy == null)
             return this;
-        return new SearchDocGroupsSorted(queryInfo(), this, sortBy);
+        return new SearchDocGroupsSorted(this, sortBy);
     }
     
     /**
@@ -32,7 +33,7 @@ public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
      * @return resulting operation
      */
     public SearchDocGroups sample(SampleParameters par) {
-        return new SearchDocGroupsSampled(queryInfo(), this, par);
+        return new SearchDocGroupsSampled(this, par);
     }
 
     /**
@@ -43,7 +44,7 @@ public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
      * @return resulting operation
      */
     public SearchDocGroups filter(DocGroupProperty property, PropertyValue value) {
-        return new SearchDocGroupsFiltered(queryInfo(), this, property, value);
+        return new SearchDocGroupsFiltered(this, property, value);
     }
 
     /**
@@ -54,7 +55,7 @@ public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
      * @return resulting operation
      */
     public SearchDocGroups window(long first, long number) {
-        return new SearchDocGroupsWindow(queryInfo(), this, first, number);
+        return new SearchDocGroupsWindow(this, first, number);
     }
     
 }

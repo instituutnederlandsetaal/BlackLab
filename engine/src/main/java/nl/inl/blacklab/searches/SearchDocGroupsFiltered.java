@@ -15,8 +15,8 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
 
     private final PropertyValue value;
 
-    public SearchDocGroupsFiltered(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
-        super(queryInfo);
+    public SearchDocGroupsFiltered(SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
+        super(source);
         this.source = source;
         this.property = property;
         this.value = value;

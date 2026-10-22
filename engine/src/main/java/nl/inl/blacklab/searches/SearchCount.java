@@ -1,6 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**
@@ -8,8 +9,8 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
  */
 public abstract class SearchCount extends AbstractSearch<ResultsStats> {
 
-    protected SearchCount(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected SearchCount(Search<?> source) {
+        super(source);
     }
 
 }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
 
@@ -9,8 +10,12 @@ import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
  */
 public abstract class SearchForResults<R extends Results> extends AbstractSearch<R> {
 
-    SearchForResults(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected SearchForResults(Search<?> source) {
+        super(source);
+    }
+
+    SearchForResults(QueryInfo queryInfo, QueryTimings timings) {
+        super(queryInfo, timings);
     }
 
     /**
@@ -19,7 +24,7 @@ public abstract class SearchForResults<R extends Results> extends AbstractSearch
      * @return resulting operation
      */
     public SearchCount count() {
-        return new SearchCountFromResults<>(queryInfo(), this, ResultStatsFromOtherResult.CountType.RESULTS);
+        return new SearchCountFromResults<>(this, ResultStatsFromOtherResult.CountType.RESULTS);
     }
 
     /**
@@ -28,7 +33,7 @@ public abstract class SearchForResults<R extends Results> extends AbstractSearch
      * @return resulting operation
      */
     public SearchCount hitCount() {
-        return new SearchCountFromResults<>(queryInfo(), this, ResultStatsFromOtherResult.CountType.HITS);
+        return new SearchCountFromResults<>(this, ResultStatsFromOtherResult.CountType.HITS);
     }
 
     /**
@@ -37,7 +42,7 @@ public abstract class SearchForResults<R extends Results> extends AbstractSearch
      * @return resulting operation
      */
     public SearchCount docCount() {
-        return new SearchCountFromResults<>(queryInfo(), this, ResultStatsFromOtherResult.CountType.DOCS);
+        return new SearchCountFromResults<>(this, ResultStatsFromOtherResult.CountType.DOCS);
     }
 
 }

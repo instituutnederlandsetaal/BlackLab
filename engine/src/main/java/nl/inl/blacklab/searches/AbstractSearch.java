@@ -10,6 +10,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -23,8 +24,20 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
 
     private final QueryInfo queryInfo;
 
+    /** How long executing certain parts of the operation took. */
+    private final QueryTimings timings;
+
+    protected AbstractSearch(Search<?> source) {
+        this(source.queryInfo(), source.timings());
+    }
+
     protected AbstractSearch(QueryInfo queryInfo) {
+        this(queryInfo, new QueryTimings());
+    }
+
+    protected AbstractSearch(QueryInfo queryInfo, QueryTimings timings) {
         this.queryInfo = queryInfo;
+        this.timings = timings;
     }
 
     @Override
@@ -116,6 +129,11 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     @Override
     public QueryInfo queryInfo() {
         return queryInfo;
+    }
+
+    @Override
+    public QueryTimings timings() {
+        return timings;
     }
 
     @Override

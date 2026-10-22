@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -138,6 +139,8 @@ public interface Search<R extends SearchResult> {
     int hashCode();
 
     QueryInfo queryInfo();
+
+    QueryTimings timings();
 
     @Override
     String toString();

@@ -19,8 +19,8 @@ public class SearchHitsFromQuery extends SearchHits {
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromQuery(QueryInfo queryInfo, CompleteQuery completeQuery, SearchSettings searchSettings) {
-        super(queryInfo);
+    public SearchHitsFromQuery(QueryInfo queryInfo, QueryTimings timings, CompleteQuery completeQuery, SearchSettings searchSettings) {
+        super(queryInfo, timings);
         if (completeQuery == null)
             throw new IllegalArgumentException("Must specify a query");
         this.completeQuery = completeQuery;
@@ -34,7 +34,7 @@ public class SearchHitsFromQuery extends SearchHits {
      */
     @Override
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
-        QueryTimings timings = queryInfo().timings().start();
+        QueryTimings timings = timings().start();
         try {
             return queryInfo().index().find(queryInfo(), getCombinedSpanFilterQuery(), searchSettings);
         } finally {

@@ -5,6 +5,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 
 /**
  * Search operation that yields collocations.
@@ -17,8 +18,8 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     private final PropertyValue value;
 
-    public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty property, PropertyValue value) {
-        super(queryInfo);
+    protected SearchCollocationsFiltered(QueryInfo queryInfo, QueryTimings timings, SearchCollocations source, ResultProperty property, PropertyValue value) {
+        super(queryInfo, timings);
         this.source = source;
         this.property = property;
         this.value = value;

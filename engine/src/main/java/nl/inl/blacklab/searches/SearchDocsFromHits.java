@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsFromHits extends SearchDocs {
@@ -12,8 +11,8 @@ public class SearchDocsFromHits extends SearchDocs {
 
     private long maxHits = 0;
 
-    public SearchDocsFromHits(QueryInfo queryInfo, SearchHits hitSearch, long maxHitsToGatherPerDocument) {
-        super(queryInfo);
+    public SearchDocsFromHits(SearchHits hitSearch, long maxHitsToGatherPerDocument) {
+        super(hitSearch);
         this.source = hitSearch;
         this.maxHits = maxHitsToGatherPerDocument;
     }

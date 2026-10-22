@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -13,15 +12,15 @@ public class SearchHitsSorted extends SearchHits {
     private final SearchHits source;
     private final HitProperty property;
 
-    SearchHitsSorted(QueryInfo queryInfo, SearchHits source, HitProperty sortBy) {
-        super(queryInfo);
+    SearchHitsSorted(SearchHits source, HitProperty sortBy) {
+        super(source);
         this.source = source;
         this.property = sortBy;
     }
 
     @Override
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) throws InvalidQuery {
-        QueryTimings timings = queryInfo().timings().start();
+        QueryTimings timings = timings().start();
         try {
             return executeChildSearch(activeSearch, source).sorted(property);
         } finally {

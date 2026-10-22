@@ -4,6 +4,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /**
@@ -11,8 +12,12 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public abstract class SearchCollocations extends AbstractSearch<TermFrequencyList> {
 
-    protected SearchCollocations(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected SearchCollocations(Search<?> source) {
+        super(source);
+    }
+
+    protected SearchCollocations(QueryInfo queryInfo, QueryTimings timings) {
+        super(queryInfo, timings);
     }
 
     /**
@@ -32,7 +37,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations sample(SampleParameters par) {
-        return new SearchCollocationsSampled(queryInfo(), this, par);
+        return new SearchCollocationsSampled(queryInfo(), timings(), this, par);
     }
 
     /**
@@ -43,7 +48,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations filter(ResultProperty property, PropertyValue value) {
-        return new SearchCollocationsFiltered(queryInfo(), this, property, value);
+        return new SearchCollocationsFiltered(queryInfo(), timings(), this, property, value);
     }
 
     /**
@@ -54,6 +59,6 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @return resulting operation
      */
     public SearchCollocations window(long first, long number) {
-        return new SearchCollocationsWindow(queryInfo(), this, first, number);
+        return new SearchCollocationsWindow(queryInfo(), timings(), this, first, number);
     }
 }

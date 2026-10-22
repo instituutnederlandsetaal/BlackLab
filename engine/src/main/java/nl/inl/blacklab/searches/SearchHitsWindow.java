@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 
@@ -14,8 +13,8 @@ public class SearchHitsWindow extends SearchHits {
     private final long first;
     private final long number;
 
-    SearchHitsWindow(QueryInfo queryInfo, SearchHits source, long first, long number) {
-        super(queryInfo);
+    SearchHitsWindow(SearchHits source, long first, long number) {
+        super(source);
         this.source = source;
         this.first = first;
         this.number = number;

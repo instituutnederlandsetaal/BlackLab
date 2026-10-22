@@ -27,7 +27,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
             // If no settings given, use the default
             searchSettings = queryInfo().index().searchSettings();
         }
-        return new SearchHitsFromQuery(queryInfo(), query, searchSettings);
+        return new SearchHitsFromQuery(queryInfo(), timings(), query, searchSettings);
     }
 
     public SearchHits find(CompleteQuery query) {
@@ -35,7 +35,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
     
     public SearchDocs findDocuments(Query documentQuery) {
-        return new SearchDocsFromQuery(queryInfo(), documentQuery);
+        return new SearchDocsFromQuery(queryInfo(), timings(), documentQuery);
     }
     
     @Override

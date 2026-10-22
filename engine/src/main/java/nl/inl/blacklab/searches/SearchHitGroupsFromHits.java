@@ -39,9 +39,9 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @param mustStoreHits if true, up to maxResultsToStorePerGroup hits will be stored. If false, no hits may be
      *                      stored, depending on how the grouping is performed.
      */
-    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy,
+    public SearchHitGroupsFromHits(SearchHits hitsSearch, HitProperty groupBy,
             long maxResultsToStorePerGroup, boolean mustStoreHits, HitGroupScorer scorer) {
-        super(queryInfo);
+        super(hitsSearch);
         this.source = hitsSearch;
         this.property = groupBy;
         this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;

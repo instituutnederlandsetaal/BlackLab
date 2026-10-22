@@ -19,7 +19,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     private final MatchSensitivity sensitivity;
 
     public SearchCollocationsFromHits(QueryInfo queryInfo, SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
-        super(queryInfo);
+        super(source);
         this.source = source;
         this.annotation = annotation;
         this.contextSize = contextSize;
