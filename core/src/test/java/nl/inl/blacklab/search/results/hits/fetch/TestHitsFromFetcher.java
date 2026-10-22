@@ -21,9 +21,9 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -178,11 +178,11 @@ public class TestHitsFromFetcher {
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(indexAndField.field());
+        SpansContext spansContext = new SpansContext(indexAndField.field());
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(index, lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(index, lrc, weight, spansContext, service, hitsStats, docsStats));
         }
         return publishers;
     }

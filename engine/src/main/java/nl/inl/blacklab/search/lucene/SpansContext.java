@@ -1,14 +1,14 @@
 package nl.inl.blacklab.search.lucene;
 
 /**
- * Provides per-hit query-wide context, such as captured groups.
+ * Provides Spans-wide context while iterating over the hits.
  * <p>
  * This object is passed to the whole BLSpans tree before iterating over the
- * hits. Captured groups will register themselves here and receive an index in
+ * hits. Match infos will be registered here and be assigned an index in
  * the captured group array, and BLSpans objects that need access to captured
  * groups will store a reference to this context and use it later.
  */
-public class HitQueryContext {
+public class SpansContext {
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
@@ -20,11 +20,11 @@ public class HitQueryContext {
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
     private final String field;
 
-    public HitQueryContext(String defaultField) {
+    public SpansContext(String defaultField) {
         this(defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(String defaultField, String field, MatchInfoDefs matchInfoDefs) {
+    private SpansContext(String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
@@ -32,10 +32,10 @@ public class HitQueryContext {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    public HitQueryContext withField(String overriddenField) {
-        HitQueryContext result = this;
+    public SpansContext withField(String overriddenField) {
+        SpansContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(defaultField, overriddenField, matchInfoDefs);
+            result = new SpansContext(defaultField, overriddenField, matchInfoDefs);
         }
         return result;
     }

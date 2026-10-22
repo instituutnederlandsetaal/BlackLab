@@ -19,7 +19,7 @@ public class TestSpansBuffered {
     @Test
     public void test() throws IOException {
         SpansBuffered spans = new SpansBuffered(a);
-        spans.setHitQueryContext(null); // create buffer
+        spans.setSpansContext(null); // create buffer
         Assert.assertEquals(1, spans.nextDoc());
         checkDoc1Hits(spans);
         spans.reset();

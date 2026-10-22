@@ -166,7 +166,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                     }
 
                     @Override
-                    protected void passHitQueryContextToClauses(HitQueryContext context) {
+                    protected void passSpansContextToClauses(SpansContext context) {
                         // (no clauses)
                     }
 

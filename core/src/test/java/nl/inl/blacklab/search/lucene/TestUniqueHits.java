@@ -46,9 +46,9 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new SpansUnique(tags);
-        HitQueryContext context = new HitQueryContext("test");
+        SpansContext context = new SpansContext("test");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
-        spans.setHitQueryContext(context);
+        spans.setSpansContext(context);
 
         int[] expDoc   = {  1,  2, 3, 3 };
         int[] expStart = { 10, 10, 1, 1 };
@@ -65,9 +65,9 @@ public class TestUniqueHits {
                 false, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
-        HitQueryContext context = new HitQueryContext("test");
+        SpansContext context = new SpansContext("test");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
-        spans.setHitQueryContext(context);
+        spans.setSpansContext(context);
 
         int[] expDoc   = {  1,  2, 3, 3 };
         int[] expStart = { 10, 10, 1, 1 };

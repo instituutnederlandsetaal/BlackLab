@@ -9,8 +9,8 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /** Compare two constraint values and return an integer comparison result. */
 public class MatchFilterCompare extends MatchFilter {
@@ -87,9 +87,9 @@ public class MatchFilterCompare extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
-        a.setHitQueryContext(context);
-        b.setHitQueryContext(context);
+    public void setSpansContext(SpansContext context) {
+        a.setSpansContext(context);
+        b.setSpansContext(context);
     }
 
     @Override

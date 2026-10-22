@@ -86,20 +86,20 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             assert captureTargetAs != null && !captureTargetAs.isEmpty();
         }
 
-        void setHitQueryContext(HitQueryContext context) {
-            matchRelations.setHitQueryContext(context);
-            captureRelations.setHitQueryContext(context);
+        void setSpansContext(SpansContext context) {
+            matchRelations.setSpansContext(context);
+            captureRelations.setSpansContext(context);
             captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
 
-            HitQueryContext targetContext = context.withField(targetField);
+            SpansContext targetContext = context.withField(targetField);
             for (String captureName: captureTargetAs) {
                 captureTargetAsIndex.add(targetContext.registerMatchInfo(captureName, MatchInfo.Type.SPAN));
             }
             if (target != null)
-                target.setHitQueryContext(targetContext);
+                target.setSpansContext(targetContext);
 
             if (capturerTargetOverlaps != null) {
-                capturerTargetOverlaps.setHitQueryContext(targetContext);
+                capturerTargetOverlaps.setSpansContext(targetContext);
                 capturedTargetOverlapsIndex = targetContext.registerMatchInfo(captureTargetOverlapsAs,
                         MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
             }
@@ -147,7 +147,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     private final List<Target> targets;
 
     /** Our hit query context */
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** Match info for current hit */
     private MatchInfo[] matchInfo;
@@ -403,11 +403,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.context = context;
         for (Target target: targets)
-            target.setHitQueryContext(context);
+            target.setSpansContext(context);
     }
 
     @Override

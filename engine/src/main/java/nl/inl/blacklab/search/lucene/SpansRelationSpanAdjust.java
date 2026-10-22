@@ -25,7 +25,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     /** Adjusted end position of current hit */
     private int endAdjusted = -1;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     private MatchInfo[] matchInfo;
 
@@ -99,9 +99,9 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         this.context = context;
-        super.passHitQueryContextToClauses(context.withField(clauseField));
+        super.passSpansContextToClauses(context.withField(clauseField));
         this.captureIndex = adjustToCapture == null ? -1 : context.getMatchInfoDefs().indexOf(adjustToCapture);
     }
 

@@ -39,10 +39,10 @@ import org.apache.lucene.search.Weight;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
@@ -451,7 +451,7 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
         }
 
         @Override
-        protected void passHitQueryContextToClauses(HitQueryContext context) {
+        protected void passSpansContextToClauses(SpansContext context) {
             // @@@ TODO
         }
 

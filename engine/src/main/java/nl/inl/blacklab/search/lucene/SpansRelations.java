@@ -115,7 +115,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         // Find the target field from the relation class (e.g. for class al__de, target field will be something like
         // contents__de)
         // Be careful not to interpret special relations class __tag as a parallel field!

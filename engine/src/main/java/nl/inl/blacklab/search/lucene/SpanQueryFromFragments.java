@@ -547,7 +547,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         }
 
         @Override
-        protected void passHitQueryContextToClauses(HitQueryContext context) {
+        protected void passSpansContextToClauses(SpansContext context) {
             // No clauses to pass context to
         }
 

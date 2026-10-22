@@ -14,8 +14,8 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -33,9 +33,9 @@ public class HitPublisherSpans implements HitPublisher {
     private boolean isInitialized = false;
 
     /** Our own hit query context */
-    private final HitQueryContext hitQueryContext;
+    private final SpansContext spansContext;
 
-    /** How many match infos there are in the hitQueryContext */
+    /** How many match infos there are in the spansContext */
     private int numMatchInfos;
 
     /** Spans object we read our hits from. Will be lazy-initialized in initialize() because
@@ -103,18 +103,18 @@ public class HitPublisherSpans implements HitPublisher {
     private volatile boolean needAllHits;
 
     /** Lazy Hits interface to a single Spans object. */
-    public HitPublisherSpans(BlackLabIndex index, LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext hitQueryContext,
+    public HitPublisherSpans(BlackLabIndex index, LeafReaderContext lrc, BLSpanWeight weight, SpansContext spansContext,
             ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         this.weight = weight;
-        this.hitQueryContext = hitQueryContext;
+        this.spansContext = spansContext;
         this.spans = null;
         this.executorService = executorService;
         this.hitsStats = hitsStats;
         maxToProcess = hitsStats.getMaxHitsToProcess();
         maxToCount = hitsStats.getMaxHitsToCount();
         this.docsStats = docsStats;
-        Hits.Context context = new Hits.Context(IndexAndField.create(index, hitQueryContext.getField()),
-                hitQueryContext.getMatchInfoDefs(), lrc);
+        Hits.Context context = new Hits.Context(IndexAndField.create(index, spansContext.getField()),
+                spansContext.getMatchInfoDefs(), lrc);
         output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
     }
@@ -126,10 +126,10 @@ public class HitPublisherSpans implements HitPublisher {
     /**
      * Will retrieve its own Spans object on when it's ran.
      * <p>
-     * This will self-initialize (meaning its Spans object and HitQueryContext are set). This is done
+     * This will self-initialize (meaning its Spans object and SpansContext are set). This is done
      * because HitFetcherQuerySegments can hold a lot of memory and time to set up and only a few are active at a time.
      * <p>
-     * All HitFetcherQuerySegments share an instance of MatchInfoDefs (via the hit query context, of which each
+     * All HitFetcherQuerySegments share an instance of MatchInfoDefs (via the spans context, of which each
      * HitFetcherQuerySegment gets a personalized copy, but with the same shared MatchInfoDefs instance).
      * <p>
      * HitFetcherQuerySegments will register their match infos with the MatchInfoDefs instance. Often the first
@@ -161,8 +161,8 @@ public class HitPublisherSpans implements HitPublisher {
 
             // Register the query context with our query.
             // Then determine the number of match infos (query registers match infos with the context)
-            this.spans.setHitQueryContext(hitQueryContext);
-            this.numMatchInfos = hitQueryContext.numberOfMatchInfos();
+            this.spans.setSpansContext(spansContext);
+            this.numMatchInfos = spansContext.numberOfMatchInfos();
 
             this.liveDocs = lrc.reader().getLiveDocs();
             if (!hasPrefetchedHit) {

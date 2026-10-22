@@ -161,11 +161,11 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
     protected abstract boolean twoPhaseCurrentDocMatches() throws IOException;
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         if (in instanceof BLSpans)
-            ((BLSpans) in).setHitQueryContext(context);
+            ((BLSpans) in).setSpansContext(context);
         else if (in instanceof SpansInBuckets)
-            ((SpansInBuckets) in).setHitQueryContext(context);
+            ((SpansInBuckets) in).setSpansContext(context);
     }
 
     @Override

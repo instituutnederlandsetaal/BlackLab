@@ -252,7 +252,7 @@ You can think of these as properties needed for a phase in the whole search proc
 
 - This would cover how to execute: what executor, max threads, etc. - we can ask the index, but better to isolate these settings in a separate context object?
 
-#### HitQueryContext
+#### SpansContext (formerly HitQueryContext)
 
 - each `BLSpans` gets one
 - knows default field / current field, `MatchInfoDefs`

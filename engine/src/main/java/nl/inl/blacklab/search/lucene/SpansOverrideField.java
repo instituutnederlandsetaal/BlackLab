@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 /**
- * A Spans that makes sure clauses below it get the overridden field in their HitQueryContext.
+ * A Spans that makes sure clauses below it get the overridden field in their SpansContext.
  *
  * Used for e.g. parallel corpora, in which part of the query deals with a different field.
  */
@@ -86,8 +86,8 @@ class SpansOverrideField extends BLFilterDocsSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         // Our descendants should use the overridden field
-        in.setHitQueryContext(context.withField(overriddenField));
+        in.setSpansContext(context.withField(overriddenField));
     }
 }

@@ -32,7 +32,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsAbstract;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
@@ -155,8 +155,8 @@ public class TestHitPublisher {
             ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         LeafReaderContext lrc = mock(LeafReaderContext.class);
         when(lrc.reader()).thenReturn(mock(LeafReader.class));
-        HitQueryContext sourceHitQueryContext = new HitQueryContext("test");
-        return new HitPublisherSpans(null, lrc, weight, sourceHitQueryContext, executor,
+        SpansContext sourceSpansContext = new SpansContext("test");
+        return new HitPublisherSpans(null, lrc, weight, sourceSpansContext, executor,
                 hitsStats, docsStats);
     }
 

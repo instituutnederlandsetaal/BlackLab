@@ -44,13 +44,13 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
 import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
@@ -670,9 +670,9 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 // BL
 
                 @Override
-                public void passHitQueryContextToClauses(HitQueryContext theContext) {
+                public void passSpansContextToClauses(SpansContext theContext) {
                     for (Spans spans : subSpans) {
-                        ((BLSpans) spans).setHitQueryContext(theContext);
+                        ((BLSpans) spans).setSpansContext(theContext);
                     }
                 }
 

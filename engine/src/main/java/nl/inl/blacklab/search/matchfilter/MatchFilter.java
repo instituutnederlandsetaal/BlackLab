@@ -7,8 +7,8 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
@@ -35,7 +35,7 @@ public abstract class MatchFilter implements TextPattern.EvalResult {
      * 
      * @param context hit query context object
      */
-    public abstract void setHitQueryContext(HitQueryContext context);
+    public abstract void setSpansContext(SpansContext context);
 
     /**
      * Evaluate the constraint at the current match position.

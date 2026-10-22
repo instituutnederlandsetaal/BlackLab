@@ -31,7 +31,7 @@ public class SpansAndFilterFactoryUniqueRelations implements SpansAndFilterFacto
                 relationsReturnedAtThisPosition.clear();
             }
 
-            private List<RelationInfo> getRelationsSorted(HitQueryContext context, BLSpans spans) {
+            private List<RelationInfo> getRelationsSorted(SpansContext context, BLSpans spans) {
                 MatchInfo[] matchInfo = new MatchInfo[context.numberOfMatchInfos()];
                 spans.getMatchInfo(matchInfo);
                 List<RelationInfo> ri = new ArrayList<>();

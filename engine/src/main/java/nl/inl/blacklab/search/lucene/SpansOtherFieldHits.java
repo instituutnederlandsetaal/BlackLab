@@ -26,7 +26,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     /** Adjusted end position of current hit */
     private int endAdjusted = -1;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** Our clause's match info */
     private MatchInfo[] matchInfo;
@@ -126,9 +126,9 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         this.context = context;
-        super.passHitQueryContextToClauses(context.withField(clauseField));
+        super.passSpansContextToClauses(context.withField(clauseField));
     }
 
     @Override

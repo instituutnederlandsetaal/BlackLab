@@ -7,7 +7,7 @@ import org.apache.lucene.queries.spans.FilterSpans;
 /**
  * Captures its clause as a captured group.
  *
- * Registers itself with the HitQueryContext so others can access its start()
+ * Registers itself with the SpansContext so others can access its start()
  * and end() when they want to.
  */
 class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
@@ -62,8 +62,8 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.groupIndex = context.registerMatchInfo(name, MatchInfo.Type.SPAN);
     }
 

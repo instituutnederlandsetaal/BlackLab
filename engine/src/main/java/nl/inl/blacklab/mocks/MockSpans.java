@@ -11,10 +11,10 @@ import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -242,7 +242,7 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
+    public void passSpansContextToClauses(SpansContext context) {
         // just ignore this here
     }
 

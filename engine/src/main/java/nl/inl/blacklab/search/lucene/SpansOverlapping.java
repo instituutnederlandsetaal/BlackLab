@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
-import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Combines overlapping hits from two spans in various ways.
@@ -281,9 +281,9 @@ class SpansOverlapping extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        first.setHitQueryContext(context);
-        second.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        first.setSpansContext(context);
+        second.setSpansContext(context);
     }
 
     @Override

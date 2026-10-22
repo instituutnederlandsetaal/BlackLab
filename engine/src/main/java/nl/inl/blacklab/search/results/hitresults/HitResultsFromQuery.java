@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -63,9 +63,9 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
 
         ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
-        HitQueryContext hitQueryContext = new HitQueryContext(sourceQuery.getAnnotatedFieldName());
+        SpansContext spansContext = new SpansContext(sourceQuery.getAnnotatedFieldName());
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(index, lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(index, lrc, weight, spansContext, service, hitsStats, docsStats));
         }
         return publishers;
     }

@@ -22,10 +22,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
 
 /**
  * Common super class for multiple sub spans required in a document.
@@ -146,9 +146,9 @@ abstract class BLConjunctionSpansInBuckets extends BLSpans {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         for (SpansInBuckets subSpan : subSpans) {
-            subSpan.setHitQueryContext(context);
+            subSpan.setSpansContext(context);
         }
     }
 

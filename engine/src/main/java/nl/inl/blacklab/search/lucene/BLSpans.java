@@ -74,7 +74,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     /**
      * For efficiency while matching, this will store the result of hasMatchInfo().
-     * Only valid after setHitQueryContext() has been called.
+     * Only valid after setSpansContext() has been called.
      */
     protected boolean childClausesCaptureMatchInfo = true;
 
@@ -102,14 +102,14 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
      * <p>
-     * Subclasses should implement {@link #passHitQueryContextToClauses(HitQueryContext)}.
+     * Subclasses should implement {@link #passSpansContextToClauses(SpansContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         childClausesCaptureMatchInfo = hasMatchInfo();
         overriddenField = context.getField() == null ? null : context.getField(); // will be null unless this is a parallel corpus query
-        passHitQueryContextToClauses(context);
+        passSpansContextToClauses(context);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
     }
 
     /**
-     * Called by setHitQueryContext() to pass the context to child clauses.
+     * Called by setSpansContext() to pass the context to child clauses.
      * <p>
      * Subclasses should implement this method to pass the context to their
      * child clauses (if any), and either:
@@ -140,7 +140,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
      */
-    protected abstract void passHitQueryContextToClauses(HitQueryContext context);
+    protected abstract void passSpansContextToClauses(SpansContext context);
 
     /**
      * Get the match infos (captured groups, relations) contained in this
