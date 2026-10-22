@@ -230,19 +230,19 @@ BLSpans
 BlackLab uses various context objects to pass information around when interpreting and executing queries.
 You can think of these as properties needed for a phase in the whole search process. Properties are usually constant (i.e. index) but different parts of the query might have slightly different contexts (i.e. what parallel version this part of the query searches).
 
-#### IndexAndField (formerly IndexAndField)
+#### IndexAndField (formerly QueryInfo)
 
 - is created first
 - passed to the `Search*` classes, which pass it to parsing, query generation and result gathering 
 - knows index and search field
 - index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
 
-#### Search.Context
+#### Search.Context (NEW))
 
 - each `Search` has one
 - knows `IndexAndField`, cache, timings(DEBUG)
 
-#### TextPatternContext
+#### TextPatternContext (formerly QueryExecutionContext)
 
 - used during translation of `TextPattern` to `BLSpanQuery`
 - knows `IndexAndField`, current parallel version, annotation, sensitivity, def.rel.class, capture names, 
@@ -257,8 +257,7 @@ You can think of these as properties needed for a phase in the whole search proc
 - each `BLSpans` gets one
 - knows default field / current field, `MatchInfoDefs`
 
-#### Hits.Context
+#### Hits.Context (formerly Hits.HitsContext)
 
 - each `Hits` gets one
-- knows index, field, `MatchInfoDefs`, originating segment (if segment hits)
-- replace index and field with `IndexAndField`?
+- knows `IndexAndField`, `MatchInfoDefs`, originating segment (if segment hits)

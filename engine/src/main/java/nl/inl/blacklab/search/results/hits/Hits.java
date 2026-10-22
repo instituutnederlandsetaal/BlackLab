@@ -41,32 +41,35 @@ public interface Hits extends Iterable<EphemeralHit> {
     Logger logger = LogManager.getLogger(Hits.class);
 
     /** Context for our hits: field, match info definitions and segment they came from (or null if global) */
-    record Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
-        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
-            this.index = index;
-            this.field = field;
+    record Context(IndexAndField indexAndField, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+        public Context(IndexAndField indexAndField, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+            this.indexAndField = indexAndField;
             this.matchInfoDefs = matchInfoDefs != null ? matchInfoDefs : MatchInfoDefs.EMPTY;
             this.leafReaderContext = leafReaderContext;
         }
 
-        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs) {
-            this(index, field, matchInfoDefs, null);
+        public Context(IndexAndField indexAndField, MatchInfoDefs matchInfoDefs) {
+            this(indexAndField, matchInfoDefs, null);
         }
 
         public Context(IndexAndField indexAndField) {
-            this(indexAndField.index(), indexAndField.field(), MatchInfoDefs.EMPTY, null);
+            this(indexAndField, MatchInfoDefs.EMPTY, null);
         }
 
         public Context(BlackLabIndex index, String field) {
-            this(index, field, MatchInfoDefs.EMPTY, null);
+            this(IndexAndField.create(index, field), MatchInfoDefs.EMPTY, null);
         }
 
         public BlackLabIndex index() {
-            return index;
+            return indexAndField.index();
+        }
+
+        public String field() {
+            return indexAndField.field();
         }
 
         public Context withoutLeafReaderContext() {
-            return new Context(index, field, matchInfoDefs, null);
+            return new Context(indexAndField, matchInfoDefs, null);
         }
     }
 
@@ -80,7 +83,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(new Context(field.index(), field.name(), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new Context(IndexAndField.create(field.index(), field.name()), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
     }
 
     static Hits single(Context context, int doc, int matchStart, int matchEnd) {

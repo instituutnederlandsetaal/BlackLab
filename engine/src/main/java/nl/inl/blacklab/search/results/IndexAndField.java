@@ -6,9 +6,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
-/**
- * Information about the original query.
- */
+/** Index and field the query was performed with. */
 public final class IndexAndField {
 
     public static IndexAndField create(BlackLabIndex index) {

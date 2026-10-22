@@ -32,7 +32,9 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestHitsFromFetcher {
-    public static final Hits.Context DUMMY_CONTEXT = new Hits.Context(null,"test", MatchInfoDefs.EMPTY, null);
+    public static final Hits.Context DUMMY_CONTEXT = new Hits.Context(
+            IndexAndField.create(null,"test"), MatchInfoDefs.EMPTY,
+            null);
 
     public final TestIndex testIndex = TestIndex.get();
 
