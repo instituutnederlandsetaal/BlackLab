@@ -1244,7 +1244,7 @@ public class ResponseStreamer {
     public static void explain(DataStream ds, AnnotatedField searchField, TextPattern tp) {
         BlackLabIndex index = searchField.index();
         try {
-            BLSpanQuery q = tp.toQuery(IndexAndField.create(index, searchField.name()));
+            BLSpanQuery q = tp.toQuery(IndexAndField.get(index, searchField.name()));
             QueryExplanation explanation = index.explain(q);
             ds.startEntry("explanation").startMap()
                     .entry("originalQuery", explanation.originalQuery())

@@ -56,7 +56,7 @@ public class TestQueryRewriteNfa {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            BLSpanQuery q = getPatternFromCql(cql).toQuery(IndexAndField.create(index));
+            BLSpanQuery q = getPatternFromCql(cql).toQuery(IndexAndField.get(index));
             QueryExplanation explanation = index.explain(q);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();

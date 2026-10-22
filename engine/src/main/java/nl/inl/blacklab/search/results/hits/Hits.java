@@ -57,7 +57,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         }
 
         public Context(BlackLabIndex index, String field) {
-            this(IndexAndField.create(index, field), MatchInfoDefs.EMPTY, null);
+            this(IndexAndField.get(index, field), MatchInfoDefs.EMPTY, null);
         }
 
         public BlackLabIndex index() {
@@ -83,7 +83,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(new Context(IndexAndField.create(field.index(), field.name()), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new Context(IndexAndField.get(field.index(), field.name()), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
     }
 
     static Hits single(Context context, int doc, int matchStart, int matchEnd) {

@@ -94,7 +94,7 @@ public class DocIndexerSaxonTest {
 
         // 3. Verify
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
-            IndexAndField qi = IndexAndField.create(index);
+            IndexAndField qi = IndexAndField.get(index);
             
             // Build Lucene field name for pos annotation (insensitive)
             String posField = AnnotatedFieldNameUtil.luceneName("contents", "pos", MatchSensitivity.INSENSITIVE);

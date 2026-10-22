@@ -14,7 +14,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.IndexAndField;
@@ -43,9 +42,9 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     /** Global view on our segment hits */
     private final HitsFromPublishers hits;
 
-    protected HitResultsFromQuery(IndexAndField indexAndField, BLSpanQuery sourceQuery,
+    protected HitResultsFromQuery(BlackLabIndex index, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
-        super(SpanQueryOtherFieldHits.getIndexAndField(indexAndField, sourceQuery.getAnnotatedFieldName()));
+        super(IndexAndField.get(index, sourceQuery.getAnnotatedFieldName()));
         sourceQuery.setIndexAndField(this.indexAndField);
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;

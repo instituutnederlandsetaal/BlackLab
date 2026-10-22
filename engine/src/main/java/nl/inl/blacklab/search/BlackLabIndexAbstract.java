@@ -322,19 +322,15 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    public HitResults find(BLSpanQuery query, SearchSettings settings) {
-        return find(IndexAndField.create(this, query.getAnnotatedFieldName()), query, settings);
-    }
-
     @Override
-    public HitResults find(IndexAndField indexAndField, BLSpanQuery query, SearchSettings settings) {
-        return HitResults.fromSpanQuery(indexAndField, query, settings == null ? searchSettings() : settings);
+    public HitResults find(BLSpanQuery query, SearchSettings settings) {
+        return HitResults.fromSpanQuery(this, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            query.setIndexAndField(IndexAndField.create(this, query.getAnnotatedFieldName()));
+            query.setIndexAndField(IndexAndField.get(this, query.getAnnotatedFieldName()));
             return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
@@ -397,7 +393,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(IndexAndField.create(this, mainAnnotatedField().name()), documentFilterQuery);
+        return DocResults.fromQuery(IndexAndField.get(this, mainAnnotatedField().name()), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -568,7 +564,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         if (annotatedField == null)
             throw new IllegalArgumentException("Annotated field must not be null");
         if (indexAndField == null)
-            indexAndField = IndexAndField.create(this, annotatedField);
+            indexAndField = IndexAndField.get(this, annotatedField);
         Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
@@ -696,12 +692,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
             Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity.luceneField(), terms);
-        return new TermFrequencyList(IndexAndField.create(this, annotSensitivity.annotation().field().name()), freq, true);
+        return new TermFrequencyList(IndexAndField.get(this, annotSensitivity.annotation().field().name()), freq, true);
     }
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        IndexAndField indexAndField = IndexAndField.create(this, field.name());
+        IndexAndField indexAndField = IndexAndField.get(this, field.name());
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
         return new SearchEmpty(new Search.Context(indexAndField, cacheToUse));
     }

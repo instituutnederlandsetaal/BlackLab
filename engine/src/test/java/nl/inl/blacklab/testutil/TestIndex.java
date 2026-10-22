@@ -343,7 +343,7 @@ public class TestIndex implements AutoCloseable {
         try {
             BLQueryParser parser = index.getQueryParser("bcql");
             BLSpanQuery query = parser.parse(pattern).pattern()
-                    .toQuery(IndexAndField.create(index), filter);
+                    .toQuery(IndexAndField.get(index), filter);
             return index.find(query, null)
                     .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));
         } catch (InvalidQuery e) {

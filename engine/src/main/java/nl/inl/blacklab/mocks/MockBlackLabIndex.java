@@ -81,7 +81,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
     
     public IndexAndField createDefaultIndexAndField() {
-        return IndexAndField.create(this, mainAnnotatedField().name());
+        return IndexAndField.get(this, mainAnnotatedField().name());
     }
 
     @Override
@@ -107,7 +107,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public TextPatternContext defaultExecutionContext(String field, IndexAndField indexAndField) {
         if (indexAndField == null)
-            indexAndField = IndexAndField.create(this, field);
+            indexAndField = IndexAndField.get(this, field);
         return TextPatternContext.get(field,
                 annotatedField(field).defaultSearchAnnotation().name(),
                 MatchSensitivity.INSENSITIVE, indexAndField);
@@ -178,11 +178,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public HitResults find(BLSpanQuery query, SearchSettings settings) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public HitResults find(IndexAndField indexAndField, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

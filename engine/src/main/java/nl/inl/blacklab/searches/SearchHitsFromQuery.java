@@ -35,7 +35,7 @@ public class SearchHitsFromQuery extends SearchHits {
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
         QueryTimings timings = timings().start();
         try {
-            return indexAndField().index().find(indexAndField(), getCombinedSpanFilterQuery(), searchSettings);
+            return indexAndField().index().find(getCombinedSpanFilterQuery(), searchSettings);
         } finally {
             timings.record("fetch");
         }

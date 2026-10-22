@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results.hitresults;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -29,8 +30,8 @@ public interface HitResults extends Results {
      * @param searchSettings settings such as max. hits to process/count
      * @return hits found
      */
-    static HitResults fromSpanQuery(IndexAndField indexAndField, BLSpanQuery query, SearchSettings searchSettings) {
-        return new HitResultsFromQuery(indexAndField, query, searchSettings);
+    static HitResults fromSpanQuery(BlackLabIndex index, BLSpanQuery query, SearchSettings searchSettings) {
+        return new HitResultsFromQuery(index, query, searchSettings);
     }
 
     /**

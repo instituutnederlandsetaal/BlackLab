@@ -23,7 +23,7 @@ public class TestResultsGrouper {
     @Test
     public void testGrouper() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        HitResults hitResults = HitResults.list(IndexAndField.create(index), doc, start, end);
+        HitResults hitResults = HitResults.list(IndexAndField.get(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT, HitGroupScorer.NONE);
 

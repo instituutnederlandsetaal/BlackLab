@@ -49,7 +49,7 @@ public class TestSpanQueryFromFragments {
                 writer.addDocument(new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
             BlackLabIndex index = new MockBlackLabIndex();
-            IndexAndField indexAndField = IndexAndField.create(index, "contents");
+            IndexAndField indexAndField = IndexAndField.get(index, "contents");
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 assertEquals(3, reader.leaves().size());
                 var query = new SpanQueryFromFragments(indexAndField, new MatchAllDocsQuery(), null,

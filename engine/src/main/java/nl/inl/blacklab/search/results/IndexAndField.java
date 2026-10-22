@@ -9,11 +9,11 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 /** Index and field the query was performed with. */
 public final class IndexAndField {
 
-    public static IndexAndField create(BlackLabIndex index) {
-        return create(index, index.mainAnnotatedField().name());
+    public static IndexAndField get(BlackLabIndex index) {
+        return get(index, index.mainAnnotatedField().name());
     }
 
-    public static IndexAndField create(BlackLabIndex index, String field) {
+    public static IndexAndField get(BlackLabIndex index, String field) {
         return new IndexAndField(index, field);
     }
 
@@ -72,7 +72,7 @@ public final class IndexAndField {
             throw new IllegalArgumentException("field cannot be null");
         if (Objects.equals(this.field, field))
             return this;
-        return IndexAndField.create(index, field);
+        return IndexAndField.get(index, field);
     }
 }
 

@@ -12,7 +12,7 @@ public class TestSpanQueryFiltered {
 
     @Test
     public void testEquals() {
-        IndexAndField indexAndField = IndexAndField.create(new MockBlackLabIndex());
+        IndexAndField indexAndField = IndexAndField.get(new MockBlackLabIndex());
         SpanQueryFiltered a = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Zwets")));
         SpanQueryFiltered b = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));
         SpanQueryFiltered c = new SpanQueryFiltered(new BLSpanTermQuery(indexAndField, new Term("contents", "bla")), new TermQuery(new Term("author", "Neuzel")));

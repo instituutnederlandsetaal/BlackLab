@@ -88,7 +88,7 @@ public class BatchQuery {
                     Timer t = new Timer();
                     System.out.print(strQuery + "\t");
                     BLQueryParser parser = index.getQueryParser("bcql");
-                    BLSpanQuery query = parser.parse(strQuery).pattern().toQuery(IndexAndField.create(index));
+                    BLSpanQuery query = parser.parse(strQuery).pattern().toQuery(IndexAndField.get(index));
                     Hits hits = index.find(query, null).getHits();
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {

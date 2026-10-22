@@ -225,7 +225,7 @@ public interface BlackLabIndex extends AutoCloseable {
     //---------------------------------------------------------------------------
 
     default HitResults find(AnnotatedField field, CompleteQuery query) {
-        IndexAndField indexAndField = IndexAndField.create(this, field.name());
+        IndexAndField indexAndField = IndexAndField.get(this, field.name());
         BLSpanQuery spanQuery = query.pattern().toQuery(indexAndField, query.filter());
         return find(spanQuery);
     }
@@ -250,8 +250,6 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return the hits found
      */
     HitResults find(BLSpanQuery query, SearchSettings settings);
-
-    HitResults find(IndexAndField indexAndField, BLSpanQuery spanQuery, SearchSettings searchSettings);
 
     /**
      * Perform a document query only (no hits)

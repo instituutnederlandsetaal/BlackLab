@@ -60,7 +60,7 @@ public class TestParallel {
     private HitResults find(String pattern) throws InvalidQuery {
         BLQueryParser parser = testIndex.index().getQueryParser("bcql");
         BLSpanQuery query = parser.parse(pattern).pattern()
-                .toQuery(IndexAndField.create(testIndex.index(), testIndex.index().mainAnnotatedField().name()));
+                .toQuery(IndexAndField.get(testIndex.index(), testIndex.index().mainAnnotatedField().name()));
         return testIndex.index().find(query, null);
     }
 
