@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -60,16 +60,16 @@ public class RelationTarget extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         return targetQuery(context);
     }
 
-    public BLSpanQuery targetQuery(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery targetQuery(TextPatternContext context) throws InvalidQuery {
         assert !opInfo.isAlignment();
 
         // replace _ with any ngram
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target);
-        QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
+        TextPatternContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
 
         String relationType = opInfo.getFullTypeRegex(context);
 

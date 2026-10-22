@@ -691,7 +691,7 @@ public class TestSearches {
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
             String field = index.mainAnnotatedField().name();
-            QueryExecutionContext context = index.defaultExecutionContext(field, null);
+            TextPatternContext context = index.defaultExecutionContext(field, null);
             BLSpanQuery q1 = p1.toQuery(context);
             context = index.defaultExecutionContext(field, null);
             BLSpanQuery q2 = p2.toQuery(context);

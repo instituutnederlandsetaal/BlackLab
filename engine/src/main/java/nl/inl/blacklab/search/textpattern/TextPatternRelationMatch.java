@@ -7,7 +7,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -49,7 +49,7 @@ public class TextPatternRelationMatch extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         if (children.isEmpty())
             throw new InvalidQuery("Relation match has no children");
         if (children.get(0).getOperatorInfo().isAlignment()) {
@@ -61,7 +61,7 @@ public class TextPatternRelationMatch extends TextPattern {
         }
     }
 
-    private BLSpanQuery createAlignmentQuery(QueryExecutionContext context) throws InvalidQuery {
+    private BLSpanQuery createAlignmentQuery(TextPatternContext context) throws InvalidQuery {
         assert parent != null;
         BLSpanQuery source = TextPatternDefaultValue.replaceWithAnyToken(parent).toQuery(context);
         List<SpanQueryCaptureRelationsBetweenSpans.Target> targets = new ArrayList<>();
@@ -71,7 +71,7 @@ public class TextPatternRelationMatch extends TextPattern {
         return new SpanQueryCaptureRelationsBetweenSpans(source, targets);
     }
 
-    private static SpanQueryCaptureRelationsBetweenSpans.Target alignmentTarget(RelationTarget target, QueryExecutionContext context)
+    private static SpanQueryCaptureRelationsBetweenSpans.Target alignmentTarget(RelationTarget target, TextPatternContext context)
             throws InvalidQuery {
         RelationOperatorInfo opInfo = target.getOperatorInfo();
         assert opInfo.isAlignment();
@@ -91,7 +91,7 @@ public class TextPatternRelationMatch extends TextPattern {
             throw new InvalidQuery("Cannot use alignment operator with target version '" + targetVersion
                     + "' (annotated field '" + name + "' does not exist)");
         }
-        QueryExecutionContext targetContext = context.withDocVersion(targetVersion);
+        TextPatternContext targetContext = context.withDocVersion(targetVersion);
         BLSpanQuery targetQuery = targetNoDefVal.toQuery(targetContext);
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
@@ -100,7 +100,7 @@ public class TextPatternRelationMatch extends TextPattern {
                 null, null);
     }
 
-    private static BLSpanQuery createRelMatchQuery(QueryExecutionContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
+    private static BLSpanQuery createRelMatchQuery(TextPatternContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
         List<BLSpanQuery> clauses = new ArrayList<>();
         if (parent != null) { // might be a root relation operator, which has no parent
             BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
@@ -114,7 +114,7 @@ public class TextPatternRelationMatch extends TextPattern {
         return createRelMatchQuery(context, clauses);
     }
 
-    public static BLSpanQuery createRelMatchQuery(QueryExecutionContext context, List<BLSpanQuery> clauses) {
+    public static BLSpanQuery createRelMatchQuery(TextPatternContext context, List<BLSpanQuery> clauses) {
         assert !clauses.isEmpty();
         // Filter out "any n-gram" arguments ([]*) because they don't do anything
         clauses = clauses.stream()

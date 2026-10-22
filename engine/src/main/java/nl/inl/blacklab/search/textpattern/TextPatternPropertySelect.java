@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterSpan;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
@@ -36,7 +36,7 @@ public class TextPatternPropertySelect extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         // Evaluate left and right sides, getting the symbol, not MatchFilterSpan
         if (!context.isInConstraint())
             throw new InvalidQuery("Property selector . can only be used in constraints");

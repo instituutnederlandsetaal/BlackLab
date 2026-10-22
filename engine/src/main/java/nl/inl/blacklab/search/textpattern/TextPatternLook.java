@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 
 /**
@@ -29,7 +29,7 @@ public class TextPatternLook extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         return SpanQueryEdge.lookAheadBehindQuery(clause.toQuery(context), behind, negate);
     }
 

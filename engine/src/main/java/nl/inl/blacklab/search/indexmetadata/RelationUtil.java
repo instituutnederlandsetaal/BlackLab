@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.util.StringUtil;
 
 public class RelationUtil {
@@ -125,7 +125,7 @@ public class RelationUtil {
     }
 
     /** If the relationtype regex doesn't specify a relation class yet, prepend the default class to it. */
-    public static String optPrependDefaultClass(String relationTypeRegex, QueryExecutionContext context) {
+    public static String optPrependDefaultClass(String relationTypeRegex, TextPatternContext context) {
         if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR)) {
             String defaultClass = context.resolveDefaultRelationClass();
             relationTypeRegex = fullTypeRegex(defaultClass, optParRegex(relationTypeRegex));

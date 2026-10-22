@@ -14,7 +14,7 @@ import nl.inl.blacklab.plugins.param.PInteger;
 import nl.inl.blacklab.plugins.param.PList;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
@@ -86,7 +86,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         return argTypes;
     }
 
-    public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
+    public List<Object> preprocessArgs(TextPatternContext context, List<TextPattern> args) {
         // Make sure argument are interpreted as the correct type
         // (the parser interprets all values as queries, so we sometimes need to convert them back...)
         List<Object> newArgs = new ArrayList<>(args);
@@ -120,7 +120,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         return newArgs;
     }
 
-    public TextPattern.EvalResult apply(QueryExecutionContext context, List<Object> args) {
+    public TextPattern.EvalResult apply(TextPatternContext context, List<Object> args) {
         // Add any default argument values
         List<Object> newArgs = new ArrayList<>(args);
         int n = Math.max(newArgs.size(), requiredNumberOfArguments());
@@ -189,7 +189,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         return applyFunc(context, newArgs);
     }
 
-    protected abstract TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters);
+    protected abstract TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters);
 
     public int requiredNumberOfArguments() {
         return argTypes.size();

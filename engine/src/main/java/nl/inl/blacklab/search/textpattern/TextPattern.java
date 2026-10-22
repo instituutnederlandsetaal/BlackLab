@@ -8,7 +8,7 @@ import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.ExprType;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -131,7 +131,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @param arg the argument
      * @return the string value, or null if not a simple term/regex
      */
-    public static String getSimpleStringValue(QueryExecutionContext context, Object arg) {
+    public static String getSimpleStringValue(TextPatternContext context, Object arg) {
         String strValue = null;
         if (arg instanceof TextPatternCompare tpc) {
             // E.g. passing a string to a function was interpreted as a query on the
@@ -182,7 +182,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting value
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
-    public abstract EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery;
+    public abstract EvalResult evaluate(TextPatternContext context) throws InvalidQuery;
 
     /**
      * Visit this TextPattern, calculating some result value.
@@ -210,7 +210,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @param context query execution context to use
      * @return resulting MatchFilter
      */
-    public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
+    public MatchFilter toMatchFilter(TextPatternContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
             return mf;
@@ -226,7 +226,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting query
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
-    public BLSpanQuery toQuery(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery toQuery(TextPatternContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof BLSpanQuery q)
             return q;

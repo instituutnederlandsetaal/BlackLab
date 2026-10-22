@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.QueryFunction;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
@@ -32,7 +32,7 @@ public class TextPatternValue extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(TextPatternContext context) {
         if (context.isInConstraint()) {
             if (value instanceof ConstraintValueSymbol cvs) {
                 /** In constraint, symbol A in  :: start(A)  means "pass the span captured for A to start()",

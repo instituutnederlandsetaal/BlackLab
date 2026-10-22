@@ -13,7 +13,7 @@ import nl.inl.blacklab.plugins.param.PMatchInfo;
 import nl.inl.blacklab.plugins.param.PMultiple;
 import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.plugins.param.PString;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -53,7 +53,7 @@ public class XFRelations implements ExtensionFunctionClass {
     /** Default for relations captured using rcapture() */
     private static final String DEFAULT_RCAP_NAME = "captured_rels";
 
-    public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
+    public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, TextPatternContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs, boolean implicitCapture,
             RelationInfo.SpanMode spanMode, String targetField) {
         // Do we need to match a target, or don't we care?
@@ -78,7 +78,7 @@ public class XFRelations implements ExtensionFunctionClass {
         }
     }
 
-    public static String determineCaptureAs(QueryExecutionContext context, String relationType, boolean multiple) {
+    public static String determineCaptureAs(TextPatternContext context, String relationType, boolean multiple) {
         // Autodetermine capture name if no explicit name given.
         // Discard relation class if specified, keep Unicode letters from relationType, and add unique number
         String targetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(RelationUtil.classFromFullType(relationType));
@@ -128,7 +128,7 @@ public class XFRelations implements ExtensionFunctionClass {
             "Perform and AND operation with the additional requirement that clauses match unique relations",
             List.of(PList.optional("queries", PList.Validator.ALL_QUERIES)),
             List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM),
-            (QueryInfo queryInfo, QueryExecutionContext context, List<Object> parameters) -> {
+            (QueryInfo queryInfo, TextPatternContext context, List<Object> parameters) -> {
                     if (parameters.isEmpty())
                         throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
                     List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {

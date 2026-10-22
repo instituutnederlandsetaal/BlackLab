@@ -4,7 +4,7 @@ import java.util.List;
 
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PluginParam;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -20,7 +20,7 @@ public class QueryFunctionLambda extends QueryFunction {
     }
 
     @Override
-    protected TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    protected TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         // context will be null when evaluting constraints during matching
         QueryInfo queryInfo = context == null ? null : context.queryInfo();
         return func.apply(queryInfo, context, parameters);

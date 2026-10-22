@@ -430,9 +430,9 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to search
      * @return query execution context
      */
-    QueryExecutionContext defaultExecutionContext(String field, QueryInfo queryInfo);
+    TextPatternContext defaultExecutionContext(String field, QueryInfo queryInfo);
 
-    default QueryExecutionContext defaultExecutionContext(QueryInfo queryInfo) {
+    default TextPatternContext defaultExecutionContext(QueryInfo queryInfo) {
         return defaultExecutionContext(queryInfo.field(), queryInfo);
     }
 

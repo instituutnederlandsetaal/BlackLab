@@ -15,21 +15,22 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.webservice.WsParam;
 
 /**
- * Represents the context while evaluating a TextPattern query.
+ * Represents the context while evaluating a TextPattern.
  *
- * While evaluating a query, this context may change: a different annotation may be
- * "selected" to search in, the case sensitivity setting may change, etc. This
- * object is passed to the translation methods and keeps track of this context.
+ * While evaluating a TextPattern (i.e. translating it to a BLSpanQuery),
+ * this context may vary: a different annotation may be "selected" to
+ * search in, the case sensitivity setting may change, etc. This object
+ * is passed to the translation methods and keeps track of this context.
  *
  * The context also keeps track of whether we're in the query part or the
  * constraint part (after :: ), as this affects what object type the patterns
  * evaluate to (BLSpanQuery vs MatchFilter).
  */
-public class QueryExecutionContext {
+public class TextPatternContext {
 
-    public static QueryExecutionContext get(String annotatedField, String annotation,
+    public static TextPatternContext get(String annotatedField, String annotation,
             MatchSensitivity matchSensitivity, QueryInfo queryInfo) {
-        return new QueryExecutionContext(annotatedField, null, annotation,
+        return new TextPatternContext(annotatedField, null, annotation,
                 matchSensitivity, null, null, false, queryInfo);
     }
 
@@ -79,7 +80,7 @@ public class QueryExecutionContext {
      * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
      * @param queryInfo QueryInfo to use, or null to create a new one
      */
-    private QueryExecutionContext(String annotatedField, String version, String annotationName,
+    private TextPatternContext(String annotatedField, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
             QueryInfo queryInfo) throws InvalidQuery {
         if (queryInfo == null)
@@ -147,25 +148,25 @@ public class QueryExecutionContext {
         }
     }
 
-    public QueryExecutionContext withField(String field) {
+    public TextPatternContext withField(String field) {
         if (this.field.equals(field))
             return this;
-        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
+        return new TextPatternContext(field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
-    public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
+    public TextPatternContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             annotation = sensitivity.annotation();
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
         if (annotation == sensitivity.annotation() && matchSensitivity == requestedSensitivity)
             return this;
-        return new QueryExecutionContext(field, version, annotation.name(), matchSensitivity,
+        return new TextPatternContext(field, version, annotation.name(), matchSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
-    public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
+    public TextPatternContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
             throws InvalidQuery {
         Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
         if (annotationName != null && annotation == null)
@@ -173,7 +174,7 @@ public class QueryExecutionContext {
         return withAnnotationAndSensitivity(annotation, matchSensitivity);
     }
 
-    public QueryExecutionContext withRelationAnnotation() {
+    public TextPatternContext withRelationAnnotation() {
         if (!field().hasRelationAnnotation())
             throw new UnsupportedOperationException("Field " + field().name() + " has no relation annotation!");
         String name = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
@@ -188,10 +189,10 @@ public class QueryExecutionContext {
      * @param version document version to search
      * @return new context object
      */
-    public QueryExecutionContext withDocVersion(String version) {
+    public TextPatternContext withDocVersion(String version) {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
-        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
+        return new TextPatternContext(field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
@@ -201,18 +202,18 @@ public class QueryExecutionContext {
      * @param relClass default relation class to use if not overridden
      * @return new context object
      */
-    public QueryExecutionContext withDefaultRelationClass(String relClass) {
+    public TextPatternContext withDefaultRelationClass(String relClass) {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
-        return new QueryExecutionContext(field, version, annotationName, requestedSensitivity,
+        return new TextPatternContext(field, version, annotationName, requestedSensitivity,
                 relClass, captures, inConstraint, queryInfo);
     }
 
     /** Get new context with inConstraint set to true */
-    public QueryExecutionContext withInConstraint() {
+    public TextPatternContext withInConstraint() {
         if (inConstraint)
             return this;
-        return new QueryExecutionContext(field, version, annotationName,
+        return new TextPatternContext(field, version, annotationName,
                 requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
     }
 

@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
 import nl.inl.util.RangeRegex;
@@ -67,7 +67,7 @@ public class TextPatternTags extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(TextPatternContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
         String optDesensitizedElNameRegex = context.getSensitivity().desensitize(elementNameRegex);

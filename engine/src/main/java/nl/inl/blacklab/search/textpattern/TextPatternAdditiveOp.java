@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueInt;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterAdditiveOp;
@@ -34,7 +34,7 @@ public class TextPatternAdditiveOp extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         if (context.isInConstraint()) {
             MatchFilter a = left == null ? null : left.toMatchFilter(context);
             MatchFilter b = right.toMatchFilter(context);

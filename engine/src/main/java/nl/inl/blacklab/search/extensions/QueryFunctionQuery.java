@@ -4,7 +4,7 @@ import java.util.List;
 
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -16,7 +16,7 @@ public class QueryFunctionQuery extends QueryFunction {
                 null, false);
     }
 
-    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         Object o = parameters.get(0);
         if (o instanceof BLSpanQuery q)
             return q;
