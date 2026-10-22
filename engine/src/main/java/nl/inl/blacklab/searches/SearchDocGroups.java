@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.docs.DocGroups;
 /** A search that yields groups of documents. */
 public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
 
-    protected SearchDocGroups(Search<?> source) {
+    protected SearchDocGroups(AbstractSearch<?> source) {
         super(source.context());
     }
     

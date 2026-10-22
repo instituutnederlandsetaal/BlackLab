@@ -64,28 +64,11 @@ public interface Search<R extends SearchResult> {
      * the returned Future.
      *
      * This search may be queued (i.e. kept from starting until later) if load is high.
-     * To avoid this (and potential deadlock situations because of it), use
-     * {@link #executeAsyncNoQueue()} or {@link #executeAsync(boolean)}.
      *
      * @return future result
      */
     default SearchCacheEntry<R> executeAsync() {
         return executeAsync(true);
-    }
-
-    /**
-     * Execute the search operation asynchronously.
-     *
-     * Runs the search in a separate thread and passes the result through
-     * the returned Future.
-     *
-     * This search will be started right away, even if load is high.
-     * For more control, use {@link #executeAsync(boolean)}.
-     *
-     * @return future result
-     */
-    default SearchCacheEntry<R> executeAsyncNoQueue() {
-        return executeAsync(false);
     }
 
     /**
@@ -154,8 +137,6 @@ public interface Search<R extends SearchResult> {
             this.cache = cache == null ? new SearchCacheMap() : cache;
         }
     }
-
-    Context context();
 
     QueryTimings timings();
 

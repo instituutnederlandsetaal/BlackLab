@@ -120,8 +120,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
         return context.queryInfo();
     }
 
-    @Override
-    public Context context() {
+    protected Context context() {
         return context;
     }
 
