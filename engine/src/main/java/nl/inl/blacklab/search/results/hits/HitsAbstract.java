@@ -37,14 +37,14 @@ public abstract class HitsAbstract implements Hits {
      *  (performance testing) */
     private static boolean groupAfterFetching = true;
 
-    protected final HitsContext context;
+    protected final Context context;
 
-    protected HitsAbstract(HitsContext context) {
+    protected HitsAbstract(Context context) {
         this.context = context;
     }
 
     @Override
-    public HitsContext context() {
+    public Context context() {
         return context;
     }
 

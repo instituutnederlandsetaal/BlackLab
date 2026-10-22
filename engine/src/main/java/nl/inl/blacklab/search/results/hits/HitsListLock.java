@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  */
 class HitsListLock extends HitsListNoLock {
 
-    HitsListLock(Hits.HitsContext context, long initialCapacity) {
+    HitsListLock(Context context, long initialCapacity) {
         super(context, initialCapacity);
         lock = new ReentrantReadWriteLock();
     }

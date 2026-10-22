@@ -44,7 +44,7 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     /** Lock (for the classes that do locking; otherwise null) */
     ReadWriteLock lock;
 
-    HitsListAbstract(Hits.HitsContext context) {
+    HitsListAbstract(Context context) {
         super(context);
     }
 

@@ -30,7 +30,7 @@ public class TestHitsFromPublishers {
      * immediately or remain open depending on the test.
      */
     private static final class ControlledPublisher implements HitPublisher {
-        private final Hits.HitsContext context = new Hits.HitsContext(null, "test");
+        private final Hits.Context context = new Hits.Context(null, "test");
         private final boolean finish;
         private HitSubscriber subscriber;
         private boolean published;
@@ -60,7 +60,7 @@ public class TestHitsFromPublishers {
         }
 
         @Override
-        public Hits.HitsContext context() {
+        public Hits.Context context() {
             return context;
         }
 
@@ -75,7 +75,7 @@ public class TestHitsFromPublishers {
      * count, hit, completion, or failure callbacks explicitly.
      */
     private static final class ManualPublisher implements HitPublisher {
-        private final Hits.HitsContext context = new Hits.HitsContext(null, "test");
+        private final Hits.Context context = new Hits.Context(null, "test");
         private final Hits hit = Hits.single(context, 0, 0, 1);
         private final CountDownLatch activated = new CountDownLatch(1);
         private HitSubscriber subscriber;
@@ -92,7 +92,7 @@ public class TestHitsFromPublishers {
         }
 
         @Override
-        public Hits.HitsContext context() {
+        public Hits.Context context() {
             return context;
         }
 

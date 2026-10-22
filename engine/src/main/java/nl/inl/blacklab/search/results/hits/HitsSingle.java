@@ -7,11 +7,11 @@ public class HitsSingle extends HitsAbstract {
 
     EphemeralHit hit = new EphemeralHit();
 
-    public HitsSingle(HitsContext context) {
+    public HitsSingle(Context context) {
         super(context);
     }
 
-    public HitsSingle(HitsContext context, int doc, int matchStart, int matchEnd) {
+    public HitsSingle(Context context, int doc, int matchStart, int matchEnd) {
         this(context);
         hit.doc_ = doc;
         hit.start_ = matchStart;

@@ -21,12 +21,12 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  */
 class HitsListLock32 extends HitsListNoLock32 {
 
-    HitsListLock32(Hits.HitsContext context, int initialCapacity) {
+    HitsListLock32(Context context, int initialCapacity) {
         super(context, initialCapacity);
         lock = new ReentrantReadWriteLock();
     }
 
-    HitsListLock32(Hits.HitsContext context,
+    HitsListLock32(Context context,
             IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         super(context, docs, starts, ends, matchInfos);
         lock = new ReentrantReadWriteLock();

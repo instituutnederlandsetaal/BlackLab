@@ -380,7 +380,7 @@ public class HitsFromPublishers extends HitsAbstract {
     }
 
     @Override
-    public HitsContext context() {
+    public Context context() {
         return context;
     }
 

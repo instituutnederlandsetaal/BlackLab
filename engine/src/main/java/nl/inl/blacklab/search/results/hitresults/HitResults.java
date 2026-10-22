@@ -72,7 +72,7 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults empty(QueryInfo queryInfo) {
-        return new HitResultsList(queryInfo, Hits.empty(new Hits.HitsContext(queryInfo)));
+        return new HitResultsList(queryInfo, Hits.empty(new Hits.Context(queryInfo)));
     }
 
     /**

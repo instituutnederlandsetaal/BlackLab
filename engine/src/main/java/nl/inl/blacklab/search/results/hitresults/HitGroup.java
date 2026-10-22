@@ -84,7 +84,7 @@ public class HitGroup implements HitOrDocGroup {
             long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery,
             HitGroupScorer scorer) {
         HitResultsList results = new HitResultsList(queryInfo,
-                Hits.empty(new Hits.HitsContext(queryInfo)), totalDocuments,
+                Hits.empty(new Hits.Context(queryInfo)), totalDocuments,
                 totalSize, totalDocuments, maxStats);
         return new HitGroup(groupIdentity, results, totalSize, totalDocuments, hitsInGroupQuery, scorer);
     }

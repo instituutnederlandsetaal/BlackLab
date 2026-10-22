@@ -39,7 +39,7 @@ class HitsListNoLock extends HitsListAbstract {
     protected final IntBigList ends;
     protected final ObjectBigList<MatchInfo[]> matchInfos;
 
-    HitsListNoLock(Hits.HitsContext context, long initialCapacity) {
+    HitsListNoLock(Context context, long initialCapacity) {
         super(context);
         if (initialCapacity < 0) {
             // Use default initial capacities
@@ -67,7 +67,7 @@ class HitsListNoLock extends HitsListAbstract {
      * @param ends          hit end positions
      * @param matchInfos    match info for each hit, or empty if no match info
      */
-    HitsListNoLock(Hits.HitsContext context, IntBigList docs, IntBigList starts, IntBigList ends, ObjectBigList<MatchInfo[]> matchInfos) {
+    HitsListNoLock(Context context, IntBigList docs, IntBigList starts, IntBigList ends, ObjectBigList<MatchInfo[]> matchInfos) {
         super(context);
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();

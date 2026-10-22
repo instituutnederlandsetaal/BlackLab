@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestHitsFromFetcher {
-    public static final Hits.HitsContext DUMMY_CONTEXT = new Hits.HitsContext(null,"test", MatchInfoDefs.EMPTY, null);
+    public static final Hits.Context DUMMY_CONTEXT = new Hits.Context(null,"test", MatchInfoDefs.EMPTY, null);
 
     public final TestIndex testIndex = TestIndex.get();
 
@@ -67,7 +67,7 @@ public class TestHitsFromFetcher {
             }
 
             @Override
-            public Hits.HitsContext context() {
+            public Hits.Context context() {
                 return DUMMY_CONTEXT;
             }
 
@@ -130,7 +130,7 @@ public class TestHitsFromFetcher {
             }
 
             @Override
-            public Hits.HitsContext context() {
+            public Hits.Context context() {
                 return DUMMY_CONTEXT;
             }
 

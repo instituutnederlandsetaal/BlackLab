@@ -25,7 +25,7 @@ public class HitPublisherFilter implements HitPublisher {
 
     public HitPublisherFilter(HitPublisher source, HitFilter filter) {
         this.source = source;
-        Hits.HitsContext context = source.context();
+        Hits.Context context = source.context();
         output = new HitPublisherOutput(context);
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
 
@@ -104,7 +104,7 @@ public class HitPublisherFilter implements HitPublisher {
     }
 
     @Override
-    public Hits.HitsContext context() {
+    public Hits.Context context() {
         return output.context();
     }
 

@@ -40,24 +40,24 @@ public interface Hits extends Iterable<EphemeralHit> {
 
     Logger logger = LogManager.getLogger(Hits.class);
 
-    /** Context for our hit: field, match info definitions and segment they came from (or null if global) */
-    record HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
-        public HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+    /** Context for our hits: field, match info definitions and segment they came from (or null if global) */
+    record Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
             this.index = index;
             this.field = field;
             this.matchInfoDefs = matchInfoDefs != null ? matchInfoDefs : MatchInfoDefs.EMPTY;
             this.leafReaderContext = leafReaderContext;
         }
 
-        public HitsContext(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs) {
+        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs) {
             this(index, field, matchInfoDefs, null);
         }
 
-        public HitsContext(QueryInfo queryInfo) {
+        public Context(QueryInfo queryInfo) {
             this(queryInfo.index(), queryInfo.field(), MatchInfoDefs.EMPTY, null);
         }
 
-        public HitsContext(BlackLabIndex index, String field) {
+        public Context(BlackLabIndex index, String field) {
             this(index, field, MatchInfoDefs.EMPTY, null);
         }
 
@@ -65,13 +65,13 @@ public interface Hits extends Iterable<EphemeralHit> {
             return index;
         }
 
-        public HitsContext withoutLeafReaderContext() {
-            return new HitsContext(index, field, matchInfoDefs, null);
+        public Context withoutLeafReaderContext() {
+            return new Context(index, field, matchInfoDefs, null);
         }
     }
 
     /** An empty list of hits. */
-    static Hits empty(Hits.HitsContext context) {
+    static Hits empty(Context context) {
         return new HitsListNoLock32(context, -1);
     }
 
@@ -80,17 +80,17 @@ public interface Hits extends Iterable<EphemeralHit> {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(new HitsContext(field.index(), field.name(), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new Context(field.index(), field.name(), MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
     }
 
-    static Hits single(HitsContext context, int doc, int matchStart, int matchEnd) {
+    static Hits single(Context context, int doc, int matchStart, int matchEnd) {
         if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
             throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
         return new HitsSingle(context, doc, matchStart, matchEnd);
     }
 
-    HitsContext context();
+    Context context();
 
     /**
      * Type of each of our match infos.
@@ -393,7 +393,7 @@ public interface Hits extends Iterable<EphemeralHit> {
     default HitPublisher publisher() {
         return new HitPublisher() {
             @Override
-            public HitsContext context() {
+            public Context context() {
                 return Hits.this.context();
             }
 

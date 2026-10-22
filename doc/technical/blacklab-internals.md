@@ -235,18 +235,19 @@ You can think of these as properties needed for a phase in the whole search proc
 - is created first
 - passed to the `Search*` classes, which pass it to parsing, query generation and result gathering 
 - knows index and search field
+- rename to `IndexAndField`?
 - index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
 
 #### Search.Context
 
 - each `Search` has one
-- knows QueryInfo, cache, timings(DEBUG)
+- knows `QueryInfo`, cache, timings(DEBUG)
 
 #### QueryExecutionContext
 
 - used during translation of `TextPattern` to `BLSpanQuery`
 - should really be renamed to e.g.`TextPatternTranslationContext`, but that could break plugins
-- knows index, search field (because it has a reference to `QueryInfo`), current parallel version, annotation, sensitivity, def.rel.class, inconstraint
+- knows `QueryInfo`, current parallel version, annotation, sensitivity, def.rel.class, inconstraint
 
 ### MISSING? Context for actually executing the query
 
@@ -257,7 +258,8 @@ You can think of these as properties needed for a phase in the whole search proc
 - each `BLSpans` gets one
 - knows default field / current field, `MatchInfoDefs`
 
-#### Hits.HitsContext
+#### Hits.Context
 
 - each `Hits` gets one
 - knows index, field, `MatchInfoDefs`, originating segment (if segment hits)
+- replace index and field with `QueryInfo`/`IndexAndField`?
