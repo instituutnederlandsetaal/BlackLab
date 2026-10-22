@@ -31,16 +31,15 @@ import nl.inl.util.ZipHandleManager;
  * Main BlackLab class, from which indexes can be opened.
  * 
  * You can either open indices using the static methods in this class,
- * or you can create() a BlackLabEngine and use that to open indices.
+ * or you can call createEngine() to get a BlackLabEngine object and use
+ * that to open indices.
  * 
  * The first approach will implicitly create a default BlackLabEngine
- * in the background, with 4 search threads. If you want a different
- * number of search threads, call create() to create your own instance
- * of BlackLabEngine.
+ * in the background. If you want a different number of search threads,
+ * call createEngine() to create your own instance of BlackLabEngine.
  * 
- * Don't try to mix these two methods; if an implicit engine exists and
- * you call create(), or if you call e.g. BlackLab.open() when you've
- * already created an engine explicitly, an exception will be thrown.
+ * Only one engine may exist at a time, so don't try to create one when
+ * an implicit one has already been created.
  * 
  * If you explicitly create an engine, make sure to close it when you're
  * done. For the implicit engine, this is done automatically when you

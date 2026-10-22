@@ -26,12 +26,11 @@ import nl.inl.util.VersionFile;
 /**
  * Main BlackLab instance, from which indexes can be opened.
  *
- * If you don't instantiate this, but call BlackLab.openIndex() directly,
- * an implicit instance will be created that will be closed when you close
- * the last index.
- *
- * Instantiating this explicitly has the advantage of being able to pass
- * parameters, such as the number of search thread you want (default 4).
+ * If you call BlackLab.open(), an implicit instance will be created
+ * that will be closed when you close the last index. If you want more
+ * control, you can call BlackLab.createEngine() to create your own
+ * instance of BlackLabEngine. This has the advantage of being able to pass
+ * parameters, such as the number of search thread you want (default autodetect).
  */
 public final class BlackLabEngine implements AutoCloseable {
 
@@ -90,7 +89,7 @@ public final class BlackLabEngine implements AutoCloseable {
     private final AtomicInteger threadCounter = new AtomicInteger(1);
 
     /** Were we implicitly created? If so, also implicitly close when the last index is closed */
-    private boolean implicit;
+    private final boolean implicit;
 
     /** Was close() called on this engine? */
     private boolean wasClosed;
@@ -205,7 +204,10 @@ public final class BlackLabEngine implements AutoCloseable {
         if (wasClosed)
             return;
         synchronized (BlackLabEngine.class) {
-            instance = null;
+            if (instance == this)
+                instance = null;
+            else
+                throw new IllegalStateException("Cannot close engine: this is not the current instance");
         }
         wasClosed = true;
         closeExecutorPool(searchExecutorService);
