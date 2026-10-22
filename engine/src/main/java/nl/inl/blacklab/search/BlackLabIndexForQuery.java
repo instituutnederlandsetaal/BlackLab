@@ -2,7 +2,7 @@ package nl.inl.blacklab.search;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
-/** Partial interface to a BlackLabIndex needed by BLSpanQuery. */
+/** Partial interface to a BlackLabIndex needed by BLSpanQuery implementations. */
 public interface BlackLabIndexForQuery {
 
     /** If a parallel version is passed without the base name of the annotated field,

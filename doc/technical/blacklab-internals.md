@@ -223,5 +223,37 @@ BLSpans
   # Bucketed spans allow random access to a group of matches
   SpansInBucketsPerDocument   (all matches from 1 doc in 1 bucket)
   SpansInBucketsConsecutive   (all consecutive matches in 1 bucket for repetition matching)
-
 ```
+
+### Context objects
+
+BlackLab uses various context objects to pass information around when interpreting and executing queries.
+You can think of these as properties needed for a phase in the whole search process. Properties are usually constant (i.e. index) but different parts of the query might have slightly different contexts (i.e. what parallel version this part of the query searches).
+
+#### QueryInfo
+
+- is created first
+- passed to the `Search*` classes, which pass it to parsing, query generation and result gathering 
+- knows index, search field, cache, timings(DEBUG)
+- cache and timings are tied to `Search*` - separate out? index and (main) search field are more or less universal
+- index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
+
+#### QueryExecutionContext
+
+- used during translation of `TextPattern` to `BLSpanQuery`
+- should really be renamed to e.g.`TextPatternTranslationContext` because it is only used for that
+- knows index, search field (because it has a reference to `QueryInfo`), current parallel version, annotation, sensitivity, def.rel.class, inconstraint, 
+
+### MISSING? Context for actually executing the query
+
+- This would cover how to execute: what executor, max threads, etc. - we can ask the index, but better to isolate these settings in a separate context object?
+
+#### HitQueryContext
+
+- each `BLSpans` gets one
+- knows default field / current field, `MatchInfoDefs`
+
+#### Hits.HitsContext
+
+- each `Hits` gets one
+- knows index, field, `MatchInfoDefs`, originating segment (if segment hits)
