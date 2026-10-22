@@ -30,7 +30,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     protected List<BLSpanQuery> clauses;
 
     protected BLSpanQueryAbstract(Collection<BLSpanQuery> clauses) {
-        super(getQueryInfo(clauses));
+        super(getIndexAndField(clauses));
         this.clauses = new ArrayList<>(clauses);
         baseFieldName = checkAllCompatibleFields(clauses);
         luceneFieldName = getLuceneFieldName(clauses);
@@ -44,7 +44,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         return "";
     }
 
-    private static IndexAndField getQueryInfo(Collection<BLSpanQuery> clauses) {
+    private static IndexAndField getIndexAndField(Collection<BLSpanQuery> clauses) {
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
                 return clause.indexAndField;
@@ -126,11 +126,11 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
     
     @Override
-    public void setQueryInfo(IndexAndField indexAndField) {
-        super.setQueryInfo(indexAndField);
+    public void setIndexAndField(IndexAndField indexAndField) {
+        super.setIndexAndField(indexAndField);
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
-                clause.setQueryInfo(indexAndField);
+                clause.setIndexAndField(indexAndField);
         }
     }
 }

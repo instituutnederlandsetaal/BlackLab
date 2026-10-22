@@ -27,7 +27,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
-    public static IndexAndField getQueryInfo(IndexAndField indexAndField, String targetField) {
+    public static IndexAndField getIndexAndField(IndexAndField indexAndField, String targetField) {
         return targetField == null ? indexAndField : indexAndField.withField(targetField);
     }
 
@@ -36,7 +36,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     private final String targetField;
 
     public SpanQueryOtherFieldHits(BLSpanQuery clause, @NonNull String targetField) {
-        super(getQueryInfo(clause.indexAndField, targetField));
+        super(getIndexAndField(clause.indexAndField, targetField));
         this.clause = clause;
         this.targetField = targetField;
 
@@ -146,8 +146,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(IndexAndField indexAndField) {
-        super.setQueryInfo(indexAndField);
-        clause.setQueryInfo(clause.getAnnotatedFieldName() == null ? indexAndField : indexAndField.withField(clause.getAnnotatedFieldName()));
+    public void setIndexAndField(IndexAndField indexAndField) {
+        super.setIndexAndField(indexAndField);
+        clause.setIndexAndField(clause.getAnnotatedFieldName() == null ? indexAndField : indexAndField.withField(clause.getAnnotatedFieldName()));
     }
 }

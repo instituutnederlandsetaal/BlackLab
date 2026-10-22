@@ -354,7 +354,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      *
      * @param indexAndField query info object
      */
-    public void setQueryInfo(IndexAndField indexAndField) {
+    public void setIndexAndField(IndexAndField indexAndField) {
         this.indexAndField = indexAndField;
     }
 

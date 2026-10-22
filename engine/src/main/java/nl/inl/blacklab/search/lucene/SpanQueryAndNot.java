@@ -184,7 +184,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     private SpansAndFilterFactory filterFactory = null;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
-        super(determineQueryInfo(include, exclude));
+        super(determineIndexAndField(include, exclude));
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         assert !(this.include.isEmpty() && this.exclude.isEmpty());
@@ -195,7 +195,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
     }
 
-    private static @Nullable IndexAndField determineQueryInfo(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
+    private static @Nullable IndexAndField determineIndexAndField(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         if (include != null && !include.isEmpty())
             return include.get(0).indexAndField;
         if (exclude != null && !exclude.isEmpty())
@@ -587,13 +587,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(IndexAndField indexAndField) {
-        super.setQueryInfo(indexAndField);
+    public void setIndexAndField(IndexAndField indexAndField) {
+        super.setIndexAndField(indexAndField);
         for (BLSpanQuery cl: include) {
-            cl.setQueryInfo(indexAndField);
+            cl.setIndexAndField(indexAndField);
         }
         for (BLSpanQuery cl: exclude) {
-            cl.setQueryInfo(indexAndField);
+            cl.setIndexAndField(indexAndField);
         }
     }
 }

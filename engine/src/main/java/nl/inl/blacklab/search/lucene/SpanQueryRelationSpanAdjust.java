@@ -173,8 +173,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(IndexAndField indexAndField) {
-        super.setQueryInfo(indexAndField);
-        clause.setQueryInfo(indexAndField);
+    public void setIndexAndField(IndexAndField indexAndField) {
+        super.setIndexAndField(indexAndField);
+        clause.setIndexAndField(indexAndField);
     }
 }

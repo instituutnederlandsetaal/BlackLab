@@ -16,7 +16,7 @@ public class TestHitResultsSample {
 
     private static void assertSample(int[] expected, SampleParameters param) {
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            HitResults hitResults = HitResults.list(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
+            HitResults hitResults = HitResults.list(index.createDefaultIndexAndField(), A_DOC, A_START, A_END).sample(param);
             int i = 0;
             Assert.assertEquals(expected.length, hitResults.size());
             for (EphemeralHit hit: hitResults.getHits()) {

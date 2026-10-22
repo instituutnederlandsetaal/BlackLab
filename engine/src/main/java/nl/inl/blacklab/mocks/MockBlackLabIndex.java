@@ -80,7 +80,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         blackLab.registerIndex(null, this);
     }
     
-    public IndexAndField createDefaultQueryInfo() {
+    public IndexAndField createDefaultIndexAndField() {
         return IndexAndField.create(this, mainAnnotatedField().name());
     }
 

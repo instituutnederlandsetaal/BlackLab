@@ -45,8 +45,8 @@ public class HitResultsFromQuery extends HitResultsAbstract {
 
     protected HitResultsFromQuery(IndexAndField indexAndField, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
-        super(SpanQueryOtherFieldHits.getQueryInfo(indexAndField, sourceQuery.getAnnotatedFieldName()));
-        sourceQuery.setQueryInfo(this.indexAndField);
+        super(SpanQueryOtherFieldHits.getIndexAndField(indexAndField, sourceQuery.getAnnotatedFieldName()));
+        sourceQuery.setIndexAndField(this.indexAndField);
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;
         ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
