@@ -234,9 +234,13 @@ You can think of these as properties needed for a phase in the whole search proc
 
 - is created first
 - passed to the `Search*` classes, which pass it to parsing, query generation and result gathering 
-- knows index, search field, cache, timings(DEBUG)
-- cache and timings are tied to `Search*` - separate out? index and (main) search field are more or less universal
+- knows index and search field
 - index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
+
+#### Search.Context
+
+- each `Search` has one
+- knows QueryInfo, cache, timings(DEBUG)
 
 #### QueryExecutionContext
 

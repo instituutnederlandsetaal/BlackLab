@@ -15,7 +15,7 @@ public class SearchDocsFiltered extends SearchDocs {
     private final PropertyValue value;
 
     public SearchDocsFiltered(SearchDocs source, DocProperty sortBy, PropertyValue value) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = sortBy;
         this.value = value;

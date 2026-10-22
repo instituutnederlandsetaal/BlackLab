@@ -14,7 +14,7 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     private final HitGroupProperty property;
 
     public SearchHitGroupsSorted(SearchHitGroups source, HitGroupProperty sortBy) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = sortBy;
     }

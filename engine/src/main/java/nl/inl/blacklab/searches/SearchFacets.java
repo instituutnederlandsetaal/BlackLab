@@ -13,7 +13,7 @@ public class SearchFacets extends AbstractSearch<Facets> {
     private final List<DocProperty> properties;
 
     public SearchFacets(SearchDocs source, List<DocProperty> properties) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.properties = properties;
     }

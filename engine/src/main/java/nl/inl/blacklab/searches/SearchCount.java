@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 public abstract class SearchCount extends AbstractSearch<ResultsStats> {
 
     protected SearchCount(Search<?> source) {
-        super(source);
+        super(source.context());
     }
 
 }

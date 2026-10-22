@@ -15,7 +15,7 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
     private final long number;
 
     public SearchHitGroupsWindow(SearchHitGroups source, long first, long number) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.first = first;
         this.number = number;

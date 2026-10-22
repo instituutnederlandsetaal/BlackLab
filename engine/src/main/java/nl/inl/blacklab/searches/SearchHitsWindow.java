@@ -14,7 +14,7 @@ public class SearchHitsWindow extends SearchHits {
     private final long number;
 
     SearchHitsWindow(SearchHits source, long first, long number) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.first = first;
         this.number = number;

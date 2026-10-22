@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.docs.DocGroups;
 public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
 
     protected SearchDocGroups(Search<?> source) {
-        super(source);
+        super(source.context());
     }
     
     /**

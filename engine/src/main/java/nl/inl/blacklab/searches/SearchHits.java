@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
@@ -19,12 +18,8 @@ import nl.inl.blacklab.search.textpattern.CompleteQuery;
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchForResults<HitResults> {
 
-    protected SearchHits(Search<?> source) {
-        super(source);
-    }
-
-    protected SearchHits(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    protected SearchHits(Context context) {
+        super(context);
     }
     
     /**
@@ -125,7 +120,7 @@ public abstract class SearchHits extends SearchForResults<HitResults> {
      * @return resulting operation
      */
     public SearchCollocations collocations(Annotation annotation, ContextSize size, MatchSensitivity sensitivity) {
-        return new SearchCollocationsFromHits(queryInfo(), this, annotation, size, sensitivity);
+        return new SearchCollocationsFromHits(this, annotation, size, sensitivity);
     }
 
     /** Does this query represent all tokens in a set of documents (possibly the whole index)?

@@ -700,8 +700,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
+        QueryInfo queryInfo = QueryInfo.create(this, field.name());
         SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
-        return new SearchEmpty(QueryInfo.create(this, field.name()), new Search.SearchContext(cacheToUse));
+        return new SearchEmpty(new Search.Context(queryInfo, cacheToUse));
     }
 
     @Override

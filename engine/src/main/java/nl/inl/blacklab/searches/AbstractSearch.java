@@ -22,21 +22,10 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
 
-    private final QueryInfo queryInfo;
-
     /** How long executing certain parts of the operation took. */
-    private final SearchContext context;
+    private final Context context;
 
-    protected AbstractSearch(Search<?> source) {
-        this(source.queryInfo(), source.context());
-    }
-
-    protected AbstractSearch(QueryInfo queryInfo, SearchCache cache) {
-        this(queryInfo, new SearchContext(cache));
-    }
-
-    protected AbstractSearch(QueryInfo queryInfo, SearchContext context) {
-        this.queryInfo = queryInfo;
+    protected AbstractSearch(Context context) {
         this.context = context;
     }
 
@@ -128,11 +117,11 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
 
     @Override
     public QueryInfo queryInfo() {
-        return queryInfo;
+        return context.queryInfo();
     }
 
     @Override
-    public SearchContext context() {
+    public Context context() {
         return context;
     }
 
@@ -145,12 +134,12 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     public boolean equals(Object o) {
         if (!(o instanceof AbstractSearch<?> that))
             return false;
-        return Objects.equals(queryInfo, that.queryInfo);
+        return Objects.equals(context, that.context);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(queryInfo);
+        return Objects.hashCode(context);
     }
 
     protected static String toString(String operation, Object... param) {

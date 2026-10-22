@@ -14,7 +14,7 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     private final SampleParameters sampleParameters;
 
     public SearchHitGroupsSampled(SearchHitGroups source, SampleParameters sampleParameters) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

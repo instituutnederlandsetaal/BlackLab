@@ -13,7 +13,7 @@ public class SearchHitsSorted extends SearchHits {
     private final HitProperty property;
 
     SearchHitsSorted(SearchHits source, HitProperty sortBy) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = sortBy;
     }

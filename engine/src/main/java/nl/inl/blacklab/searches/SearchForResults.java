@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
 
@@ -10,12 +9,8 @@ import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
  */
 public abstract class SearchForResults<R extends Results> extends AbstractSearch<R> {
 
-    protected SearchForResults(Search<?> source) {
-        super(source);
-    }
-
-    SearchForResults(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    SearchForResults(Context context) {
+        super(context);
     }
 
     /**

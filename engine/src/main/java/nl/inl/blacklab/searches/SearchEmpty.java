@@ -13,8 +13,8 @@ import nl.inl.blacklab.search.textpattern.CompleteQuery;
  */
 public class SearchEmpty extends AbstractSearch<SearchResult> {
     
-    public SearchEmpty(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    public SearchEmpty(Context context) {
+        super(context);
     }
 
     @Override
@@ -27,7 +27,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
             // If no settings given, use the default
             searchSettings = queryInfo().index().searchSettings();
         }
-        return new SearchHitsFromQuery(queryInfo(), context(), query, searchSettings);
+        return new SearchHitsFromQuery(context(), query, searchSettings);
     }
 
     public SearchHits find(CompleteQuery query) {
@@ -35,7 +35,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
     
     public SearchDocs findDocuments(Query documentQuery) {
-        return new SearchDocsFromQuery(queryInfo(), context(), documentQuery);
+        return new SearchDocsFromQuery(context(), documentQuery);
     }
     
     @Override

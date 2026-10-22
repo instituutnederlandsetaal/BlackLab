@@ -11,7 +11,7 @@ public class SearchDocsSorted extends SearchDocs {
     private final DocProperty property;
 
     public SearchDocsSorted(SearchDocs docsSearch, DocProperty sortBy) {
-        super(docsSearch);
+        super(docsSearch.context());
         this.source = docsSearch;
         this.property = sortBy;
     }

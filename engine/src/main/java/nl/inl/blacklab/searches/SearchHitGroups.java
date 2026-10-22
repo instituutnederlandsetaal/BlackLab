@@ -2,20 +2,15 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.QueryTimings;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 
 /** A search that yields groups of hits. */
 public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
 
-    protected SearchHitGroups(Search<?> source) {
-        super(source);
-    }
-
-    protected SearchHitGroups(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    protected SearchHitGroups(Context context) {
+        super(context);
     }
 
     /**

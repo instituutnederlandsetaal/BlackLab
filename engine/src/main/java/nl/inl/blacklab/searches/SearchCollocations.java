@@ -4,7 +4,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /**
@@ -12,12 +11,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public abstract class SearchCollocations extends AbstractSearch<TermFrequencyList> {
 
-    protected SearchCollocations(Search<?> source) {
-        super(source);
-    }
-
-    protected SearchCollocations(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    protected SearchCollocations(Context context) {
+        super(context);
     }
 
     /**

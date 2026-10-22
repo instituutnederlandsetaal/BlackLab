@@ -19,7 +19,7 @@ public class SearchCollocationsFiltered extends SearchCollocations {
     private final PropertyValue value;
 
     protected SearchCollocationsFiltered(SearchCollocations source, ResultProperty property, PropertyValue value) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = property;
         this.value = value;

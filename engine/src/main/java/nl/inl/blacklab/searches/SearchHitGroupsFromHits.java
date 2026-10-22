@@ -41,7 +41,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     public SearchHitGroupsFromHits(SearchHits hitsSearch, HitProperty groupBy,
             long maxResultsToStorePerGroup, boolean mustStoreHits, HitGroupScorer scorer) {
-        super(hitsSearch);
+        super(hitsSearch.context());
         this.source = hitsSearch;
         this.property = groupBy;
         this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;

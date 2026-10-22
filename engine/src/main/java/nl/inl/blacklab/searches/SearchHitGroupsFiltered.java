@@ -18,7 +18,7 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
     private final PropertyValue value;
 
     public SearchHitGroupsFiltered(SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = property;
         this.value = value;

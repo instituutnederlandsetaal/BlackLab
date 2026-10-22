@@ -14,7 +14,7 @@ public class SearchDocsWindow extends SearchDocs {
     private final long number;
 
     public SearchDocsWindow(SearchDocs docsSearch, long first, long number) {
-        super(docsSearch);
+        super(docsSearch.context());
         this.source = docsSearch;
         this.first = first;
         this.number = number;

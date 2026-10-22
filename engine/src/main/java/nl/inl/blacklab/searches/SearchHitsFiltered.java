@@ -16,7 +16,7 @@ public class SearchHitsFiltered extends SearchHits {
     private final PropertyValue value;
 
     SearchHitsFiltered(SearchHits source, HitProperty property, PropertyValue value) {
-        super(source);
+        super(source.context());
         this.source = source;
         this.property = property;
         this.value = value;

@@ -18,8 +18,8 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     private final ContextSize contextSize;
     private final MatchSensitivity sensitivity;
 
-    public SearchCollocationsFromHits(QueryInfo queryInfo, SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
-        super(source);
+    public SearchCollocationsFromHits(SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
+        super(source.context());
         this.source = source;
         this.annotation = annotation;
         this.contextSize = contextSize;

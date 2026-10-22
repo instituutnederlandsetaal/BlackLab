@@ -12,7 +12,7 @@ public class SearchDocsFromHits extends SearchDocs {
     private long maxHits = 0;
 
     public SearchDocsFromHits(SearchHits hitSearch, long maxHitsToGatherPerDocument) {
-        super(hitSearch);
+        super(hitSearch.context());
         this.source = hitSearch;
         this.maxHits = maxHitsToGatherPerDocument;
     }

@@ -11,7 +11,7 @@ public class SearchDocsSampled extends SearchDocs {
     private final SampleParameters sampleParameters;
 
     public SearchDocsSampled(SearchDocs docsSearch, SampleParameters sampleParameters) {
-        super(docsSearch);
+        super(docsSearch.context());
         this.source = docsSearch;
         this.sampleParameters = sampleParameters;
     }

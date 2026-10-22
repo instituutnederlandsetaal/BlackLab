@@ -5,19 +5,14 @@ import java.util.List;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 /** A search that produces DocResults. */
 public abstract class SearchDocs extends SearchForResults<DocResults> {
 
-    protected SearchDocs(Search<?> source) {
-        super(source);
-    }
-
-    protected SearchDocs(QueryInfo queryInfo, SearchContext context) {
-        super(queryInfo, context);
+    protected SearchDocs(Context context) {
+        super(context);
     }
     
     /**
