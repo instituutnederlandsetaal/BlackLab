@@ -654,38 +654,40 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     boolean isFragmentQuery(Query query);
 
-    default BlackLabIndexForQuery forQuery() {
+    BlackLabIndexForQuery forQuery();
+
+    static @NonNull BlackLabIndexForQuery forQuery(BlackLabIndex index) {
         return new BlackLabIndexForQuery() {
 
             @Override
             public @NonNull String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
-                return annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
+                return index.annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
             }
 
             @Override
             public String annotatedFieldNameMainLuceneField(String anntatedFieldName) {
-                return annotatedField(anntatedFieldName).mainAnnotation().mainSensitivity().luceneField();
+                return index.annotatedField(anntatedFieldName).mainAnnotation().mainSensitivity().luceneField();
             }
 
             @Override
             public String mainAnnotatedFieldName() {
-                return mainAnnotatedField().name();
+                return index.mainAnnotatedField().name();
             }
 
             @Override
             public boolean hasForwardIndex(String annotatedField, String annotation) {
-                return annotatedField(annotatedField).annotation(annotation).hasForwardIndex();
+                return index.annotatedField(annotatedField).annotation(annotation).hasForwardIndex();
             }
 
             @Override
             public ForwardIndexAccessor forwardIndexAccessor(String annotatedField) {
                 return new ForwardIndexAccessorGlobal(
-                        BlackLabIndex.this, annotatedField);
+                        index, annotatedField);
             }
 
             @Override
             public BlackLabEngine blackLab() {
-                return BlackLabIndex.this.blackLab();
+                return index.blackLab();
             }
         };
     }

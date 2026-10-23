@@ -164,6 +164,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     /** Index of segments by their doc base (the number to add to get global docId) */
     protected final LeafReaderLookup leafReaderLookup;
 
+    /** Reduced API for the BLSpanQuery classes. */
+    private final BlackLabIndexForQuery forQuery = BlackLabIndex.forQuery(this);
+
     // Constructors
     //---------------------------------------------------------------
 
@@ -777,5 +780,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         };
         query.visit(isFragmentQueryVisitor);
         return result[0];
+    }
+
+    @Override
+    public BlackLabIndexForQuery forQuery() {
+        return forQuery;
     }
 }

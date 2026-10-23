@@ -24,6 +24,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -67,6 +68,13 @@ public class MockBlackLabIndex implements BlackLabIndex {
     private final FreqListCache freqListCache = new FreqListCache();
 
     private final BlackLabEngine blackLab;
+
+    private final BlackLabIndexForQuery forQuery = BlackLabIndex.forQuery(this);
+
+    @Override
+    public BlackLabIndexForQuery forQuery() {
+        return forQuery;
+    }
 
     public MockBlackLabIndex() {
         super();
