@@ -15,7 +15,7 @@ public interface BlackLabIndexForQuery {
      */
     @NonNull String fullAnnotatedFieldName(String fieldOrVersion);
 
-    String annotatedFieldNameMainLuceneField(String anntatedFieldName);
+    String annotatedFieldNameMainLuceneField(String anntatedFieldName, String annotation);
 
     boolean hasForwardIndex(String annotatedField, String annotation);
 

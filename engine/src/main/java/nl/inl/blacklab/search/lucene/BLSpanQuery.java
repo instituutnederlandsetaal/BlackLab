@@ -60,7 +60,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         }
 
         public String annotatedFieldNameMainLuceneField() {
-            return index.annotatedFieldNameMainLuceneField(annotatedField);
+            return index.annotatedFieldNameMainLuceneField(annotatedField, null);
         }
     }
 

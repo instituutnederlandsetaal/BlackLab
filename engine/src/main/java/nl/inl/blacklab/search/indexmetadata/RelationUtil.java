@@ -127,7 +127,7 @@ public class RelationUtil {
     /** If the relationtype regex doesn't specify a relation class yet, prepend the default class to it. */
     public static String optPrependDefaultClass(String relationTypeRegex, TextPatternContext context) {
         if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR)) {
-            String defaultClass = context.resolveDefaultRelationClass();
+            String defaultClass = context.defaultRelationClass();
             relationTypeRegex = fullTypeRegex(defaultClass, optParRegex(relationTypeRegex));
         }
         return relationTypeRegex;

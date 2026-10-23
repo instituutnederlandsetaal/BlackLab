@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
@@ -134,8 +135,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
                     defVal = SpanQueryAnyToken.anyNGram(context.queryContext(), context.luceneField());
                 } else if (defVal == VALUE_ANY_SPAN) {
                     // Special case: any span (usually meaning "don't care")
-                    defVal = context.index()
-                            .tagQuery(context.queryContext(), context.withRelationAnnotation().annotationSensitivity(),
+                    defVal = SpanQueryRelations.tagQuery(context.queryContext(), context.withRelationAnnotation().annotationSensitivity(),
                                     RelationUtil.ANY_TYPE_REGEX, null,
                                     TextPatternTags.Adjust.FULL_TAG, null, false);
                 }

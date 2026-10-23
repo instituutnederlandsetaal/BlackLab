@@ -22,7 +22,6 @@ public class QueryFunctionLambda extends QueryFunction {
     @Override
     protected TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         // context will be null when evaluting constraints during matching
-        IndexAndField indexAndField = context == null ? null : context.indexAndField();
         return func.apply(context, parameters);
     }
 

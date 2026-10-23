@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -52,7 +51,6 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchDocs;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -115,8 +113,8 @@ public interface BlackLabIndex extends AutoCloseable {
                 .count().execute().countedTotal();
     }
 
-    BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
+//    BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+//            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
 
     /** Get our index type (always integrated now). */
     IndexType getType();
@@ -440,16 +438,12 @@ public interface BlackLabIndex extends AutoCloseable {
     MatchSensitivity defaultMatchSensitivity();
 
     /**
-     * Get the default initial query execution context.
+     * Get the initial TextPattern context.
      *
      * @param field field to search
-     * @return query execution context
+     * @return TextPattern context
      */
-    TextPatternContext defaultTextPatternContext(String field, IndexAndField indexAndField);
-
-    default TextPatternContext defaultTextPatternContext(IndexAndField indexAndField) {
-        return defaultTextPatternContext(indexAndField.field(), indexAndField);
-    }
+    TextPatternContext textPatternContext(String field);
 
     /**
      * Get the collator being used for sorting.
@@ -665,8 +659,11 @@ public interface BlackLabIndex extends AutoCloseable {
             }
 
             @Override
-            public String annotatedFieldNameMainLuceneField(String anntatedFieldName) {
-                return index.annotatedField(anntatedFieldName).mainAnnotation().mainSensitivity().luceneField();
+            public String annotatedFieldNameMainLuceneField(String annotatedFieldName, String annotation) {
+                Annotation annotDef = annotation == null ?
+                        index.annotatedField(annotatedFieldName).mainAnnotation() :
+                        index.annotatedField(annotatedFieldName).annotation(annotation);
+                return annotDef.mainSensitivity().luceneField();
             }
 
             @Override

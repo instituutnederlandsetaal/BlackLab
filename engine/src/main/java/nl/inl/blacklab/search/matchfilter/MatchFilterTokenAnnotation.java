@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -9,20 +8,20 @@ import nl.inl.blacklab.search.lucene.SpansContext;
 
 public class MatchFilterTokenAnnotation extends MatchFilter {
 
-    private final BlackLabIndex index;
-
     private final String field;
+
+    private final String annotationName;
+
+    private final String forwardIndexLuceneField;
 
     private final String groupName;
 
     private int groupIndex;
 
-    private final String annotationName;
-
     private int annotationIndex = -1;
 
-    public MatchFilterTokenAnnotation(BlackLabIndex index, String field, String groupName, String annotationName) {
-        this.index = index;
+    public MatchFilterTokenAnnotation(String forwardIndexLuceneField, String field, String groupName, String annotationName) {
+        this.forwardIndexLuceneField = forwardIndexLuceneField;
         this.field = field;
         this.groupName = groupName;
         if (annotationName == null)
@@ -92,10 +91,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        String forwardIndexLuceneField = index.annotatedField(field).annotation(annotationName).mainSensitivity()
-                .luceneField();
-        return new MatchFilterTokenAnnotationEqualsString(index, field,
-                groupName, annotationName, str, sensitivity, forwardIndexLuceneField);
+        return new MatchFilterTokenAnnotationEqualsString(groupName, annotationName, str, sensitivity, forwardIndexLuceneField);
     }
 
     public MatchFilter matchOtherTokenSameAnnotation(String otherGroupName, MatchSensitivity sensitivity) {

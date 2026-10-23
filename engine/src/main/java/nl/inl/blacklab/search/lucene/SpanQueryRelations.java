@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 /**
  *
@@ -31,6 +32,20 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
  * This version works with the integrated index and the _relation annotation.
  */
 public class SpanQueryRelations extends BLSpanQuery {
+
+    public static BLSpanQuery tagQuery(Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
+        // Note: tags are always indexed as a forward relation (source always occurs before target)
+        RelationInfo.SpanMode spanMode = switch (adjust) {
+            case LEADING_EDGE -> RelationInfo.SpanMode.SOURCE;
+            case TRAILING_EDGE -> RelationInfo.SpanMode.TARGET;
+            default -> RelationInfo.SpanMode.FULL_SPAN;
+        };
+
+        return new SpanQueryRelations(context, luceneField,
+                RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
+                attributes, Direction.FORWARD, spanMode, captureAs, implicitCapture, null);
+    }
 
     public enum Direction {
         // Only return root relations (relations without a source)

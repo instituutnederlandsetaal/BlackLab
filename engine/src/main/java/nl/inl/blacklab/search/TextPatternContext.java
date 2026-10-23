@@ -12,7 +12,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.webservice.WsParam;
 
 /**
@@ -30,13 +29,15 @@ import nl.inl.blacklab.webservice.WsParam;
 public class TextPatternContext {
 
     public static TextPatternContext get(String annotatedField, String annotation,
-            MatchSensitivity matchSensitivity, IndexAndField indexAndField) {
+            MatchSensitivity matchSensitivity, BlackLabIndex index) {
+        String defaultRelationClass = index.getRelationsStats(index.annotatedField(annotatedField),
+                        WsParam.DEF_VAL_LIMIT_VALUES).getDefaultClass();
         return new TextPatternContext(annotatedField, null, annotation,
-                matchSensitivity, null, null, false, indexAndField);
+                matchSensitivity, defaultRelationClass, null, false, index);
     }
 
     /** Our query info object */
-    private final IndexAndField indexAndField;
+    private final BlackLabIndex index;
 
     /** Name of the annotated field we're searching.
      * <p>
@@ -79,18 +80,20 @@ public class TextPatternContext {
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
      * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
-     * @param indexAndField IndexAndField to use, or null to create a new one
+     * @param index index to use
      */
     private TextPatternContext(String annotatedField, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
-            IndexAndField indexAndField) throws InvalidQuery {
-        if (indexAndField == null)
-            throw new IllegalArgumentException("indexAndField == null");
+            BlackLabIndex index) throws InvalidQuery {
+        if (defaultRelationClass == null)
+            throw new IllegalArgumentException("defaultRelationClass == null");
+        if (index == null)
+            throw new IllegalArgumentException("index == null");
         if (annotatedField == null)
             throw new IllegalArgumentException("field == null");
         this.field = version == null ? annotatedField : AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedField, version);
         this.version = version;
-        AnnotatedField annotatedFieldDef = indexAndField.index().annotatedField(this.field);
+        AnnotatedField annotatedFieldDef = index.annotatedField(this.field);
         this.annotationName = annotationName == null ?
                 annotatedFieldDef.defaultSearchAnnotation().name() : annotationName;
         this.requestedSensitivity = matchSensitivity;
@@ -98,7 +101,7 @@ public class TextPatternContext {
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        this.indexAndField = indexAndField;
+        this.index = index;
     }
 
     private AnnotationSensitivity determineSensitivity(AnnotatedField annotatedField, String annotationName,
@@ -153,7 +156,7 @@ public class TextPatternContext {
         if (this.field.equals(field))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures, inConstraint, indexAndField);
+                defaultRelationClass, captures, inConstraint, index);
     }
 
     public TextPatternContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
@@ -164,7 +167,7 @@ public class TextPatternContext {
         if (annotation == sensitivity.annotation() && matchSensitivity == requestedSensitivity)
             return this;
         return new TextPatternContext(field, version, annotation.name(), matchSensitivity,
-                defaultRelationClass, captures, inConstraint, indexAndField);
+                defaultRelationClass, captures, inConstraint, index);
     }
 
     public TextPatternContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
@@ -194,7 +197,7 @@ public class TextPatternContext {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures, inConstraint, indexAndField);
+                defaultRelationClass, captures, inConstraint, index);
     }
 
     /**
@@ -207,7 +210,7 @@ public class TextPatternContext {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
         return new TextPatternContext(field, version, annotationName, requestedSensitivity,
-                relClass, captures, inConstraint, indexAndField);
+                relClass, captures, inConstraint, index);
     }
 
     /** Get new context with inConstraint set to true */
@@ -215,11 +218,11 @@ public class TextPatternContext {
         if (inConstraint)
             return this;
         return new TextPatternContext(field, version, annotationName,
-                requestedSensitivity, defaultRelationClass, captures, true, indexAndField);
+                requestedSensitivity, defaultRelationClass, captures, true, index);
     }
 
-    public BlackLabIndex index() {
-        return indexAndField.index();
+    public BlackLabIndexForQuery indexForQuery() {
+        return index.forQuery();
     }
 
     public MatchSensitivity getSensitivity() {
@@ -259,10 +262,6 @@ public class TextPatternContext {
         return field;
     }
 
-    public IndexAndField indexAndField() {
-        return indexAndField;
-    }
-
     /** Are we currently in a constraint (e.g. after :: )?
      *
      * TextPatterns before the :: will evaluate to BLSpanQueries,
@@ -274,17 +273,12 @@ public class TextPatternContext {
     }
 
     /**
-     * Get the overridden default relation class.
+     * Get the default relation class.
      *
-     * @return default relation class, or null if not overridden
+     * @return default relation class
      */
-    public String resolveDefaultRelationClass() {
-        // If overridden (e.g. using @rc=al): return that.
-        // Otherwise determine the default for this index and use that
-        return defaultRelationClass != null ?
-                defaultRelationClass :
-                index().getRelationsStats(field(), WsParam.DEF_VAL_LIMIT_VALUES)
-                        .getDefaultClass();
+    public String defaultRelationClass() {
+        return defaultRelationClass;
     }
 
     public String ensureUniqueCapture(String captureBaseName) {
@@ -299,6 +293,6 @@ public class TextPatternContext {
     }
 
     public BLSpanQuery.Context queryContext() {
-        return indexAndField().queryContext();
+        return new BLSpanQuery.Context(indexForQuery(), fieldName());
     }
 }

@@ -39,13 +39,11 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -109,12 +107,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public TextPatternContext defaultTextPatternContext(String field, IndexAndField indexAndField) {
-        if (indexAndField == null)
-            indexAndField = indexAndField(field);
+    public TextPatternContext textPatternContext(String field) {
         return TextPatternContext.get(field,
                 annotatedField(field).defaultSearchAnnotation().name(),
-                MatchSensitivity.INSENSITIVE, indexAndField);
+                MatchSensitivity.INSENSITIVE, this);
     }
 
     @Override
@@ -320,11 +316,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 //        }
     }
 
-    @Override
-    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+//            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
+//        throw new UnsupportedOperationException();
+//    }
 
     @Override
     public IndexType getType() {

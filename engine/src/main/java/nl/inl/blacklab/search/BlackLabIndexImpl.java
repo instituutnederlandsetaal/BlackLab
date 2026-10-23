@@ -3,7 +3,6 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -30,16 +29,10 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.util.VersionFile;
 
 /**
@@ -181,21 +174,6 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorGlobal(this, searchField);
-    }
-
-    @Override
-    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
-        // Note: tags are always indexed as a forward relation (source always occurs before target)
-        RelationInfo.SpanMode spanMode = switch (adjust) {
-            case LEADING_EDGE -> RelationInfo.SpanMode.SOURCE;
-            case TRAILING_EDGE -> RelationInfo.SpanMode.TARGET;
-            default -> RelationInfo.SpanMode.FULL_SPAN;
-        };
-
-        return new SpanQueryRelations(context, luceneField,
-                RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
-                attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, implicitCapture, null);
     }
 
     @Override

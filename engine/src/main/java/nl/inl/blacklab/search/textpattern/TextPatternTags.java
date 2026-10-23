@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.TextPatternContext;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
 import nl.inl.util.RangeRegex;
@@ -98,7 +99,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.queryContext(), context.annotationSensitivity(),
+        return SpanQueryRelations.tagQuery(context.queryContext(), context.annotationSensitivity(),
                 optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto, implicitCapture);
     }
 

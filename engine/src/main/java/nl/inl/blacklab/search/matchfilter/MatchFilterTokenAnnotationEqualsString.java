@@ -4,7 +4,6 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -15,10 +14,6 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     private final String groupName;
 
     private int groupIndex;
-
-    private final BlackLabIndex index;
-
-    private final String field;
 
     private final String annotationName;
 
@@ -32,23 +27,19 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private final MatchSensitivity sensitivity;
 
-    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, String termString,
+    public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, String termString,
                                                 MatchSensitivity sensitivity, String forwardIndexLuceneField) {
-        this(index, field, groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
+        this(groupName, annotationName, termString, sensitivity, -1, forwardIndexLuceneField);
     }
 
-    public MatchFilterTokenAnnotationEqualsString(BlackLabIndex index, String field, String groupName, String annotationName, String termString,
+    public MatchFilterTokenAnnotationEqualsString(String groupName, String annotationName, String termString,
             MatchSensitivity sensitivity, int compareToSortPosition, String forwardIndexLuceneField) {
-        this.index = index;
-        this.field = field;
         this.groupName = groupName;
         this.compareToTermString = termString;
         this.sensitivity = sensitivity;
 
-        // We either get a name and will look up the annotation later, or we get an annotation and will use its name.
-        this.annotationName = annotationName;// == null ? annotation.name() : annotationName;
-//        this.annotation = annotation;
-        this.luceneField = forwardIndexLuceneField; //annotation == null ? null : annotation.forwardIndexLuceneField();
+        this.annotationName = annotationName;
+        this.luceneField = forwardIndexLuceneField;
 
         this.compareToSortPosition = compareToSortPosition;
     }
@@ -59,7 +50,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     }
 
     private String annotationName() {
-        return /*annotation != null ? annotation.name() : */annotationName;
+        return annotationName;
     }
 
     @Override
@@ -130,8 +121,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         Terms terms = BLTerms.forSegment(context, luceneField).reader();
         int sortPosition = terms.termToSortPosition(compareToTermString, sensitivity);
 
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(index, field,
-                groupName, annotationName, compareToTermString, sensitivity,
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(groupName, annotationName, compareToTermString, sensitivity,
                 sortPosition, luceneField);
         mf.annotationIndex = annotationIndex;
         return mf;

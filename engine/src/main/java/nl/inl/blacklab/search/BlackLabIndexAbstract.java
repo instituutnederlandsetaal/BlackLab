@@ -564,16 +564,14 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public TextPatternContext defaultTextPatternContext(String annotatedField, IndexAndField indexAndField) {
+    public TextPatternContext textPatternContext(String annotatedField) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Annotated field must not be null");
-        if (indexAndField == null)
-            indexAndField = indexAndField(annotatedField);
         Annotation defaultSearchAnnotation = annotatedField(annotatedField).defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField);
         return TextPatternContext.get(annotatedField, defaultSearchAnnotation.name(), defaultMatchSensitivity,
-                indexAndField);
+                this);
     }
 
     @Override

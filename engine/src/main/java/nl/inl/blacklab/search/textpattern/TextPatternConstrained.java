@@ -5,7 +5,6 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryConstrained;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -36,7 +35,7 @@ public class TextPatternConstrained extends TextPattern {
         BLSpanQuery translate = clause.toQuery(context);
         String fieldName = translate.getAnnotatedFieldName();
         context = context.withField(fieldName);
-        ForwardIndexAccessor fiAccessor = new ForwardIndexAccessorGlobal(context.index(), fieldName);
+        ForwardIndexAccessor fiAccessor = context.indexForQuery().forwardIndexAccessor(fieldName);
         MatchFilter constraintFilter = constraint.toMatchFilter(context.withInConstraint());
         return new SpanQueryConstrained(translate, constraintFilter, fiAccessor);
     }

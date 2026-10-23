@@ -46,7 +46,8 @@ public class TextPatternPropertySelect extends TextPattern {
         if (!(resultLabel instanceof MatchFilterSpan mfs))
             throw new InvalidQuery("Expected a reference to a span left of . for token annotation reference");
         if (tpAnnotation instanceof TextPatternValue tpv && tpv.value instanceof ConstraintValueSymbol cvsa) {
-            return new MatchFilterTokenAnnotation(context.index(), context.fieldName(), mfs.getGroupName(), cvsa.getValue());
+            String forwardIndexLuceneField = context.indexForQuery().annotatedFieldNameMainLuceneField(context.fieldName(), cvsa.getValue());
+            return new MatchFilterTokenAnnotation(forwardIndexLuceneField, context.fieldName(), mfs.getGroupName(), cvsa.getValue());
         } else
             throw new InvalidQuery("Expected an annotation name right of . for token annotation reference");
     }

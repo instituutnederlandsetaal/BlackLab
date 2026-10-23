@@ -690,9 +690,9 @@ public class TestSearches {
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
             String field = index.mainAnnotatedField().name();
-            TextPatternContext context = index.defaultTextPatternContext(field, null);
+            TextPatternContext context = index.textPatternContext(field);
             BLSpanQuery q1 = p1.toQuery(context);
-            context = index.defaultTextPatternContext(field, null);
+            context = index.textPatternContext(field);
             BLSpanQuery q2 = p2.toQuery(context);
             Assert.assertEquals(q1, q2);
             Assert.assertEquals(q1.hashCode(), q2.hashCode());
@@ -710,7 +710,7 @@ public class TestSearches {
                 TextPatternValue.fromObject(2)));
         HitProperty sortBy = new HitPropertyBeforeHit(testIndex.index(), null,
                 MatchSensitivity.INSENSITIVE, 5);
-        BLSpanQuery query = patt.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery query = patt.toQuery(testIndex.index().textPatternContext(testIndex.index().mainAnnotatedField().name()));
         Assert.assertEquals(expected, testIndex.findConc(query, sortBy));
     }
 
@@ -727,7 +727,7 @@ public class TestSearches {
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
         TextPattern tp = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, "\"" + bcqlPattern + "\"");
-        BLSpanQuery q = tp.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery q = tp.toQuery(testIndex.index().textPatternContext(testIndex.index().mainAnnotatedField().name()));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
         q.visit(new QueryVisitor() {
             @Override
@@ -751,7 +751,7 @@ public class TestSearches {
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
         TextPattern patt = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, query);
-        BLSpanQuery blQuery = patt.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery blQuery = patt.toQuery(testIndex.index().textPatternContext(testIndex.index().mainAnnotatedField().name()));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));
     }
 
