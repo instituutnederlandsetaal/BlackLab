@@ -17,10 +17,10 @@ public class TestSpanQueryAnd {
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        IndexAndField indexAndField = IndexAndField.get(index, "contents2");
-        BLSpanTermQuery first = new BLSpanTermQuery(indexAndField, new Term(indexAndField.field(), "bla"));
-        indexAndField = IndexAndField.get(index, "contents");
-        BLSpanTermQuery second = new BLSpanTermQuery(indexAndField, new Term(indexAndField.field(), "bla"));
+        BLSpanQuery.Context context = index.queryContext("contents2");
+        BLSpanTermQuery first = new BLSpanTermQuery(context, new Term(indexAndField.field(), "bla"));
+        context = index.queryContext("contents");
+        BLSpanTermQuery second = new BLSpanTermQuery(context, new Term(indexAndField.field(), "bla"));
 
         // Different fields; will throw exception
         new SpanQueryAnd(first, second);
@@ -28,10 +28,11 @@ public class TestSpanQueryAnd {
 
     @Test
     public void testAnnotatedFieldDifferentProperties() {
-        IndexAndField indexAndField = IndexAndField.get(new MockBlackLabIndex());
-        BLSpanTermQuery first = new BLSpanTermQuery(indexAndField, new Term(AnnotatedFieldNameUtil.luceneName("contents",
+        MockBlackLabIndex index = new MockBlackLabIndex();
+        BLSpanQuery.Context context = index.defaultQueryContext();
+        BLSpanTermQuery first = new BLSpanTermQuery(context, new Term(AnnotatedFieldNameUtil.luceneName("contents",
                 "prop1", MatchSensitivity.SENSITIVE), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(indexAndField, new Term(AnnotatedFieldNameUtil.luceneName("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(context, new Term(AnnotatedFieldNameUtil.luceneName("contents",
                 "prop2", MatchSensitivity.SENSITIVE), "bla"));
 
         // No exception here because both are properties of annotated field "field"

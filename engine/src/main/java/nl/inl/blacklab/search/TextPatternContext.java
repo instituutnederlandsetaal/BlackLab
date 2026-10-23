@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.webservice.WsParam;
 
@@ -295,5 +296,9 @@ public class TextPatternContext {
         }
         captures.add(capture);
         return capture;
+    }
+
+    public BLSpanQuery.Context queryContext() {
+        return indexAndField().queryContext();
     }
 }

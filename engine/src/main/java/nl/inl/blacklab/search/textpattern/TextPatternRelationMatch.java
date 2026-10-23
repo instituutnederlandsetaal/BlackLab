@@ -95,7 +95,7 @@ public class TextPatternRelationMatch extends TextPattern {
         BLSpanQuery targetQuery = targetNoDefVal.toQuery(targetContext);
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
-                context.indexAndField(), context.withRelationAnnotation().annotationSensitivity(), targetQuery,
+                context.queryContext(), context.withRelationAnnotation().annotationSensitivity(), targetQuery,
                 targetContext.field().name(), captureName, relationType, opInfo.isOptionalMatch(),
                 null, null);
     }
@@ -123,7 +123,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
         if (clauses.isEmpty()) {
             // All clauses were []*; return any n-gram query (good luck with that...)
-            return SpanQueryAnyToken.anyNGram(context.indexAndField(), context.luceneField());
+            return SpanQueryAnyToken.anyNGram(context.queryContext(), context.luceneField());
         }
         if (clauses.size() == 1) {
             // Nothing to match, just return the clause

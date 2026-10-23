@@ -39,7 +39,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.util.VersionFile;
 
@@ -185,7 +184,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     }
 
     @Override
-    public BLSpanQuery tagQuery(IndexAndField indexAndField, AnnotationSensitivity luceneField, String tagNameRegex,
+    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
         RelationInfo.SpanMode spanMode = switch (adjust) {
@@ -194,7 +193,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
             default -> RelationInfo.SpanMode.FULL_SPAN;
         };
 
-        return new SpanQueryRelations(indexAndField, luceneField,
+        return new SpanQueryRelations(context, luceneField,
                 RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
                 attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, implicitCapture, null);
     }

@@ -226,7 +226,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public BLSpanQuery getRelationsQuery(IndexAndField indexAndField, AnnotationSensitivity relationField, String relationTypeRegex,
+    public BLSpanQuery getRelationsQuery(BLSpanQuery.Context context, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes) {
         // Construct the clause from the field, relation type and attributes
         List<String> regexes = searchRegexes(relationTypeRegex, attributes);
@@ -234,7 +234,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         List<BLSpanQuery> queries = new ArrayList<>();
         for (String regex: regexes) {
             RegexpQuery regexpQuery = new RegexpQuery(new Term(relationField.luceneField(), regex), RegExp.COMPLEMENT);
-            queries.add(new BLSpanMultiTermQueryWrapper<>(indexAndField, regexpQuery));
+            queries.add(new BLSpanMultiTermQueryWrapper<>(context, regexpQuery));
         }
         SpanQueryAnd q =  new SpanQueryAnd(queries);
         q.setFilter(SpansAndFilterFactorySameRelationId.INSTANCE);

@@ -233,7 +233,7 @@ You can think of these as properties needed for a phase in the whole search proc
 #### IndexAndField (formerly QueryInfo)
 
 - is created first
-- passed to the `Search*` classes, which pass it to parsing, query generation and result gathering 
+- passed to the `Search*` classes, which pass it to parsing, query generation and result gathering
 - knows index and search field
 - index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
 
@@ -247,6 +247,12 @@ You can think of these as properties needed for a phase in the whole search proc
 - used during translation of `TextPattern` to `BLSpanQuery`
 - knows `IndexAndField`, current parallel version, annotation, sensitivity, def.rel.class, capture names, 
   inconstraint
+
+#### BLSpanQuery.Context
+
+- each `BLSpanQuery` has one
+- knows index and search field
+- get a reduced API to the index (`BlackLabIndexForQuery`) to improve testability. Could be done for other context as well.
 
 ### MISSING? Context for actually executing the query
 

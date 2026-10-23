@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -87,8 +86,8 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     final String luceneField;
 
-    public SpanQueryAnyToken(IndexAndField indexAndField, int min, int max, String luceneField) {
-        super(indexAndField.withField(AnnotatedFieldNameUtil.getBaseName(luceneField)));
+    public SpanQueryAnyToken(Context context, int min, int max, String luceneField) {
+        super(context.withField(AnnotatedFieldNameUtil.getBaseName(luceneField)));
         if (min < 0)
             throw new IllegalArgumentException("min cannot be negative");
         if (max < 1)
@@ -111,8 +110,8 @@ public class SpanQueryAnyToken extends BLSpanQuery {
      * @param luceneField the field to search
      * @return the query
      */
-    public static SpanQueryAnyToken anyNGram(IndexAndField indexAndField, String luceneField) {
-        return new SpanQueryAnyToken(indexAndField, 0, MAX_UNLIMITED, luceneField);
+    public static SpanQueryAnyToken anyNGram(Context context, String luceneField) {
+        return new SpanQueryAnyToken(context, 0, MAX_UNLIMITED, luceneField);
     }
 
     @Override
@@ -132,7 +131,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public BLSpanQuery noEmpty() {
         if (min > 0)
             return this;
-        return new SpanQueryAnyToken(indexAndField, 1, max, luceneField);
+        return new SpanQueryAnyToken(context, 1, max, luceneField);
     }
 
     @Override
@@ -207,7 +206,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryNoHits(indexAndField, luceneField);
+        return new SpanQueryNoHits(context, luceneField);
     }
 
     @Override
@@ -246,7 +245,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public BLSpanQuery addRep(int addMin, int addMax) {
         int nMin = min + addMin;
         int nMax = BLSpanQuery.addMaxValues(max, addMax);
-        return new SpanQueryAnyToken(indexAndField, nMin, nMax, luceneField);
+        return new SpanQueryAnyToken(context, nMin, nMax, luceneField);
     }
 
     @Override

@@ -158,9 +158,8 @@ public class TestHitsFromFetcher {
     @Test
     public void testSublist() throws IOException {
         BlackLabIndex index = testIndex.index();
-        IndexAndField indexAndField = IndexAndField.get(index);
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(indexAndField, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(indexAndField, patternQuery);
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(index.defaultQueryContext(), 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(index.defaultIndexAndField(), patternQuery);
         Hits whole = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         int subListStart = 11;
         int subListLength = 15;
@@ -189,9 +188,9 @@ public class TestHitsFromFetcher {
 
     @Test
     public void testSort() throws IOException {
-        IndexAndField indexAndField = IndexAndField.get(testIndex.index());
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(indexAndField, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(indexAndField, patternQuery);
+        BlackLabIndex index = testIndex.index();
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(index.defaultQueryContext(), 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(index.defaultIndexAndField(), patternQuery);
         Hits unsorted = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
         Hits sorted = unsorted.sorted(sortBy);

@@ -238,7 +238,7 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     public BLSpanQuery toQuery(IndexAndField indexAndField, Query filter) throws InvalidQuery {
-        EvalResult result = evaluate(indexAndField.index().defaultExecutionContext(indexAndField));
+        EvalResult result = evaluate(indexAndField.index().defaultTextPatternContext(indexAndField));
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
@@ -246,7 +246,7 @@ public abstract class TextPattern implements TextPatternStruct {
                 // Can the filter yield fragments or only regular (full) documents?
                 if (indexAndField.index().isFragmentQuery(filter)) {
                     // Adapt the filter query to a spanquery and use within to find hits within documents/fragments
-                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(indexAndField, filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
+                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(indexAndField.queryContext(), filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
                     spanQuery = new SpanQueryPositionFilter(spanQuery, filterSpanQuery, SpanFilter.WITHIN, false);
                 } else {
                     // Not a fragment query; use regular SpanQueryFiltered

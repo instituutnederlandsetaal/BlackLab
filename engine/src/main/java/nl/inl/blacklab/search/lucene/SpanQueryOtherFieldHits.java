@@ -14,8 +14,6 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.jspecify.annotations.NonNull;
 
-import nl.inl.blacklab.search.results.IndexAndField;
-
 /**
  * Determine foreign hits from a specific field.
  */
@@ -27,8 +25,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
-    public static IndexAndField getIndexAndField(IndexAndField indexAndField, String targetField) {
-        return targetField == null ? indexAndField : indexAndField.withField(targetField);
+    public static Context getContext(Context context, String targetField) {
+        return targetField == null ? context : context.withField(targetField);
     }
 
     private final BLSpanQuery clause;
@@ -36,7 +34,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     private final String targetField;
 
     public SpanQueryOtherFieldHits(BLSpanQuery clause, @NonNull String targetField) {
-        super(getIndexAndField(clause.indexAndField, targetField));
+        super(getContext(clause.context, targetField));
         this.clause = clause;
         this.targetField = targetField;
 
@@ -146,8 +144,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     @Override
-    public void setIndexAndField(IndexAndField indexAndField) {
-        super.setIndexAndField(indexAndField);
-        clause.setIndexAndField(clause.getAnnotatedFieldName() == null ? indexAndField : indexAndField.withField(clause.getAnnotatedFieldName()));
+    public void setContext(Context context) {
+        super.setContext(context);
+        clause.setContext(clause.getAnnotatedFieldName() == null ? context : context.withField(clause.getAnnotatedFieldName()));
     }
 }

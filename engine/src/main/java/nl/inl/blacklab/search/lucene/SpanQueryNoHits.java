@@ -11,8 +11,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.results.IndexAndField;
-
 /**
  * A query matching nothing.
  */
@@ -24,8 +22,8 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     private final String luceneField;
 
-    public SpanQueryNoHits(IndexAndField indexAndField, String luceneField) {
-        super(indexAndField);
+    public SpanQueryNoHits(Context context, String luceneField) {
+        super(context);
         this.luceneField = luceneField;
         this.guarantees = createGuarantees();
     }
@@ -95,7 +93,7 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryAnyToken(indexAndField, 1, 1, luceneField);
+        return new SpanQueryAnyToken(context, 1, 1, luceneField);
     }
 
     @Override

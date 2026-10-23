@@ -51,7 +51,7 @@ public class TextPatternAnyToken extends TextPattern {
 
     @Override
     public EvalResult evaluate(TextPatternContext context) {
-        return new SpanQueryAnyToken(context.indexAndField(), min, max, context.luceneField());
+        return new SpanQueryAnyToken(context.queryContext(), min, max, context.luceneField());
     }
 
     @Override

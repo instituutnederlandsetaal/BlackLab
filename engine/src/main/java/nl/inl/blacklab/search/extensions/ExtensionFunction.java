@@ -11,5 +11,5 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  * Such a function takes a number of arguments and returns a BLSpanQuery.
  */
 public interface ExtensionFunction {
-    TextPattern.EvalResult apply(IndexAndField indexAndField, TextPatternContext context, List<Object> args);
+    TextPattern.EvalResult apply(TextPatternContext context, List<Object> args);
 }

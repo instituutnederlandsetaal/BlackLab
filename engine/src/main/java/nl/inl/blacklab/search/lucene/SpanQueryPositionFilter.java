@@ -108,7 +108,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             // Identical clauses; trivial case
             if (invert) {
                 // e.g. <s/> not within <s/>
-                return new SpanQueryNoHits(indexAndField, luceneFieldName);
+                return new SpanQueryNoHits(context, luceneFieldName);
             }
             // e.g. <s/> within <s/> --> <s/>
             // (this works for all operations)

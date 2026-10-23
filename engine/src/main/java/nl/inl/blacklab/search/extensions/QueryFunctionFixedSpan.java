@@ -30,7 +30,7 @@ public class QueryFunctionFixedSpan extends QueryFunction {
             throw new IllegalArgumentException("_fixed() takes non-negative integers as arguments");
         if (end < start)
             throw new IllegalArgumentException("_end must be greater than or equal to _start in _fixed()");
-        return new SpanQueryFixedSpan(context.indexAndField(), context.luceneField(), start, end);
+        return new SpanQueryFixedSpan(context.queryContext(), context.luceneField(), start, end);
     }
 
 }

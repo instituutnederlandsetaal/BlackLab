@@ -13,14 +13,15 @@ import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
@@ -36,8 +37,35 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
-    /** Information such as our index, our search logger, etc. */
-    protected IndexAndField indexAndField;
+    /** Index and annotated field for this search */
+    public record Context(BlackLabIndexForQuery index, String annotatedField) {
+
+        public Context(BlackLabIndexForQuery index, String annotatedField) {
+            this.index = index;
+            this.annotatedField = annotatedField == null ? index.mainAnnotatedFieldName() : annotatedField;
+        }
+
+        public Context(BlackLabIndexForQuery index) {
+            this(index, null);
+        }
+
+        public BlackLabIndexForQuery indexForQuery() {
+            return index;
+        }
+
+        public Context withField(String newAnnotatedField) {
+            if (newAnnotatedField.equals(annotatedField))
+                return this;
+            return new Context(index, newAnnotatedField);
+        }
+
+        public String annotatedFieldNameMainLuceneField() {
+            return index.annotatedFieldNameMainLuceneField(annotatedField);
+        }
+    }
+
+    /** Index and annotated field for this search */
+    protected Context context;
 
     /** The annotated field that this query is searching in.
      * (might differ from indexAndField.field() for parallel corpora, where parts of a query
@@ -48,10 +76,10 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     protected SpanGuarantees guarantees;
 
-    protected BLSpanQuery(IndexAndField indexAndField) {
-        assert indexAndField != null && indexAndField.field() != null;
-        this.indexAndField = indexAndField;
-        this.annotatedField = indexAndField.field();
+    protected BLSpanQuery(Context context) {
+        assert context != null && context.annotatedField() != null;
+        this.context = context;
+        this.annotatedField = context.annotatedField();
     }
     
     /**
@@ -64,16 +92,16 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
      * @return resulting BLSpanQuery, or the input query if it was one already
      */
-    public static BLSpanQuery wrap(IndexAndField indexAndField, SpanQuery spanQuery) {
+    public static BLSpanQuery wrap(Context context, SpanQuery spanQuery) {
         if (spanQuery instanceof BLSpanQuery) {
             // Already BL-derived, no wrapper needed.
             return (BLSpanQuery) spanQuery;
         } else if (spanQuery instanceof SpanOrQuery) {
             // Translate to a BLSpanOrQuery, recursively translating the clauses.
-            return BLSpanOrQuery.from(indexAndField, (SpanOrQuery) spanQuery);
+            return BLSpanOrQuery.from(context, (SpanOrQuery) spanQuery);
         } else if (spanQuery instanceof SpanTermQuery) {
             // Translate to a BLSpanTermQuery.
-            return BLSpanTermQuery.from(indexAndField, (SpanTermQuery) spanQuery);
+            return BLSpanTermQuery.from(context, (SpanTermQuery) spanQuery);
         } else {
             // After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
             throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
@@ -352,14 +380,18 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     /**
      * Set the query info object.
      *
-     * @param indexAndField query info object
+     * @param context query info object
      */
-    public void setIndexAndField(IndexAndField indexAndField) {
-        this.indexAndField = indexAndField;
+    protected void setContext(Context context) {
+        this.context = context;
     }
 
-    public IndexAndField indexAndField() {
-        return indexAndField;
+    public void setContext(BlackLabIndexForQuery index, String annotatedField) {
+        setContext(new Context(index, annotatedField));
+    }
+
+    public @NonNull Context context() {
+        return context;
     }
 
     @Override

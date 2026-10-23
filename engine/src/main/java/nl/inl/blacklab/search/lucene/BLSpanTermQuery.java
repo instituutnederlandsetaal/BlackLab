@@ -29,8 +29,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     public static final int FIXED_FORWARD_MATCHING_COST = 200;
 
-    public static BLSpanTermQuery from(IndexAndField indexAndField, SpanTermQuery q) {
-        return new BLSpanTermQuery(indexAndField, q);
+    public static BLSpanTermQuery from(Context context, SpanTermQuery q) {
+        return new BLSpanTermQuery(context, q);
     }
 
     public static SpanGuarantees createGuarantees() {
@@ -50,15 +50,15 @@ public class BLSpanTermQuery extends BLSpanQuery {
      *
      * @param term term to search
      */
-    public BLSpanTermQuery(IndexAndField indexAndField, Term term) {
-        super(indexAndField);
+    public BLSpanTermQuery(Context context, Term term) {
+        super(context);
         query = new SpanTermQuery(term);
         termStates = null;
         this.guarantees = createGuarantees();
     }
 
-    BLSpanTermQuery(IndexAndField indexAndField, SpanTermQuery termQuery) {
-        this(indexAndField, termQuery.getTerm());
+    BLSpanTermQuery(Context context, SpanTermQuery termQuery) {
+        this(context, termQuery.getTerm());
     }
 
     /**
@@ -68,8 +68,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
      * @param term term to search
      * @param termStates TermStates to use to search the term
      */
-    public BLSpanTermQuery(Term term, TermStates termStates, IndexAndField indexAndField) {
-        super(indexAndField);
+    public BLSpanTermQuery(Term term, TermStates termStates, Context context) {
+        super(context);
         query = new SpanTermQuery(term, termStates);
         this.termStates = termStates;
     }
@@ -167,7 +167,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
             String fieldName = comp[0];
             assert comp.length > 1;
             String annotationName = comp[1];
-            hasForwardIndex = indexAndField.indexForQuery().hasForwardIndex(fieldName, annotationName);
+            hasForwardIndex = context.indexForQuery().hasForwardIndex(fieldName, annotationName);
             hasForwardIndexDetermined = true;
         }
         return hasForwardIndex;

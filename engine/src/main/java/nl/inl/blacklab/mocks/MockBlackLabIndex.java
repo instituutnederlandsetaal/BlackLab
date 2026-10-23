@@ -79,10 +79,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
         blackLab = BlackLab.engine();
         blackLab.registerIndex(null, this);
     }
-    
-    public IndexAndField defaultIndexAndField() {
-        return indexAndField(mainAnnotatedField().name());
-    }
 
     @Override
     public void close() {
@@ -105,7 +101,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public TextPatternContext defaultExecutionContext(String field, IndexAndField indexAndField) {
+    public TextPatternContext defaultTextPatternContext(String field, IndexAndField indexAndField) {
         if (indexAndField == null)
             indexAndField = indexAndField(field);
         return TextPatternContext.get(field,
@@ -317,7 +313,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public BLSpanQuery tagQuery(IndexAndField indexAndField, AnnotationSensitivity luceneField, String tagNameRegex,
+    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
         throw new UnsupportedOperationException();
     }

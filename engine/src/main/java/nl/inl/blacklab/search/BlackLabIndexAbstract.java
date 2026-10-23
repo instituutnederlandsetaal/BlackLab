@@ -330,7 +330,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public QueryExplanation explain(BLSpanQuery query) {
         try {
-            query.setIndexAndField(indexAndField(query.getAnnotatedFieldName()));
+            //@@@ WHY setContext?
+            query.setContext(forQuery(), query.getAnnotatedFieldName());
             return new QueryExplanation(query, query.optimize(this).rewrite(reader()));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
@@ -560,7 +561,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public TextPatternContext defaultExecutionContext(String annotatedField, IndexAndField indexAndField) {
+    public TextPatternContext defaultTextPatternContext(String annotatedField, IndexAndField indexAndField) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Annotated field must not be null");
         if (indexAndField == null)

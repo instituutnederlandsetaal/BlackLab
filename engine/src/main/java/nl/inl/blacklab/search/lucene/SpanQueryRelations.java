@@ -23,7 +23,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
-import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  *
@@ -158,10 +157,10 @@ public class SpanQueryRelations extends BLSpanQuery {
 
     private final RelationsStrategy relationsStrategy;
 
-    public SpanQueryRelations(IndexAndField indexAndField, AnnotationSensitivity relationField, String relationTypeRegex,
+    public SpanQueryRelations(Context context, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
             boolean implicitCapture, String targetField) {
-        super(indexAndField);
+        super(context);
         this.relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
         if (relationField == null)
             throw new IllegalArgumentException("relationFieldName must be non-empty");
@@ -172,15 +171,15 @@ public class SpanQueryRelations extends BLSpanQuery {
         // (should hopefully not be necessary anymore with better relations strategy)
         relationTypeRegex = relationsStrategy.sanitizeTagNameRegex(relationTypeRegex);
 
-        BLSpanQuery clause = relationsStrategy.getRelationsQuery(indexAndField, relationField, relationTypeRegex, attributes);
+        BLSpanQuery clause = relationsStrategy.getRelationsQuery(context, relationField, relationTypeRegex, attributes);
         //BLSpanQuery clause = getRelationsQuery(indexAndField, relationFieldName, relationTypeRegex, attributes);
         init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
 
-    public SpanQueryRelations(IndexAndField indexAndField, AnnotationSensitivity relationField, String relationTypeRegex,
+    public SpanQueryRelations(Context context, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, boolean implicitCapture, String targetField) {
-        super(indexAndField);
+        super(context);
         this.relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
         init(relationField, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, implicitCapture, targetField);
     }
@@ -203,7 +202,7 @@ public class SpanQueryRelations extends BLSpanQuery {
     public BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
         if (this.spanMode == mode)
             return this;
-        return new SpanQueryRelations(indexAndField, relationField, relationType, attributes, clause, direction, mode,
+        return new SpanQueryRelations(context, relationField, relationType, attributes, clause, direction, mode,
                 captureAs, implicitCapture, targetField);
     }
 
@@ -212,7 +211,7 @@ public class SpanQueryRelations extends BLSpanQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelations(indexAndField, relationField, relationType, attributes, rewritten, direction,
+        return new SpanQueryRelations(context, relationField, relationType, attributes, rewritten, direction,
                 spanMode, captureAs, implicitCapture, targetField);
     }
 
@@ -354,8 +353,8 @@ public class SpanQueryRelations extends BLSpanQuery {
     }
 
     @Override
-    public void setIndexAndField(IndexAndField indexAndField) {
-        super.setIndexAndField(indexAndField);
-        clause.setIndexAndField(indexAndField);
+    public void setContext(Context context) {
+        super.setContext(context);
+        clause.setContext(context);
     }
 }

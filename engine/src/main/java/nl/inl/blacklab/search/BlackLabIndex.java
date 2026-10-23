@@ -115,7 +115,7 @@ public interface BlackLabIndex extends AutoCloseable {
                 .count().execute().countedTotal();
     }
 
-    BLSpanQuery tagQuery(IndexAndField indexAndField, AnnotationSensitivity luceneField, String tagNameRegex,
+    BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
 
     /** Get our index type (always integrated now). */
@@ -224,8 +224,20 @@ public interface BlackLabIndex extends AutoCloseable {
     // Search the index
     //---------------------------------------------------------------------------
 
+    default IndexAndField defaultIndexAndField() {
+        return indexAndField(mainAnnotatedField().name());
+    }
+
     default IndexAndField indexAndField(String field) {
         return IndexAndField.get(this, field);
+    }
+
+    default BLSpanQuery.Context defaultQueryContext() {
+        return new BLSpanQuery.Context(forQuery(), mainAnnotatedField().name());
+    }
+
+    default BLSpanQuery.Context queryContext(String field) {
+        return new BLSpanQuery.Context(forQuery(), field);
     }
 
     default HitResults find(AnnotatedField field, CompleteQuery query) {
@@ -433,10 +445,10 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to search
      * @return query execution context
      */
-    TextPatternContext defaultExecutionContext(String field, IndexAndField indexAndField);
+    TextPatternContext defaultTextPatternContext(String field, IndexAndField indexAndField);
 
-    default TextPatternContext defaultExecutionContext(IndexAndField indexAndField) {
-        return defaultExecutionContext(indexAndField.field(), indexAndField);
+    default TextPatternContext defaultTextPatternContext(IndexAndField indexAndField) {
+        return defaultTextPatternContext(indexAndField.field(), indexAndField);
     }
 
     /**
@@ -648,6 +660,16 @@ public interface BlackLabIndex extends AutoCloseable {
             @Override
             public @NonNull String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
                 return annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
+            }
+
+            @Override
+            public String annotatedFieldNameMainLuceneField(String anntatedFieldName) {
+                return annotatedField(anntatedFieldName).mainAnnotation().mainSensitivity().luceneField();
+            }
+
+            @Override
+            public String mainAnnotatedFieldName() {
+                return mainAnnotatedField().name();
             }
 
             @Override

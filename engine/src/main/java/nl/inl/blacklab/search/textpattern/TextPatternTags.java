@@ -98,7 +98,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.indexAndField(), context.annotationSensitivity(),
+        return context.index().tagQuery(context.queryContext(), context.annotationSensitivity(),
                 optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto, implicitCapture);
     }
 

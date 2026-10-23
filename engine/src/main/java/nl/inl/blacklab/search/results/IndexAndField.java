@@ -5,6 +5,7 @@ import java.util.Objects;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /** Index and field the query was performed with. */
 public final class IndexAndField {
@@ -73,6 +74,10 @@ public final class IndexAndField {
         if (Objects.equals(this.field, field))
             return this;
         return new IndexAndField(index, field);
+    }
+
+    public BLSpanQuery.Context queryContext() {
+        return new BLSpanQuery.Context(index.forQuery(), field);
     }
 }
 

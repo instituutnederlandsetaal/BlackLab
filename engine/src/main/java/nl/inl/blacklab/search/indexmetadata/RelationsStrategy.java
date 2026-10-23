@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Represents how we index and search spans ("inline tags") and relations.
@@ -55,13 +54,13 @@ public interface RelationsStrategy {
     /**
      * Get a query to match the given relation type and attributes.
      *
-     * @param indexAndField query info
-     * @param relationFieldName field name to search in
+     * @param context query context
+     * @param relationField field name to search in
      * @param relationTypeRegex relation type to find
      * @param attributes attribute values to match
      * @return query to find the relations
      */
-    BLSpanQuery getRelationsQuery(IndexAndField indexAndField, AnnotationSensitivity relationField, String relationTypeRegex, Map<String, String> attributes);
+    BLSpanQuery getRelationsQuery(BLSpanQuery.Context context, AnnotationSensitivity relationField, String relationTypeRegex, Map<String, String> attributes);
 
     BytesRef getPayload(RelationInfo relationInfo);
 

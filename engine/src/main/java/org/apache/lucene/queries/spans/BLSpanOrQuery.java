@@ -34,7 +34,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -51,7 +51,6 @@ import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
 import nl.inl.blacklab.search.lucene.SpansContext;
-import nl.inl.blacklab.search.results.IndexAndField;
 
 /**
  * Matches the union of its clauses.
@@ -160,29 +159,29 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
-        super(queryInfoFromClauses(clauses));
+        super(contextFromClauses(clauses));
         if (clauses.length == 0)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);
         this.field = inner.getField();
-        this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
+        this.luceneField = clauses[0].getRealField();
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(clauses);
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
-    private static @Nullable IndexAndField queryInfoFromClauses(BLSpanQuery[] clauses) {
+    private static @NonNull Context contextFromClauses(BLSpanQuery[] clauses) {
         if (clauses.length == 0 || clauses[0] == null)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
-        return clauses[0].indexAndField();
+        return clauses[0].context();
     }
 
-    public static BLSpanQuery from(IndexAndField indexAndField, SpanOrQuery in) {
+    public static BLSpanQuery from(Context context, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
         if (clauses.length == 0)
-            return new SpanQueryNoHits(indexAndField, indexAndField.annotatedField().mainAnnotation().mainSensitivity().luceneField());
+            return new SpanQueryNoHits(context, context.annotatedFieldNameMainLuceneField());
         if (clauses.length == 1)
-            return BLSpanQuery.wrap(indexAndField, clauses[0]);
+            return BLSpanQuery.wrap(context, clauses[0]);
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
         String field = null;
         boolean allInSameField = true;
@@ -200,7 +199,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     }
                 }
             }
-            blClauses[i] = BLSpanQuery.wrap(indexAndField, clauses[i]);
+            blClauses[i] = BLSpanQuery.wrap(context, clauses[i]);
         }
         BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
         if (allSimpleTerms && allInSameField)
@@ -309,7 +308,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
         // Node need not be rewritten; return as-is
         if (inner.getClauses().length == 1) {
-            return BLSpanQuery.wrap(indexAndField, inner.getClauses()[0]);
+            return BLSpanQuery.wrap(context, inner.getClauses()[0]);
         }
         return this;
     }

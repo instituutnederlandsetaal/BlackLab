@@ -39,7 +39,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.results.IndexAndField;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -101,8 +100,8 @@ public class TestSearches {
     @Test
     public void testFilteredQuery() {
         List<String> expected = Arrays.asList("[The] quick", "over [the] lazy");
-        IndexAndField indexAndField = IndexAndField.get(testIndex.index());
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(indexAndField, new Term("contents%word@i", "the"));
+        BlackLabIndex index = testIndex.index();
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(index.defaultQueryContext(), new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
         Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
     }
@@ -691,9 +690,9 @@ public class TestSearches {
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
             String field = index.mainAnnotatedField().name();
-            TextPatternContext context = index.defaultExecutionContext(field, null);
+            TextPatternContext context = index.defaultTextPatternContext(field, null);
             BLSpanQuery q1 = p1.toQuery(context);
-            context = index.defaultExecutionContext(field, null);
+            context = index.defaultTextPatternContext(field, null);
             BLSpanQuery q2 = p2.toQuery(context);
             Assert.assertEquals(q1, q2);
             Assert.assertEquals(q1.hashCode(), q2.hashCode());
@@ -711,7 +710,7 @@ public class TestSearches {
                 TextPatternValue.fromObject(2)));
         HitProperty sortBy = new HitPropertyBeforeHit(testIndex.index(), null,
                 MatchSensitivity.INSENSITIVE, 5);
-        BLSpanQuery query = patt.toQuery(testIndex.index().defaultExecutionContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery query = patt.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
         Assert.assertEquals(expected, testIndex.findConc(query, sortBy));
     }
 
@@ -728,7 +727,7 @@ public class TestSearches {
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
         TextPattern tp = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, "\"" + bcqlPattern + "\"");
-        BLSpanQuery q = tp.toQuery(testIndex.index().defaultExecutionContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery q = tp.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
         q.visit(new QueryVisitor() {
             @Override
@@ -752,7 +751,7 @@ public class TestSearches {
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
         TextPattern patt = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, query);
-        BLSpanQuery blQuery = patt.toQuery(testIndex.index().defaultExecutionContext(testIndex.index().mainAnnotatedField().name(), null));
+        BLSpanQuery blQuery = patt.toQuery(testIndex.index().defaultTextPatternContext(testIndex.index().mainAnnotatedField().name(), null));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));
     }
 

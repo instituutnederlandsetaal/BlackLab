@@ -46,7 +46,8 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     protected HitResultsFromQuery(BlackLabIndex index, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
         super(IndexAndField.get(index, sourceQuery.getAnnotatedFieldName()));
-        sourceQuery.setIndexAndField(this.indexAndField);
+        // @@@ WHY setContext?
+        sourceQuery.setContext(indexAndField.index().forQuery(), indexAndField.field());
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;
         ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
