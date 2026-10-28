@@ -18,9 +18,9 @@ public interface ProcessingStep {
      * @return combined step
      */
     static ProcessingStep combine(ProcessingStep a, ProcessingStep b) {
-        if (a == null || a instanceof ProcessingInstructionIdentity)
+        if (a == null || a instanceof ProcessingInstructionIdentity.ProcessingStepIdentity)
             return b;
-        if (b == null || b instanceof ProcessingInstructionIdentity)
+        if (b == null || b instanceof ProcessingInstructionIdentity.ProcessingStepIdentity)
             return a;
         if (a instanceof ProcessingInstructionMultiple.ProcessingStepMultiple a1) {
             List<ProcessingStep> steps = new ArrayList<>(a1.getSteps());

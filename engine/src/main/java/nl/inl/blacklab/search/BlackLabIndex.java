@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -18,6 +17,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.jspecify.annotations.NonNull;
 
 import com.ibm.icu.text.Collator;
 
@@ -31,6 +31,7 @@ import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.QueryParserProvider;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -42,16 +43,13 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchDocs;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -114,14 +112,11 @@ public interface BlackLabIndex extends AutoCloseable {
                 .count().execute().countedTotal();
     }
 
-    BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
+//    BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+//            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture);
 
     /** Get our index type (always integrated now). */
     IndexType getType();
-
-    /** Get the strategy to use for indexing/searching relations. */
-    RelationsStrategy getRelationsStrategy();
 
     LeafReaderLookup getLeafReaderLookup();
 
@@ -226,9 +221,16 @@ public interface BlackLabIndex extends AutoCloseable {
     // Search the index
     //---------------------------------------------------------------------------
 
+    default BLSpanQuery.Context defaultQueryContext() {
+        return new BLSpanQuery.Context(forQuery(), mainAnnotatedField().name());
+    }
+
+    default BLSpanQuery.Context queryContext(String field) {
+        return new BLSpanQuery.Context(forQuery(), field);
+    }
+
     default HitResults find(AnnotatedField field, CompleteQuery query) {
-        QueryInfo queryInfo = QueryInfo.create(this, field);
-        BLSpanQuery spanQuery = query.pattern().toQuery(queryInfo, query.filter());
+        BLSpanQuery spanQuery = query.pattern().toQuery(this, field.name(), query.filter());
         return find(spanQuery);
     }
 
@@ -251,11 +253,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    default HitResults find(BLSpanQuery query, SearchSettings settings) {
-        return find(QueryInfo.create(this, fieldFromQuery(query)), query, settings);
-    }
-
-    HitResults find(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings);
+    HitResults find(BLSpanQuery query, SearchSettings settings);
 
     /**
      * Perform a document query only (no hits)
@@ -291,17 +289,40 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param useCache whether to use the cache or bypass it
      * @return empty search object
      */
-    SearchEmpty search(AnnotatedField field, boolean useCache);
+    default SearchEmpty search(AnnotatedField field, boolean useCache) {
+        return search(field.name(), useCache);
+    }
 
     /**
-     * Start building a Search. 
-     * 
+     * Start building a Search.
+     *
+     * @param field field to search
+     * @return empty search object
+     * @deprecated Use {@link #search(String)} instead
+     */
+    @Deprecated
+    default SearchEmpty search(AnnotatedField field) {
+        return search(field.name(), true);
+    }
+
+    /**
+     * Start building a Search.
+     *
      * @param field field to search
      * @return empty search object
      */
-    default SearchEmpty search(AnnotatedField field) {
+    default SearchEmpty search(String field) {
         return search(field, true);
     }
+
+    /**
+     * Start building a Search.
+     *
+     * @param field field to search
+     * @param useCache whether to use the cache or bypass it
+     * @return empty search object
+     */
+    SearchEmpty search(String field, boolean useCache);
     
     /**
      * Start building a Search.
@@ -378,29 +399,12 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     IndexMetadata metadata();
 
-    /**
-     * Get a field (either an annotated or a metadata field).
-     * 
-     * @param fieldName name of the field
-     * @return the field
-     */
-    default Field field(String fieldName) {
-        Field field = annotatedField(fieldName);
-        if (field == null)
-            field = metadataField(fieldName);
-        return field;
-    }
-
     default AnnotatedFields annotatedFields() {
         return metadata().annotatedFields();
     }
 
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedField(fieldName);
-    }
-
-    default AnnotatedField fieldFromQuery(BLSpanQuery q) {
-        return annotatedField(q.getField());
     }
 
     default AnnotatedField mainAnnotatedField() {
@@ -447,12 +451,12 @@ public interface BlackLabIndex extends AutoCloseable {
     MatchSensitivity defaultMatchSensitivity();
 
     /**
-     * Get the default initial query execution context.
+     * Get the initial TextPattern context.
      *
      * @param field field to search
-     * @return query execution context
+     * @return TextPattern context
      */
-    QueryExecutionContext defaultExecutionContext(AnnotatedField field, QueryInfo queryInfo);
+    TextPatternContext textPatternContext(String field);
 
     /**
      * Get the collator being used for sorting.
@@ -656,4 +660,45 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return true if the query might match a fragment, false if it definitely cannot
      */
     boolean isFragmentQuery(Query query);
+
+    BlackLabIndexForQuery forQuery();
+
+    static @NonNull BlackLabIndexForQuery forQuery(BlackLabIndex index) {
+        return new BlackLabIndexForQuery() {
+
+            @Override
+            public @NonNull String fullAnnotatedFieldName(String annotatedFieldOrVersion) {
+                return index.annotatedFields().getByFieldOrVersionName(annotatedFieldOrVersion).name();
+            }
+
+            @Override
+            public String annotatedFieldNameMainLuceneField(String annotatedFieldName, String annotation) {
+                Annotation annotDef = annotation == null ?
+                        index.annotatedField(annotatedFieldName).mainAnnotation() :
+                        index.annotatedField(annotatedFieldName).annotation(annotation);
+                return annotDef.mainSensitivity().luceneField();
+            }
+
+            @Override
+            public String mainAnnotatedFieldName() {
+                return index.mainAnnotatedField().name();
+            }
+
+            @Override
+            public boolean hasForwardIndex(String annotatedField, String annotation) {
+                return index.annotatedField(annotatedField).annotation(annotation).hasForwardIndex();
+            }
+
+            @Override
+            public ForwardIndexAccessor forwardIndexAccessor(String annotatedField) {
+                return new ForwardIndexAccessorGlobal(
+                        index, annotatedField);
+            }
+
+            @Override
+            public BlackLabEngine blackLab() {
+                return index.blackLab();
+            }
+        };
+    }
 }

@@ -5,7 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PInteger;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.SpanQueryFixedSpan;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -23,14 +23,14 @@ public class QueryFunctionFixedSpan extends QueryFunction {
                 false);
     }
 
-    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         int start = (Integer) parameters.get(0);
         int end = (Integer) parameters.get(1);
         if (start < 0 || end < 0)
             throw new IllegalArgumentException("_fixed() takes non-negative integers as arguments");
         if (end < start)
             throw new IllegalArgumentException("_end must be greater than or equal to _start in _fixed()");
-        return new SpanQueryFixedSpan(context.queryInfo(), context.luceneField(), start, end);
+        return new SpanQueryFixedSpan(context.queryContext(), context.luceneField(), start, end);
     }
 
 }

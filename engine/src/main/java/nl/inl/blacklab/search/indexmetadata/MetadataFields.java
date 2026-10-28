@@ -43,4 +43,17 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
     /** Are there any metadata fields occurring in fragments? (i.e. does the index use fragments at all?) */
     boolean anyOccurInFragments();
+
+    /**
+     * Get a FieldType.Getter for metadata fields.
+     * <p>
+     * This can be used to get the type of a metadata field by name
+     * Used for parsing metadata filter query.
+     * Better than passing the whole BlackLabIndex around.
+     *
+     * @return a FieldType.Getter
+     */
+    default FieldType.Getter typeGetter() {
+        return name -> get(name).type();
+    }
 }

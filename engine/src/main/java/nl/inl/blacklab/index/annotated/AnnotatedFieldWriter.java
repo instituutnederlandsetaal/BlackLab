@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 
 /**
  * An annotated field is like a Lucene field, but in addition to its "normal"
@@ -94,7 +95,7 @@ public class AnnotatedFieldWriter {
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads, String defaultSearchAnnotation) {
         this.docWriter = docWriter;
-        relationsStrategy = docWriter.getRelationsStrategy();
+        relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
         relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         boolean includeOffsets = true;
         fieldName = name;
@@ -230,10 +231,6 @@ public class AnnotatedFieldWriter {
     @Override
     public String toString() {
         return "AnnotatedFieldWriter(" + fieldName + ")";
-    }
-
-    public RelationsStrategy getRelationsStrategy() {
-        return relationsStrategy;
     }
 
     public DocWriter getDocWriter() {

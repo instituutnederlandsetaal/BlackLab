@@ -17,7 +17,6 @@ import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.StringUtil;
 
 public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
@@ -183,9 +182,6 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
      * @return the analyzer
      */
     Analyzer analyzer();
-
-    /** Get the strategy to use for indexing relations. */
-    RelationsStrategy getRelationsStrategy();
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.

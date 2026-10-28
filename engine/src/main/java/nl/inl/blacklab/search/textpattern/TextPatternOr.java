@@ -8,7 +8,7 @@ import java.util.Objects;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
@@ -41,7 +41,7 @@ public class TextPatternOr extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         if (context.isInConstraint()) {
             // We're in the constraint part of the query; create MatchFilter
             if (clauses.size() != 2)

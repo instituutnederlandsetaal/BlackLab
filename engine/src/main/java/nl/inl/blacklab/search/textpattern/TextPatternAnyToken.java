@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.textpattern;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 
@@ -50,8 +50,8 @@ public class TextPatternAnyToken extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) {
-        return new SpanQueryAnyToken(context.queryInfo(), min, max, context.luceneField());
+    public EvalResult evaluate(TextPatternContext context) {
+        return new SpanQueryAnyToken(context.queryContext(), min, max, context.luceneField());
     }
 
     @Override

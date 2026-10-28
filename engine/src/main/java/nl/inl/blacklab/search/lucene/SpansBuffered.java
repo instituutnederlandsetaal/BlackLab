@@ -101,7 +101,7 @@ class SpansBuffered extends BLSpans {
 
     private final BLSpans clause;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     private static final int BEFORE_FIRST_HIT = -1;
 
@@ -137,9 +137,9 @@ class SpansBuffered extends BLSpans {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         if (context != null) // (can only happen in test)
-            super.setHitQueryContext(context);
+            super.setSpansContext(context);
         doMatchInfo = context != null && (childClausesCaptureMatchInfo && context.numberOfMatchInfos() > 0 ||
                 context.hasRelationCaptures() || clause instanceof SpansRelations);
         // (NOTE: SpansRelations is a special case, because it may not have match info, but it obviously does have
@@ -148,9 +148,9 @@ class SpansBuffered extends BLSpans {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         this.context = context;
-        clause.passHitQueryContextToClauses(context);
+        clause.passSpansContextToClauses(context);
     }
 
     /**

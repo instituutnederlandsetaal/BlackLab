@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCacheEntry;
@@ -118,7 +119,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             throw new IllegalStateException("Search already started");
         started = true;
         peekValue = search.peekObject(this);
-        future = search.queryInfo().index().blackLab().searchExecutorService().submit(this::executeSearch);
+        future = BlackLab.engine().searchExecutorService().submit(this::executeSearch);
     }
 
     /** Perform the requested search.

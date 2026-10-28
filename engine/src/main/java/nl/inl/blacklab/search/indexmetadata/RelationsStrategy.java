@@ -11,10 +11,8 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Represents how we index and search spans ("inline tags") and relations.
@@ -56,13 +54,13 @@ public interface RelationsStrategy {
     /**
      * Get a query to match the given relation type and attributes.
      *
-     * @param queryInfo query info
-     * @param relationFieldName field name to search in
+     * @param context query context
+     * @param relationField field name to search in
      * @param relationTypeRegex relation type to find
      * @param attributes attribute values to match
      * @return query to find the relations
      */
-    BLSpanQuery getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex, Map<String, String> attributes);
+    BLSpanQuery getRelationsQuery(BLSpanQuery.Context context, AnnotationSensitivity relationField, String relationTypeRegex, Map<String, String> attributes);
 
     BytesRef getPayload(RelationInfo relationInfo);
 
@@ -134,12 +132,11 @@ public interface RelationsStrategy {
      *
      * Depending on the strategy, this might be a single regex or multiple regexes.
      *
-     * @param index the index to search in
      * @param relationTypeRegex relation type to find
      * @param attributes attribute values to match
      * @return regex(es) to find the relations
      */
-    List<String> searchRegexes(BlackLabIndex index, String relationTypeRegex, Map<String, String> attributes);
+    List<String> searchRegexes(String relationTypeRegex, Map<String, String> attributes);
 
     /** Optionally sanitize the tag name regex to avoid undesirable matches
      *  (i.e. matching a delimiter, not just the value).

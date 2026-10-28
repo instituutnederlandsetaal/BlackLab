@@ -37,6 +37,17 @@ public abstract class HitsAbstract implements Hits {
      *  (performance testing) */
     private static boolean groupAfterFetching = true;
 
+    protected final Context context;
+
+    protected HitsAbstract(Context context) {
+        this.context = context;
+    }
+
+    @Override
+    public Context context() {
+        return context;
+    }
+
     @Override
     public int countDocs(long startIndex, long endIndex) {
         Set<Integer> docs = new HashSet<>();

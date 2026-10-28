@@ -9,7 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -21,15 +22,16 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
 
-    private final QueryInfo queryInfo;
+    /** How long executing certain parts of the operation took. */
+    private final Context context;
 
-    protected AbstractSearch(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;
+    protected AbstractSearch(Context context) {
+        this.context = context;
     }
 
     @Override
     public SearchCacheEntry<R> executeAsync(boolean allowQueue) {
-        return queryInfo.cache().getAsync(this, allowQueue);
+        return context.cache().getAsync(this, allowQueue);
     }
 
     /**
@@ -113,21 +115,33 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
         }
     }
 
+    protected Context context() {
+        return context;
+    }
+
+    public BlackLabIndex index() {
+        return context.index();
+    }
+
+    public String field() {
+        return context.field();
+    }
+
     @Override
-    public QueryInfo queryInfo() {
-        return queryInfo;
+    public QueryTimings timings() {
+        return context.timings();
     }
 
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof AbstractSearch<?> that))
             return false;
-        return Objects.equals(queryInfo, that.queryInfo);
+        return Objects.equals(context, that.context);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(queryInfo);
+        return Objects.hashCode(context);
     }
 
     protected static String toString(String operation, Object... param) {

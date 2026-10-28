@@ -53,7 +53,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** [SEGMENT/GLOBAL] Stores the sort order for the relevant context tokens for each hit index */
     private BigList<int[]> contextSortOrder;
 
-    protected Annotation annotation;
+    protected final Annotation annotation;
 
     protected final MatchSensitivity sensitivity;
 
@@ -75,10 +75,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * the source or the target, or both, might be in this field)
      *
      * @param hit our hit
-     * @param field foreign field we're interested in
+     * @param annotatedField foreign field we're interested in
      * @return array of length 2, containing start and end positions for the hit in this field
      */
-    protected int[] getForeignHitStartEnd(EphemeralHit hit, AnnotatedField field) {
+    protected int[] getForeignHitStartEnd(EphemeralHit hit, String annotatedField) {
         assert hit != null : "Need a hit";
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos == null)
@@ -88,7 +88,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
+            if (mi.getField().equals(annotatedField) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
@@ -161,47 +161,24 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
      * @return the annotation to use
      */
-    protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField overrideField) {
-        if (overrideField != null && !overrideField.equals(annotation.field())) {
+    protected static Annotation annotationOverrideField(Annotation annotation, String overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            annotation = overrideField.annotation(annotation.name());
+            annotation = annotation.field().index().annotatedField(overrideField).annotation(annotation.name());
         }
         return annotation;
     }
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, String overrideField) {
         super(prop, context, invert);
+        this.name = prop.name;
+        this.serializeName = prop.serializeName;
         this.index = context.hits() == null ? prop.index : context.hits().index();
         this.annotation = annotationOverrideField(prop.annotation, overrideField);
         this.sensitivity = prop.sensitivity;
-        this.name = prop.name;
-        this.serializeName = prop.serializeName;
         this.compareInReverse = prop.compareInReverse;
-        if (prop.context.equals(context)) {
-            // Same context; reuse context arrays
-            copyContext(prop);
-        } else {
-            initForwardIndex();
-        }
-    }
-
-    void initForwardIndex() {
-        luceneField = annotation.forwardIndexSensitivity().luceneField();
-        if (isGlobal() || context.toGlobal()) {
-            // To produce global term ids, we need the global forward index
-            forwardIndex = index.forwardIndex(annotation);
-        } else {
-            // Use the forward index for the segment we're in
-            forwardIndex = FieldForwardIndex.get(context.lrc(), luceneField);
-        }
-    }
-
-    private void copyContext(HitPropertyContextBase prop) {
-        luceneField = prop.luceneField;
-        forwardIndex = prop.forwardIndex;
-        contextTermId = prop.contextTermId;
-        contextSortOrder = prop.contextSortOrder;
+        initFi(prop, context);
     }
 
     protected HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
@@ -213,7 +190,26 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
-        initForwardIndex();
+        initFi(null, null);
+    }
+
+    private void initFi(HitPropertyContextBase prop, PropContext context) {
+        if (prop != null && prop.context.equals(context)) {
+            // Same context; reuse context arrays
+            luceneField = prop.luceneField;
+            forwardIndex = prop.forwardIndex;
+            contextTermId = prop.contextTermId;
+            contextSortOrder = prop.contextSortOrder;
+        } else {
+            luceneField = annotation.mainSensitivity().luceneField();
+            if (isGlobal() || this.context.toGlobal()) {
+                // To produce global term ids, we need the global forward index
+                forwardIndex = index.forwardIndex(annotation);
+            } else {
+                // Use the forward index for the segment we're in
+                forwardIndex = FieldForwardIndex.get(this.context.lrc(), luceneField);
+            }
+        }
     }
 
     public Annotation getAnnotation() {
@@ -374,6 +370,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return Objects.hash(super.hashCode(), annotation, sensitivity, index);
     }
 
+    /** Refine the given query with the given text pattern (extracted from a PropertyValue). */
     RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
         throw new UnsupportedOperationException();
     }

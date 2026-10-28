@@ -91,7 +91,7 @@ public class TestCollocationScorers {
         AnnotationSensitivity lemma = index.mainAnnotatedField().annotation("lemma")
                 .sensitivity(MatchSensitivity.INSENSITIVE);
 
-        Assert.assertEquals(4, LuceneUtil.getTermFrequency(lemma, "the", filter, false));
+        Assert.assertEquals(4, LuceneUtil.getTermFrequency(index.searcher(), lemma.luceneField(), "the", filter, false));
         CorpusSize corpusSize = index.queryDocuments(filter).subcorpusSize();
         Assert.assertEquals(25, corpusSize.getTotalCount().getTokens());
         Assert.assertEquals(25,
@@ -164,7 +164,6 @@ public class TestCollocationScorers {
         Assert.assertEquals(expected, group.score(), 1e-12);
     }
 
-    //@Ignore //@@@@@@ FIXME DEADLOCK
     @Test
     public void testRelationScores() throws Exception {
         ConfigInputFormat format = ConfigInputFormat.read(new StringReader("""

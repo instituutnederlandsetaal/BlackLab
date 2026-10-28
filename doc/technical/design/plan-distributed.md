@@ -37,7 +37,6 @@ STARTUP TIME
   Can we run it in a separate thread, and only block when we actually need the values?
 
 OTHER ISSUES
-- Look at QueryInfo / SearchSettings
 - try to get rid of more useless abstract base classes like `Result` (?)
 
 

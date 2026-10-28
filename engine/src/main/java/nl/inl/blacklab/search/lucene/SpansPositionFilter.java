@@ -572,9 +572,9 @@ class SpansPositionFilter extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        producer.setHitQueryContext(context);
-        filter.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        producer.setSpansContext(context);
+        filter.setSpansContext(context);
     }
 
     @Override

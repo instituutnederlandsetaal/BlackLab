@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -11,8 +10,6 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A query matching nothing.
@@ -25,8 +22,8 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     private final String luceneField;
 
-    public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
-        super(queryInfo);
+    public SpanQueryNoHits(Context context, String luceneField) {
+        super(context);
         this.luceneField = luceneField;
         this.guarantees = createGuarantees();
     }
@@ -96,7 +93,7 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryAnyToken(queryInfo, 1, 1, luceneField);
+        return new SpanQueryAnyToken(context, 1, 1, luceneField);
     }
 
     @Override

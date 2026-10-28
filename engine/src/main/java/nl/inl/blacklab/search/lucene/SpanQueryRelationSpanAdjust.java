@@ -13,9 +13,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.QueryInfo;
-
 /**
  * Adjust relation spans to match source, target, or entire relation.
  */
@@ -30,15 +27,15 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final AnnotatedField overriddenField;
+    private final String overriddenField;
 
     private final RelationInfo.SpanMode mode;
 
     private final String adjustToCapture;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, AnnotatedField overriddenField, RelationInfo.SpanMode mode,
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, String overriddenField, RelationInfo.SpanMode mode,
             String adjustToCapture) {
-        super(clause.queryInfo);
+        super(clause.context);
         this.clause = clause;
         this.overriddenField = overriddenField;
         this.mode = mode;
@@ -115,8 +112,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedField(), mode, adjustToCapture);
-            if (overriddenField != null && !overriddenField.name().equals(clause.getField()))
+            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedFieldName(), mode, adjustToCapture);
+            if (overriddenField != null && !overriddenField.equals(clause.getField()))
                 spans = new SpansOverrideField(spans, overriddenField);
             return spans;
         }
@@ -152,14 +149,14 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     @Override
     public String getField() {
         if (overriddenField != null)
-            return overriddenField.name();
+            return overriddenField;
         return clause.getField();
     }
 
     @Override
     public String getRealField() {
         if (overriddenField != null)
-            return overriddenField.name(); // not strictly correct, should be full Lucene field name with annotation and sensitivity
+            return overriddenField; // not strictly correct, should be full Lucene field name with annotation and sensitivity
         return clause.getRealField();
     }
 
@@ -174,8 +171,8 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(queryInfo);
+    public void setContext(Context context) {
+        super.setContext(context);
+        clause.setContext(context);
     }
 }

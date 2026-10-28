@@ -219,7 +219,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         // no clause, nothing to do
     }
 

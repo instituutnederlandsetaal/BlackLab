@@ -43,6 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.StringUtil;
@@ -119,8 +120,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
-                this.relationsStrategy =
-                        docWriter == null/*test*/ ? RelationsStrategy.forNewIndex() : docWriter.getRelationsStrategy();
+                this.relationsStrategy = RelationsStrategySeparateTerms.INSTANCE;
                 resetStats();
                 setDocument(file);
             }
@@ -150,13 +150,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
             protected BLInputDocument createNewDocument(BLInputDocument.DocType docType) {
                 return new BLInputDocument(docType);
-            }
-
-            /**
-             * Get the strategy to use for indexing relations.
-             */
-            public RelationsStrategy getRelationsStrategy() {
-                return relationsStrategy;
             }
 
             public RelationsStrategy.PayloadCodec getPayloadCodec() {

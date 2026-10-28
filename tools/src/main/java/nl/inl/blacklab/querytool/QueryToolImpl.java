@@ -461,7 +461,7 @@ public class QueryToolImpl {
             output.line("Filter cleared.");
         } else {
             try {
-                filterQuery = LuceneUtil.parseLuceneQuery(index, arguments, index.analyzer(), "title");
+                filterQuery = LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), arguments, index.analyzer(), "title");
                 output.line("Filter created: " + filterQuery);
                 output.verbose(filterQuery.getClass().getName());
             } catch (ParseException e) {
@@ -753,7 +753,7 @@ public class QueryToolImpl {
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
-            timings = search.queryInfo().timings();
+            timings = search.timings();
 
             if (alwaysSortBy != null) {
                 search = search.sort(HitProperty.deserialize(contentsField, alwaysSortBy, contextSize));

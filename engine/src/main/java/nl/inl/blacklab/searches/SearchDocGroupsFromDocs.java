@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 
 /** A search that yields groups of documents. */
@@ -16,8 +15,8 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
 
     private final long maxDocs;
 
-    public SearchDocGroupsFromDocs(QueryInfo queryInfo, SearchDocs source, DocProperty property, long maxDocsToStorePerGroup) {
-        super(queryInfo);
+    public SearchDocGroupsFromDocs(SearchDocs source, DocProperty property, long maxDocsToStorePerGroup) {
+        super(source);
         this.source = source;
         this.property = property;
         this.maxDocs = maxDocsToStorePerGroup;

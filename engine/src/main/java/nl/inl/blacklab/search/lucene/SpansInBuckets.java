@@ -54,7 +54,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
     protected Bucket bucket;
 
     /** Context, containing e.g. match info names */
-    protected HitQueryContext hitQueryContext;
+    protected SpansContext spansContext;
 
     /** Is there match info (e.g. captured groups) for each hit that we need to store? */
     protected boolean doMatchInfo;
@@ -190,10 +190,10 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
         return docId;
     }
 
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         clauseCapturesMatchInfo = hasMatchInfo();
-        this.hitQueryContext = context;
-        source.setHitQueryContext(context);
+        this.spansContext = context;
+        source.setSpansContext(context);
     }
 
     public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {

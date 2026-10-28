@@ -35,7 +35,7 @@ public class TestTermSerialization {
             Annotation annotation = annotationName.isEmpty() ?
                     field.mainAnnotation() :
                     field.annotation(annotationName);
-            String luceneField = annotation.forwardIndexSensitivity().luceneField();
+            String luceneField = annotation.mainSensitivity().luceneField();
             System.out.println("Checking all terms...");
             termsDone = 0;
             for (LeafReaderContext lrc: index.reader().leaves()) {

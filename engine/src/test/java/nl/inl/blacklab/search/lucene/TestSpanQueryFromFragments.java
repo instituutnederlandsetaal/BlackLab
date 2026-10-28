@@ -17,13 +17,11 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.apache.lucene.store.Directory;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestSpanQueryFromFragments {
 
@@ -49,13 +47,11 @@ public class TestSpanQueryFromFragments {
                 writer.commit();
                 writer.addDocument(new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA).getDocument());
             }
-            AnnotatedField field = Mockito.mock(AnnotatedField.class);
-            Mockito.when(field.name()).thenReturn("contents");
-            Mockito.when(field.tokenLengthField()).thenReturn(TOKEN_LENGTH_LUCENE_FIELD);
-            QueryInfo queryInfo = QueryInfo.create(null, field);
+            BlackLabIndex index = new MockBlackLabIndex();
+            BLSpanQuery.Context context = index.queryContext("contents");
             try (DirectoryReader reader = DirectoryReader.open(directory)) {
                 assertEquals(3, reader.leaves().size());
-                var query = new SpanQueryFromFragments(queryInfo, new MatchAllDocsQuery(), null,
+                var query = new SpanQueryFromFragments(context, new MatchAllDocsQuery(), null,
                         SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
                 var weight = query.createWeight(new IndexSearcher(reader), ScoreMode.COMPLETE_NO_SCORES, 1);
                 BLSpans plain = weight.getSpans(reader.leaves().get(0), SpanWeight.Postings.POSITIONS);

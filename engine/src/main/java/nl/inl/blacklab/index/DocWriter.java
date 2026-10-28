@@ -11,7 +11,6 @@ import org.apache.lucene.index.IndexableFieldType;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.TextContent;
 
 /**
@@ -71,8 +70,6 @@ public interface DocWriter {
     default BlackLabIndex.IndexType getIndexType() {
         return metadata().getIndexType();
     }
-
-    RelationsStrategy getRelationsStrategy();
 
     /** Force a merge (debug feature) */
     void debugForceMerge();

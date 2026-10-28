@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.queries.spans.TermSpans;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Base class for all our own Spans classes.
  * <p>
@@ -76,7 +74,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     /**
      * For efficiency while matching, this will store the result of hasMatchInfo().
-     * Only valid after setHitQueryContext() has been called.
+     * Only valid after setSpansContext() has been called.
      */
     protected boolean childClausesCaptureMatchInfo = true;
 
@@ -85,7 +83,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     /** If we're querying a parallel corpus, this may indicate that this part of the hit
      *  comes from a different anntotated field, e.g. contents__nl. */
-    private AnnotatedField overriddenField = null;
+    private String overriddenField = null;
 
     protected BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
@@ -104,14 +102,14 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * Give the BLSpans tree a way to access match info (captured groups etc.),
      * and the classes that capture match info a way to register themselves.
      * <p>
-     * Subclasses should implement {@link #passHitQueryContextToClauses(HitQueryContext)}.
+     * Subclasses should implement {@link #passSpansContextToClauses(SpansContext)}.
      *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         childClausesCaptureMatchInfo = hasMatchInfo();
-        overriddenField = context.getField(); // will be null unless this is a parallel corpus query
-        passHitQueryContextToClauses(context);
+        overriddenField = context.getField() == null ? null : context.getField(); // will be null unless this is a parallel corpus query
+        passSpansContextToClauses(context);
     }
 
     /**
@@ -123,12 +121,12 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *
      * @return the overridden field, or null if none
      */
-    public AnnotatedField getOverriddenField() {
+    public String getOverriddenField() {
         return overriddenField;
     }
 
     /**
-     * Called by setHitQueryContext() to pass the context to child clauses.
+     * Called by setSpansContext() to pass the context to child clauses.
      * <p>
      * Subclasses should implement this method to pass the context to their
      * child clauses (if any), and either:
@@ -142,7 +140,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      * @param context the hit query context, that e.g. keeps track of captured
      *            groups
      */
-    protected abstract void passHitQueryContextToClauses(HitQueryContext context);
+    protected abstract void passSpansContextToClauses(SpansContext context);
 
     /**
      * Get the match infos (captured groups, relations) contained in this

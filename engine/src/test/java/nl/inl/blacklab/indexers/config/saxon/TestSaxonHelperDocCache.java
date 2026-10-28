@@ -21,7 +21,7 @@ public class TestSaxonHelperDocCache {
 
     @BeforeClass
     public static void beforeClass() {
-        BlackLab.implicitInstance(); // init plugin system (includes IndexSourceType "test")
+        BlackLab.engine(); // init plugin system (includes IndexSourceType "test")
     }
 
     @Test

@@ -186,38 +186,71 @@ public class BLIndexWriterProxy implements Closeable {
         Set<String> pids = new ObjectOpenHashSet<>(getNumberOfDocs());
         String pidFieldName1 = getPidFieldName();
         if (pidFieldName1 != null) {
-            try (IndexReader reader = DirectoryReader.open(indexWriter)) {
-                var fields = reader.storedFields();
-                var fieldsToVisit = Collections.singleton(pidFieldName1);
+            // Open a new IndexReader here so we can see the documents that have already been added to the index
+            // (but not yet committed).
+            try {
+                IndexReader reader = getRealtimeIndexReader();
+                try {
+                    var fields = reader.storedFields();
+                    var fieldsToVisit = Collections.singleton(pidFieldName1);
 
-                for (int i = 0; i < reader.maxDoc(); i++) {
-                    var visitor = new DocumentStoredFieldVisitor(fieldsToVisit) {
-                        private boolean found = false;
+                    for (int i = 0; i < reader.maxDoc(); i++) {
+                        var visitor = new DocumentStoredFieldVisitor(fieldsToVisit) {
+                            private boolean found = false;
 
-                        @Override
-                        public Status needsField(FieldInfo fieldInfo) {
-                            if (found)
-                                return Status.STOP;
-                            if (fieldsToVisit.contains(fieldInfo.name)) {
-                                found = true;
-                                return Status.YES;
+                            @Override
+                            public Status needsField(FieldInfo fieldInfo) {
+                                if (found)
+                                    return Status.STOP;
+                                if (fieldsToVisit.contains(fieldInfo.name)) {
+                                    found = true;
+                                    return Status.YES;
+                                }
+                                return Status.NO;
                             }
-                            return Status.NO;
-                        }
-                    };
-                    fields.document(i, visitor);
-                    var doc = visitor.getDocument();
+                        };
+                        fields.document(i, visitor);
+                        var doc = visitor.getDocument();
 
-                    String pid1 = doc.get(pidFieldName1);
-                    if (pid1 != null) {
-                        pids.add(pid1);
+                        String pid1 = doc.get(pidFieldName1);
+                        if (pid1 != null) {
+                            pids.add(pid1);
+                        }
                     }
+                } finally {
+                    // Our real-time reader may just be the original reader with its reference count incremented if
+                    // nothing has changed, so we need to decRef() it here (not close()!) to avoid closing the
+                    // underlying index reader. If it was a new reader, decRef() will close it because the reference
+                    // count will reach zero.
+                    reader.decRef();
                 }
             } catch (IOException e) {
                 throw new ErrorIndexingFile("Error gathering existing persistent identifiers from index", e);
             }
         }
         return pids;
+    }
+
+    /** Get a real-time IndexReader that sees all changes made to the index so far, even if not yet committed.
+     * <p>
+     * This is necessary to check for existing PIDs when adding documents to the index.
+     * Will return a new IndexReader if the index has changed since the last time it was called, or the
+     * same IndexReader with its reference count incremented if nothing has changed.
+     *
+     * @return a real-time IndexReader
+     */
+    private DirectoryReader getRealtimeIndexReader() throws IOException {
+        if (index.reader() instanceof DirectoryReader dr) {
+            // Efficiently open a refreshed reader if the index has changed, or return the same reader with its
+            // reference count incremented if not.
+            DirectoryReader refreshed = DirectoryReader.openIfChanged(dr, indexWriter, true);
+            if (refreshed != null)
+                return refreshed;
+            dr.incRef(); // client will close it, so we need to incRef() here to avoid closing the underlying index reader
+            return dr;
+        }
+        // Some other type of IndexReader; just open a new one. This is slower.
+        return DirectoryReader.open(indexWriter);
     }
 
     /** Get the Lucene documents for a list of BLInputDocuments. */

@@ -9,7 +9,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -26,18 +26,18 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
     /**
      * Construct a DocGroups from a list of groups.
      * 
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param groups list of groups to wrap
      * @param groupBy what the documents were grouped by
      * @param sampleParameters sample parameters if this is a sample, null otherwise
      * @param windowStats window stats if this is a window, null otherwise
      * @return document groups
      */
-    public static DocGroups fromList(
-            QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy,
+    public static DocGroups fromList(BlackLabIndex index, String field, List<DocGroup> groups, DocProperty groupBy,
             SampleParameters sampleParameters, WindowStats windowStats,
             long totalNumberOfGroups, long totalResults, long largestGroupSize) {
-        return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats,
+        return new DocGroups(index, field, groups, groupBy, sampleParameters, windowStats,
                 totalNumberOfGroups, totalResults, largestGroupSize);
     }
 
@@ -67,10 +67,10 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
     
     private final SampleParameters sampleParameters;
 
-    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy,
+    protected DocGroups(BlackLabIndex index, String field, List<DocGroup> groups, DocProperty groupBy,
             SampleParameters sampleParameters, WindowStats windowStats,
             long totalNumberOfGroups, long totalResults, long largestGroupSize) {
-        super(queryInfo);
+        super(index, field);
 
         if (groups.size() > MAX_NUMBER_OF_GROUPS)
             throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
@@ -125,7 +125,8 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
         List<DocGroup> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         return new DocGroups(
-            this.queryInfo(), 
+            index,
+            field,
             sorted,
             this.groupBy, 
             null,
@@ -138,7 +139,8 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
 
     public DocGroups filter(DocGroupProperty property, PropertyValue value) {
         return new DocGroups(
-            this.queryInfo(), 
+            index,
+            field,
             this.results.stream().filter(group -> property.get(group).equals(value)).toList(),
             this.groupBy, 
             null,
@@ -168,7 +170,7 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
         List<DocGroup> resultsWindow = doWindow(this, first, number);
         boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats,
+        return DocGroups.fromList(index, field, resultsWindow, groupBy, null, windowStats,
                 stats.processedTotal(),
                 totalResults,
                 largestGroupSize);
@@ -186,7 +188,7 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
      * @return the sample
      */
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), doSample(this, sampleParameters), groupCriteria(),
+        return DocGroups.fromList(index, field, doSample(this, sampleParameters), groupCriteria(),
                 sampleParameters, null,
                 stats.processedTotal(),
                 totalResults,

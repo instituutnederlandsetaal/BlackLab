@@ -40,12 +40,12 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
 
     /** Filter instance for filtering our hits */
     public abstract static class SpansAndFilter {
-        protected HitQueryContext context;
+        protected SpansContext context;
 
         protected SpansAndFilter() {
         }
 
-        public void setContext(HitQueryContext context) {
+        public void setContext(SpansContext context) {
             this.context = context;
         }
 
@@ -275,8 +275,8 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.filter.setContext(context);
     }
 

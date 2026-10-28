@@ -134,10 +134,7 @@
         "with-spans": {
           "type": "list"
         }
-      },
-      "otherFields": [
-        "contents__nl"
-      ]
+      }
     },
     "results": {
       "stats": {

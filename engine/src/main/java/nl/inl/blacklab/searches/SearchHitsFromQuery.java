@@ -5,7 +5,6 @@ import java.util.Objects;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -19,8 +18,8 @@ public class SearchHitsFromQuery extends SearchHits {
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromQuery(QueryInfo queryInfo, CompleteQuery completeQuery, SearchSettings searchSettings) {
-        super(queryInfo);
+    public SearchHitsFromQuery(Context context, CompleteQuery completeQuery, SearchSettings searchSettings) {
+        super(context);
         if (completeQuery == null)
             throw new IllegalArgumentException("Must specify a query");
         this.completeQuery = completeQuery;
@@ -34,9 +33,9 @@ public class SearchHitsFromQuery extends SearchHits {
      */
     @Override
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
-        QueryTimings timings = queryInfo().timings().start();
+        QueryTimings timings = timings().start();
         try {
-            return queryInfo().index().find(queryInfo(), getCombinedSpanFilterQuery(), searchSettings);
+            return index().find(getCombinedSpanFilterQuery(), searchSettings);
         } finally {
             timings.record("fetch");
         }
@@ -69,7 +68,7 @@ public class SearchHitsFromQuery extends SearchHits {
 
     @Override
     public BLSpanQuery getCombinedSpanFilterQuery() {
-        return completeQuery.pattern().toQuery(queryInfo(), completeQuery.filter());
+        return completeQuery.pattern().toQuery(index(), field(), completeQuery.filter());
     }
 
     @Override

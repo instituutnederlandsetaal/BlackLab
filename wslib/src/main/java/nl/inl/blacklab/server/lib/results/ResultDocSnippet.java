@@ -9,7 +9,6 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -90,7 +89,7 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hitResults = HitResults.singleHit(QueryInfo.create(index, request.field()), luceneDocId, start, end);
+            hitResults = HitResults.singleHit(index, request.field().name(), luceneDocId, start, end);
         }
 
         origContent = request.concordanceType() == ConcordanceType.CONTENT_STORE;

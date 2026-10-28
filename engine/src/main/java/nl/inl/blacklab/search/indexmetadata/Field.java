@@ -4,7 +4,13 @@ import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 
-/** Shared base interface between metadata and annotated fields */
+/** Shared base interface between metadata and annotated fields.
+ *
+ * Used because either type can have content store and character offsets.
+ *
+ * Knows its index, name, its settings (whether it has a content store and character offsets),
+ * and its custom properties.
+ */
 public interface Field extends Comparable<Field> {
 
     /** Get this field's name

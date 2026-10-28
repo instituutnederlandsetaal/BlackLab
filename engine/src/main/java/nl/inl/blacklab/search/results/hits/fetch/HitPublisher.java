@@ -28,7 +28,7 @@ public interface HitPublisher {
     void activate();
 
     /** Context for our hit: field, match info definitions and segment they came from (or null if global) */
-    Hits.HitsContext context();
+    Hits.Context context();
 
     /** Wait for all hits to be fetched and return an efficient Hits interface to them. */
     Hits getStatic();

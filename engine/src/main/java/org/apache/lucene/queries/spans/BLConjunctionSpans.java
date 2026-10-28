@@ -27,16 +27,10 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
-
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /**
  * Common super class for multiple sub spans required in a document.
@@ -184,9 +178,9 @@ public abstract class BLConjunctionSpans extends BLSpans {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         for (BLSpans subSpan : subSpans) {
-            subSpan.setHitQueryContext(context);
+            subSpan.setSpansContext(context);
         }
     }
 

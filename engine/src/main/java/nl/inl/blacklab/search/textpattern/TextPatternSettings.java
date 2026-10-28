@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 
 /**
  * Apply some settings to part of the query.
@@ -28,7 +28,7 @@ public class TextPatternSettings extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         for (Map.Entry<String, String> e : settings.entrySet()) {
             String key = e.getKey();
             String value = e.getValue();

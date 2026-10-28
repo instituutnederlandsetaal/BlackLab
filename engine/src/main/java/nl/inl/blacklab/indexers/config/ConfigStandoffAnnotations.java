@@ -286,7 +286,8 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         if (actualTargetField.equals(defaultTargetField)) {
             // Not a cross-field relation
             return getRelationClass();
-        } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
+        } else if (AnnotatedFieldNameUtil.baseFromParallelFieldName(defaultTargetField).equals(
+                AnnotatedFieldNameUtil.baseFromParallelFieldName(actualTargetField))) {
             // Cross-field relation to a different version of the same parallel field,
             // e.g. contents__nl --> contents__de
             String actualTargetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(actualTargetField);

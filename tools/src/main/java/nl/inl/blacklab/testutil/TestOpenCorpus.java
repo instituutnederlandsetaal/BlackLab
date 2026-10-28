@@ -28,7 +28,7 @@ public class TestOpenCorpus {
         }));
 
         File indexDir = new File(args[0]);
-        try (BlackLabIndex index = BlackLab.implicitInstance().open(indexDir)) {
+        try (BlackLabIndex ignored = BlackLab.open(indexDir)) {
             // Wait until terminated by user (Ctrl+C to terminate)
             int i = 0;
             while (!terminate.get()) {

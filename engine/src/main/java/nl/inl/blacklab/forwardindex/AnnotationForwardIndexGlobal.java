@@ -110,6 +110,6 @@ public class AnnotationForwardIndexGlobal implements AnnotationForwardIndex {
 
     @Override
     public String getLuceneFieldName() {
-        return annotation.forwardIndexSensitivity().luceneField();
+        return annotation.mainSensitivity().luceneField();
     }
 }

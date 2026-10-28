@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.plugins.QueryFunction;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -93,7 +93,7 @@ public class TextPatternCompare extends TextPattern {
     }
 
     /** Get simple anytoken, term or regex query. */
-    public static BLSpanQuery getSimpleMatchQuery(QueryExecutionContext context, String annotation, String value, MatchSensitivity sensitivity) {
+    public static BLSpanQuery getSimpleMatchQuery(TextPatternContext context, String annotation, String value, MatchSensitivity sensitivity) {
         RegexStripped stripped = new RegexStripped(value, sensitivity);
         if (stripped.isAnyToken()) {
             // Any token query.
@@ -104,8 +104,9 @@ public class TextPatternCompare extends TextPattern {
             if (rewrittenPseudoAnnot != null)
                 return rewrittenPseudoAnnot.toQuery(context);
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-            return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
-                    context.optDesensitize(context.optDesensitize(value))));
+            String value1 = context.getSensitivity().desensitize(value);
+            return new BLSpanTermQuery(context.queryContext(), new Term(context.luceneField(),
+                    context.getSensitivity().desensitize(value1)));
         } else {
             // Regex query.
             if (stripped.regex().equals(value) && stripped.sensitivity().equals(sensitivity)) {
@@ -117,11 +118,11 @@ public class TextPatternCompare extends TextPattern {
     }
 
     private static @NonNull BLSpanMultiTermQueryWrapper<RegexpQuery> evalRegex(
-            QueryExecutionContext context, String annotation, String value, MatchSensitivity sensitivity) throws InvalidQuery {
+            TextPatternContext context, String annotation, String value, MatchSensitivity sensitivity) throws InvalidQuery {
 
         // We're dealing with an actual regex query.
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-        String valueDesensitized = context.optDesensitize(value);
+        String valueDesensitized = context.getSensitivity().desensitize(value);
 
         // Lucene's regex engine requires double quotes to be escaped, unlike most others.
         // Escape double quotes
@@ -130,7 +131,7 @@ public class TextPatternCompare extends TextPattern {
         try {
             Term term = new Term(context.luceneField(), valueDesensitized);
             RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
-            return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
+            return new BLSpanMultiTermQueryWrapper<>(context.queryContext(), regexpQuery);
         } catch (IllegalArgumentException e) {
             throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {
@@ -147,7 +148,7 @@ public class TextPatternCompare extends TextPattern {
      *
      * @param context the query execution context
      */
-    protected static TextPattern rewriteIfPseudoAnnotation(QueryExecutionContext context, boolean convertToRegex, String annotation, String value) {
+    protected static TextPattern rewriteIfPseudoAnnotation(TextPatternContext context, boolean convertToRegex, String annotation, String value) {
         TextPattern rewrittenPseudoAnnot = null;
         if (!context.field().annotations().exists(annotation)) {
             // Annotation doesn't exist in the data.
@@ -188,7 +189,7 @@ public class TextPatternCompare extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         TextPattern actualLeft = left instanceof TextPatternDefaultValue ? // use default annotation
                 new TextPatternValue(ConstraintValue.symbol(context.field().defaultSearchAnnotation().name())) :
                 left;

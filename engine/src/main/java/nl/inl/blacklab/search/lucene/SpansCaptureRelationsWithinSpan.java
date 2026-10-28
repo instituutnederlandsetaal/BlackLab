@@ -33,7 +33,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     private int captureAsIndex = -1;
 
     /** Our hit query context */
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** Match info for current hit */
     private MatchInfo[] matchInfo;
@@ -122,9 +122,9 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
-        relations.setHitQueryContext(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
+        relations.setSpansContext(context);
         this.context = context;
         if (!StringUtils.isEmpty(toCapture))
             this.toCaptureIndex = context.registerMatchInfo(toCapture, null);

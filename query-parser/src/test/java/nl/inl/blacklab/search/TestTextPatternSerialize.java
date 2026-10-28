@@ -19,7 +19,7 @@ public class TestTextPatternSerialize {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        BlackLab.implicitInstance();
+        BlackLab.engine();
     }
 
     private static void assertRewritesTo(String expected, TextPattern pattern) throws IOException {

@@ -33,7 +33,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.Span;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Converts documents and fragments results into spans.
@@ -55,6 +55,8 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** Field that gives us the document length in tokens */
     private final String tokenLengthField;
 
+    private final String luceneField;
+
     /** Whether to prefer full documents or fragments. */
     public enum Behaviour {
         /** If the the full document matches, return only that as a span.
@@ -69,11 +71,12 @@ public class SpanQueryFromFragments extends BLSpanQuery {
     /** The behaviour of the span query (whether to prefer full documents or fragments) */
     private final Behaviour behaviour;
 
-    public SpanQueryFromFragments(QueryInfo queryInfo, Query fragmentQuery, BLSpanQuery hitsInFragments, Behaviour behaviour) {
-        super(queryInfo);
+    public SpanQueryFromFragments(Context context, Query fragmentQuery, BLSpanQuery hitsInFragments, Behaviour behaviour) {
+        super(context);
         this.fragmentQuery = fragmentQuery;
         this.hitsInFragments = hitsInFragments;
-        this.tokenLengthField = queryInfo.field().tokenLengthField();
+        this.luceneField = context.annotatedFieldNameMainLuceneField();
+        this.tokenLengthField = AnnotatedFieldNameUtil.lengthTokensField(context.annotatedField());
         this.behaviour = behaviour;
 
         fullDocsBitSetProducer = new QueryBitSetProducer(BLInputDocument.docTypeQuery(BLInputDocument.DocType.DOCUMENT));
@@ -84,7 +87,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         Query frRewr = fragmentQuery.rewrite(reader);
         BLSpanQuery hitsRewr = hitsInFragments == null ? null : hitsInFragments.rewrite(reader);
         if (frRewr != fragmentQuery || hitsRewr != hitsInFragments) {
-            return new SpanQueryFromFragments(queryInfo, frRewr, hitsRewr, behaviour);
+            return new SpanQueryFromFragments(context, frRewr, hitsRewr, behaviour);
         }
         return this;
     }
@@ -138,7 +141,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
 
     @Override
     public String getRealField() {
-        return queryInfo.field().mainAnnotation().mainSensitivity().luceneField();
+        return luceneField;
     }
 
     @Override
@@ -297,7 +300,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
                 LeafReader reader = ctx.reader();
                 dvTokenLength = DocValues.getNumeric(reader, tokenLengthField);
                 dvFragAnnotatedField = DocValues.getSorted(reader, BLInputDocument.FRAG_FIELD_ANNOTATED_FIELD);
-                String annotatedFieldName = queryInfo.field().name();
+                String annotatedFieldName = context.annotatedField();
                 currentAnnotatedFieldOrd = dvFragAnnotatedField.lookupTerm(new BytesRef(annotatedFieldName));
                 dvFragStart = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_START);
                 dvFragEnd = DocValues.getNumeric(reader, BLInputDocument.FRAG_FIELD_END);
@@ -543,7 +546,7 @@ public class SpanQueryFromFragments extends BLSpanQuery {
         }
 
         @Override
-        protected void passHitQueryContextToClauses(HitQueryContext context) {
+        protected void passSpansContextToClauses(SpansContext context) {
             // No clauses to pass context to
         }
 

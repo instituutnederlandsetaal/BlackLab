@@ -17,7 +17,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
@@ -40,57 +39,61 @@ public interface Hits extends Iterable<EphemeralHit> {
 
     Logger logger = LogManager.getLogger(Hits.class);
 
-    /** Context for our hit: field, match info definitions and segment they came from (or null if global) */
-    record HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
-        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+    /** Context for our hits: field, match info definitions and segment they came from (or null if global) */
+    record Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+            this.index = index;
             this.field = field;
             this.matchInfoDefs = matchInfoDefs != null ? matchInfoDefs : MatchInfoDefs.EMPTY;
             this.leafReaderContext = leafReaderContext;
         }
 
-        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-            this(field, matchInfoDefs, null);
+        public Context(BlackLabIndex index, String field, MatchInfoDefs matchInfoDefs) {
+            this(index, field, matchInfoDefs, null);
         }
 
-        public HitsContext(AnnotatedField field) {
-            this(field, MatchInfoDefs.EMPTY, null);
+        public Context(BlackLabIndex index, String field) {
+            this(index, field, MatchInfoDefs.EMPTY, null);
         }
 
-        public static HitsContext fromHitQueryContext(HitQueryContext hitQueryContext,
-                LeafReaderContext leafReaderContext) {
-            return new HitsContext(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
+        public Context(BlackLabIndex index) {
+            this(index, index.mainAnnotatedField().name(), MatchInfoDefs.EMPTY, null);
         }
 
         public BlackLabIndex index() {
-            return field.index();
+            return index;
         }
 
-        public HitsContext withoutLeafReaderContext() {
-            return new HitsContext(field, matchInfoDefs, null);
+        public String field() {
+            return field;
+        }
+
+        public Context withoutLeafReaderContext() {
+            return new Context(index, field, matchInfoDefs, null);
         }
     }
 
     /** An empty list of hits. */
-    static Hits empty(Hits.HitsContext context) {
+    static Hits empty(Context context) {
         return new HitsListNoLock32(context, -1);
     }
 
-    static Hits fromLists(AnnotatedField field,
+    static Hits fromLists(BlackLabIndex index, String field,
             int[] docs, int[] starts, int[] ends) {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(new HitsContext(field), lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new Context(index, field, MatchInfoDefs.EMPTY, null), lDocs, lStarts, lEnds, null);
     }
 
-    static Hits single(HitsContext context, int doc, int matchStart, int matchEnd) {
+    static Hits single(Context context, int doc, int matchStart, int matchEnd) {
         if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
             throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
         return new HitsSingle(context, doc, matchStart, matchEnd);
     }
 
-    HitsContext context();
+    Context context();
 
     /**
      * Type of each of our match infos.
@@ -98,7 +101,7 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return list of match info definitions
      */
     default AnnotatedField field() {
-        return context().field();
+        return index().annotatedField(context().field());
     }
 
     default BlackLabIndex index() {
@@ -393,7 +396,7 @@ public interface Hits extends Iterable<EphemeralHit> {
     default HitPublisher publisher() {
         return new HitPublisher() {
             @Override
-            public HitsContext context() {
+            public Context context() {
                 return Hits.this.context();
             }
 

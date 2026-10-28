@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -18,14 +17,14 @@ public class ResultSummaryCommonFields {
     private final MatchInfoDefs matchInfoDefs;
     private final ResultGroups groups;
     private final WindowStats window;
-    private final AnnotatedField searchField;
-    private final Collection<AnnotatedField> otherFields;
+    private final String searchField;
+    private final Collection<String> otherFields;
     private final SampleParameters sampleSettings;
     private final ResultSummaryNumDocs numDocs;
     private final ResultSummaryNumHits numHits;
 
     public ResultSummaryCommonFields(TextPattern pattern, SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups,
-            WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields,
+            WindowStats window, String searchField, Collection<String> otherFields,
             SampleParameters sampleSettings, ParamsForResponse paramsForResponse,
             ResultSummaryNumDocs numDocs, ResultSummaryNumHits numHits) {
         this.paramsForResponse = paramsForResponse;
@@ -65,11 +64,11 @@ public class ResultSummaryCommonFields {
         return window;
     }
 
-    public AnnotatedField getSearchField() {
+    public String getSearchField() {
         return searchField;
     }
 
-    public Collection<AnnotatedField> getOtherFields() {
+    public Collection<String> getOtherFields() {
         return otherFields;
     }
 

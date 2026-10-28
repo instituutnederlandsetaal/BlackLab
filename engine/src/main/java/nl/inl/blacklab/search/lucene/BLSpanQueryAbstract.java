@@ -11,8 +11,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.QueryVisitor;
 
-import nl.inl.blacklab.search.results.QueryInfo;
-
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default
  * implementations of some abstract methods in SpanQuery.
@@ -30,7 +28,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     protected List<BLSpanQuery> clauses;
 
     protected BLSpanQueryAbstract(Collection<BLSpanQuery> clauses) {
-        super(getQueryInfo(clauses));
+        super(getContext(clauses));
         this.clauses = new ArrayList<>(clauses);
         baseFieldName = checkAllCompatibleFields(clauses);
         luceneFieldName = getLuceneFieldName(clauses);
@@ -44,12 +42,12 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         return "";
     }
 
-    private static QueryInfo getQueryInfo(Collection<BLSpanQuery> clauses) {
+    private static Context getContext(Collection<BLSpanQuery> clauses) {
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
-                return clause.queryInfo;
+                return clause.context();
         }
-        return null;
+        throw new IllegalArgumentException("No clauses provided");
     }
 
     protected BLSpanQueryAbstract(BLSpanQuery... clauses) {
@@ -126,11 +124,11 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
     
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
+    public void setContext(Context context) {
+        super.setContext(context);
         for (BLSpanQuery clause: clauses) {
             if (clause != null)
-                clause.setQueryInfo(queryInfo);
+                clause.setContext(context);
         }
     }
 }

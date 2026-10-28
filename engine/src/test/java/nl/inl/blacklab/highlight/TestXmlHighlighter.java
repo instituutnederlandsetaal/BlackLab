@@ -18,22 +18,18 @@ public class TestXmlHighlighter {
 
     @Before
     public void setUp() {
-        hl = new XmlHighlighter();
-        hl.setRemoveEmptyHlTags(false); // don't do this for testing, as it might conceal mistakes
+        // don't remove empty highlight tags for testing, as it might conceal mistakes
+        hl = new XmlHighlighter(UnbalancedTagsStrategy.ADD_TAG, false);
     }
 
     @Test
-    public void testRemoveEmptyHightlights() {
-        XmlHighlighter hl = new XmlHighlighter();
-        try {
-            String xmlContent = "The quick brown fox <b>jumps</b> over the lazy dog.";
+    public void testRemoveEmptyHighlights() {
+        XmlHighlighter hl = new XmlHighlighter(UnbalancedTagsStrategy.ADD_TAG, true);
+        String xmlContent = "The quick brown fox <b>jumps</b> over the lazy dog.";
 
-            List<HitCharSpan> hits = List.of(new HitCharSpan(23, 32), new HitCharSpan(25, 32));
-            Assert.assertEquals("The quick brown fox <b><hl index=\"0\">ju<hl index=\"1\">mps</hl></hl></b> over the lazy dog.",
-                    hl.highlight(xmlContent, hits));
-        } finally {
-            hl.setRemoveEmptyHlTags(false);
-        }
+        List<HitCharSpan> hits = List.of(new HitCharSpan(23, 32), new HitCharSpan(25, 32));
+        Assert.assertEquals("The quick brown fox <b><hl index=\"0\">ju<hl index=\"1\">mps</hl></hl></b> over the lazy dog.",
+                hl.highlight(xmlContent, hits));
     }
 
     @Test
@@ -141,14 +137,14 @@ public class TestXmlHighlighter {
 
     @Test
     public void testMakeWellFormedRemoveOpenTag() {
-        hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
+        hl = new XmlHighlighter(UnbalancedTagsStrategy.REMOVE_TAG, false);
         String xmlContent = "The <word content='fox'>jumps over";
         Assert.assertEquals("The jumps over", hl.makeWellFormed(xmlContent));
     }
 
     @Test
     public void testMakeWellFormedRemoveCloseTag() {
-        hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
+        hl = new XmlHighlighter(UnbalancedTagsStrategy.REMOVE_TAG, false);
         String xmlContent = "The fox</word> jumps over";
         Assert.assertEquals("The fox jumps over", hl.makeWellFormed(xmlContent));
     }

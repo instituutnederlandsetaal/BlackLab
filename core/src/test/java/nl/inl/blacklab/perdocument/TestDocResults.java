@@ -24,7 +24,7 @@ public class TestDocResults {
         int[] aEnd = { 2, 3, 4, 5, 6 };
 
         index = new MockBlackLabIndex();
-        HitResults hitResults = HitResults.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+        HitResults hitResults = HitResults.list(index, index.mainAnnotatedField().name(), aDoc, aStart, aEnd);
         drs = hitResults.perDocResults(Results.NO_LIMIT);
     }
 

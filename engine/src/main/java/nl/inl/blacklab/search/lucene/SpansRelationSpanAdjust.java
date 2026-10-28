@@ -5,8 +5,6 @@ import java.util.Arrays;
 
 import org.apache.lucene.queries.spans.FilterSpans;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Adjust relations spans to match source, target, or entire relation.
  */
@@ -27,12 +25,12 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     /** Adjusted end position of current hit */
     private int endAdjusted = -1;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final AnnotatedField clauseField;
+    private final String clauseField;
 
     /** Whether or not the current hit should be included. */
     private FilterSpans.AcceptStatus filterResult = FilterSpans.AcceptStatus.YES;
@@ -43,7 +41,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
      * @param in       spans to adjust
      * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, AnnotatedField clauseField, RelationInfo.SpanMode spanMode,
+    public SpansRelationSpanAdjust(BLSpans in, String clauseField, RelationInfo.SpanMode spanMode,
             String adjustToCapture) {
         super(in, adjustToCapture != null ? SpanGuarantees.NONE : SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
         this.clauseField = clauseField;
@@ -101,9 +99,9 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         this.context = context;
-        super.passHitQueryContextToClauses(context.withField(clauseField));
+        super.passSpansContextToClauses(context.withField(clauseField));
         this.captureIndex = adjustToCapture == null ? -1 : context.getMatchInfoDefs().indexOf(adjustToCapture);
     }
 

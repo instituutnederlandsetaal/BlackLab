@@ -14,7 +14,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Captures all relations within a match info span.
@@ -41,16 +40,16 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
      *
      * (if captureRelsInside is not set, capture all relations in current clause hit)
      *
-     * @param queryInfo query info
+     * @param context query context
      * @param relationField field where relations where indexed
      * @param query query capturing the span to capture relations from
      * @param captureRelsInside name of the match info span to capture relations from
      * @param captureRelsAs name to capture the list of relations as
      * @param relationType type of relation to capture (regex)
      */
-    public SpanQueryCaptureRelationsWithinSpan(QueryInfo queryInfo, AnnotationSensitivity relationField, BLSpanQuery query,
+    public SpanQueryCaptureRelationsWithinSpan(Context context, AnnotationSensitivity relationField, BLSpanQuery query,
             String captureRelsInside, String captureRelsAs, String relationType) {
-        super(query, new SpanQueryRelations(queryInfo, relationField, relationType, Collections.emptyMap(),
+        super(query, new SpanQueryRelations(context, relationField, relationType, Collections.emptyMap(),
                 SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN, "", false, null));
         this.captureRelsInside = captureRelsInside;
         this.captureRelsAs = captureRelsAs;

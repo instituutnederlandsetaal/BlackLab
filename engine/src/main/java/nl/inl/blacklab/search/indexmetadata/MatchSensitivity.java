@@ -26,10 +26,6 @@ public enum MatchSensitivity {
         else
             return diacriticsSensitive ? CASE_INSENSITIVE : INSENSITIVE;
     }
-    
-    public static MatchSensitivity caseAndDiacriticsSensitive(boolean b) {
-        return b ? SENSITIVE : INSENSITIVE;
-    }
 
     public static MatchSensitivity fromLuceneFieldSuffix(String code) {
         return switch (code.toLowerCase()) {
@@ -85,14 +81,14 @@ public enum MatchSensitivity {
     }
 
     public String desensitize(String input) {
-        // TODO: instead of Locale.ROOT we should probably use the configured locale here!
-        return switch (this) {
-            case CASE_INSENSITIVE -> input.toLowerCase(Locale.ROOT);
-            case DIACRITICS_INSENSITIVE ->
-                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input));
-            case INSENSITIVE ->
-                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase(Locale.ROOT));
-            case SENSITIVE -> input;
-        };
+        if (this == SENSITIVE)
+            return input;
+        input = StringUtil.removeCharsIgnoredByInsensitiveCollator(input);
+        final Locale locale = Locale.ROOT;   // TODO: use the configured locale here!
+        if (!isCaseSensitive())
+            input = input.toLowerCase(locale);
+        if (!isDiacriticsSensitive())
+            input = StringUtil.stripAccents(input);
+        return input;
     }
 }

@@ -111,8 +111,8 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
         @Override
         public int gatherHitsInternal() throws IOException {
             assert positionedAtHitIfPositionedInDoc();
-            doMatchInfo = hitQueryContext != null && (clauseCapturesMatchInfo && hitQueryContext.numberOfMatchInfos() > 0 ||
-                    hitQueryContext.hasRelationCaptures());
+            doMatchInfo = spansContext != null && (clauseCapturesMatchInfo && spansContext.numberOfMatchInfos() > 0 ||
+                    spansContext.hasRelationCaptures());
             clear();
             assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
             gatherHits();
@@ -134,7 +134,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
                 assert source.endPosition() >= 0 && source.endPosition() != Spans.NO_MORE_POSITIONS;
                 if (doMatchInfo) {
                     // Store match information such as captured groups and active relation (if any)
-                    int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
+                    int n = spansContext == null ? 0 : spansContext.numberOfMatchInfos();
                     MatchInfo[] matchInfo = new MatchInfo[n];
                     source.getMatchInfo(matchInfo);
                     matchInfos.add(matchInfo);

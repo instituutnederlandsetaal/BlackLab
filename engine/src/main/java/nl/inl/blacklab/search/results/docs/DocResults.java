@@ -45,7 +45,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -66,8 +65,11 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
     private static final class SimpleDocCollector extends SimpleCollector {
 
-        /** Info about our query (needed to instantiate DocResult) */
-        private final QueryInfo queryInfo;
+        /** Index we're querying. */
+        private final BlackLabIndex index;
+
+        /** Field we're querying. */
+        private final String field;
 
         /** Where to collect results. */
         private final List<DocResult> results;
@@ -81,11 +83,12 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         /** Global document id of the metadata document, so we can skip it. */
         private final int metadataDocumentId;
 
-        SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo, ResultsStatsPassive stats) {
+        SimpleDocCollector(List<DocResult> results, BlackLabIndex index, String field, ResultsStatsPassive stats) {
             this.results = results;
-            this.queryInfo = queryInfo;
+            this.index = index;
+            this.field = field;
             this.stats = stats;
-            metadataDocumentId = queryInfo.index().metadata().metadataDocId();
+            metadataDocumentId = index.metadata().metadataDocId();
         }
 
         @Override
@@ -109,7 +112,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
             stats.increment(true);
-            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(globalDocId), 0));
+            results.add(DocResult.fromDoc(index, field, new PropertyValueDoc(globalDocId), 0));
         }
 
         @Override
@@ -120,47 +123,51 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
     /**
      * Construct an empty DocResults.
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @return document results
      */
-    public static DocResults empty(QueryInfo queryInfo) {
-        return new DocResults(queryInfo);
+    public static DocResults empty(BlackLabIndex index, String field) {
+        return new DocResults(index, field);
     }
 
     /**
      * Construct a DocResults from a list of results.
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param results results
      * @param sampleParameters sample parameters (if this is a sample)
      * @param windowStats window stats (if this is a window)
      * @return document results
      */
-    public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
-        return new DocResults(queryInfo, results, sampleParameters, windowStats);
+    public static DocResults fromList(BlackLabIndex index, String field, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+        return new DocResults(index, field, results, sampleParameters, windowStats);
     }
 
     /**
      * Construct a DocResults from a Hits instance.
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param hits hits to get document results from
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
-        return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
+    public static DocResults fromHits(BlackLabIndex index, String field, Hits hits, long maxHitsToStorePerDoc) {
+        return new DocResults(index, field, hits, maxHitsToStorePerDoc);
     }
 
     /**
      * Don't use this, use BlackLabIndex.queryDocuments().
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param query query to execute
      * @return per-document results
      */
-    public static DocResults fromQuery(QueryInfo queryInfo, Query query) {
-        return new DocResults(queryInfo, query);
+    public static DocResults fromQuery(BlackLabIndex index, String field, Query query) {
+        return new DocResults(index, field, query);
     }
 
     /**
@@ -235,10 +242,11 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
     /**
      * Construct an empty DocResults.
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      */
-    protected DocResults(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected DocResults(BlackLabIndex index, String field) {
+        super(index, field);
         stats = new ResultsStatsPassive(getResultsAwaiter());
         stats.setDone();
     }
@@ -246,13 +254,14 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     /**
      * Construct per-document results objects from a Hits object
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
-        super(queryInfo);
-        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(PropContext.globalHits(hits));
+    protected DocResults(BlackLabIndex index, String field, Hits hits, long maxHitsToStorePerDoc) {
+        super(index, field);
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(index).copyWith(PropContext.globalHits(hits));
         this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.iterator();
         stats = new ResultsStatsPassive(getResultsAwaiter());
@@ -268,12 +277,13 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      *
      * Used by DocGroups constructor.
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param results the list of results
      * @param windowStats window stats
      */
-    protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
-        this(queryInfo);
+    protected DocResults(BlackLabIndex index, String field, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+        this(index, field);
         if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
@@ -285,10 +295,10 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         stats.add(results.size(), results.size());
     }
 
-    private DocResults(QueryInfo queryInfo, Query query) {
-        this(queryInfo);
+    private DocResults(BlackLabIndex index, String field, Query query) {
+        this(index, field);
         this.query = query;
-        if (queryInfo.index().isFragmentQuery(query)) {
+        if (index().isFragmentQuery(query)) {
             // The query can yield fragments as well as full documents. "Upcast" to only full documents.
             query = upcastFragmentsToFullDocuments(query);
         }
@@ -296,7 +306,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery)
         results = new ArrayList<>();
         try {
-            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo, stats));
+            index.searcher().search(query, new SimpleDocCollector(results, index, field, stats));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -353,7 +363,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         ensureResultsRead(-1);
         List<DocResult> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
-        return DocResults.fromList(queryInfo(), sorted, null, null);
+        return DocResults.fromList(index, field, sorted, null, null);
     }
 
     /**
@@ -392,7 +402,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                            HitResults hitResults = HitResults.list(queryInfo(), docHits);
+                            HitResults hitResults = HitResults.list(index, field, docHits);
                             long size = docHits.size();
                             addDocResultToList(doc, hitResults, size);
                         }
@@ -400,7 +410,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsMutable.create(new Hits.HitsContext(field(), matchInfoDefs), -1, true, false);
+                        docHits = HitsMutable.create(new Hits.Context(index, field, matchInfoDefs), -1, true, false);
                     }
 
                     docHits.add(h);
@@ -414,7 +424,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                        HitResults hitResults = HitResults.list(queryInfo(), docHits);
+                        HitResults hitResults = HitResults.list(index, field, docHits);
                         addDocResultToList(doc, hitResults, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
@@ -440,7 +450,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
-            docResult = DocResult.fromHits(doc, HitResults.empty(queryInfo()), totalNumberOfHits);
+            docResult = DocResult.fromHits(doc, HitResults.empty(index, field), totalNumberOfHits);
         else if (maxHitsToStorePerDoc > 0 && docHits.size() > maxHitsToStorePerDoc)
             docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
         else
@@ -461,7 +471,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
 
         String tokenLengthFieldName = field().name();
-        DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
+        DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(index, tokenLengthFieldName);
 
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
@@ -483,10 +493,10 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         }
         List<DocGroup> results = new ArrayList<>();
         for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
-            DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
+            DocGroup docGroup = DocGroup.fromList(index, field, e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, groupBy, null, null,
+        return DocGroups.fromList(index, field, results, groupBy, null, null,
                 -1, -1, -1);
     }
 
@@ -501,7 +511,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         List<DocResult> resultsWindow = doWindow(this, first, number);
         boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return DocResults.fromList(queryInfo(), resultsWindow, null, windowStats);
+        return DocResults.fromList(index, field, resultsWindow, null, windowStats);
     }
 
     /**
@@ -563,7 +573,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
     public DocResults filter(DocProperty property, PropertyValue value) {
         List<DocResult> list = StreamSupport.stream(this.spliterator(), false).filter(g -> property.get(g).equals(value)).toList();
-        return DocResults.fromList(queryInfo(), list, null, null);
+        return DocResults.fromList(index, field, list, null, null);
     }
 
     /**
@@ -573,7 +583,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @return the sample
      */
     public DocResults sample(SampleParameters sampleParameters) {
-        return DocResults.fromList(queryInfo(), doSample(this, sampleParameters), sampleParameters, null);
+        return DocResults.fromList(index, field, doSample(this, sampleParameters), sampleParameters, null);
     }
 
     @Override
@@ -616,7 +626,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 // Rewrite query (we store the original query, not the rewritten one)
                 Query rewritten;
                 try {
-                    rewritten = query.rewrite(queryInfo().index().reader());
+                    rewritten = query.rewrite(index.reader());
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
@@ -625,9 +635,9 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createWeight(rewritten, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    List<AnnotatedField> tokenLengthFields = queryInfo().index().annotatedFields().stream().toList();
-                    for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
+                    Weight weight = index.searcher().createWeight(rewritten, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+                    List<AnnotatedField> tokenLengthFields = index.annotatedFields().stream().toList();
+                    for (LeafReaderContext r: index.reader().leaves()) {
                         LeafReader reader = r.reader();
                         Bits liveDocs = reader.getLiveDocs();
                         Scorer scorer = weight.scorer(r);
@@ -678,8 +688,8 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
                 numberOfTokens = 0;
-                for (AnnotatedField field: queryInfo().index().annotatedFields()) {
-                    DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), field.name());
+                for (AnnotatedField field: index.annotatedFields()) {
+                    DocProperty propTokens = new DocPropertyAnnotatedFieldLength(index, field.name());
                     CorpusSize.Count thisFieldCount = new CorpusSize.Count(0, 0);
                     StreamSupport.stream(this.spliterator(), false).forEach(fieldValue -> {
                         PropertyValueInt tokens = (PropertyValueInt) propTokens.get(fieldValue);

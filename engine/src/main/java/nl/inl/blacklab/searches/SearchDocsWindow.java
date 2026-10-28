@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsWindow extends SearchDocs {
@@ -14,8 +13,8 @@ public class SearchDocsWindow extends SearchDocs {
 
     private final long number;
 
-    public SearchDocsWindow(QueryInfo queryInfo, SearchDocs docsSearch, long first, long number) {
-        super(queryInfo);
+    public SearchDocsWindow(SearchDocs docsSearch, long first, long number) {
+        super(docsSearch.context());
         this.source = docsSearch;
         this.first = first;
         this.number = number;

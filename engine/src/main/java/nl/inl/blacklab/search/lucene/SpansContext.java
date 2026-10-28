@@ -1,41 +1,30 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
- * Provides per-hit query-wide context, such as captured groups.
+ * Provides Spans-wide context while iterating over the hits.
  * <p>
  * This object is passed to the whole BLSpans tree before iterating over the
- * hits. Captured groups will register themselves here and receive an index in
+ * hits. Match infos will be registered here and be assigned an index in
  * the captured group array, and BLSpans objects that need access to captured
  * groups will store a reference to this context and use it later.
  */
-public class HitQueryContext {
-
-    /** The index we're searching. */
-    private final BlackLabIndex index;
-
-    /** Root of the BLSpans tree for this query. */
-    private BLSpans rootSpans;
+public class SpansContext {
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
     private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
-    private final AnnotatedField defaultField;
+    private final String defaultField;
 
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
-    private final AnnotatedField field;
+    private final String field;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField) {
-        this(index, spans, defaultField, defaultField, new MatchInfoDefs());
+    public SpansContext(String defaultField) {
+        this(defaultField, defaultField, new MatchInfoDefs());
     }
 
-    private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        this.index = index;
-        this.rootSpans = spans;
+    private SpansContext(String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
@@ -43,32 +32,12 @@ public class HitQueryContext {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    public BlackLabIndex index() {
-        return index;
-    }
-
-    public HitQueryContext withSpans(BLSpans spans) {
-        return new HitQueryContext(index, spans, defaultField, field, matchInfoDefs);
-    }
-
-    public HitQueryContext withField(AnnotatedField overriddenField) {
-        HitQueryContext result = this;
+    public SpansContext withField(String overriddenField) {
+        SpansContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(index, rootSpans, defaultField, overriddenField, matchInfoDefs);
+            result = new SpansContext(defaultField, overriddenField, matchInfoDefs);
         }
         return result;
-    }
-
-    /**
-     * Set our Spans object.
-     * <p>
-     * Used when manually iterating through the index segments, because we go
-     * through several Spans for a single query.
-     *
-     * @param spans our new spans
-     */
-    public void setSpans(BLSpans spans) {
-        this.rootSpans = spans;
     }
 
     /**
@@ -96,7 +65,7 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
         return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 
@@ -107,17 +76,6 @@ public class HitQueryContext {
      */
     public synchronized int numberOfMatchInfos() {
         return matchInfoDefs.currentSize();
-    }
-
-    /**
-     * Retrieve all the captured group information.
-     * <p>
-     * Used by Hits.
-     *
-     * @param matchInfo array to place the captured group information into
-     */
-    public void getMatchInfo(MatchInfo[] matchInfo) {
-        rootSpans.getMatchInfo(matchInfo);
     }
 
     /**
@@ -138,11 +96,18 @@ public class HitQueryContext {
      *
      * @return the field this part of the query searches
      */
-    public AnnotatedField getField() {
+    public String getField() {
         return field;
     }
 
-    public AnnotatedField getDefaultField() {
+    /**
+     * Get the name of the annotated field this part of the query searches.
+     * <p>
+     * Used for parallel corpora.
+     *
+     * @return the name of the field this part of the query searches
+     */
+    public String getDefaultFieldName() {
         return defaultField;
     }
 

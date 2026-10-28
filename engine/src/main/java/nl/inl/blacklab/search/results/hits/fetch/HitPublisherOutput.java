@@ -29,7 +29,7 @@ final class HitPublisherOutput {
 
     private static final HitSubscriber[] NO_SUBSCRIBERS = {};
 
-    private final Hits.HitsContext context;
+    private final Hits.Context context;
 
     private final LeafReaderContext lrc;
 
@@ -59,13 +59,13 @@ final class HitPublisherOutput {
     /** Number of documents the counted-only hits cover */
     private int countedDocs;
 
-    HitPublisherOutput(Hits.HitsContext context) {
+    HitPublisherOutput(Hits.Context context) {
         this.context = context;
         lrc = context.leafReaderContext();
         retainedHits = HitsMutable.create(context, -1, true, true);
     }
 
-    Hits.HitsContext context() {
+    Hits.Context context() {
         return context;
     }
 

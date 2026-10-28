@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -175,7 +175,7 @@ public class RelationOperatorInfo {
      *
      * @return the full relation type regex
      */
-    public String getFullTypeRegex(QueryExecutionContext context) {
+    public String getFullTypeRegex(TextPatternContext context) {
         // Make sure our type regex has a relation class
         String regex = RelationUtil.optPrependDefaultClass(typeRegex, context);
         if (targetVersion == null || targetVersion.isEmpty())

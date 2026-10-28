@@ -31,16 +31,15 @@ import nl.inl.util.ZipHandleManager;
  * Main BlackLab class, from which indexes can be opened.
  * 
  * You can either open indices using the static methods in this class,
- * or you can create() a BlackLabEngine and use that to open indices.
+ * or you can call createEngine() to get a BlackLabEngine object and use
+ * that to open indices.
  * 
  * The first approach will implicitly create a default BlackLabEngine
- * in the background, with 4 search threads. If you want a different
- * number of search threads, call create() to create your own instance
- * of BlackLabEngine.
+ * in the background. If you want a different number of search threads,
+ * call createEngine() to create your own instance of BlackLabEngine.
  * 
- * Don't try to mix these two methods; if an implicit engine exists and
- * you call create(), or if you call e.g. BlackLab.open() when you've
- * already created an engine explicitly, an exception will be thrown.
+ * Only one engine may exist at a time, so don't try to create one when
+ * an implicit one has already been created.
  * 
  * If you explicitly create an engine, make sure to close it when you're
  * done. For the implicit engine, this is done automatically when you
@@ -57,17 +56,6 @@ public final class BlackLab {
 
     /** Suffix for an config override file name (so e.g. blacklab.override.yaml or blacklab-server.override.yaml) */
     public static final String OVERRIDE_FILE_SUFFIX = ".override";
-
-    /**
-     * If client doesn't explicitly create a BlackLab instance, one will be instantiated
-     * automatically.
-     */
-    private static BlackLabEngine implicitInstance = null;
-    
-    /**
-     * Have we called create()? If so, don't create an implicit instance, but throw an exception.
-     */
-    private static boolean explicitlyCreated = false;
     
     /** Cache for getConfigDirs() */
     private static List<File> configDirs;
@@ -102,14 +90,11 @@ public final class BlackLab {
      */
     public static BlackLabEngine createEngine(int maxThreadsPerSearch) {
         ensureGlobalConfigApplied();
-        if (implicitInstance != null)
-            throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
-        explicitlyCreated = true;
-        return new BlackLabEngine(maxThreadsPerSearch);
+        return BlackLabEngine.create(maxThreadsPerSearch);
     }
 
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
-        return implicitInstance().open(dir);
+        return engine().open(dir);
     }
 
     /**
@@ -122,7 +107,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex)
             throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(indexDir, createNewIndex);
+        return engine().openForWriting(indexDir, createNewIndex);
     }
 
     /**
@@ -137,7 +122,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(indexDir, createNewIndex, config);
+        return engine().openForWriting(indexDir, createNewIndex, config);
     }
 
     /**
@@ -150,40 +135,17 @@ public final class BlackLab {
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(directory, create, formatIdentifier);
-    }
-
-    public static synchronized BlackLabEngine currentInstance() {
-        if (explicitlyCreated)
-            return BlackLabEngine.singleInstance();
-        return implicitInstance();
+        return engine().openForWriting(directory, create, formatIdentifier);
     }
 
     /**
-     * Return the implicitly created instance of BlackLab.
-     * 
-     * Only used by BlackLabIndex if no BlackLab instance is provided during opening.
-     * The instance will have 4 search threads.
-     * 
-     * @return implicitly instantiated BlackLab instance
+     * Return the BlackLabEngine instance. If none exists, create one implicitly.
+     *
+     * @return BlackLabEngine instance
      */
-    public static synchronized BlackLabEngine implicitInstance() {
+    public static synchronized BlackLabEngine engine() {
         ensureGlobalConfigApplied();
-        if (explicitlyCreated)
-            throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
-        if (implicitInstance == null) {
-            // -1 = choose max. threads per operation automatically
-            implicitInstance = new BlackLabEngine(-1);
-        }
-        return implicitInstance;
-    }
-
-    public static synchronized void discardImplicitInstance() {
-        implicitInstance = null;
-    }
-
-    public static boolean isImplicitInstance(BlackLabEngine blackLabEngine) {
-        return blackLabEngine == implicitInstance;
+        return BlackLabEngine.getOrCreateImplicit();
     }
 
     /**

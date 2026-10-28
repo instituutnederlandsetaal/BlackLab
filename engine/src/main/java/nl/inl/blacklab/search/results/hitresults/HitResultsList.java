@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results.hitresults;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -31,11 +31,12 @@ public class HitResultsList extends HitResultsAbstract {
      *
      * Does not copy the list, but reuses it.
      *
-     * @param queryInfo query info
+     * @param index query info
+     * @param field query info
      * @param hits the list of hits to wrap
      */
-    protected HitResultsList(QueryInfo queryInfo, Hits hits) {
-        this(queryInfo, hits, -1, -1, -1, MaxStats.NOT_EXCEEDED);
+    protected HitResultsList(BlackLabIndex index, String field, Hits hits) {
+        this(index, field, hits, -1, -1, -1, MaxStats.NOT_EXCEEDED);
     }
 
     /**
@@ -43,13 +44,14 @@ public class HitResultsList extends HitResultsAbstract {
      *
      * Does not copy the list, but reuses it.
      *
-     * @param queryInfo query info
+     * @param index query info
+     * @param field query info
      * @param hits the list of hits to wrap
      * @param hitsCounted number of hits counted so far, or -1 if same as number processed
      * @param docsCounted number of documents counted so far, or -1 if same as number processed
      */
-    protected HitResultsList(QueryInfo queryInfo, Hits hits, int numberOfDocs, long hitsCounted, long docsCounted, MaxStats maxStats) {
-        super(queryInfo);
+    protected HitResultsList(BlackLabIndex index, String field, Hits hits, int numberOfDocs, long hitsCounted, long docsCounted, MaxStats maxStats) {
+        super(index, field);
 
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
@@ -71,13 +73,13 @@ public class HitResultsList extends HitResultsAbstract {
      * Should only be used internally.
      */
     protected HitResultsList(
-            QueryInfo queryInfo,
+            BlackLabIndex index, String field,
             Hits hits,
             WindowStats windowStats,
             SampleParameters sampleParameters,
             ResultsStats hitsStats,
             ResultsStats docsStats) {
-        super(queryInfo);
+        super(index, field);
 
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");

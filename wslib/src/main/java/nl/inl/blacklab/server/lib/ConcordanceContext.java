@@ -55,7 +55,7 @@ public class ConcordanceContext {
         return kwics.get(hit);
     }
 
-    public Map<AnnotatedField, Kwic> getForeignKwics(Hit hit) {
+    public Map<String, Kwic> getForeignKwics(Hit hit) {
         return kwics.getForeignKwics(hit);
     }
 }

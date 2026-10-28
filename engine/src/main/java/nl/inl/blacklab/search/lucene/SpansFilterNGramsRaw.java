@@ -339,8 +339,8 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        in.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        in.setSpansContext(context);
     }
 
     @Override

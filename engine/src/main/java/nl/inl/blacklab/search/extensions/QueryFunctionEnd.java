@@ -4,7 +4,7 @@ import java.util.List;
 
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PMatchInfo;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueInt;
@@ -17,7 +17,7 @@ public class QueryFunctionEnd extends QueryFunction {
                 null, false);
     }
 
-    public ConstraintValueInt applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public ConstraintValueInt applyFunc(TextPatternContext context, List<Object> parameters) {
         return ConstraintValue.get(((MatchInfo)parameters.get(0)).getSpanEnd());
     }
 

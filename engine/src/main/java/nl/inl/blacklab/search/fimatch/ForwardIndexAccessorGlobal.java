@@ -11,7 +11,6 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
 /**
@@ -20,9 +19,9 @@ import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
  * document.
  */
 @ThreadSafe
-public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract {
+public class ForwardIndexAccessorGlobal extends ForwardIndexAccessorAbstract {
 
-    public ForwardIndexAccessorIntegrated(BlackLabIndex index, AnnotatedField searchField) {
+    public ForwardIndexAccessorGlobal(BlackLabIndex index, String searchField) {
         super(index, searchField);
     }
 
@@ -41,20 +40,18 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         protected final LeafReaderContext readerContext;
 
-        private final BlackLabPostingsReader postingsReader;
-
         private final DocFieldLengthGetter lengthGetter;
 
         private final List<AnnotationForwardIndex> fiPerSegment = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            postingsReader = BlackLabPostingsReader.forSegment(readerContext);
+            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(readerContext);
             for (String luceneField: luceneFields) {
                 AnnotationForwardIndex e = postingsReader.forwardIndex(luceneField);
                 fiPerSegment.add(e);
             }
-            lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
+            lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField);
         }
 
         @Override
@@ -76,7 +73,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         @Override
         public int getNumberOfAnnotations() {
-            return ForwardIndexAccessorIntegrated.this.numberOfAnnotations();
+            return ForwardIndexAccessorGlobal.this.numberOfAnnotations();
         }
 
         @Override
@@ -92,7 +89,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof ForwardIndexAccessorIntegrated that))
+        if (!(o instanceof ForwardIndexAccessorGlobal that))
             return false;
         return index.equals(that.index) && annotatedField.equals(that.annotatedField);
     }

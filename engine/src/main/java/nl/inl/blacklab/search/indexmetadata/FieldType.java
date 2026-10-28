@@ -29,4 +29,10 @@ public enum FieldType {
     public static FieldType defaultValue() {
         return TOKENIZED;
     }
+
+    /** Interface for getting the type of a field. Used when parsing metadata filter queries. */
+    public interface Getter {
+        FieldType typeOf(String fieldName);
+    }
+
 }

@@ -10,14 +10,13 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
@@ -43,29 +42,30 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     /** Global view on our segment hits */
     private final HitsFromPublishers hits;
 
-    protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    protected HitResultsFromQuery(BlackLabIndex index, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
-        super(SpanQueryOtherFieldHits.getQueryInfo(queryInfo, sourceQuery.getAnnotatedField()));
-        sourceQuery.setQueryInfo(this.queryInfo);
+        super(index, sourceQuery.getAnnotatedFieldName());
+        // @@@ WHY setContext?
+        //sourceQuery.setContext(index.forQuery(), sourceQuery.getAnnotatedFieldName());
         if (searchSettings == null)
             searchSettings = SearchSettings.UNLIMITED;
         ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
-        List<HitPublisher> publishers = getHitPublishers(this.queryInfo, sourceQuery, searchSettings, hitsStats, docsStats);
+        List<HitPublisher> publishers = getHitPublishers(index, sourceQuery, searchSettings, hitsStats, docsStats);
         hits = new HitsFromPublishers(publishers, searchSettings);
     }
 
-    public static List<HitPublisher> getHitPublishers(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    public static List<HitPublisher> getHitPublishers(BlackLabIndex index, BLSpanQuery sourceQuery,
             SearchSettings searchSettings, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         List<HitPublisher> publishers = new ArrayList<>();
-        BlackLabIndex index = queryInfo.index();
         BLSpanWeight weight = rewriteAndCreateWeight(index, sourceQuery, searchSettings.fiMatchFactor());
-        int nThreads = Math.min(numberOfThreads, Math.max(index.blackLab().maxThreadsPerSearch(), 1));
+        BlackLabEngine engine = BlackLab.engine();
+        int nThreads = Math.min(numberOfThreads, Math.max(engine.maxThreadsPerSearch(), 1));
 
-        ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, sourceQuery.getAnnotatedField());
+        ExecutorService service = new SearchPool(engine.searchExecutorService(nThreads), nThreads);
+        SpansContext spansContext = new SpansContext(sourceQuery.getAnnotatedFieldName());
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(index, lrc, weight, spansContext, service, hitsStats, docsStats));
         }
         return publishers;
     }
@@ -93,7 +93,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
                 if (traceOptimization)
                     logger.debug("Query before optimize()/rewrite(): {}", sourceQuery);
 
-                optimizedQuery = sourceQuery.optimize(index.reader());
+                optimizedQuery = sourceQuery.optimize(index);
                 if (traceOptimization)
                     logger.debug("Query after optimize(): {}", optimizedQuery);
 

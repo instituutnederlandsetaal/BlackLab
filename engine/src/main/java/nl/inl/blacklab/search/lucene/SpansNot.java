@@ -280,8 +280,8 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        clause.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        clause.setSpansContext(context);
     }
 
     @Override

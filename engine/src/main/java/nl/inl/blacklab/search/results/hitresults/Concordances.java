@@ -107,7 +107,7 @@ public class Concordances {
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         AnnotatedField field = hits.field();
-        DocUtil.characterOffsets(hits.index(), docId, field, startsOfWords, endsOfWords, true);
+        DocUtil.characterOffsets(hits.index().reader(), docId, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
         List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
@@ -126,8 +126,9 @@ public class Concordances {
      * @return the concordances
      */
     private static Map<PermanentHit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
-        XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
+        // used to make fragments well-formed
+        XmlHighlighter hl = new XmlHighlighter(hits.index().defaultUnbalancedTagsStrategy());
+
         // Group hits per document
         MutableIntObjectMap<HitsMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 
@@ -12,8 +11,8 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
 
     private final SampleParameters sampleParameters;
 
-    public SearchDocGroupsSampled(QueryInfo queryInfo, SearchDocGroups source, SampleParameters sampleParameters) {
-        super(queryInfo);
+    public SearchDocGroupsSampled(SearchDocGroups source, SampleParameters sampleParameters) {
+        super(source);
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

@@ -91,7 +91,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static AnnotatedField determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
+    private static String determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
         return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);

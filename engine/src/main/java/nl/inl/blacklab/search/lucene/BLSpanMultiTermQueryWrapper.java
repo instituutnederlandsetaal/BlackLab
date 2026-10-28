@@ -41,7 +41,6 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
 
 /**
@@ -61,8 +60,8 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     Term term;
 
-    public BLSpanMultiTermQueryWrapper(QueryInfo queryInfo, Q query) {
-        super(queryInfo);
+    public BLSpanMultiTermQueryWrapper(Context context, Q query) {
+        super(context);
         try {
             // Use reflection to get at inaccesible field MultiTermQuery.field.
             // We need this in order to (decide whether to) optimize this to an NFA.
@@ -87,7 +86,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         if (!(q instanceof SpanQuery))
             throw new UnsupportedOperationException(
                     "You can only use BLSpanMultiTermQueryWrapper with a suitable SpanRewriteMethod.");
-        BLSpanQuery result = BLSpanQuery.wrap(queryInfo, (SpanQuery) q);
+        BLSpanQuery result = BLSpanQuery.wrap(context, (SpanQuery) q);
         if (result.getField() == null) {
             if (result instanceof BLSpanOrQuery or) {
                 or.setHitsAreFixedLength(1);

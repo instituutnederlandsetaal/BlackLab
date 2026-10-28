@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
@@ -51,8 +51,8 @@ public class TextPatternDefaultValue extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryDefaultValue(context.queryInfo(), context.luceneField());
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
+        return new SpanQueryDefaultValue(context.queryContext(), context.luceneField());
     }
 
     @Override

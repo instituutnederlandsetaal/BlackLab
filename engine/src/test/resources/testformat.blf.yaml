@@ -1,0 +1,91 @@
+# For displaying in user interface (optional)
+displayName: Indexing format used for tests (see TestIndex)
+
+# For describing input format in user interface (optional)
+description: A simple format for testing BlackLab functionality
+
+# (Optional, informational)
+# content, metadata or mixed?
+# (not used by BlackLab, purely informational for the frontend application)
+type: content
+
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /doc
+
+# Annotated, CQL-searchable fields.
+# We usually have just one, named "contents".
+annotatedFields:
+
+  contents:
+
+    # How to display the field in the interface (optional)
+    displayName: Contents
+
+    # How to describe the field in the interface (optional)
+    description: Contents of the documents.
+
+    # What element (relative to document) contains this field's contents?
+    # (if omitted, entire document is used)
+    #containerPath: .
+
+    # What are our word tags? (relative to container)
+    wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)
+
+    # Punctuation between word tags (relative to container)
+    punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
+
+    annotations:
+    # First annotation is the main annotation
+    - name: word
+      displayName: Word
+      valuePath: .
+      sensitivity: all
+      process:
+        - action: split
+          separator: "\\|"
+          keep: all
+    - name: lemma
+      displayName: Lemma
+      valuePath: "@l"
+      sensitivity: sensitive_insensitive
+    - name: pos
+      displayName: PoS
+      valuePath: "@p"
+
+    # XML tags within the content we'd like to index
+    # (relative to container)
+    inlineTags:
+    - path: .//s       # Sentence
+    - path: .//entity  # Named entity
+
+# Metadata (part of the document element)
+metadata:
+  #containerPath: .
+  fields:
+  - name: pid
+    valuePath: "@pid"
+  - name: title
+    valuePath: "@title"
+
+corpusConfig:
+  # Can users request full document contents?
+  contentViewable: true
+
+  metadataFieldGroups:
+    - name: Title group
+      fields:
+          - title
+    - name: Other fields group
+      addRemainingFields: true
+
+  annotationGroups:
+      contents:
+        - name: Basic
+          annotations:
+            - word
+            - lemma
+        - name: Advanced
+          annotations:
+            - pos
+          addRemainingAnnotations: true

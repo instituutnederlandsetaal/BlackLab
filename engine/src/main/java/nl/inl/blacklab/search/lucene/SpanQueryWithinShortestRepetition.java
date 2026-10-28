@@ -13,7 +13,6 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Resolve e.g. Q within rcapture(R+) with the shortest possible match for R+.
@@ -46,9 +45,9 @@ public class SpanQueryWithinShortestRepetition extends BLSpanQueryAbstract {
      * @param producer hits we may be interested in
      * @param filterUnit how we determine what producer hits we're interested in
      */
-    public SpanQueryWithinShortestRepetition(QueryInfo queryInfo, BLSpanQuery producer, BLSpanQuery filterUnit,
+    public SpanQueryWithinShortestRepetition(Context context, BLSpanQuery producer, BLSpanQuery filterUnit,
             AnnotationSensitivity relationField, String captureRelsAs) {
-        this(queryInfo, producer, filterUnit, relationField, captureRelsAs, 0, 0);
+        this(context, producer, filterUnit, relationField, captureRelsAs, 0, 0);
     }
 
     /**
@@ -61,9 +60,9 @@ public class SpanQueryWithinShortestRepetition extends BLSpanQueryAbstract {
      * @param adjustTrailing how to adjust the trailing edge of the producer hits while
      *                       matching
      */
-    public SpanQueryWithinShortestRepetition(QueryInfo queryInfo, BLSpanQuery producer, BLSpanQuery filterUnit,
+    public SpanQueryWithinShortestRepetition(Context context, BLSpanQuery producer, BLSpanQuery filterUnit,
             AnnotationSensitivity relationField, String captureRelsAs, int adjustLeading, int adjustTrailing) {
-        this(producer, filterUnit, new SpanQueryRelations(queryInfo, relationField,
+        this(producer, filterUnit, new SpanQueryRelations(context, relationField,
                 XFRelations.REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE, Collections.emptyMap(),
                 SpanQueryRelations.Direction.BOTH_DIRECTIONS, RelationInfo.SpanMode.FULL_SPAN,
                 "", false, null), captureRelsAs, adjustLeading, adjustTrailing);

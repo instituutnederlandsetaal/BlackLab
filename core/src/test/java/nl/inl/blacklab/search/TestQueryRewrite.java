@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -56,7 +55,7 @@ public class TestQueryRewrite {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            BLSpanQuery q = getPatternFromCql(cql).toQuery(QueryInfo.create(index));
+            BLSpanQuery q = getPatternFromCql(cql).toQuery(index, index.mainAnnotatedField().name());
             QueryExplanation explanation = index.explain(q);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();

@@ -5,7 +5,6 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextPart;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies;
@@ -32,16 +31,17 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * This saves a large amount of memory and time, but transforms the query into more of a statistical view on the data
      * because the individual hits are lost. If this is a problem, set mustStoreHits to true.
      *
-     * @param queryInfo query info
+     * @param index index that was searched
+     * @param field annotated field that was searched
      * @param hitsSearch search to group hits from
      * @param groupBy what to group by
      * @param maxResultsToStorePerGroup maximum number of results to store (if any are stored)
      * @param mustStoreHits if true, up to maxResultsToStorePerGroup hits will be stored. If false, no hits may be
      *                      stored, depending on how the grouping is performed.
      */
-    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy,
+    public SearchHitGroupsFromHits(SearchHits hitsSearch, HitProperty groupBy,
             long maxResultsToStorePerGroup, boolean mustStoreHits, HitGroupScorer scorer) {
-        super(queryInfo);
+        super(hitsSearch.context());
         this.source = hitsSearch;
         this.property = groupBy;
         this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;
@@ -70,7 +70,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         } else {
             // Do we need to store the hits per group, or can we find them later using a group-specific query?
             boolean storeHits = !mustStoreHits && prop.canRefineQuery() || source.getCombinedSpanFilterQuery() == null;
-            boolean hitsInCache = queryInfo().index().cache().containsKey(source);
+            boolean hitsInCache = context().cache().containsKey(source);
             if (storeHits || hitsInCache) {
                 // We need to store the hits, or the hits are already cached.
                 // Just find all the hits and group them.

@@ -5,24 +5,17 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 /** A single hit. Used because HitProperty requires a Hits instance. */
 public class HitsSingle extends HitsAbstract {
 
-    private final HitsContext context;
-
     EphemeralHit hit = new EphemeralHit();
 
-    public HitsSingle(HitsContext context) {
-        this.context = context;
+    public HitsSingle(Context context) {
+        super(context);
     }
 
-    public HitsSingle(HitsContext context, int doc, int matchStart, int matchEnd) {
+    public HitsSingle(Context context, int doc, int matchStart, int matchEnd) {
         this(context);
         hit.doc_ = doc;
         hit.start_ = matchStart;
         hit.end_ = matchEnd;
-    }
-
-    @Override
-    public HitsContext context() {
-        return context;
     }
 
     @Override

@@ -53,7 +53,7 @@ public class BlsUtils {
         Analyzer analyzer = index.analyzer();
         if (filterLang.equals("luceneql")) {
             try {
-                return LuceneUtil.parseLuceneQuery(index, filter, analyzer, "");
+                return LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), filter, analyzer, "");
             } catch (ParseException | TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing LuceneQL filter query: "

@@ -135,7 +135,7 @@ public class ResultDocContents {
         Hits hitsInDoc;
         AnnotatedField fieldToShow = request.field();
         if (hitResults == null) {
-            hitsInDoc = Hits.empty(new Hits.HitsContext(fieldToShow));
+            hitsInDoc = Hits.empty(new Hits.Context(index, fieldToShow.name()));
         } else {
             hitsInDoc = hitResults.getHits().filteredByDocId(docId);
         }

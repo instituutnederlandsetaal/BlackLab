@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 
 /** A search that yields groups of documents. */
@@ -13,8 +12,8 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     private final long first;
     private final long number;
 
-    public SearchDocGroupsWindow(QueryInfo queryInfo, SearchDocGroups source, long first, long number) {
-        super(queryInfo);
+    public SearchDocGroupsWindow(SearchDocGroups source, long first, long number) {
+        super(source);
         this.source = source;
         this.first = first;
         this.number = number;

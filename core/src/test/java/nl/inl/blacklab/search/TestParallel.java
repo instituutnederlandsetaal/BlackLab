@@ -13,14 +13,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -60,9 +58,9 @@ public class TestParallel {
 
     private HitResults find(String pattern) throws InvalidQuery {
         BLQueryParser parser = testIndex.index().getQueryParser("bcql");
-        BLSpanQuery query = parser.parse(pattern).pattern()
-                .toQuery(QueryInfo.create(testIndex.index(), testIndex.index().mainAnnotatedField()));
-        return testIndex.index().find(query, null);
+        BlackLabIndex index = testIndex.index();
+        BLSpanQuery query = parser.parse(pattern).pattern().toQuery(index, index.mainAnnotatedField().name());
+        return index.find(query, null);
     }
 
     @Test

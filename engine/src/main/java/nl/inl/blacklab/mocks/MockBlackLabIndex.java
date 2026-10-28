@@ -24,10 +24,11 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.DocTask;
-import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -37,15 +38,12 @@ import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -69,6 +67,13 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private final BlackLabEngine blackLab;
 
+    private final BlackLabIndexForQuery forQuery = BlackLabIndex.forQuery(this);
+
+    @Override
+    public BlackLabIndexForQuery forQuery() {
+        return forQuery;
+    }
+
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata(this);
@@ -77,12 +82,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
-        blackLab = BlackLab.currentInstance();
+        blackLab = BlackLab.engine();
         blackLab.registerIndex(null, this);
-    }
-    
-    public QueryInfo createDefaultQueryInfo() {
-        return QueryInfo.create(this, mainAnnotatedField());
     }
 
     @Override
@@ -106,9 +107,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField field, QueryInfo queryInfo) {
-        return QueryExecutionContext.get(this, field.defaultSearchAnnotation(),
-                MatchSensitivity.INSENSITIVE, queryInfo);
+    public TextPatternContext textPatternContext(String field) {
+        return TextPatternContext.get(field,
+                annotatedField(field).defaultSearchAnnotation().name(),
+                MatchSensitivity.INSENSITIVE, this);
     }
 
     @Override
@@ -175,7 +177,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public HitResults find(BLSpanQuery query, SearchSettings settings) {
         throw new UnsupportedOperationException();
     }
 
@@ -240,7 +242,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+    public SearchEmpty search(String field, boolean useCache) {
         throw new UnsupportedOperationException();
     }
 
@@ -314,11 +316,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 //        }
     }
 
-    @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+//            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
+//        throw new UnsupportedOperationException();
+//    }
 
     @Override
     public IndexType getType() {
@@ -332,11 +334,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
         throw new UnsupportedOperationException();
     }
 

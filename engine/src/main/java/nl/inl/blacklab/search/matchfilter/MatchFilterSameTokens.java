@@ -6,8 +6,8 @@ import java.util.List;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 public class MatchFilterSameTokens extends MatchFilter {
 
@@ -70,7 +70,7 @@ public class MatchFilterSameTokens extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         for (int i = 0; i < groupName.length; i++)
             groupIndex[i] = context.registerMatchInfo(groupName[i], null);
     }

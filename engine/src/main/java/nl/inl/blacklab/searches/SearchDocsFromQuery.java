@@ -2,21 +2,20 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsFromQuery extends SearchDocs {
 
     private final Query query;
 
-    public SearchDocsFromQuery(QueryInfo queryInfo, Query query) {
-        super(queryInfo);
+    public SearchDocsFromQuery(Context context, Query query) {
+        super(context);
         this.query = query;
     }
 
     @Override
     public DocResults executeInternal(ActiveSearch<DocResults> activeSearch) {
-        return queryInfo().index().queryDocuments(query);
+        return index().queryDocuments(query);
     }
     
     @Override

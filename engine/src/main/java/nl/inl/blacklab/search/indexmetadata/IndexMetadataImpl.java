@@ -625,11 +625,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // they have a forward index, and the main annotation are all registered correctly.
         for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
             AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.name());
-            for (String suffix: annotationWriter.sensitivitySuffixes()) {
-                annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
+            for (MatchSensitivity matchSensitivity: annotationWriter.sensitivitySuffixes()) {
+                annotation.addSensitivity(matchSensitivity);
             }
             if (annotationWriter.includeOffsets())
-                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+                annotation.setOffsetsMatchSensitivity(annotationWriter.mainSensitivity());
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotation.createSensitivities(annotationWriter.getSensitivitySetting());
             //annotation.setOffsetsSensitivity(annotation.mainSensitivity().sensitivity());
@@ -770,7 +770,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             continue;
                         CorpusSize.Count fieldCount = countPerField.get(field.name());
                         // Add up token counts for all the documents
-                        String luceneField = annot.forwardIndexSensitivity().luceneField();
+                        String luceneField = annot.mainSensitivity().luceneField();
                         AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                         int docLength = (int) fi.docLength(segmentDocId);
                         if (docLength > 0) {

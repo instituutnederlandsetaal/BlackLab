@@ -3,14 +3,12 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
@@ -22,26 +20,19 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
+import nl.inl.blacklab.contentstore.ContentStoreGlobal;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorGlobal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.util.VersionFile;
 
 /**
@@ -98,15 +89,9 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         }
     }
 
-    /** Get the strategy to use for indexing/searching relations. */
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
-        return relationsStrategy;
-    }
-
-    BlackLabIndexImpl(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexImpl(String name, BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config);
+        super(name, blackLab, indexDir, indexMode, createNewIndex, config);
 
         // See if this is an old external index. If so, delete the version file,
         // forward indexes and content stores.
@@ -172,7 +157,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     @Override
     protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
         String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
-        ContentStore cs = new ContentStoreIntegrated(leafReaderLookup, luceneField);
+        ContentStore cs = new ContentStoreGlobal(leafReaderLookup, luceneField);
         contentStores.put(field, cs);
     }
 
@@ -188,22 +173,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
-        return new ForwardIndexAccessorIntegrated(this, annotatedField(searchField));
-    }
-
-    @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
-        // Note: tags are always indexed as a forward relation (source always occurs before target)
-        RelationInfo.SpanMode spanMode = switch (adjust) {
-            case LEADING_EDGE -> RelationInfo.SpanMode.SOURCE;
-            case TRAILING_EDGE -> RelationInfo.SpanMode.TARGET;
-            default -> RelationInfo.SpanMode.FULL_SPAN;
-        };
-
-        return new SpanQueryRelations(queryInfo, luceneField,
-                RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
-                attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, implicitCapture, null);
+        return new ForwardIndexAccessorGlobal(this, searchField);
     }
 
     @Override

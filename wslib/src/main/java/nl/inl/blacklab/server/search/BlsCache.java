@@ -152,7 +152,7 @@ public class BlsCache implements SearchCache {
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
-            if (entry.getValue().search().queryInfo().index() == index) {
+            if (entry.getValue().search().index().equals(index)) {
                 entry.getValue().cancel(true);
                 it.remove();
             }
@@ -183,8 +183,7 @@ public class BlsCache implements SearchCache {
     public synchronized <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         //if (trace) logger.debug("getFromCache({}, allowQueue={})", search, allowQueue);
         BlsCacheEntry<R> future;
-        boolean useCache = /*search.queryInfo().useCache() &&*/ !cacheDisabled;
-        future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
+        future = cacheDisabled ? null : (BlsCacheEntry<R>) searches.get(search);
         if (future == null) {
             logger.debug("not found in cache, starting search: " + search);
             int numQueued = numberOfQueuedSearches();
@@ -197,11 +196,11 @@ public class BlsCache implements SearchCache {
             // Note that all entries start "queued" (i.e. the search itself hasn't been started yet).
             // We will see if it can be started below.
             future = new BlsCacheEntry<>(search);
-            if (useCache)
+            if (!cacheDisabled)
                 searches.put(search, future);
 
             // Can we start the search, or should it remain queued for now?
-            if (!allowQueue || !useCache) {
+            if (!allowQueue || !!cacheDisabled) {
                 // No queueing allowed (i.e. subtask required by another subtask). Start the search right away.
                 // (we also do this if you bypass the cache, because then queueing doesn't work)
                 if (!allowQueue)

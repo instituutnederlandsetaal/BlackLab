@@ -36,7 +36,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.stats.MaxStats;
@@ -193,7 +192,6 @@ public class HitGroupsTokenFrequencies {
      */
     public static HitGroups get(SearchHits source, HitProperty requestedGroupingProperty) {
 
-        QueryInfo queryInfo = source.queryInfo();
         Query combinedFilterQuery = source.getCombinedSpanFilterQuery();
         SearchSettings searchSettings = source.searchSettings();
 
@@ -201,7 +199,8 @@ public class HitGroupsTokenFrequencies {
             // This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits and number of docs
             final ConcurrentHashMap<GroupIdHash, OccurrenceCounts> globalOccurrences = new ConcurrentHashMap<>();
 
-            final BlackLabIndex index = queryInfo.index();
+            final BlackLabIndex index = source.index();
+            final String fieldName = source.field();
 
             /*
              * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
@@ -292,7 +291,6 @@ public class HitGroupsTokenFrequencies {
                     // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
                     numberOfDocsProcessed = docIds.values().stream().map(List::size).reduce(0, Integer::sum);
                     try (BlockTimer ignored = c.child("Grouping documents (metadata only path)")) {
-                        String fieldName = queryInfo.field().name();
                         DocPropertyAnnotatedFieldLength fieldLength = new DocPropertyAnnotatedFieldLength(index, fieldName);
                         final int[] emptyTokenValuesArray = new int[0];
 
@@ -302,7 +300,7 @@ public class HitGroupsTokenFrequencies {
                             for (int docId: docIdsInSegment) {
                                 int globalDocId = docId + lrc.docBase;
                                 final int docLength = (int) fieldLength.get(globalDocId); // excludes dummy closing token!
-                                final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
+                                final DocResult synthesizedDocResult = DocResult.fromDoc(index, fieldName,
                                         new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                                 for (int i = 0; i < docProperties.size(); ++i) {
@@ -342,7 +340,6 @@ public class HitGroupsTokenFrequencies {
                     //       another setting that can limit this operation as well.
                     final long maxHitsToCount = searchSettings.maxHitsToCount();
                     //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
-                    final String fieldName = queryInfo.field().name();
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
@@ -357,7 +354,7 @@ public class HitGroupsTokenFrequencies {
                         AnnotationForwardIndex[] forwardIndexes = new FieldForwardIndex[hitProperties.size()];
                         int hitPropIndex = 0;
                         for (AnnotInfo annot : hitProperties) {
-                            String luceneField = annot.annotation.forwardIndexSensitivity().luceneField();
+                            String luceneField = annot.annotation.mainSensitivity().luceneField();
                             forwardIndexes[hitPropIndex] = FieldForwardIndex.get(lrc, luceneField);
                             hitPropIndex++;
                         }
@@ -412,7 +409,7 @@ public class HitGroupsTokenFrequencies {
                                 // Step 2: retrieve the to-be-grouped metadata for this document
                                 int docLength = BlackLabIndex.decodeTokenLengthField(
                                         Integer.parseInt(doc.get(lengthTokensFieldName)));
-                                final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
+                                final DocResult synthesizedDocResult = DocResult.fromDoc(index, fieldName,
                                         new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ?
                                         new PropertyValue[docProperties.size()] :
@@ -553,7 +550,7 @@ public class HitGroupsTokenFrequencies {
                     // NOTE: we're only calculating stats here, never storing hits, and we cannot store a query for
                     // each group that will yield the hits (because of e.g. NO_TERM groups), so we never store a query
                     // either.
-                    return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
+                    return HitGroup.withoutResults(index, fieldName, groupId, groupSizeHits,
                             groupSizeDocs, MaxStats.NOT_EXCEEDED, null, scorer);
                 }).toList();
             }
@@ -561,7 +558,7 @@ public class HitGroupsTokenFrequencies {
 
             ResultsStats hitsStats = new ResultsStatsSaved(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
             ResultsStats docsStats = new ResultsStatsSaved((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
-            return new HitGroups(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats, scorer);
+            return new HitGroups(index, fieldName, groups, requestedGroupingProperty, null, null, hitsStats, docsStats, scorer);
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
