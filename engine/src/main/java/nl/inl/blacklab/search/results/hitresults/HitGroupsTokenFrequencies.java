@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,8 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.stats.MaxStats;
-import nl.inl.blacklab.search.results.stats.ResultsStats;
-import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
+import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.searches.SearchHits;
@@ -57,6 +54,16 @@ public class HitGroupsTokenFrequencies {
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
     private HitGroupsTokenFrequencies() {
+    }
+
+    private static int countDocument(int docLength, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
+        synchronized (hitsStats) {
+            long counted = Math.min(docLength, hitsStats.getMaxHitsToCount() - hitsStats.countedSoFar());
+            long processed = Math.min(counted, hitsStats.getMaxHitsToProcess() - hitsStats.processedSoFar());
+            hitsStats.add(processed, counted);
+            docsStats.add(processed > 0 ? 1 : 0, counted > 0 ? 1 : 0);
+            return (int) processed;
+        }
     }
 
     /** Precalculated hashcode for group id, to save time while grouping and sorting. */
@@ -248,9 +255,10 @@ public class HitGroupsTokenFrequencies {
             }
 
             final int numAnnotations = hitProperties.size();
-            long numberOfDocsProcessed;
-            final AtomicLong numberOfHitsProcessed = new AtomicLong();
-            final AtomicBoolean hitMaxHitsToCount = new AtomicBoolean(false);
+            final ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(),
+                    searchSettings.maxHitsToCount());
+            final ResultsStatsPassive docsStats = new ResultsStatsPassive();
+            hitsStats.add(0, 0);
 
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
 
@@ -289,7 +297,6 @@ public class HitGroupsTokenFrequencies {
                     // This requires a different approach because we never retrieve the individual tokens if there's no annotation
                     // e.g. match '*' group by document year --
                     // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
-                    numberOfDocsProcessed = docIds.values().stream().map(List::size).reduce(0, Integer::sum);
                     try (BlockTimer ignored = c.child("Grouping documents (metadata only path)")) {
                         DocPropertyAnnotatedFieldLength fieldLength = new DocPropertyAnnotatedFieldLength(index, fieldName);
                         final int[] emptyTokenValuesArray = new int[0];
@@ -298,8 +305,13 @@ public class HitGroupsTokenFrequencies {
                             LeafReaderContext lrc = entry.getKey();
                             List<Integer> docIdsInSegment = entry.getValue();
                             for (int docId: docIdsInSegment) {
+                                if (hitsStats.countedSoFar() >= searchSettings.maxHitsToCount())
+                                    break;
                                 int globalDocId = docId + lrc.docBase;
                                 final int docLength = (int) fieldLength.get(globalDocId); // excludes dummy closing token!
+                                final int hitsToProcess = countDocument(docLength, hitsStats, docsStats);
+                                if (hitsToProcess == 0)
+                                    continue;
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(index, fieldName,
                                         new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
@@ -309,9 +321,7 @@ public class HitGroupsTokenFrequencies {
                                 // precompute, it's the same for all hits in document
                                 final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup);
 
-                                numberOfHitsProcessed.addAndGet(docLength);
-
-                                // Add all tokens in document to the group.
+                                // Add tokens up to the processing limit to the group.
                                 final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray,
                                         emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
                                 globalOccurrences.compute(groupId, (__, groupSizes) -> {
@@ -321,11 +331,11 @@ public class HitGroupsTokenFrequencies {
                                         // is a ConcurrentHashMap, and its compute() operation is atomic according to the
                                         // documentation:
                                         // https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html#compute-K-java.util.function.BiFunction-
-                                        groupSizes.hits += docLength;
+                                        groupSizes.hits += hitsToProcess;
                                         groupSizes.docs += 1;
                                         return groupSizes;
                                     } else {
-                                        return new OccurrenceCounts(docLength, 1);
+                                        return new OccurrenceCounts(hitsToProcess, 1);
                                     }
                                 });
                             }
@@ -339,14 +349,13 @@ public class HitGroupsTokenFrequencies {
                     //       exists to manage server load, so maybe we can ignore it here? I guess then we might need
                     //       another setting that can limit this operation as well.
                     final long maxHitsToCount = searchSettings.maxHitsToCount();
-                    //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
 
-                    numberOfDocsProcessed = docIds.entrySet().parallelStream().map(entry -> {
+                    docIds.entrySet().parallelStream().forEach(entry -> {
                         LeafReaderContext lrc = entry.getKey();
                         List<Integer> segmentDocIds = entry.getValue();
 
@@ -362,15 +371,13 @@ public class HitGroupsTokenFrequencies {
                         // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
                         Map<GroupIdHash, OccurrenceCounts> occsInSegment = new HashMap<>();
 
-                        int docsDone = 0;
                         for (int segmentDocId: segmentDocIds) {
                             int globalDocId = segmentDocId + lrc.docBase;
                             Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                             // If we've already exceeded the maximum, skip this doc
-                            if (numberOfHitsProcessed.get() >= maxHitsToCount)
-                                return docsDone;
-                            docsDone++;
+                            if (hitsStats.countedSoFar() >= maxHitsToCount)
+                                break;
 
                             try {
 
@@ -378,6 +385,11 @@ public class HitGroupsTokenFrequencies {
                                 // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
                                 final Document doc = lrc.reader().storedFields().document(segmentDocId, fieldsToLoad);
+                                int docLength = BlackLabIndex.decodeTokenLengthField(
+                                        Integer.parseInt(doc.get(lengthTokensFieldName)));
+                                int hitsToProcess = countDocument(docLength, hitsStats, docsStats);
+                                if (hitsToProcess == 0)
+                                    continue;
                                 final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                                 final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
@@ -394,9 +406,8 @@ public class HitGroupsTokenFrequencies {
                                         // Look up sort values
                                         // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
                                         //       but that was slower...
-                                        int docLength = tokenValues.length;
-                                        int[] sortValues = new int[docLength];
-                                        for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
+                                        int[] sortValues = new int[tokenValues.length];
+                                        for (int tokenIndex = 0; tokenIndex < tokenValues.length; ++tokenIndex) {
                                             final int segmentTermId = tokenValues[tokenIndex];
                                             sortValues[tokenIndex] = segmentTerms.idToSortPosition(segmentTermId,
                                                     annot.getMatchSensitivity());
@@ -407,8 +418,6 @@ public class HitGroupsTokenFrequencies {
                                 }
 
                                 // Step 2: retrieve the to-be-grouped metadata for this document
-                                int docLength = BlackLabIndex.decodeTokenLengthField(
-                                        Integer.parseInt(doc.get(lengthTokensFieldName)));
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(index, fieldName,
                                         new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ?
@@ -424,7 +433,7 @@ public class HitGroupsTokenFrequencies {
 
                                 try (BlockTimer ignored = c.child("Group tokens")) {
 
-                                    for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
+                                    for (int tokenIndex = 0; tokenIndex < hitsToProcess; ++tokenIndex) {
                                         int[] annotationValuesForThisToken = new int[numAnnotations];
                                         int[] sortPositions = new int[numAnnotations];
 
@@ -463,13 +472,6 @@ public class HitGroupsTokenFrequencies {
                                         });
                                     }
 
-                                    // If we exceeded maxHitsToCount, remember that and don't process more docs.
-                                    // (NOTE: we don't care if we don't get exactly maxHitsToCount in this case; just that
-                                    //  we stop the operation before the server is overloaded)
-                                    if (numberOfHitsProcessed.getAndUpdate(i -> i + docLength) >= maxHitsToCount) {
-                                        hitMaxHitsToCount.set(true);
-                                    }
-
                                 }
                             } catch (IOException e) {
                                 throw BlackLabException.wrapRuntime(e);
@@ -505,9 +507,8 @@ public class HitGroupsTokenFrequencies {
                                             }
                                         }));
 
-                        return docsDone;
-                    }).reduce(0, Integer::sum);
-                    logger.trace("Number of processed docs: " + numberOfDocsProcessed);
+                    });
+                    logger.trace("Number of processed docs: " + docsStats.processedSoFar());
                 }
             }
 
@@ -556,8 +557,8 @@ public class HitGroupsTokenFrequencies {
             }
             logger.debug("fast path used for grouping");
 
-            ResultsStats hitsStats = new ResultsStatsSaved(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
-            ResultsStats docsStats = new ResultsStatsSaved((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
+            hitsStats.setDone();
+            docsStats.setDone();
             return new HitGroups(index, fieldName, groups, requestedGroupingProperty, null, null, hitsStats, docsStats, scorer);
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);

@@ -19,6 +19,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
@@ -76,6 +77,44 @@ public class TestSearchHitGroups {
         g = it.next();
         Assert.assertEquals(title + " 2nd group size", 1, g.size());
         Assert.assertEquals(title + " 2nd group id", "be", g.identity().toString());
+    }
+
+    @Test
+    public void testHitGroupLimits() throws InvalidQuery {
+        HitProperty[] properties = {
+                new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE),
+                new HitPropertyDocumentStoredField(index, "title", "Title")
+        };
+        long[][] limits = { { 1, 15 }, { 1, -1 }, { 0, 15 }, { 0, 0 }, { 0, -1 }, { 15, 15 },
+                { 15, 25 }, { 15, -1 },
+                { -1, 15 }, { 100, 15 }, { 100, 100 }, { -1, -1 } };
+        for (HitProperty property : properties) {
+            CompleteQuery query = new CompleteQuery(TextPatternAnyToken.ANY_SINGLE_TOKEN, new MatchAllDocsQuery());
+            long total = index.search(contents, false).find(query, SearchSettings.UNLIMITED)
+                    .groupStats(property, 0, HitGroupScorer.NONE).execute().sumOfGroupSizes();
+            for (long[] limit : limits) {
+                SearchSettings settings = SearchSettings.get(limit[0], limit[1]);
+                SearchHits hits = index.search(contents, false).find(query, settings);
+                HitGroups groups = hits.groupStats(property, 0, HitGroupScorer.NONE).execute();
+                String message = property + ", " + settings;
+                long processed = Math.min(total, settings.maxHitsToProcess());
+                long counted = Math.min(total, settings.maxHitsToCount());
+                long grouped = 0;
+                for (HitGroup group : groups)
+                    grouped += group.size();
+                Assert.assertEquals(message, processed, grouped);
+                Assert.assertEquals(message, processed, groups.hitsStats().processedTotal());
+                Assert.assertEquals(message, counted, groups.hitsStats().countedTotal());
+                Assert.assertEquals(message, total >= settings.maxHitsToProcess(),
+                        groups.hitsStats().maxStats().isTooManyToProcess());
+                Assert.assertEquals(message, total >= settings.maxHitsToCount(),
+                        groups.hitsStats().maxStats().isTooManyToCount());
+                if (limit[0] == 1 && limit[1] == -1) {
+                    Assert.assertEquals(message, 1, groups.docsStats().processedTotal());
+                    Assert.assertEquals(message, 4, groups.docsStats().countedTotal());
+                }
+            }
+        }
     }
 
     @Test
