@@ -3,6 +3,9 @@
     "PBsve430": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test"
+        ],
         "fromInputFile": [
           "PBsve430.xml"
         ],

@@ -3,6 +3,9 @@
     "PRint602": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test2"
+        ],
         "fromInputFile": [
           "PRint602.xml"
         ],

@@ -102,3 +102,5 @@ metadata:
     role: pid # persistent id field to use to retrieve documents
   - name: title
     valuePath: teiHeader/fileDesc/titleStmt/title
+  - name: editor
+    valuePath: teiHeader/fileDesc/titleStmt/editor

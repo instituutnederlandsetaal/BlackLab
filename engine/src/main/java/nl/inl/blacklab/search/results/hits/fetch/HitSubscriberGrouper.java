@@ -13,6 +13,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Group;
@@ -82,9 +83,11 @@ public class HitSubscriberGrouper implements HitSubscriber {
                 CompleteQuery completeQuery;
                 boolean isNoTerm = identity instanceof PropertyValueContextWords pcvw && Arrays.equals(pcvw.value(),
                         NO_TERM_VALUE);
-                if (isNoTerm) {
+                boolean isNoMetadataValue = identity instanceof PropertyValueString pvs && pvs.value().equals(PropertyValue.NO_VALUE_STR);
+                if (isNoTerm || isNoMetadataValue) {
                     // We cannot make a query for "no value". If we have the stored hits, this is not a problem,
-                    // but if we don't, we have no way easy to find the hits in this group again.
+                    // but if we don't, we have no way easy to find the hits in this group again. Make sure Group hangs
+                    // on to the hits.
                     completeQuery = null;
                 } else {
                     // With the query, we can free memory and find hits again later

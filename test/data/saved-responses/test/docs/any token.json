@@ -4,6 +4,9 @@
       "docInfo": {
         "mayView": true,
         "metadata": {
+          "editor": [
+            "test"
+          ],
           "fromInputFile": [
             "PBsve430.xml"
           ],
@@ -696,6 +699,9 @@
       "docInfo": {
         "mayView": true,
         "metadata": {
+          "editor": [
+            "test2"
+          ],
           "fromInputFile": [
             "PRint602.xml"
           ],

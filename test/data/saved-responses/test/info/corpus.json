@@ -184,6 +184,17 @@
   "documentFormat": "voice-tei",
   "mainAnnotatedField": "contents",
   "metadataFields": {
+    "editor": {
+      "analyzer": "DEFAULT",
+      "fieldName": "editor",
+      "fieldValues": {
+        "test": 1,
+        "test2": 1
+      },
+      "isAnnotatedField": false,
+      "type": "TOKENIZED",
+      "valueListComplete": true
+    },
     "fromInputFile": {
       "analyzer": "DEFAULT",
       "fieldName": "fromInputFile",

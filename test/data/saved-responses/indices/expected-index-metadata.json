@@ -118,6 +118,16 @@
     }
   },
   "metadataFields": {
+    "editor": {
+      "analyzer": "DEFAULT",
+      "fieldName": "editor",
+      "fieldValues": {
+        "test": 1
+      },
+      "isAnnotatedField": false,
+      "type": "TOKENIZED",
+      "valueListComplete": true
+    },
     "fromInputFile": {
       "fieldName": "fromInputFile",
       "isAnnotatedField": false,
