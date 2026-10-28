@@ -41,7 +41,13 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
                 relations.nextStartPosition();
             }
 
-            // Named capture spans need not arrive in start-position order.
+            // Unlike hits from BLSpans, named capture spans (is SpansCaptureRelationsWithinSpan.toCapture is set) need
+            // not arrive in start-position order. So the value of start may be less than the start position of the
+            // last hit this method was called with. This means we have to keep the all the relations we've buffered so
+            // far, and binary search for relations that starts at or after the start position of the current hit.
+            // TODO: if SpansCaptureRelationsWithinSpan.toCapture == null, we know the hits arrive in start-position
+            //       order, so we can remove any relations that end before the start position of the current hit from
+            //       bufferedRelations, and avoid the binary search.
             int min = 0, max = bufferedRelations.size();
             while (min < max) {
                 int mid = (min + max) >>> 1;
@@ -50,12 +56,17 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
                 else
                     max = mid;
             }
+            // Now find all the buffered relations that overlap with the current hit, and add them to capturedRelations.
             for (int i = min; i < bufferedRelations.size(); i++) {
                 RelationInfo relation = bufferedRelations.get(i);
+                // Capture relation if:
+                // - start is within the to-capture span, and
+                // - end is within the to-capture span
+                // (note that getSpanStart|End return the start/end of the source for cross-field relations, which is
+                //  what we want: we want to ignore target in that case because it's in a different field)
                 if (relation.getSpanStart() >= end)
-                    break;
-                // The target of a cross-field relation is outside the captured field.
-                if (relation.isCrossFieldRelation() || relation.getSpanEnd() <= end)
+                    break; // relations are sorted by start position, so no more can overlap
+                if (relation.getSpanEnd() <= end)
                     capturedRelations.add(relation);
             }
             capturedRelations.sort(RelationInfo::compareTo);
@@ -102,7 +113,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
      *
      * @param clause clause we're capturing from
      * @param relations relations to capture
-     * @param toCapture name of the match info span to capture relations from
+     * @param toCapture name of the match info span to capture relations from, or null to capture all relations in hit
      * @param captureAs name to capture the list of relations as
      */
     public SpansCaptureRelationsWithinSpan(BLSpans clause, BLSpans relations, String toCapture, String captureAs) {

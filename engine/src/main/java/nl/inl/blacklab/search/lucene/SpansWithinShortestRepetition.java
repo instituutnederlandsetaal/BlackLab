@@ -65,8 +65,8 @@ class SpansWithinShortestRepetition extends BLSpans {
      *
      * @param producer the hits we may be interested in
      * @param filterUnit the hits used to filter the producer hits
-     * @param op filter operation to use
-     * @param invert if true, produce hits that DON'T match the filter instead
+     * @param relations the relations to capture
+     * @param captureRelsAs what match info to capture the list of relations under
      * @param adjustLeading how to adjust the left edge of the producer hits while
      *            matching
      * @param adjustTrailing how to adjust the right edge of the producer hits while
