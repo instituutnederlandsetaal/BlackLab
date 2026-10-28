@@ -13,6 +13,8 @@ public class InputFormatMessages {
 
     private final List<String> warnings = new ArrayList<>();
 
+    private String pidField = null;
+
     public void error(String message) {
         errors.add(message);
     }
@@ -39,5 +41,13 @@ public class InputFormatMessages {
             logger.error("in input format '{}': {}", formatIdentifier, error);
         for (String warning: getWarnings())
             logger.warn("in input format '{}': {}", formatIdentifier, warning);
+    }
+
+    public void foundPidField(String pidField) {
+        // Ensure that at most one pid field is defined in the input format.
+        if (this.pidField != null && !this.pidField.equals(pidField)) {
+            error("Multiple pid fields found: '" + this.pidField + "' and '" + pidField + "'");
+        }
+        this.pidField = pidField;
     }
 }

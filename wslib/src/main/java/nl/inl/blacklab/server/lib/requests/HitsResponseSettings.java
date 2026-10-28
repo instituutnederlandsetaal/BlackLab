@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WsParam;
@@ -44,7 +43,7 @@ public record HitsResponseSettings(boolean omitEmptyCaptures,
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
     public static List<Annotation> getAnnotationsToWrite(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = qpar.getList(WsParam.LIST_VALUES_FOR_ANNOTATIONS);
         boolean all = false;

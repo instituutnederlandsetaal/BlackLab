@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.queryParser.JsonParserProvider;
@@ -23,9 +22,7 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.config.ConfigFileReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**
  * Servlet-independent "main" BLS class. We can use this for other implementations as well.
@@ -38,10 +35,20 @@ public class BlsMain {
 
     private static BlsMain instance;
 
+    public static synchronized BlsMain create(BLSConfig config) {
+        if (instance != null) {
+            throw new IllegalStateException("Already created");
+        }
+        instance = new BlsMain(config);
+        return instance;
+    }
+
     /** Get instance, creating one if it doesn't exist yet */
     public static synchronized BlsMain get() {
-        if (instance == null)
-            instance = new BlsMain();
+        if (instance == null) {
+            BLSConfig config = ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
+            instance = new BlsMain(config);
+        }
         return instance;
     }
 
@@ -55,25 +62,18 @@ public class BlsMain {
      */
     private SearchManager searchManager;
 
-    private RequestInstrumentationProvider requestInstrumentationProvider = null;
-
     /**
      * Default output type to use if none given.
      */
     private DataFormat defaultOutputType;
 
-    private BlsMain() {
-
-        BLSConfig config = ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
+    private BlsMain(BLSConfig config) {
 
         // Create our search manager (main webservice class)
         searchManager = new SearchManager(config, true);
 
         // Set defaults from config in ParameterDefaults
         config.getParameters().setParameterDefaults();
-
-        // Configure metrics provider (e.g Prometheus)
-        setMetricsProvider(config.getDebug());
 
         checkExpectedDebugAddresses(config);
 
@@ -96,21 +96,6 @@ public class BlsMain {
                 JsonParserProvider.class,
                 ContextQLParserProvider.class));
         PluginManager.addPluginType(AuthMethodProvider.class);
-    }
-
-    private void setMetricsProvider(BLSConfigDebug configDebug) throws ConfigurationException {
-        String registryProviderClassName = configDebug.getMetricsProvider();
-        if (StringUtils.isBlank(registryProviderClassName)) {
-            requestInstrumentationProvider = RequestInstrumentationProvider.noOpProvider();
-        } else {
-            // Create instrumentation provider
-            requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(registryProviderClassName,
-                    configDebug.getRequestInstrumentationProvider());
-        }
-    }
-
-    public RequestInstrumentationProvider getInstrumentationProvider() {
-        return requestInstrumentationProvider;
     }
 
     /**

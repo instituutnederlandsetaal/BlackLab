@@ -11,9 +11,11 @@
             <w>The</w>
             <w>quick</w>
             <w>brown</w>
-            <w>fox</w>
-            <w>jumps</w>
-            <w>over</w>
+            <frag ftype="inline">
+                <w>fox</w>
+                <w>jumps</w>
+                <w>over</w>
+            </frag>
             <w>the</w>
             <w>lazy</w>
             <w>dog</w>.

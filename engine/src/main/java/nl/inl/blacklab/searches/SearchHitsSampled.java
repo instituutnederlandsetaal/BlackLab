@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -12,8 +11,8 @@ public class SearchHitsSampled extends SearchHits {
     private final SearchHits source;
     private final SampleParameters sampleParameters;
 
-    SearchHitsSampled(QueryInfo queryInfo, SearchHits source, SampleParameters sampleParameters) {
-        super(queryInfo);
+    SearchHitsSampled(SearchHits source, SampleParameters sampleParameters) {
+        super(source.context());
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

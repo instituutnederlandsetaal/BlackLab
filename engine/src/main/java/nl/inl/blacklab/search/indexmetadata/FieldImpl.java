@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.xml.bind.annotation.XmlTransient;
@@ -83,7 +85,7 @@ public abstract class FieldImpl implements Field, Freezable {
 
     @Override
     public int hashCode() {
-        return fieldName.hashCode();
+        return Objects.hash(index, fieldName, getClass().getSimpleName());
     }
 
     @Override
@@ -95,7 +97,7 @@ public abstract class FieldImpl implements Field, Freezable {
         if (getClass() != obj.getClass())
             return false;
         FieldImpl other = (FieldImpl) obj;
-        return fieldName.equals(other.fieldName);
+        return index == other.index && fieldName.equals(other.fieldName);
     }
     
     @Override

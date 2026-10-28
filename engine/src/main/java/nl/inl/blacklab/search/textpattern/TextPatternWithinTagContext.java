@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryWithinShortestRepetition;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
@@ -40,19 +40,20 @@ public class TextPatternWithinTagContext extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         EvalResult result = filterUnit.evaluate(context);
+        BLSpanQuery.Context queryContext = context.queryContext();
         if (result instanceof BLSpanQuery filterQuery) {
-            return new SpanQueryWithinShortestRepetition(context.queryInfo(), producer.toQuery(context), filterQuery,
-                    context.withRelationAnnotation().luceneFieldRef(), captureAs);
+            return new SpanQueryWithinShortestRepetition(queryContext, producer.toQuery(context), filterQuery,
+                    context.withRelationAnnotation().annotationSensitivity(), captureAs);
         } else if (result instanceof ConstraintValueList cvl) {
             // Apply multiple filters in sequence
             // Example: A containing list(B, C) -> (A containing B) containing C
             BLSpanQuery resultQuery = producer.toQuery(context);
             for (Object item: cvl.getValue()) {
                 if (item instanceof BLSpanQuery filterQuery) {
-                    resultQuery = new SpanQueryWithinShortestRepetition(context.queryInfo(), resultQuery, filterQuery,
-                            context.withRelationAnnotation().luceneFieldRef(), captureAs);
+                    resultQuery = new SpanQueryWithinShortestRepetition(queryContext, resultQuery, filterQuery,
+                            context.withRelationAnnotation().annotationSensitivity(), captureAs);
                 } else {
                     throw new InvalidQuery("Non-query filter parameter to 'within tag context' filter: " + item);
                 }

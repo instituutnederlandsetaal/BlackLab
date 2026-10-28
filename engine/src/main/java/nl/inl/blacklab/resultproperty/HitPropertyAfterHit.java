@@ -98,7 +98,7 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
             // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
             // Determine start and end using matchInfo instead.
             fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
-                int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                 int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                 starts[hitIndex] = pos;
                 ends[hitIndex] = pos + numberOfTokens;

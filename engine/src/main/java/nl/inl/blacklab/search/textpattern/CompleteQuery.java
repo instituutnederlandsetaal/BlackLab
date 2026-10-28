@@ -131,4 +131,11 @@ public record CompleteQuery(TextPattern pattern, Query filter) {
         return new CompleteQuery(p, f);
     }
 
+    @Override
+    public String toString() {
+        return "CompleteQuery{" +
+                "pattern=" + pattern +
+                ", filter=" + filter +
+                '}';
+    }
 }

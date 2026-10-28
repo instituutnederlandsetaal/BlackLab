@@ -70,8 +70,6 @@ corpusConfig:
   displayName: test
 
   specialFields:
-    # persistent id field to use to retrieve documents
-    pidField: pid
     # document title field (not used by blacklab, but clients can use this)
     titleField: title
 
@@ -103,6 +101,7 @@ metadata:
   fields:
   - name: pid
     valuePath: "@xml:id"
+    role: pid
   - name: title
     valuePath: teiHeader/fileDesc/titleStmt/title
   #- forEachPath: bibl/interpGrp/interp

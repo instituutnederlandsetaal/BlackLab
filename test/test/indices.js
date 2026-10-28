@@ -50,9 +50,9 @@ async function createInputFormat() {
     return request;
 }
 
-async function createIndex(indexName) {
+async function createIndex(indexName, inputFormat) {
     const index_url = constants.BLACKLAB_USER + ":" + indexName
-    const inputFormat = TEST_CONFIG['input-format'].split('.')[0];
+    inputFormat = inputFormat || TEST_CONFIG['input-format'].split('.')[0];
     const request = chai
             .request(constants.SERVER_URL)
             .post('/corpora')
@@ -154,9 +154,17 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
     return request.send()
 }
 
-if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement these functions yet
+if (process.env.SKIP_INDEXING_TESTS !== 'true') { // not all targets implement these functions
 
     describe('Indexing tests', () => {
+        it('create an index with non-existent format', async () => {
+            const indexName = createIndexName();
+            const createRes = await createIndex(indexName, 'non-existent-format');
+            assert.isFalse(createRes.ok, 'Create with non-existent format should fail');
+            assert.equal(createRes.body.error.code, 'FORMAT_NOT_FOUND', 'Error code should be NOT_FOUND');
+            const resGetIndex = await getIndexStatus(indexName);
+            assert.isFalse(resGetIndex.ok, 'Index should not exist after failed create');
+        });
         it('create a new index', async () => {
             const indexName = createIndexName();
             const respFormat = await createInputFormat();

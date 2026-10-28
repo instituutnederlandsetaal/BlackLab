@@ -19,8 +19,9 @@ import nl.inl.util.XPathUtil;
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
+    public static final String STR_STANDOFF_ANNOTATIONS_OF_TYPE = "Standoff annotations of type ";
     /**
-     * The type of standoff annotation (e.g. "token" (default), "span" or "relation")
+     * The type of standoff annotation (e.g. "token" (default), "span", "relation" or "fragment")
      */
     private AnnotationType type = AnnotationType.TOKEN;
 
@@ -33,7 +34,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /**
      * Unique id of the token position(s) to index these values at. A uniqueId must
      * be defined for words.
-     * If this is a span (that is, spanEndPath is not empty), this refers to the start of
+     * If this is a span or fragment, this refers to the start of
      * the span.
      */
     private String tokenRefPath;
@@ -44,7 +45,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String spanEndPath = "";
 
     /**
-     * If this is a span, does spanEndPath refer to the last token inside the span (inclusive)
+     * If this is a span or fragment, does spanEndPath refer to the last token inside the span (inclusive)
      * or the first token outside the span (exclusive)?
      */
     private boolean spanEndIsInclusive = true;
@@ -54,6 +55,9 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      * E.g. for a sentence this will usually resolve to "s".
      */
     private String valuePath;
+
+    /** containerPath for the metadata to capture, relative to current element (for type=FRAGMENT only!) */
+    private String metadataContainerPath = ".";
 
     /** Metadata (for type=FRAGMENT only!) */
     @JsonDeserialize(using = ConfigInputFormat.MetadataDeserializer.class)
@@ -123,26 +127,42 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         messages.mustHave(t, tokenRefPath, "tokenRefPath");
         for (ConfigAnnotation a : annotations)
             a.validate(messages, false);
-        if (type == AnnotationType.FRAGMENT) {
-            if (!annotations.isEmpty())
-                messages.error("Fragments cannot have annotations.");
-        } else {
+        switch (type) {
+            case TOKEN -> {
+                if (spanEndPath != null && !spanEndPath.isEmpty())
+                    messages.error("Token annotations cannot have a spanEndPath.");
+                if (valuePath != null && !valuePath.isEmpty())
+                    messages.error("Token annotations cannot have a valuePath.");
+            }
+            case FRAGMENT -> {
+                if (!annotations.isEmpty())
+                    messages.error("Fragments cannot have annotations.");
+                if (valuePath != null && !valuePath.isEmpty())
+                    messages.error("Fragments cannot have a valuePath.");
+            }
+            case SPAN, RELATION -> {
+                if (valuePath.isEmpty())
+                    messages.error("Spans and relations must have a valuePath.");
+                if (spanEndPath.isEmpty())
+                    messages.error("Relations must have a spanEndPath.");
+            }
+        }
+        if (type != AnnotationType.RELATION) {
+            if (relationClass != null)
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a relationClass.");
+            if (targetField != null && !targetField.isEmpty())
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a targetField.");
+            if (targetVersionPath != null && !targetVersionPath.isEmpty())
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have a targetVersionPath.");
+        }
+        if (type != AnnotationType.FRAGMENT) {
             if (!metadata.isEmpty())
-                messages.error("Standoff annotations of type " + type + " cannot have metadata blocks.");
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have metadata blocks.");
+            if (!metadataContainerPath.equals("."))
+                messages.error(STR_STANDOFF_ANNOTATIONS_OF_TYPE + type + " cannot have metadataContainerPath");
         }
         for (ConfigMetadataBlock m : metadata)
             m.validate(messages);
-    }
-
-    public ConfigStandoffAnnotations copy() {
-        ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
-        for (ConfigAnnotation a : annotations) {
-            result.addAnnotation(a.copy());
-        }
-        for (ConfigMetadataBlock m : metadata) {
-            result.metadata.add(m.copy());
-        }
-        return result;
     }
 
     public String getPath() {
@@ -266,7 +286,8 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         if (actualTargetField.equals(defaultTargetField)) {
             // Not a cross-field relation
             return getRelationClass();
-        } else if (AnnotatedFieldNameUtil.isSameParallelBaseField(defaultTargetField, actualTargetField)) {
+        } else if (AnnotatedFieldNameUtil.baseFromParallelFieldName(defaultTargetField).equals(
+                AnnotatedFieldNameUtil.baseFromParallelFieldName(actualTargetField))) {
             // Cross-field relation to a different version of the same parallel field,
             // e.g. contents__nl --> contents__de
             String actualTargetVersion = AnnotatedFieldNameUtil.versionFromParallelFieldName(actualTargetField);
@@ -303,5 +324,13 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public void setSpanNamePath(String v) {
         throw new InvalidInputFormatConfig("Encountered removed key 'spanNamePath' (rename to 'valuePath')");
+    }
+
+    public void setMetadataContainerPath(String v) {
+        this.metadataContainerPath = v;
+    }
+
+    public String getMetadataContainerPath() {
+        return metadataContainerPath;
     }
 }

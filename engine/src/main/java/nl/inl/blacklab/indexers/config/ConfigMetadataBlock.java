@@ -8,6 +8,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 
 /** Configuration for a block of metadata fields. */
 public class ConfigMetadataBlock {
@@ -43,17 +44,6 @@ public class ConfigMetadataBlock {
         for (ConfigMetadataField f : fields) {
             f.validate(messages);
         }
-    }
-
-    public ConfigMetadataBlock copy() {
-        ConfigMetadataBlock result = new ConfigMetadataBlock();
-        result.setContainerPath(containerPath);
-        result.setDefaultAnalyzer(defaultAnalyzer);
-        result.setApplyDocRules(applyDocRules);
-        for (ConfigMetadataField f : fields) {
-            result.addMetadataField(f.copy());
-        }
-        return result;
     }
 
     public boolean isApplyDocRules() {
@@ -115,8 +105,22 @@ public class ConfigMetadataBlock {
         this.defaultAnalyzer = defaultAnalyzer;
     }
 
-    public ConfigMetadataField getMetadataField(String fieldName) {
-        return fieldsByName.get(fieldName);
+    /**
+     * Get metadata field config by name, searching recursively through sub-blocks if necessary.
+     *
+     * @param fieldName field name
+     * @return metadata field config, or null if not found
+     */
+    public ConfigMetadataField getMetadataFieldRecursive(String fieldName) {
+        ConfigMetadataField f = fieldsByName.get(fieldName);
+        if (f == null) {
+            for (ConfigMetadataBlock b : blocks) {
+                f = b.getMetadataFieldRecursive(fieldName);
+                if (f != null)
+                    break;
+            }
+        }
+        return f;
     }
 
     @Override
@@ -124,4 +128,15 @@ public class ConfigMetadataBlock {
         return "ConfigMetadataBlock [containerPath=" + containerPath + "]";
     }
 
+    public boolean hasPidField() {
+        for (ConfigMetadataField f: fields) {
+            if (f.getRole() == MetadataField.Role.PID)
+                return true;
+        }
+        for (ConfigMetadataBlock b: blocks) {
+            if (b.hasPidField())
+                return true;
+        }
+        return false;
+    }
 }

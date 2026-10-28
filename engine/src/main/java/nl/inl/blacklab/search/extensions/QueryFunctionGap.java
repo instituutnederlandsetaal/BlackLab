@@ -5,7 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PBoolean;
 import nl.inl.blacklab.plugins.param.PMatchInfo;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -18,7 +18,7 @@ public class QueryFunctionGap extends QueryFunction {
                 null, false);
     }
 
-    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         MatchInfo first = (MatchInfo)parameters.get(0);
         MatchInfo second = (MatchInfo)parameters.get(1);
         boolean directional = (boolean)parameters.get(2);

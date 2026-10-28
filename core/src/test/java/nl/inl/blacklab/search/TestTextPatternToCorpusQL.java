@@ -14,7 +14,7 @@ public class TestTextPatternToCorpusQL {
 
     @BeforeClass
     public static void beforeClass() {
-        BlackLab.implicitInstance(); // init plugin system
+        BlackLab.engine(); // init plugin system
     }
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
@@ -42,7 +42,7 @@ public class TestTextPatternToCorpusQL {
         assertRoundtrip("[!(word = \"a\" & word = \"b\")]");
         assertRoundtrip("[word != \"the\" & (lemma = \"cat\" | pos = \"dog\")] \"turtle\"");
         assertRoundtrip("!\"cat\"");
-        assertRoundtrip("[!(word = \"a\") & !(word = \"b\")]");
+        assertCanonicalized("[word!=\"a\" & word!=\"b\"]", "[!(word = \"a\") & !(word = \"b\")]");
     }
 
     @Test

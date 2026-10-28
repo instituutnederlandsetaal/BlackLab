@@ -13,7 +13,7 @@ public record RequestRelations(AnnotatedField annotatedField, long limitValues, 
                                boolean separateSpans, boolean onlySpans) {
 
     public static @NonNull RequestRelations fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         return new RequestRelations(
                 ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD)),
                 qpar.getLong(WsParam.LIMIT_VALUES),

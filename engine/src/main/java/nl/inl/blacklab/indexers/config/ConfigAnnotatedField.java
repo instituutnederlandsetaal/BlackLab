@@ -159,26 +159,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
             tag.validate(messages);
     }
 
-    public ConfigAnnotatedField copy() {
-        ConfigAnnotatedField result = new ConfigAnnotatedField(name);
-        result.dummyForStoringLinkedDocument = dummyForStoringLinkedDocument;
-        result.setDisplayName(displayName);
-        result.setDescription(description);
-        result.setContainerPath(containerPath);
-        result.setWordPath(wordPath);
-        result.setTokenIdPath(tokenIdPath);
-        result.setPunctPath(punctPath);
-        result.setDefaultSearchAnnotation(defaultSearchAnnotation);
-        result.setMainAnnotation(mainAnnotation);
-        for (ConfigAnnotation a: annotations)
-            result.addAnnotation(a.copy());
-        for (ConfigStandoffAnnotations a: standoffAnnotations)
-            result.addStandoffAnnotation(a.copy());
-        for (ConfigInlineTag t: inlineTags)
-            result.addInlineTag(t.copy());
-        return result;
-    }
-
     public void setName(String name) {
         this.name = name;
     }

@@ -7,12 +7,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.lucene.search.Query;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsParam;
@@ -24,8 +25,37 @@ import nl.inl.blacklab.webservice.WsParam;
  */
 public interface QueryParams extends ParamsForResponse {
 
+    /** How to resolve the index from the corpus name */
+    interface IndexResolver {
+        BlackLabIndex resolve(String corpusName);
+    }
+
+    IndexResolver DEFAULT_INDEX_RESOLVER = corpusName -> {
+        try {
+            return IndexManager.get().getIndex(corpusName).blIndex();
+        } catch (Exception e) {
+            throw new InvalidIndex(e);
+        }
+    };
+
+    /** A corpus name and an index resolver so we can get the corresponding BlackLabIndex */
+    record CorpusRefByName(String name, IndexResolver indexResolver) {
+        public CorpusRefByName {
+            if (indexResolver == null)
+                indexResolver = QueryParams.DEFAULT_INDEX_RESOLVER;
+        }
+
+        public CorpusRefByName(String name) {
+            this(name, null);
+        }
+
+        public BlackLabIndex index() {
+            return indexResolver.resolve(name);
+        }
+    }
+
     /** Get query parameters from a HttpServletRequest */
-    static QueryParamsMap fromServletRequest(String corpusName, WebserviceOperation operation,
+    static QueryParamsMap fromServletRequest(CorpusRefByName corpusName, WebserviceOperation operation,
             HttpServletRequest request, BLSConfig config, boolean debugMode) {
         Map<WsParam, Object> typedParams = new EnumMap<>(WsParam.class);
         for (String name: request.getParameterMap().keySet()) {
@@ -37,18 +67,17 @@ public interface QueryParams extends ParamsForResponse {
                 typedParams.put(par, QueryParamsMap.toAppropriateType(par, value));
             }
         }
-        typedParams.put(WsParam.CORPUS_NAME, corpusName);
+        typedParams.put(WsParam.CORPUS_NAME, corpusName.name());
         if (operation != null && operation != WebserviceOperation.NONE) {
             typedParams.put(WsParam.OPERATION, operation.value());
         }
-        return new QueryParamsMap(corpusName, null, typedParams, null, config, debugMode);
+        return new QueryParamsMap(corpusName, null, typedParams, config, debugMode);
     }
 
     /** Get query parameters from a JSON structure */
-    static QueryParamsMap fromJson(String corpusName, WebserviceOperation operation, String json,
-            Query fallbackFilterQuery,
+    static QueryParamsMap fromJson(CorpusRefByName corpusName, WebserviceOperation operation, String json,
             BLSConfig config, boolean debugMode) throws JsonProcessingException {
-        return new QueryParamsMap(corpusName, null, ParamUtil.getTypedParams(operation, json), fallbackFilterQuery, config, debugMode);
+        return new QueryParamsMap(corpusName, null, ParamUtil.getTypedParams(operation, json), config, debugMode);
     }
 
     /** Config, for determing some parameter defaults */
@@ -57,10 +86,13 @@ public interface QueryParams extends ParamsForResponse {
     /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
     boolean debugMode();
 
-    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
-    default Query getFallbackFilterQuery() { return null; }
-
     String getCorpusName();
+
+    CorpusRefByName getCorpusRef();
+
+    default BlackLabIndex index() {
+        return getCorpusRef().index();
+    }
 
     /**
      * Was a value for this parameter explicitly passed?
@@ -119,6 +151,6 @@ public interface QueryParams extends ParamsForResponse {
     default QueryParams withOverrides(Map<WsParam, Object> overrides) {
         Map<WsParam, Object> typedParams = new LinkedHashMap<>(getTypedParameters());
         typedParams.putAll(overrides);
-        return new QueryParamsMap(getCorpusName(), null, typedParams, getFallbackFilterQuery(), config(), debugMode());
+        return new QueryParamsMap(getCorpusRef(), null, typedParams, config(), debugMode());
     }
 }

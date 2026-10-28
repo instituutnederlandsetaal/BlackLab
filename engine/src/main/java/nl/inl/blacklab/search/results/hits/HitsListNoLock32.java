@@ -32,7 +32,7 @@ class HitsListNoLock32 extends HitsListAbstract {
     protected final IntList ends;
     protected final ObjectList<MatchInfo[]> matchInfos;
 
-    HitsListNoLock32(Hits.HitsContext context, int initialCapacity) {
+    HitsListNoLock32(Context context, int initialCapacity) {
         super(context);
         if (initialCapacity < 0) {
             // Use default initial capacities
@@ -62,7 +62,7 @@ class HitsListNoLock32 extends HitsListAbstract {
      * @param ends          hit end positions
      * @param matchInfos    match info for each hit, or empty if no match info
      */
-    HitsListNoLock32(Hits.HitsContext context,
+    HitsListNoLock32(Context context,
             IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         super(context);
         if (docs == null || starts == null || ends == null)

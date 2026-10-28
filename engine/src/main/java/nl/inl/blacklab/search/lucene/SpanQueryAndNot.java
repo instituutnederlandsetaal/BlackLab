@@ -18,11 +18,11 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A SpanQuery for an AND NOT query. Produces all spans matching all the
@@ -183,16 +183,23 @@ public class SpanQueryAndNot extends BLSpanQuery {
     private SpansAndFilterFactory filterFactory = null;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
-        super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
+        super(determineContext(include, exclude));
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
-        if (this.include.isEmpty() && this.exclude.isEmpty())
-            throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
+        assert !(this.include.isEmpty() && this.exclude.isEmpty());
         checkAllCompatibleFields(this.include);
         checkAllCompatibleFields(this.exclude);
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(this.include);
         this.guarantees = createGuarantees(clauseGuarantees, !this.exclude.isEmpty());
+    }
+
+    private static @NonNull Context determineContext(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
+        if (include != null && !include.isEmpty())
+            return include.get(0).context;
+        if (exclude != null && !exclude.isEmpty())
+            return exclude.get(0).context;
+        throw new IllegalStateException("AND(NOT)/RSPAN query without clauses");
     }
 
     /**
@@ -289,7 +296,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             if (rewrCl.isEmpty()) {
                 // All clauses were any token repetitions.
                 return reapplyCaptures(savedCaptures,
-                        new SpanQueryAnyToken(queryInfo, minMax[0], minMax[1], includeWithoutCaptures.get(0).getRealField()));
+                        new SpanQueryAnyToken(context, minMax[0], minMax[1], includeWithoutCaptures.get(0).getRealField()));
             }
         }
 
@@ -579,13 +586,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
+    public void setContext(Context context) {
+        super.setContext(context);
         for (BLSpanQuery cl: include) {
-            cl.setQueryInfo(queryInfo);
+            cl.setContext(context);
         }
         for (BLSpanQuery cl: exclude) {
-            cl.setQueryInfo(queryInfo);
+            cl.setContext(context);
         }
     }
 }

@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +20,8 @@ import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermVectors;
 import org.apache.lucene.index.Terms;
@@ -41,12 +43,11 @@ import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.ParallelDocTask;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public final class LuceneUtil {
 
@@ -57,45 +58,51 @@ public final class LuceneUtil {
     private LuceneUtil() {} // utility class
 
     /** Determine how often a term occurs in a field in the index */
-    public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term,
+    public static long getTermFrequency(IndexSearcher searcher, String luceneField, String term,
             Query docFilter, boolean accurateButSlower) {
-        String luceneField = annotSensitivity.luceneField();
         if (docFilter != null || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
-            return getTermFrequencyIterOverDocs(annotSensitivity, term, docFilter, luceneField);
+            return getTermFrequencyIterOverDocs(searcher, term, docFilter, luceneField);
         } else {
             // Just use totalTermFreq. This doesn't take deleted documents into account,
             // but that's usually okay if you're using it for a ratio with another frequency
             // that also doesn't take deletions into account.
             try {
-                return annotSensitivity.annotation().field().index().reader().totalTermFreq(new Term(luceneField, term));
+                if (searcher == null)
+                    return 0; // TEST
+                IndexReader reader = searcher.getIndexReader();
+                return reader.totalTermFreq(new Term(luceneField, term));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    private static long getTermFrequencyIterOverDocs(AnnotationSensitivity annotSensitivity, String term, Query docFilter,
+    private static long getTermFrequencyIterOverDocs(IndexSearcher searcher, String term, Query docFilter,
             String luceneField) {
-        BlackLabIndex index = annotSensitivity.annotation().field().index();
-        Weight filterWeight = determineFilterWeight(docFilter, index.searcher());
+        Weight filterWeight = determineFilterWeight(docFilter, searcher);
 
         BytesRef bytesRef = new BytesRef(term);
-        Map<Integer, Long> counts = new ConcurrentHashMap<>();
-        index.forEachDocument((ParallelDocTask) lrc -> {
+        LongAdder count = new LongAdder();
+        forEachDocument(searcher.getIndexReader(), true, true, (ParallelDocTask) lrc -> {
             try {
-                Scorer scorer = docFilter == null ? null :
-                        filterWeight.scorer(index.searcher().getLeafContexts().get(0));
-                DocIdSetIterator docIt = scorer == null ? null : scorer.iterator();
+                Scorer scorer = docFilter == null ? null : filterWeight.scorer(lrc);
+                DocIdSetIterator docIt = docFilter == null ? null :
+                        scorer == null ? DocIdSetIterator.empty() : scorer.iterator();
                 TermVectors termVectors = lrc.reader().termVectors();
                 return docId -> {
                     try {
-                        int matchingDocId = scorer == null ? docId :
+                        int matchingDocId = docIt == null ? docId :
                                 docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId);
                         if (matchingDocId == docId) {
                             // This doc matches the filter.
-                            countDocTermFrequency(luceneField, lrc, docId, termVectors, bytesRef, counts);
+                            Terms terms = termVectors.get(docId).terms(luceneField);
+                            if (terms != null) { // field may not be present in this document (e.g. fragment)
+                                TermsEnum termsEnum = terms.iterator();
+                                if (termsEnum.seekExact(bytesRef))
+                                    count.add(termsEnum.totalTermFreq());
+                            }
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
@@ -105,7 +112,7 @@ public final class LuceneUtil {
                 throw new RuntimeException(e);
             }
         });
-        return counts.values().stream().mapToLong(Long::longValue).sum();
+        return count.sum();
     }
 
     private static @Nullable Weight determineFilterWeight(Query docFilter, IndexSearcher searcher) {
@@ -123,11 +130,44 @@ public final class LuceneUtil {
         return filterWeight;
     }
 
-    private static void countDocTermFrequency(String luceneField, LeafReaderContext lrc, int docId, TermVectors termVectors,
-            BytesRef bytesRef, Map<Integer, Long> counts) throws IOException {
-        TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
-        long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
-        counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
+    public static void forEachDocument(IndexReader reader, boolean onlyRegularDocs, boolean parallel, DocTask task) {
+        task.initializeTask();
+        List<LeafReaderContext> leaves = reader.leaves();
+        Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
+        stream.forEach(lrc -> {
+            SortedDocValues dvDocType;
+            try {
+                LeafReader leafReader = lrc.reader();
+                dvDocType = onlyRegularDocs ? leafReader.getSortedDocValues(BLInputDocument.DOC_TYPE_FIELD_NAME) : null;
+                int ordDocTypeRegularDocument = -1;
+                if (dvDocType != null) {
+                    ordDocTypeRegularDocument = dvDocType.lookupTerm(new BytesRef(BLInputDocument.DocType.DOCUMENT.getValue()));
+                }
+                DocTask.SegmentTask segTask = task.segmentDocTask(lrc);
+                Bits liveDocs = leafReader.getLiveDocs();
+                int maxDoc = leafReader.maxDoc();
+                for (int docId = 0; docId < maxDoc; docId++) {
+                    boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+                    if (isLiveDoc) {
+                        boolean processDocType;
+                        if (onlyRegularDocs) {
+                            assert dvDocType != null;
+                            int result = dvDocType.advance(docId);
+                            assert result == docId;
+                            processDocType = dvDocType.ordValue() == ordDocTypeRegularDocument;
+                        } else {
+                            processDocType = true;
+                        }
+                        if (processDocType) {
+                            segTask.document(docId);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                throw new InvalidIndex(e);
+            }
+        });
+        task.finishTask();
     }
 
     /**
@@ -138,11 +178,11 @@ public final class LuceneUtil {
      * a query touches a field that is actually numeric.
      */
     private static class FieldTypeAwareQueryParser extends QueryParser {
-        private final MetadataFields metadataFields;
+        private final FieldType.Getter fieldTypeGetter;
 
-        public FieldTypeAwareQueryParser(MetadataFields metadataFields, String defaultField, Analyzer analyzer) {
+        public FieldTypeAwareQueryParser(FieldType.Getter fieldTypeGetter, String defaultField, Analyzer analyzer) {
             super(defaultField, analyzer);
-            this.metadataFields = metadataFields;
+            this.fieldTypeGetter = fieldTypeGetter;
         }
 
         @Override
@@ -153,8 +193,7 @@ public final class LuceneUtil {
         }
 
         private boolean isNumericField(String fieldName) {
-            MetadataField f = metadataFields == null ? null : metadataFields.get(fieldName);
-            return f != null && f.type() == FieldType.NUMERIC;
+            return fieldTypeGetter.typeOf(fieldName) == FieldType.NUMERIC;
         }
 
         @Override
@@ -195,10 +234,9 @@ public final class LuceneUtil {
      * @return the query
      * @throws ParseException on syntax error
      */
-    public static Query parseLuceneQuery(BlackLabIndex index, String luceneQuery, Analyzer analyzer, String defaultField)
+    public static Query parseLuceneQuery(FieldType.Getter fieldTypeGetter, String luceneQuery, Analyzer analyzer, String defaultField)
             throws ParseException {
-        MetadataFields metadataFields = index == null ? null : index.metadataFields();
-        QueryParser qp = new FieldTypeAwareQueryParser(metadataFields, defaultField, analyzer);
+        QueryParser qp = new FieldTypeAwareQueryParser(fieldTypeGetter, defaultField, analyzer);
         qp.setAllowLeadingWildcard(true);
         return qp.parse(luceneQuery);
     }
@@ -279,46 +317,6 @@ public final class LuceneUtil {
         }
     }
 
-    /**
-     * Check if a Lucene field has offsets stored.
-     *
-     * @param reader our index
-     * @param fieldName field to check
-     * @return true iff field has offsets
-     */
-    public static boolean hasOffsets(IndexReader reader, String fieldName) {
-        // Iterate over documents in the index until we find a annotation
-        // for this annotated field that has stored character offsets. This is
-        // our main annotation.
-
-        // Note that we can't simply retrieve the field from a document and
-        // check the FieldType to see if it has offsets or not, as that information
-        // is incorrect at search time (always set to false, even if it has offsets).
-
-        Bits liveDocs = MultiBits.getLiveDocs(reader);
-        for (int n = 0; n < reader.maxDoc(); n++) {
-            if (liveDocs == null || liveDocs.get(n)) {
-                try {
-                    Terms terms = reader.termVectors().get(n, fieldName);
-                    if (terms == null) {
-                        // No term vector; probably not stored in this document.
-                        continue;
-                    }
-                    if (terms.hasOffsets()) {
-                        // This field has offsets stored. Must be the main alternative.
-                        return true;
-                    }
-                    // This alternative has no offsets stored. Don't look at any more
-                    // documents, go to the next alternative.
-                    break;
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
-                }
-            }
-        }
-        return false;
-    }
-
     /** Handle a term. */
     @FunctionalInterface
     public interface TermHandler {
@@ -344,10 +342,8 @@ public final class LuceneUtil {
      * @param handler called to handle terms found, until it returns false (or we run out of terms)
      */
     public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
-    	boolean allTerms = startFrom == null || startFrom.isEmpty();
-        if (allTerms) {
-        	startFrom = "";
-        }
+    	if (startFrom == null)
+            startFrom = "";
         try {
             outerLoop:
             for (LeafReaderContext leafReader : index.leaves()) {
@@ -358,11 +354,13 @@ public final class LuceneUtil {
                     continue;
                 }
                 TermsEnum termsEnum = terms.iterator();
-                BytesRef brPrefix = new BytesRef(startFrom.getBytes(LUCENE_DEFAULT_CHARSET));
-                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
-
-                if (seekStatus == TermsEnum.SeekStatus.END) {
-                    continue;
+                if (!startFrom.isEmpty()) {
+                    BytesRef brPrefix = new BytesRef(startFrom.getBytes(LUCENE_DEFAULT_CHARSET));
+                    TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+                    if (seekStatus == TermsEnum.SeekStatus.END)
+                        continue;
+                } else {
+                    termsEnum.next();
                 }
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                     String termText = term.utf8ToString();
@@ -382,20 +380,19 @@ public final class LuceneUtil {
      * @param fieldName the field
      * @param prefix the prefix we're looking for (null or empty string for all
      *            terms)
-     * @param sensitive match case-sensitively or not?
+     * @param sensitivity match case-/diacritics-sensitively or not?
      * @param maxResults max. number of results to return (or -1 for all)
      * @return the matching terms
      */
     public static List<String> findTermsByPrefix(IndexReader index, String fieldName,
-            String prefix, boolean sensitive, long maxResults) {
+            String prefix, MatchSensitivity sensitivity, long maxResults) {
         boolean allTerms = prefix == null || prefix.isEmpty();
         if (allTerms) {
             prefix = "";
-            sensitive = true; // don't do unnecessary work in this case
+            sensitivity = MatchSensitivity.SENSITIVE; // don't do unnecessary work in this case
         }
         try {
-            if (!sensitive)
-                prefix = StringUtil.stripAccents(prefix).toLowerCase();
+            prefix = sensitivity.desensitize(prefix);
             Set<String> results = new TreeSet<>();
             
             outerLoop:
@@ -418,8 +415,7 @@ public final class LuceneUtil {
                         break outerLoop;
                     
                     String termText = term.utf8ToString();
-                    boolean startsWithPrefix = allTerms || (sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
-                            : termText.startsWith(prefix));
+                    boolean startsWithPrefix = allTerms || sensitivity.desensitize(termText).startsWith(prefix);
                     if (!startsWithPrefix) {
                         // Doesn't match prefix or different field; no more matches
                         break;
@@ -439,12 +435,12 @@ public final class LuceneUtil {
      * Get term frequencies for an annotation in a subset of documents.
      *
      * @param documentFilterQuery document filter, or null for all documents
-     * @param annotSensitivity field to get frequencies for
+     * @param luceneField field to get frequencies for
      * @param searchTerms list of terms to get frequencies for, or null for all terms
      * @return term frequencies
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
+            String luceneField, Set<String> searchTerms) {
         try {
             Weight weight = null;
             if (documentFilterQuery != null) {
@@ -462,7 +458,6 @@ public final class LuceneUtil {
                     throw new InvalidIndex("arc.reader() == null");
 
                 LeafReader reader = arc.reader();
-                String field = annotSensitivity.luceneField();
                 if (weight != null) { // retrieve term frequency per matched document
                     Scorer scorer = weight.scorer(arc);
                     if (scorer == null) { // no matched documents
@@ -471,16 +466,16 @@ public final class LuceneUtil {
                     DocIdSetIterator documentIterator = scorer.iterator();
                     int doc;
                     while ((doc = documentIterator.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
-                        Terms terms = reader.termVectors().get(doc, field);
+                        Terms terms = indexReader.termVectors().get(doc, luceneField);
                         if (terms == null) {
-                            throw new IllegalArgumentException("Field " + field + " has no Terms");
+                            throw new IllegalArgumentException("Field " + luceneField + " has no Terms");
                         }
 
                         getTermFrequencies(terms.iterator(), searchTerms, freq);
                     }
                 } else {
                     // all documents - use the fast path
-                    getTermFrequencies(reader.terms(field).iterator(), searchTerms, freq);
+                    getTermFrequencies(reader.terms(luceneField).iterator(), searchTerms, freq);
                 }
             }
 
@@ -568,10 +563,10 @@ public final class LuceneUtil {
     }
 
     public static class SimpleDocIdCollector extends SimpleCollector {
-        private final List<Integer> docIds;
+        private final Collection<Integer> docIds;
         private int docBase;
 
-        public SimpleDocIdCollector(List<Integer> docIds) {
+        public SimpleDocIdCollector(Collection<Integer> docIds) {
             this.docIds = docIds;
         }
 

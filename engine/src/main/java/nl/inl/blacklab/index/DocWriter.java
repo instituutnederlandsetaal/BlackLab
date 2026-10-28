@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.lucene.index.IndexableFieldType;
+
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.TextContent;
 
 /**
@@ -18,8 +19,6 @@ import nl.inl.util.TextContent;
 public interface DocWriter {
 
     IndexMetadataWriter metadata();
-
-    BLIndexObjectFactory indexObjectFactory();
     
     /**
      * Add Lucene document(s) to the index.
@@ -49,8 +48,8 @@ public interface DocWriter {
     int docsToDoLeft();
 
     File linkedFile(String inputFile);
-    
-    BLFieldType metadataFieldType(boolean tokenized);
+
+    IndexableFieldType metadataFieldType(boolean tokenized);
 
     /**
      * Get our index listener, or create a console reporting listener if none was set yet.
@@ -71,8 +70,6 @@ public interface DocWriter {
     default BlackLabIndex.IndexType getIndexType() {
         return metadata().getIndexType();
     }
-
-    RelationsStrategy getRelationsStrategy();
 
     /** Force a merge (debug feature) */
     void debugForceMerge();

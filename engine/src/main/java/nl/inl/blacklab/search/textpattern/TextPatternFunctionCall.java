@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.QueryFunction;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
@@ -40,7 +40,7 @@ public class TextPatternFunctionCall extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
 
         // Make sure arguments are interpreted with the correct types
         // (e.g. "duck" can be a string or a query)
@@ -85,7 +85,7 @@ public class TextPatternFunctionCall extends TextPattern {
         return result;
     }
 
-    private List<Object> evaluateArgs(QueryExecutionContext context, List<?> args) {
+    private List<Object> evaluateArgs(TextPatternContext context, List<?> args) {
         List<Object> evaluated = new ArrayList<>();
         for (Object arg: args) {
             if (arg instanceof TextPattern) {

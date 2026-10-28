@@ -11,10 +11,10 @@ import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -178,7 +178,7 @@ public class MockSpans extends BLSpans {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
-                    aEnd[i], aEnd[i], 0, new MockAnnotatedField(), false);
+                    aEnd[i], aEnd[i], 0, "test", false);
             BytesRef payload = relationsStrategy.getPayloadCodec().serialize(relInfo);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
@@ -242,7 +242,7 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
+    public void passSpansContextToClauses(SpansContext context) {
         // just ignore this here
     }
 
@@ -305,6 +305,10 @@ public class MockSpans extends BLSpans {
 
     @Override
     public float positionsCost() {
+        return start.length;
+    }
+
+    public int numberOfHits() {
         return start.length;
     }
 

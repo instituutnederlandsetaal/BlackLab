@@ -1,9 +1,15 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
+import java.util.Objects;
 
-/** An annotated field */
+import nl.inl.blacklab.search.BlackLabIndex;
+
+/** An annotated field.
+ *  <p>
+ *  In addition to what Field knows (index, name, settings, etc.) it knows
+ *  its annotations, including its main and search annotations, its token length
+ *  field, etc.
+ */
 public interface AnnotatedField extends Field {
 
     /**
@@ -66,10 +72,6 @@ public interface AnnotatedField extends Field {
         if (offsetsSensitivity == null)
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
         return offsetsSensitivity.luceneField();
-    }
-
-    default ForwardIndexAccessor forwardIndexAccessor() {
-        return new ForwardIndexAccessorIntegrated(index(), this);
     }
 
     default AnnotatedField withParallelFieldVersion(String version) {

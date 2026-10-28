@@ -13,12 +13,10 @@ import org.apache.lucene.search.TermQuery;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.StringUtil;
 
 public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
@@ -63,15 +61,6 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
         return BlackLab.config().getIndexing().getIfDocumentExists();
         //return IfDocumentExists.UPSERT; // TODO: make configurable (IndexTool cmdline, BLS config)
     }
-
-    /**
-     * Return factory object for creating input documents, getting field types, etc.
-     *
-     * This exists to support indexing both directly to Lucene and inside Solr.
-     *
-     * @return index object factory
-     */
-    BLIndexObjectFactory indexObjectFactory();
 
     static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
         String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
@@ -193,9 +182,6 @@ public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
      * @return the analyzer
      */
     Analyzer analyzer();
-
-    /** Get the strategy to use for indexing relations. */
-    RelationsStrategy getRelationsStrategy();
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.

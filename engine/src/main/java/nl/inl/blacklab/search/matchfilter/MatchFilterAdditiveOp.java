@@ -8,9 +8,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /** Compare two constraint values and return an integer comparison result. */
 public class MatchFilterAdditiveOp extends MatchFilter {
@@ -77,10 +76,10 @@ public class MatchFilterAdditiveOp extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         if (a != null)
-            a.setHitQueryContext(context);
-        b.setHitQueryContext(context);
+            a.setSpansContext(context);
+        b.setSpansContext(context);
     }
 
     @Override
@@ -103,12 +102,6 @@ public class MatchFilterAdditiveOp extends MatchFilter {
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         a.lookupAnnotationIndices(fiAccessor);
         b.lookupAnnotationIndices(fiAccessor);
-    }
-
-    @Override
-    public MatchFilter withField(AnnotatedField field) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.withField(field),
-                (x, y) -> new MatchFilterAdditiveOp(x, y, operator));
     }
 
     @Override

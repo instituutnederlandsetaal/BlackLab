@@ -5,8 +5,10 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BLConfigLog;
 import nl.inl.blacklab.config.BLConfigPlugins;
@@ -63,10 +65,9 @@ public class BLSConfig {
     }
 
     /** The BlackLab parts of the config together in a bundle, for easy retrieval. */
+    @XmlTransient
+    @JsonIgnore
     private BlackLabConfig blackLabConfig;
-
-    /** Are we using this from Solr? If so, don't check if we have any indexLocations (managed by Solr) */
-    private boolean solr;
 
     public List<String> getIndexLocations() {
         return indexLocations;
@@ -190,7 +191,9 @@ public class BLSConfig {
         plugins.setAllowAll(false); // plugins must be whitelisted (setting plugins.allowed) for BLS!
         this.plugins = plugins;
     }
-    
+
+    @XmlTransient
+    @JsonIgnore
     public BlackLabConfig getBLConfig() {
         if (blackLabConfig == null) {
             blackLabConfig = new BlackLabConfig();
@@ -203,16 +206,10 @@ public class BLSConfig {
         return blackLabConfig;
     }
 
+    @XmlTransient
+    @JsonIgnore
     @SuppressWarnings("unused")
     public void setBLConfig(BlackLabConfig blackLabConfig) {
         this.blackLabConfig = blackLabConfig;
-    }
-
-    public void setIsSolr(boolean b) {
-        this.solr = b;
-    }
-
-    public boolean isSolr() {
-        return solr;
     }
 }

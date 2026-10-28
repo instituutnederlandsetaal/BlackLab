@@ -10,9 +10,11 @@
             <w>the</w>
             <w>voyages</w>
             <w>of</w>
-            <w>the</w>
-            <w>starship</w>
-            <w>Enterprise</w>.
+            <frag author="Majel" ftype="inline">
+                <w>the</w>
+                <w>starship</w>
+                <w>Enterprise</w>.
+            </frag>
         </s>
         <s>
             <milestone id="B"/>

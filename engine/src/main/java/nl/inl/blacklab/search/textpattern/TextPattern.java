@@ -8,7 +8,8 @@ import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.QueryFunction;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -23,7 +24,6 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
 
 /**
@@ -43,11 +43,14 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String REGEX_PREFIX_DIACRITICS_SENSITIVE = "d";
 
     public static TextPattern regex(String value, String annotation, MatchSensitivity sensitivity) {
-        return new TextPatternRegex(value, annotation, sensitivity);
+        TextPattern left = annotation == null ? TextPatternDefaultValue.get() :
+                new TextPatternValue(ConstraintValue.symbol(annotation));
+        TextPattern right = new TextPatternValue(ConstraintValue.get(value));
+        return new TextPatternCompare(left, right, MatchFilterCompare.Operator.EQUAL, sensitivity);
     }
 
     public static TextPattern term(String value, String annotation, MatchSensitivity sensitivity) {
-        return new TextPatternTerm(value, annotation, sensitivity);
+        return regex(value, annotation, sensitivity);
     }
 
     public static TextPattern regex(String value) {
@@ -72,17 +75,18 @@ public abstract class TextPattern implements TextPatternStruct {
 
     public static TextPattern sequenceOfTerms(List<String> terms, Annotation annotation, MatchSensitivity sensitivity) {
         List<TextPattern> patterns = new ArrayList<>();
-        String regexSensitivityPrefix = getRegexSensitivityPrefix(sensitivity, annotation.field().index().defaultMatchSensitivity());
+        if (sensitivity == annotation.field().index().defaultMatchSensitivity())
+            sensitivity = null;
         for (String term: terms) {
             TextPattern annot = new TextPatternValue(ConstraintValue.symbol(annotation.name()));
-            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + StringUtil.escapeLuceneRegexCharacters(term)));
-            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL);
+            TextPattern value = new TextPatternValue(ConstraintValue.get(StringUtil.escapeLuceneRegexCharacters(term)));
+            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL, sensitivity);
             patterns.add(compare);
         }
         return patterns.size() == 1 ? patterns.get(0) : new TextPatternSequence(patterns);
     }
 
-    private static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
+    public static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
         String regexSensitivityPrefix = "";
         if (sensitivity != defaultSensitivity) {
             // We need a regex prefix to indicate that we want a different sensitivity than the default for the index.
@@ -119,7 +123,7 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     /**
-     * If the argument is a simple TextPatternTerm or TextPatternRegex, extract its string value.
+     * If the argument is a simple TextPatternCompare (i.e. annotion equals value), extract its string value.
      *
      * This is used to decide whether a function parameter value e.g. "duck" is a query [word="duck"] or
      * just a simple string value "duck", based on the declared type of the parameter.
@@ -127,7 +131,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @param arg the argument
      * @return the string value, or null if not a simple term/regex
      */
-    public static String getSimpleStringValue(QueryExecutionContext context, Object arg) {
+    public static String getSimpleStringValue(TextPatternContext context, Object arg) {
         String strValue = null;
         if (arg instanceof TextPatternCompare tpc) {
             // E.g. passing a string to a function was interpreted as a query on the
@@ -147,17 +151,6 @@ public abstract class TextPattern implements TextPatternStruct {
         } else if (arg instanceof TextPatternAdditiveOp tadd) {
             // Try to evaluate expression directly (so e.g. --3 works)
             strValue = tadd.rewriteToConstant().toString();
-        } else if (arg instanceof TextPatternRegex tpr) {
-            // Interpret as regular string, not as a query
-            // kind of a hack, but should work
-            strValue = tpr.getValue();
-            if (strValue.startsWith("^") && strValue.endsWith("$")) {
-                // strip off ^ and $
-                strValue = strValue.substring(1, strValue.length() - 1);
-            }
-        } else if (arg instanceof TextPatternTerm tpt) {
-            // Interpret as regular string, not as a query
-            strValue = tpt.getValue();
         }
         return strValue;
     }
@@ -203,7 +196,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting value
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
-    public abstract EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery;
+    public abstract EvalResult evaluate(TextPatternContext context) throws InvalidQuery;
 
     /**
      * Visit this TextPattern, calculating some result value.
@@ -231,7 +224,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @param context query execution context to use
      * @return resulting MatchFilter
      */
-    public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
+    public MatchFilter toMatchFilter(TextPatternContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
             return mf;
@@ -247,27 +240,28 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting query
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
-    public BLSpanQuery toQuery(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery toQuery(TextPatternContext context) throws InvalidQuery {
         EvalResult result = evaluate(context);
         if (result instanceof BLSpanQuery q)
             return q;
         throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + EvalResult.describe(result));
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
-        return toQuery(queryInfo, null);
+    public BLSpanQuery toQuery(BlackLabIndex index, String field) throws InvalidQuery {
+        return toQuery(index, field, null);
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
-        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo.field(), queryInfo));
+    public BLSpanQuery toQuery(BlackLabIndex index, String field, Query filter) throws InvalidQuery {
+        EvalResult result = evaluate(index.textPatternContext(field));
         if (result == null)
             throw new IllegalStateException("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
             if (filter != null) {
                 // Can the filter yield fragments or only regular (full) documents?
-                if (queryInfo.index().isFragmentQuery(filter)) {
+                if (index.isFragmentQuery(filter)) {
                     // Adapt the filter query to a spanquery and use within to find hits within documents/fragments
-                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(queryInfo, filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
+                    SpanQueryFromFragments filterSpanQuery = new SpanQueryFromFragments(
+                            new BLSpanQuery.Context(index.forQuery(), field), filter, null, SpanQueryFromFragments.Behaviour.PREFER_FULL_DOCS);
                     spanQuery = new SpanQueryPositionFilter(spanQuery, filterSpanQuery, SpanFilter.WITHIN, false);
                 } else {
                     // Not a fragment query; use regular SpanQueryFiltered

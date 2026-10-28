@@ -128,14 +128,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
 
-    /** (IGNORE; for compatiblity with old pre-release metadata, to remove eventually) */
-    @XmlTransient
-    private Map<String, Map<String, Long>> relations;
-
-    /** (IGNORE; for compatiblity with old pre-release metadata, to remove eventually) */
-    @XmlTransient
-    private boolean relationsInitialized;
-
     /** The available relation classes, types and their frequencies, plus attribute info. */
     @XmlTransient
     private RelationsStats cachedRelationsStats;
@@ -226,10 +218,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
-
-        // These are no longer used, but we need to keep them around for deserialization of some pre-release indexes
-        this.relations = null;
-        this.relationsInitialized = false;
     }
 
     /**
@@ -248,7 +236,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         }
         if (results == null || results.getLimitValues() < limitValues) {
             // We either don't have cached relationsStats, or the limitValues value is too low.
-            results = new RelationsStats(index.getRelationsStrategy(), limitValues);
+            results = new RelationsStats(RelationsStrategySeparateTerms.INSTANCE, limitValues);
 
             // Look up the correct field for the _relation annotation (depending on whether it
             // was indexed sensitively or insensitively)
@@ -265,7 +253,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
             LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                     null, results::addIndexedTerm);
-            if (results.isEmpty() && index.getRelationsStrategy() instanceof RelationsStrategySeparateTerms) {
+            if (results.isEmpty()) {
                 // older dev index without relation info terms, use older version of method
                 LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                         null, results::addIndexedTerm_OLD);
@@ -293,4 +281,20 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         return getClass().getName().compareTo(field.getClass().getName());
     }
 
+    @Override
+    public boolean equals(Object o) {
+        // FieldImpl.equals() check index and field name and that the classes are the same, which is enough.
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        // FieldImpl.hashCode() uses index, field name and class name, which is enough.
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "AnnotatedField:" + name();
+    }
 }

@@ -73,7 +73,10 @@ As you can see, this can help reduce duplication, keeping your XPath expressions
 
 ## Tokenize or not?
 
-By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it. One example of this is a field containing the document id: if your document ids contain characters that normally would indicate a token boundary, like a period (.) , your document id would be split into several tokens, which is usually not what you want.
+By default, metadata fields are tokenized, but it can sometimes be useful to index a metadata field without tokenizing it.
+One example of this is a field containing a code such as `ABC.123`: if these contain characters that normally would 
+indicate a token boundary, like a period (.) , the code would be split into several tokens, which is usually 
+not what you want.
 
 To prevent a metadata field from being tokenized:
 
@@ -85,10 +88,12 @@ metadata:
   fields:
 
     # This field should not be split into words
-  - name: docId
-    valuePath: @docId
+  - name: code
+    valuePath: @code
     type: untokenized
 ```
+
+The persistent identifier field (marked with `role: pid`) will automatically be set to untokenized.
 
 ## Numeric fields
 
@@ -324,6 +329,25 @@ metadata:
     value: blacklab-docs
 ```
 
+## Persistent document identifiers (PIDs)
+
+To ensure document ids in URLs and responses don't change when you re-index, you should designate one of your metadata
+fields as the persistent identifier (PID). This should be unique among documents. E.g. it might be a unique number or code that
+can be used to refer to the document.
+
+Tag this metadata field with `role: pid` so BlackLab knows to use it as the persistent identifier.
+
+```yaml
+metadata:
+
+- containerPath: metadata
+
+  fields:   
+  - name: id
+    valuePath: @id
+    role: pid
+```
+
 ## Corpus metadata
 
 Each BlackLab corpus has its own metadata, recording information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields.
@@ -344,7 +368,6 @@ The best way to influence the corpus metadata is by including a special section 
 
       # Metadata fields with a special meaning
       specialFields:
-        pidField: id           # unique persistent identifier, used for document lookups, etc.
         titleField: title      # used to display document title in interface
         authorField: author    # used to display author in interface
         dateField: date        # used to display document date in interface
@@ -399,7 +422,92 @@ Note that if your metadata filter matches two adjacent fragments, you will also 
 
 <h3>Example</h3>
 
-The input XML for a document with fragments might for example look like this:
+Let's look at how to configure indexing fragments.
+
+Below are two examples of a different style of defining fragments: using inline tags, and using standoff annotations.
+
+::: tabs
+=== Inline
+An example of using inline tags to define fragments. The `<metadata/>` elements are used to mark fragments of the document. The `id`, `year`, and `author` attributes are metadata for that fragment.
+
+The input document:
+```xml
+<?xml version="1.0" ?>
+<doc>
+    <metadata title="Test title" id="doc-01" author="Katrien" />
+    <text>
+        <metadata id="doc-01-frag-01" year="2025">
+            <s>
+                <w>This</w>
+                <w>is</w>
+                <w>a</w>
+                <w>fragment</w>.
+            </s>
+        </metadata>
+        <metadata id="doc-01-frag-02" year="2026" author="Jesse">
+            <s>
+                <w>Here's</w>
+                <w>another</w>
+                <w>one</w>.
+            </s>
+        </metadata>
+        <s>
+            <w>One</w>
+            <w>more</w>!
+        </s>
+    </text>
+</doc>
+```
+
+To index this input document, use `type: fragment` for the `inlineTags` entry:
+
+```yaml
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /doc
+
+# Annotated, CQL-searchable fields.
+# We usually have just one, named "contents".
+annotatedFields:
+    contents:
+        containerPath: text # containerPath for the contents field (relative to documentPath)
+        wordPath: .//w
+        annotations:
+            - name: word
+              valuePath: .
+
+        inlineTags:
+            - path: .//s
+            - path: .//metadata
+              type: fragment
+              # (optional) path to the actual metadata container (relative to the element matched by 'path')
+              #metadataContainerPath: .
+
+# How to index metadata for documents and fragments
+metadata:
+
+    # (this is the document-level metadata container, relative to documentPath.
+    #  this is ignored for fragments: the fragment is its own metadata container)
+    containerPath: metadata
+
+    fields:
+        - name: id
+          valuePath: "@id"
+          role: pid
+          # "fragments: separate" indicates that id should NOT inherit to fragment;
+          # (this is already implied by "role: pid", so specifying it here is superfluous)
+          fragments: separate
+        - name: title
+          valuePath: "@title"
+        - name: author
+          valuePath: "@author"
+        - name: year
+          valuePath: "@year"
+```
+=== Standoff
+An example of using standoff annotations to define fragments. The `<metadata/>` elements are used to mark fragments of the document. The `from` and `to` attributes indicate the start and end of the fragment (referring to `<milestone/>` tags), and the `id`, `year`, and `author` attributes are metadata for that fragment.
+
+The input document:
 
 ```xml
 <?xml version="1.0" ?>
@@ -431,15 +539,7 @@ The input XML for a document with fragments might for example look like this:
 </doc>
 ```
 
-As you can see, the `<metadata/>` elements are used to mark fragments of the document. The `from` and `to` attributes indicate the start and end of the fragment (referring to `<milestone/>` tags), and the `id`, `year`, and `author` attributes are metadata for that fragment.
-
-::: details Missing fragment?
-
-Notice that two fragments are defined, from `A` to `B` and from `B` to `C`. But from milestone `C` to `D` there is no fragment defined. In this case, BlackLab will automatically create a fragment for that part of the text, and it will inherit the document metadata.
-
-:::
-
-To index the fragments in the XML above, you need to use the `standoffAnnotations` section in your format configuration file:
+To index this data, you need to use the `standoffAnnotations` section in your format configuration file, referring to the `id`s of the `<milestone>` elements:
 
 ```yaml
 # What element starts a new document?
@@ -469,6 +569,8 @@ annotatedFields:
       spanStartPath: "@from"
       spanEndPath: "@to"
       spanEndIsInclusive: false
+      # (optional) path to the actual metadata container (relative to the element matched by 'path')
+      #metadataContainerPath: .
 
 # How to index metadata for documents and fragments
 metadata:
@@ -480,8 +582,7 @@ metadata:
   fields:
   - name: id
     valuePath: "@id"
-    type: untokenized
-    fragments: separate   # documents and fragments each have their own unique id; index separately
+    role: pid
   - name: title
     valuePath: "@title"
   - name: author
@@ -489,16 +590,23 @@ metadata:
   - name: year
     valuePath: "@year"
 ```
+:::
+
+::: details Missing fragment?
+
+Notice that in the examples above, two fragments are defined, from `A` to `B` and from `B` to `C`. But from milestone `C` to `D` there is no fragment defined. In this case, BlackLab will automatically create a fragment for that part of the text, and it will inherit the document metadata.
+
+:::
 
 <h3>Metadata field behavior</h3>
 
 A metadata field is normally inherited from the document level in each fragment, unless the fragment overrides its value, of course. However, you can change this for a metadata field using the `fragments` setting. The possible values are:
 
 - `default` (or omit the setting): fields that occur at the fragment level will ONLY be indexed in fragments. If the field also occurs at the document level in the input file (such as `author` in the example above), it will NOT be indexed at the document level, but instead the value specified there will inherit to any fragment that doesn't define its own `author`. In other words: in the example doc, each fragment without an `author` will index `Katrien` as its author. Searching for an author will only find fragment(s), never the full document.
-- `separate`: with this behavior, document level and fragment level don't affect each other at all. The field will simply be indexed where it occurs in the input file. In the example, values for `id` are indexed at both the document level and at the fragment level, with each fragment having a unique id. The (automatically created) fragment from milestone `C` to `D` will not get the field `id` at all.
+- `separate`: with this behavior, document level and fragment level don't affect each other at all. The field will simply be indexed where it occurs in the input file. The field tagged with `role: pid` (`id` in the example) will automatically get this `fragments` setting. In the example, values for `id` are indexed at both the document level and at the fragment level, with each fragment having a unique id. The (automatically created) fragment from milestone `C` to `D` will not get the field `id` at all.
 - `docvalue`: fields with this behavior will index at the document level and index the exact same value at the fragment level, ignoring the possibility of overriding it with a different value. Slightly speeds up indexing because we have fewer field rules to apply for each fragment.
 
-Mostly, you should only specify `fragments: separate` for a few fields (such as `id`) and leave the rest at the default behavior.
+Mostly, you should not need the `fragments` setting and leave it at the default behaviour.
 
 <h3>Fragment metadata rules</h3>
 
@@ -506,14 +614,15 @@ Generally, it's best if documents and fragments have the same metadata structure
 
 For example, if the `author` field is stored in a different attribute at the fragment level (e.g. not `author` but `frag-author`), you could specify that as shown below.
 
+::: tabs
+=== Inline
 ```yaml
     # Define the fragments and their metadata
-    standoffAnnotations:
-      - path: metadata  # (relative to containerPath, the text element in our case)
+    inlineTags:
+      - path: .//metadata
         type: fragment
-        spanStartPath: "@from"
-        spanEndPath: "@to"
-        spanEndIsInclusive: false
+        # (optional) path to the actual metadata container (relative to the element matched by 'path')
+        #metadataContainerPath: .
 
         # This section is entirely optional.
         # You may define additional metadata rules for fragments here if needed.
@@ -525,23 +634,26 @@ For example, if the `author` field is stored in a different attribute at the fra
               - name: author
                 valuePath: "@frag-author"
 ```
-
-<h3>Inline tags as fragments?</h3>
-
-It is currently NOT possible to define fragments using inlineTags, so for example this XML:
-
-```xml
-<block author="Koen"><!-- not yet possible to index fragments this way -->
-    <s><w>Some</w> <w>text</w></s>
-</block>
-```
-
-could NOT be indexed using:
-
+=== Standoff
 ```yaml
-inlineTags:
-- path: block
-  type: fragment
-```
+    # Define the fragments and their metadata
+    standoffAnnotations:
+      - path: metadata  # (relative to containerPath, the text element in our case)
+        type: fragment
+        spanStartPath: "@from"
+        spanEndPath: "@to"
+        spanEndIsInclusive: false
+        # (optional) path to the actual metadata container (relative to the element matched by 'path')
+        #metadataContainerPath: .
 
-We might add something like this if there is a need for it.
+        # This section is entirely optional.
+        # You may define additional metadata rules for fragments here if needed.
+        # The document level rules are always applied, unless you set applyDocRules: false.
+        metadata:
+          - applyDocRules: true # (default value, can be omitted)
+            containerPath: .    # (default value, can be omitted)
+            fields:
+              - name: author
+                valuePath: "@frag-author"
+```
+:::

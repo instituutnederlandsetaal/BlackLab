@@ -70,8 +70,6 @@ corpusConfig:
   displayName: test
 
   specialFields:
-    # persistent id field to use to retrieve documents
-    pidField: pid
     # document title field (not used by blacklab, but clients can use this)
     titleField: title
 
@@ -96,15 +94,11 @@ corpusConfig:
           - pos
         addRemainingAnnotations: true
 
-
-# FoLiA's native metadata
 metadata:
   containerPath: .
   fields:
   - name: pid
     valuePath: "@xml:id"
+    role: pid # persistent id field to use to retrieve documents
   - name: title
     valuePath: teiHeader/fileDesc/titleStmt/title
-  #- forEachPath: bibl/interpGrp/interp
-  #  namePath: ../@type                  # interpGrp/@type
-  #  valuePath: .                        # interp (text value of element, TEI P5)

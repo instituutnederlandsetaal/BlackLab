@@ -22,15 +22,14 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /** Wraps a SpanTermQuery to make it a BLSpanQuery. */
 public class BLSpanTermQuery extends BLSpanQuery {
 
     public static final int FIXED_FORWARD_MATCHING_COST = 200;
 
-    public static BLSpanTermQuery from(QueryInfo queryInfo, SpanTermQuery q) {
-        return new BLSpanTermQuery(queryInfo, q);
+    public static BLSpanTermQuery from(Context context, SpanTermQuery q) {
+        return new BLSpanTermQuery(context, q);
     }
 
     public static SpanGuarantees createGuarantees() {
@@ -50,15 +49,15 @@ public class BLSpanTermQuery extends BLSpanQuery {
      *
      * @param term term to search
      */
-    public BLSpanTermQuery(QueryInfo queryInfo, Term term) {
-        super(queryInfo);
+    public BLSpanTermQuery(Context context, Term term) {
+        super(context);
         query = new SpanTermQuery(term);
         termStates = null;
         this.guarantees = createGuarantees();
     }
 
-    BLSpanTermQuery(QueryInfo queryInfo, SpanTermQuery termQuery) {
-        this(queryInfo, termQuery.getTerm());
+    BLSpanTermQuery(Context context, SpanTermQuery termQuery) {
+        this(context, termQuery.getTerm());
     }
 
     /**
@@ -68,8 +67,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
      * @param term term to search
      * @param termStates TermStates to use to search the term
      */
-    public BLSpanTermQuery(Term term, TermStates termStates, QueryInfo queryInfo) {
-        super(queryInfo);
+    public BLSpanTermQuery(Term term, TermStates termStates, Context context) {
+        super(context);
         query = new SpanTermQuery(term, termStates);
         this.termStates = termStates;
     }
@@ -165,8 +164,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
             // Does our annotation have a forward index?
             String[] comp = AnnotatedFieldNameUtil.getNameComponents(query.getTerm().field());
             String fieldName = comp[0];
+            assert comp.length > 1;
             String annotationName = comp[1];
-            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(annotationName).hasForwardIndex();
+            hasForwardIndex = context.indexForQuery().hasForwardIndex(fieldName, annotationName);
             hasForwardIndexDetermined = true;
         }
         return hasForwardIndex;

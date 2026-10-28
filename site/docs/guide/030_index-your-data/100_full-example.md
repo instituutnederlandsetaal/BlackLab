@@ -167,7 +167,10 @@ metadata:
   # How each of the metadata fields can be found (relative to containerPath)
   fields:
 
-    # Single metadata field
+  # Two regular metadata fields, defined one at a time
+  - name: id
+    valuePath: "@docid"   # (relative to containerPath)
+    role: pid # field contains our persistent document identifiers (optional but highly recommended for reproducible indexing)
   - name: author
     valuePath: author    # (relative to containerPath)
 
@@ -234,15 +237,10 @@ corpusConfig:
       addRemainingFields: true  # BLS will add any field not yet in 
                                 # any group to this group   
     
-    # (optional, but pidField is highly recommended)
+    # (optional)
     # You can specify metadata fields that have special significance here.
-    # pidField is important for use with BLS because it guarantees that URLs
-    # won't change even if you re-index. The other fields can be nice for
-    # displaying document information but are not essential.
-    # (BTW, make sure pidField is configured with "type: untokenized" to 
-    # prevent issues with e.g. PIDs containing spaces)
+    # Can be nice for displaying document information but are not essential.
     specialFields:
-      pidField: id         # unique document identifier. Used by BLS for persistent URLs
       titleField: title    # may be used by user interface to display document info
       authorField: author  # may be used by user interface to display document info
       dateField: pubDate   # may be used by user interface to display document info

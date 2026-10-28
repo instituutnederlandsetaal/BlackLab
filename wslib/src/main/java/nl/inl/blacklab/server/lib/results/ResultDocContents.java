@@ -135,7 +135,7 @@ public class ResultDocContents {
         Hits hitsInDoc;
         AnnotatedField fieldToShow = request.field();
         if (hitResults == null) {
-            hitsInDoc = Hits.empty(new Hits.HitsContext(fieldToShow));
+            hitsInDoc = Hits.empty(new Hits.Context(index, fieldToShow.name()));
         } else {
             hitsInDoc = hitResults.getHits().filteredByDocId(docId);
         }
@@ -148,6 +148,13 @@ public class ResultDocContents {
         } else {
             // Part of the document by token positions.
             content = DocUtil.highlightContent(index, docId, hitsInDoc, startAtWord, endAtWord);
+        }
+
+        if (content == null) {
+            // This can happen in a parallel corpus if the requested document version doesn't exist.
+            // In that case, we just return an empty string.
+            content = "";
+            return;
         }
 
         // Make sure we have exactly one XML declaration

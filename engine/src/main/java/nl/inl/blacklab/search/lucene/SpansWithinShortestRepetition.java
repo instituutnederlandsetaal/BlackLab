@@ -344,9 +344,9 @@ class SpansWithinShortestRepetition extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        producer.setHitQueryContext(context);
-        filterUnit.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        producer.setSpansContext(context);
+        filterUnit.setSpansContext(context);
         captureRelsIndex = context.registerMatchInfo(captureRelsAs, MatchInfo.Type.LIST_OF_RELATIONS);
     }
 

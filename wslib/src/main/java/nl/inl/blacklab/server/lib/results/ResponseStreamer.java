@@ -15,6 +15,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.InputFormatInfo;
@@ -54,7 +56,6 @@ import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
@@ -71,6 +72,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -81,6 +83,7 @@ import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.webservice.WsParam;
+import nl.inl.util.Json;
 
 /**
  * For serializing BlackLab response objects.
@@ -267,6 +270,7 @@ public class ResponseStreamer {
                 ds.entry("id", null);
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
             ds.entry("debugMode", debugMode);
+            ds.entry("clientIp", userInfo.getClientIp());
         }
         ds.endMap().endEntry();
     }
@@ -335,22 +339,25 @@ public class ResponseStreamer {
     }
 
     private void documentFragmentMetadata(ResultDocInfo docInfo) {
-        List<ResultDocInfo.Fragment> fragments = docInfo.getFragments();
+        Map<String, List<ResultDocInfo.Fragment>> fragments = docInfo.getFragments();
         if (isNewApi && !fragments.isEmpty()) {
-            ds.startEntry("fragments").startList();
-            for (ResultDocInfo.Fragment fragment: fragments) {
-                ds.startItem("fragment").startMap();
-                {
-                    ds.entry(KEY_ANNOTATED_FIELD, fragment.getField());
-                    ds.entry(KEY_SPAN_START, fragment.getStart());
-                    ds.entry(KEY_SPAN_END, fragment.getEnd());
-                    ds.startEntry("metadata").startMap();
-                    metadataEntries(fragment.getMetadata(), docInfo.getMetadata());
-                    ds.endMap().endEntry();
+            ds.startEntry("fragments").startMap();
+            for (Map.Entry<String, List<ResultDocInfo.Fragment>> entry: fragments.entrySet()) {
+                ds.startDynEntry(entry.getKey()).startList();
+                for (ResultDocInfo.Fragment fragment: entry.getValue()) {
+                    ds.startItem("fragment").startMap();
+                    {
+                        ds.entry(KEY_SPAN_START, fragment.getStart());
+                        ds.entry(KEY_SPAN_END, fragment.getEnd());
+                        ds.startEntry("metadata").startMap();
+                        metadataEntries(fragment.getMetadata(), docInfo.getMetadata());
+                        ds.endMap().endEntry();
+                    }
+                    ds.endMap().endItem();
                 }
-                ds.endMap().endItem();
+                ds.endList().endDynEntry();
             }
-            ds.endList().endEntry();
+            ds.endMap().endEntry();
         }
     }
 
@@ -439,12 +446,12 @@ public class ResponseStreamer {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            AnnotatedField searchField = summaryFields.getSearchField();
-            ds.entry(KEY_FIELD_NAME, searchField.name());
+            String searchField = summaryFields.getSearchField();
+            ds.entry(KEY_FIELD_NAME, searchField);
             if (!summaryFields.getOtherFields().isEmpty()) {
                 ds.startEntry(KEY_OTHER_FIELDS).startList();
-                for (AnnotatedField field: summaryFields.getOtherFields()) {
-                    ds.item(KEY_FIELD_NAME, field.name());
+                for (String field: summaryFields.getOtherFields()) {
+                    ds.item(KEY_FIELD_NAME, field);
                 }
                 ds.endList().endEntry();
             }
@@ -461,10 +468,10 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (def.getField() != searchField)
-                            ds.entry(KEY_FIELD_NAME, def.getField().name());
-                        if (def.getTargetField() != null && def.getTargetField() != searchField)
-                            ds.entry(KEY_TARGET_FIELD, def.getTargetField().name());
+                        if (!def.getField().equals(searchField))
+                            ds.entry(KEY_FIELD_NAME, def.getField());
+                        if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField());
                     }
                     ds.endMap().endDynEntry();
                 }
@@ -706,7 +713,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid);
                 }
 
-                hit(docPid, hit, hitResults.field(), matchInfos, result.getContextSettings().size(),
+                hit(docPid, hit, hitResults.field().name(), matchInfos, result.getContextSettings().size(),
                         result.getConcordanceContext(),
                         result.getAnnotationsToList());
             }
@@ -715,7 +722,7 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, EphemeralHit hit, String searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
@@ -746,12 +753,11 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        AnnotatedField searchField = hitsList.field();
-        outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
+        outputHitOrSnippet(docPid, hit, hitsList.field().name(), matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, EphemeralHit hit, String searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -818,13 +824,13 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, List.of()).endEntry();
                 }
             }
-            Map<AnnotatedField, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+            Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
             if (foreignKwics != null) {
                 ds.startEntry(KEY_OTHER_FIELDS).startMap();
-                for (Map.Entry<AnnotatedField, Kwic> e: foreignKwics.entrySet()) {
-                    AnnotatedField field = e.getKey();
+                for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                    String field = e.getKey();
                     Kwic kwic = e.getValue();
-                    ds.startDynEntry(field.name()).startMap();
+                    ds.startDynEntry(field).startMap();
                     {
                         ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
                         ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
@@ -1211,7 +1217,9 @@ public class ResponseStreamer {
             }
 
             // Optionally include explanation of how the query was executed
-            optExplain(reqHits);
+            if (reqHits.explain()) {
+                explain(ds, reqHits.searchField(), reqHits.pattern());
+            }
         }
         ds.endMap().endEntry();
 
@@ -1232,20 +1240,17 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private void optExplain(RequestHits reqHits) {
-        BlackLabIndex index = reqHits.index();
-        if (reqHits.explain()) {
-            TextPattern tp = reqHits.pattern();
-            try {
-                BLSpanQuery q = tp.toQuery(QueryInfo.create(index, reqHits.searchField()));
-                QueryExplanation explanation = index.explain(q);
-                ds.startEntry("explanation").startMap()
-                        .entry("originalQuery", explanation.originalQuery())
-                        .entry("rewrittenQuery", explanation.rewrittenQuery())
-                        .endMap().endEntry();
-            } catch (InvalidQuery e) {
-                throw new BadRequest("INVALID_QUERY", e.getMessage());
-            }
+    public static void explain(DataStream ds, AnnotatedField searchField, TextPattern tp) {
+        BlackLabIndex index = searchField.index();
+        try {
+            BLSpanQuery q = tp.toQuery(index, searchField.name());
+            QueryExplanation explanation = index.explain(q);
+            ds.startEntry("explanation").startMap()
+                    .entry("originalQuery", explanation.originalQuery())
+                    .entry("rewrittenQuery", explanation.rewrittenQuery())
+                    .endMap().endEntry();
+        } catch (InvalidQuery e) {
+            throw new BadRequest("INVALID_QUERY", e.getMessage());
         }
     }
 
@@ -1267,7 +1272,9 @@ public class ResponseStreamer {
                 }
 
                 // Optionally include explanation of how the query was executed
-                optExplain(hitsGrouped.getReqGroup().requestHits());
+                RequestHits reqHits = hitsGrouped.getReqGroup().requestHits();
+                if (reqHits.explain())
+                    explain(ds, reqHits.searchField(), reqHits.pattern());
             }
             ds.endMap().endEntry();
 
@@ -1459,7 +1466,7 @@ public class ResponseStreamer {
         ds.endMap().endItem();
     }
 
-    public void serverInfo(ResultServerInfo result) {
+    public void serverInfo(ResultServerInfo result, BLSConfig config) {
         ds.startMap();
         {
             ds.entry("apiVersion", apiVersion.toString());
@@ -1486,6 +1493,9 @@ public class ResponseStreamer {
             userInfo(result.getUserInfo(), result.isDebugMode());
             if (isNewApi)
                 plugins(result.getPlugins());
+            ds.startEntry("config");
+            config(config, result.isDebugMode());
+            ds.endEntry();
         }
         ds.endMap();
     }
@@ -1959,6 +1969,21 @@ public class ResponseStreamer {
         ds.value(blackLabCache.getContents(includeDebugInfo));
         ds.endEntry()
                 .endMap();
+    }
+
+    public void config(BLSConfig config, boolean debugMode) {
+        Map<String, Object> configMap = Json.getJsonObjectMapper().convertValue(config, new TypeReference<>() {});
+        if (!debugMode) {
+            // Remove sensitive settings: various paths and debug and authentication settings
+            configMap.remove("indexLocations");
+            configMap.remove("userIndexes");
+            if (configMap.containsKey("indexing") && configMap.get("indexing") instanceof Map<?,?> indexing) {
+                indexing.remove("downloadCacheDir");
+            }
+            configMap.remove("debug");
+            configMap.remove("authentication");
+        }
+        ds.value(configMap);
     }
 
     public void formatXsltResponse(ResultInputFormat result) {

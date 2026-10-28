@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+
 /**
  * Settings that will be used to write the indexmetadata file for any corpus we
  * create from this format.
@@ -63,24 +65,6 @@ public class ConfigCorpus {
         annotationGroups.put(name, groups);
     }
 
-    public ConfigCorpus copy() {
-        ConfigCorpus result = new ConfigCorpus();
-        result.contentViewable = contentViewable;
-        result.textDirection = textDirection;
-        result.specialFields.putAll(specialFields);
-        for (ConfigMetadataFieldGroup g : getMetadataFieldGroups()) {
-            result.addMetadataFieldGroup(g.copy());
-        }
-        for (Map.Entry<String, List<ConfigAnnotationGroup>> entry: getAnnotationGroups().entrySet()) {
-            List<ConfigAnnotationGroup> groups = new ArrayList<>();
-            for (ConfigAnnotationGroup group: entry.getValue()) {
-                groups.add(group.copy());
-            }
-            result.addAnnotationGroups(entry.getKey(), groups);
-        }
-        return result;
-    }
-
     public Map<String, String> getSpecialFields() {
         return Collections.unmodifiableMap(specialFields);
     }
@@ -122,4 +106,12 @@ public class ConfigCorpus {
         return "ConfigCorpus [displayName=" + displayName + "]";
     }
 
+    public void validate(InputFormatMessages messages) {
+        String f = specialFields.get(MetadataFields.SPECIAL_FIELD_SETTING_PID);
+        if (f != null) {
+            if (f.isEmpty())
+                messages.error("pidField cannot be empty");
+            messages.foundPidField(f); // ensure no more than one pid field is defined
+        }
+    }
 }

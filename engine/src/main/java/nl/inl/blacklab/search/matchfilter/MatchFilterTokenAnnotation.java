@@ -2,23 +2,27 @@ package nl.inl.blacklab.search.matchfilter;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 public class MatchFilterTokenAnnotation extends MatchFilter {
+
+    private final String field;
+
+    private final String annotationName;
+
+    private final String forwardIndexLuceneField;
+
     private final String groupName;
 
     private int groupIndex;
 
-    private final String annotationName;
-
     private int annotationIndex = -1;
 
-    private AnnotatedField field;
-
-    public MatchFilterTokenAnnotation(String groupName, String annotationName) {
+    public MatchFilterTokenAnnotation(String forwardIndexLuceneField, String field, String groupName, String annotationName) {
+        this.forwardIndexLuceneField = forwardIndexLuceneField;
+        this.field = field;
         this.groupName = groupName;
         if (annotationName == null)
             throw new IllegalArgumentException("annotationName cannot be null");
@@ -59,7 +63,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         groupIndex = context.registerMatchInfo(groupName, null);
     }
 
@@ -86,16 +90,8 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         return this;
     }
 
-    @Override
-    public MatchFilter withField(AnnotatedField field) {
-        this.field = field;
-        return super.withField(field);
-    }
-
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
-                groupName, annotationName, str, sensitivity);
-        return mf.withField(field);
+        return new MatchFilterTokenAnnotationEqualsString(groupName, annotationName, str, sensitivity, forwardIndexLuceneField);
     }
 
     public MatchFilter matchOtherTokenSameAnnotation(String otherGroupName, MatchSensitivity sensitivity) {

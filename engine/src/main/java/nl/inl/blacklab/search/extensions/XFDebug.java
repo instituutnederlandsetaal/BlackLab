@@ -35,7 +35,7 @@ public class XFDebug implements ExtensionFunctionClass {
                         PInteger.any("before"),
                         PInteger.any("after")),
                 Arrays.asList(null, 0, 0),
-                (queryInfo, context, args) -> {
+                (context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     int startAdjust = (Integer) args.get(1);
                     int endAdjust = (Integer) args.get(2);
@@ -48,7 +48,7 @@ public class XFDebug implements ExtensionFunctionClass {
                 PQuery.required("query"),
                 PString.matching("whichEdge", "l(eading)?|b(efore)?|t(railing)?|a(after)?")
                 ), Arrays.asList(null, "leading"),
-                (queryInfo, context, args) -> {
+                (context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     String whichEdge = ((String) args.get(1)).toLowerCase();
                     boolean trailingEdge = whichEdge.matches("t(railing)?|a(fter)?|r");
@@ -62,21 +62,20 @@ public class XFDebug implements ExtensionFunctionClass {
                     PQuery.required("second"),
                     PInteger.range("fiClause", 0, 1)),
                     Arrays.asList(null, null, 0),
-                (queryInfo, context, args) -> {
+                (context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
                     int fiIndex = (Integer) args.get(2);
                     if (fiIndex != 1)
                         fiIndex = 0;
+                    ForwardIndexAccessor fiAccessor = context.indexForQuery().forwardIndexAccessor(a.getAnnotatedFieldName());
                     if (fiIndex == 0) {
                         // Resolve the first query using the forward index and the second using the inverted index
-                        ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
                         NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_BACKWARD);
                         return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_BACKWARD,
                                 fiAccessor);
                     } else {
                         // Resolve the second query using the forward index and the first using the inverted index
-                        ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
                         NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_FORWARD);
                         return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b,
                                 SpanQueryFiSeq.DIR_FORWARD,
@@ -87,7 +86,7 @@ public class XFDebug implements ExtensionFunctionClass {
         // Return the argument unchanged
         QueryExtensions.register("_ident", "Return the argument unchanged",
                 List.of(PQuery.required("query")), List.of(),
-                (queryInfo, context, args) -> (BLSpanQuery) args.get(0));
+                (context, args) -> (BLSpanQuery) args.get(0));
 
         // Search within a single docId, e.g. _indoc("water", "3") to find "water" in docId 3 only
         QueryExtensions.register("_indoc", "Search within a single Lucene doc id",
@@ -96,7 +95,7 @@ public class XFDebug implements ExtensionFunctionClass {
             PInteger.nonnegative("docId", true)
             ),
             List.of(),
-            (queryInfo, context, args) -> {
+            (context, args) -> {
                 BLSpanQuery query = (BLSpanQuery) args.get(0);
                 int docId = (Integer) args.get(1);
                 return new SpanQueryFiltered(query, new SingleDocIdFilter(docId));
@@ -110,7 +109,7 @@ public class XFDebug implements ExtensionFunctionClass {
                 PInteger.nonnegative("minLength", true),
                 PInteger.nonnegative("maxLength", true)),
                 Arrays.asList(null, 0, 0),
-                (queryInfo, context, args) -> {
+                (context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     int minLength = (Integer) args.get(1);
                     int maxLength = (Integer) args.get(2);
@@ -127,7 +126,7 @@ public class XFDebug implements ExtensionFunctionClass {
                 PEnum.of("operation", SpanFilter.class, true),
                 PBoolean.required("inverted")),
                 Arrays.asList(null, null, "matches", false),
-                (queryInfo, context, args) -> {
+                (context, args) -> {
                     BLSpanQuery producer = (BLSpanQuery) args.get(0);
                     BLSpanQuery filter = (BLSpanQuery) args.get(1);
                     SpanFilter operation = SpanFilter.fromStringValue((String) args.get(2));

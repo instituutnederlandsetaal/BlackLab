@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.Query;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,14 +23,11 @@ import nl.inl.util.Json;
  */
 public class QueryParamsMap implements QueryParams {
 
-    protected final String corpusName;
+    protected final CorpusRefByName corpusRef;
 
     private final Map<WsParam, String> params = new EnumMap<>(WsParam.class);
 
     private final Map<WsParam, Object> typedParams = new EnumMap<>(WsParam.class);
-
-    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
-    private final Query fallbackFilterQuery;
 
     /** Config, for determining some default values */
     private final BLSConfig config;
@@ -39,11 +35,10 @@ public class QueryParamsMap implements QueryParams {
     /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
     boolean debugMode;
 
-    public QueryParamsMap(String corpusName, Map<WsParam, String> params,
-            Map<WsParam, Object> typedParams, Query fallbackFilterQuery,
+    public QueryParamsMap(CorpusRefByName corpusRef, Map<WsParam, String> params,
+            Map<WsParam, Object> typedParams,
             BLSConfig config, boolean debugMode) {
-        this.corpusName = corpusName;
-        this.fallbackFilterQuery = fallbackFilterQuery;
+        this.corpusRef = corpusRef;
         this.config = config;
         this.debugMode = debugMode;
         if (typedParams == null) {
@@ -67,11 +62,6 @@ public class QueryParamsMap implements QueryParams {
     @Override
     public Map<WsParam, Object> getTypedParameters() {
         return Collections.unmodifiableMap(typedParams);
-    }
-
-    @Override
-    public Query getFallbackFilterQuery() {
-        return fallbackFilterQuery;
     }
 
     /** Get config, for determining some default values */
@@ -274,7 +264,12 @@ public class QueryParamsMap implements QueryParams {
     }
 
     @Override
-    public String getCorpusName() { return corpusName; }
+    public String getCorpusName() { return corpusRef.name(); }
+
+    @Override
+    public CorpusRefByName getCorpusRef() {
+        return corpusRef;
+    }
 
     /** A way to convert from string to some type */
     @FunctionalInterface

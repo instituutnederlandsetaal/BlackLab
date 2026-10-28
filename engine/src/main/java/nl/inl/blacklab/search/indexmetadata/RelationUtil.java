@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
+import nl.inl.util.StringUtil;
 
 public class RelationUtil {
 
@@ -21,7 +22,7 @@ public class RelationUtil {
     public static final String CLASS_ALIGNMENT = "al";
 
     /** Default relation type: any */
-    public static final String ANY_TYPE_REGEX = ".+";
+    public static final String ANY_TYPE_REGEX = StringUtil.REGEX_ANY_NON_EMPTY_VALUE;
 
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
@@ -124,9 +125,9 @@ public class RelationUtil {
     }
 
     /** If the relationtype regex doesn't specify a relation class yet, prepend the default class to it. */
-    public static String optPrependDefaultClass(String relationTypeRegex, QueryExecutionContext context) {
+    public static String optPrependDefaultClass(String relationTypeRegex, TextPatternContext context) {
         if (!relationTypeRegex.contains(CLASS_TYPE_SEPARATOR)) {
-            String defaultClass = context.resolveDefaultRelationClass();
+            String defaultClass = context.defaultRelationClass();
             relationTypeRegex = fullTypeRegex(defaultClass, optParRegex(relationTypeRegex));
         }
         return relationTypeRegex;

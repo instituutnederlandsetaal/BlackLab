@@ -19,7 +19,7 @@ public enum BlsPath {
     STATUS("status"),
     TERMFREQ("termfreq");
 
-    private String path;
+    private final String path;
 
     BlsPath(String path) {
         this.path = path;

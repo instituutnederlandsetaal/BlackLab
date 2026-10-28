@@ -22,14 +22,6 @@
         <module>core</module>
         <module>server</module>
 
-        <!-- Optional instrumentation modules -->
-        <module>instrumentation/instrumentation</module>
-        <module>instrumentation/instrumentation-impl</module>
-
-        <!-- Solr integration (experimental)
-        DISABLED FOR LUCENE 10 / SOLR 10, see
-        <module>solr</module> -->
-
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
     </modules>
@@ -43,7 +35,6 @@
         <!-- Library versions -->
         <servlet.version>6.0.0</servlet.version>
         <blacklab.luceneVersion>10.4.0</blacklab.luceneVersion>
-        <solr.version>10.0.0</solr.version>
         <log4j.version>2.25.4</log4j.version>
         <eclipse.collections.version>12.0.0.M3</eclipse.collections.version>
 

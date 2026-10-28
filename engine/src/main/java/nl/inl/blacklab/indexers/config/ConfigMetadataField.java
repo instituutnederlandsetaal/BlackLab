@@ -6,17 +6,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jspecify.annotations.NonNull;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.XPathUtil;
 
@@ -99,6 +96,10 @@ public class ConfigMetadataField {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String analyzer = "";
 
+    /** Special role for this field, if any (REGULAR|PID) */
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private MetadataField.Role role = MetadataField.Role.REGULAR;
+
     /** What UI element to show in the interface (optional) */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String uiType = "";
@@ -110,48 +111,6 @@ public class ConfigMetadataField {
     /** Order in which to display the values (optional) */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<String> displayOrder = new ArrayList<>();
-
-    /** Different behaviours with respect to fragments for indexing metadata fields */
-    public enum FragmentBehaviour {
-        DEFAULT,   // if the field is present in at least one fragment, index it only at fragment level;
-                   // otherwise, index it only at document level
-        SEPARATE,  // index at document level and fragment level separately (e.g. pid field)
-        DOC_VALUE; // fragments will simply index the value from the document-level, not their own specific value for
-                   // this field (i.e. no need to apply this metadata rule for each fragment)
-
-        @JsonCreator
-        public static FragmentBehaviour forValue(String value) {
-            String sanitized = sanitizeName(value);
-            switch (sanitized) {
-                case "default" -> { return DEFAULT; }
-                case "separate" -> { return SEPARATE; }
-                case "docvalue" -> { return DOC_VALUE; }
-                default -> throw new IllegalArgumentException("Unknown fragments value: " + value + "(valid values: default, separate or docvalue)");
-            }
-        }
-
-        private static @NonNull String sanitizeName(String value) {
-            return value.toLowerCase().replaceAll("[-_]", "");
-        }
-
-        @JsonValue
-        @Override
-        public String toString() {
-            return sanitizeName(super.toString());
-        }
-
-        public boolean indexAtDocLevel() {
-            return this != DEFAULT;
-        }
-
-        public boolean applyRuleAtFragLevel() {
-            return this != DOC_VALUE;
-        }
-
-        public boolean inheritFromDocLevel() {
-            return this != SEPARATE;
-        }
-    }
 
     public FragmentBehaviour getFragments() {
         return fragments;
@@ -184,29 +143,17 @@ public class ConfigMetadataField {
         setForEachPath(forEachPath);
     }
 
-    public ConfigMetadataField copy() {
-        ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
-        cp.setProcess(process);
-        cp.setNameProcess(nameProcess);
-        cp.setDisplayName(displayName);
-        cp.setDescription(description);
-        cp.setType(type);
-        cp.setUiType(uiType);
-        cp.setUnknownCondition(unknownCondition);
-        cp.setUnknownValue(unknownValue);
-        cp.setAnalyzer(analyzer);
-        cp.displayValues.putAll(displayValues);
-        cp.displayOrder.addAll(displayOrder);
-        cp.setSortValues(sortValues);
-        return cp;
-    }
-
     void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         String t = "metadata field";
-        if (isForEach())
+        if (isForEach()) {
             messages.mustHave(t, namePath, "namePath");
-        else
+            if (role != MetadataField.Role.REGULAR)
+                messages.error("Special roles (pid) are not allowed for forEach metadata fields");
+        } else {
             messages.mustHave(t, name, "name");
+            if (role == MetadataField.Role.PID)
+                messages.foundPidField(name); // (detects duplicate pid fields)
+        }
         for (ConfigProcessStep step : process) {
             step.validate(messages);
         }
@@ -286,6 +233,20 @@ public class ConfigMetadataField {
 
     public void setAnalyzer(String analyzer) {
         this.analyzer = analyzer;
+    }
+
+    public MetadataField.Role getRole() {
+        return role;
+    }
+
+    public void setRole(MetadataField.Role role) {
+        this.role = role;
+        if (role == MetadataField.Role.PID) {
+            // PID fields must be untokenized, and must not inherit to fragments
+            //   (although fragments may have their own PID fields if desired)
+            this.type = FieldType.UNTOKENIZED;
+            this.fragments = FragmentBehaviour.SEPARATE;
+        }
     }
 
     // Only include in JSON serialization if not FieldType.TOKENIZED

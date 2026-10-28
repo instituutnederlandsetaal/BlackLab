@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -36,7 +37,7 @@ public class DocUtil {
      *
      * The field in question must have character offsets stored.
      *
-     * @param index our index
+     * @param reader our index
      * @param docId document id
      * @param field annotated or metadata field we want offsets for
      * @param startsOfWords token positions we want the starting character offsets for
@@ -44,7 +45,7 @@ public class DocUtil {
      * @param fillInDefaultsIfNotFound if some positions could not be found, fill in defaults
      *                                 instead of throwing an exception?
      */
-    public static void characterOffsets(BlackLabIndex index, int docId, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
+    public static void characterOffsets(IndexReader reader, int docId, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
         if (startsOfWords.length == 0)
             return; // nothing to do
         try {
@@ -68,7 +69,7 @@ public class DocUtil {
 
             String fieldPropName = field.offsetsField();
 
-            org.apache.lucene.index.Terms terms = index.reader().termVectors().get(docId, fieldPropName);
+            org.apache.lucene.index.Terms terms = reader.termVectors().get(docId, fieldPropName);
             if (terms == null)
                 throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + docId + " has no term vector");
             if (!terms.hasPositions())
@@ -159,7 +160,7 @@ public class DocUtil {
         }
     }
 
-    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
+    private static List<HitCharSpan> getCharacterOffsets(IndexReader reader, int docId, Hits hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
@@ -174,7 +175,7 @@ public class DocUtil {
         int[] startPos = Arrays.copyOf(starts, starts.length);
         int[] endPos = Arrays.copyOf(ends, ends.length);
 
-        characterOffsets(index, docId, hits.field(), starts, ends, true);
+        characterOffsets(reader, docId, hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -186,7 +187,7 @@ public class DocUtil {
     /**
      * Convert start/end word positions to char positions.
      *
-     * @param index our index
+     * @param reader our index
      * @param docId document id
      * @param field field to use
      * @param startAtWord where to start getting the content (-1 for start of
@@ -195,7 +196,7 @@ public class DocUtil {
      * @return the start and end char position as a two element int array (with any
      *         -1's preserved)
      */
-    private static int[] startEndWordToCharPos(BlackLabIndex index, int docId, Field field, int startAtWord, int endAtWord) {
+    private static int[] startEndWordToCharPos(IndexReader reader, int docId, Field field, int startAtWord, int endAtWord) {
         if (startAtWord == -1 && endAtWord == -1) {
             // No need to translate anything
             return new int[] { -1, -1 };
@@ -209,7 +210,7 @@ public class DocUtil {
         boolean endAtEndOfDoc = endAtWord == -1;
         int[] starts = { startAtStartOfDoc ? 0 : startAtWord };
         int[] ends = { endAtEndOfDoc ? starts[0] : endAtWord };
-        characterOffsets(index, docId, field, starts, ends, true);
+        characterOffsets(reader, docId, field, starts, ends, true);
         if (startAtStartOfDoc)
             starts[0] = -1;
         if (endAtEndOfDoc)
@@ -233,13 +234,13 @@ public class DocUtil {
      */
     public static String contentsByCharPos(BlackLabIndex index, int docId, Document d, Field field, int startAtChar, int endAtChar) {
         try {
-            if (!field.hasContentStore()) {
+            if (field.hasContentStore()) {
+                return index.contentStore(field).retrieveParts(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
+            } else {
                 String fieldName = field.contentsFieldName();
                 if (d == null)
                     d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
-            } else {
-                return index.contentStore(field).retrieveParts(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -260,7 +261,7 @@ public class DocUtil {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
         AnnotatedField field = hits.field();
-        int[] startEndCharPos = startEndWordToCharPos(index, docId, field, startAtWord, lastWord);
+        int[] startEndCharPos = startEndWordToCharPos(index.reader(), docId, field, startAtWord, lastWord);
 
         // Get content by char positions
         int startAtChar = startEndCharPos[0];
@@ -278,9 +279,8 @@ public class DocUtil {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
             if (!hits.isEmpty()) // if hits == null, we still want the highlighter to make it well-formed
-                hitSpans = getCharacterOffsets(index, docId, hits);
-            XmlHighlighter hl = new XmlHighlighter();
-            hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
+                hitSpans = getCharacterOffsets(index.reader(), docId, hits);
+            XmlHighlighter hl = new XmlHighlighter(index.defaultUnbalancedTagsStrategy());
             content = hl.highlight(content, hitSpans, highlightFromOffset);
         }
         return content;

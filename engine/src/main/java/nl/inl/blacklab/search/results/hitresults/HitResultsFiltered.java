@@ -4,8 +4,8 @@ import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
@@ -20,9 +20,9 @@ public class HitResultsFiltered extends HitResultsAbstract {
     /** Global view on our segment hits */
     private final HitsFromPublishers hits;
 
-    protected HitResultsFiltered(QueryInfo queryInfo, Hits source,
+    protected HitResultsFiltered(BlackLabIndex index, String field, Hits source,
             HitProperty filterProp, PropertyValue filterValue) {
-        super(queryInfo);
+        super(index, field);
         HitFilter filter = new HitFilterPropertyValue(filterProp, filterValue);
         List<HitPublisher> hitPublishers = source.publishersPerSegment();
         if (hitPublishers != null) {

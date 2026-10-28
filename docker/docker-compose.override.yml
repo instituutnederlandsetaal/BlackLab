@@ -19,14 +19,3 @@ services:
     # Map JPDA port
     ports:
       - "5005:5005"
-
-  solr:
-      profiles: [ "tools" ]
-      ports:
-          # Solr runs on this port
-          - "8983:8983"
-          # Allow us to attach to the JVM using JDWP for remote debugging
-          - "5005:5005"
-      environment:
-          # Enable JDWP remote debugging on port 5005
-          - "SOLR_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"

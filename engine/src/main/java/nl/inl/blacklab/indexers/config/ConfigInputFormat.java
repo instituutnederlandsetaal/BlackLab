@@ -39,6 +39,8 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.plugins.FileConverter;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -382,12 +384,25 @@ public class ConfigInputFormat {
             addFileTypeOption(InputFormatTypeXml.FT_OPT_PROCESSOR, InputFormatTypeXml.PROCESSOR_NAME);
         }
 
+        String pidField = corpusConfig.getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID);
+        if (pidField != null) {
+            // Make sure the pid field is declared in metadata
+            ConfigMetadataField f = getMetadataFieldRecursive(pidField);
+            if (f == null) {
+                messages.error("pidField '" + pidField + "' is not declared in any metadata block");
+            } else {
+                // Ensure the field has role: pid and gets implied settings (type: untokenized, fragments: separate)
+                f.setRole(MetadataField.Role.PID);
+            }
+        }
+
         // Validate
         String t = "input format";
         messages.mustHave(t, name, "name");
         messages.mustHave(t, documentPath, "documentPath");
         for (ConfigMetadataBlock b : metadata)
             b.validate(messages);
+        corpusConfig.validate(messages);
         for (ConfigAnnotatedField af : annotatedFields.values()) {
             if (fileType != FileType.XML)
                 af.setWordPath("N/A"); // prevent validation error
@@ -601,9 +616,9 @@ public class ConfigInputFormat {
         return corpusConfig;
     }
 
-    public ConfigMetadataField getMetadataField(String fieldname) {
+    public ConfigMetadataField getMetadataFieldRecursive(String fieldname) {
         for (ConfigMetadataBlock bl : metadata) {
-            ConfigMetadataField f = bl.getMetadataField(fieldname);
+            ConfigMetadataField f = bl.getMetadataFieldRecursive(fieldname);
             if (f != null)
                 return f;
         }
@@ -678,4 +693,11 @@ public class ConfigInputFormat {
                 "Please copy the base format configuration to your own format and customize it.");
     }
 
+    public boolean hasPidField() {
+        // Declared in specialFields.pidField?
+        if (getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) != null)
+            return true;
+        // One of the fields declared with role: pid?
+        return getMetadata().stream().anyMatch(ConfigMetadataBlock::hasPidField);
+    }
 }

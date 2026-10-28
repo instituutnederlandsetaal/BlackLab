@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.results.docs;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -13,16 +13,16 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
  */
 public class DocResult extends HitGroup {
     
-    public static DocResult fromDoc(QueryInfo queryInfo, PropertyValueDoc doc, long totalNumberOfHits) {
-        return new DocResult(queryInfo, doc, totalNumberOfHits);
+    public static DocResult fromDoc(BlackLabIndex index, String field, PropertyValueDoc doc, long totalNumberOfHits) {
+        return new DocResult(index, field, doc, totalNumberOfHits);
     }
     
     public static DocResult fromHits(PropertyValueDoc doc, HitResults storedHits, long totalNumberOfHits) {
         return new DocResult(doc, storedHits, totalNumberOfHits);
     }
 
-    protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, long numberOfHits) {
-        super(doc, HitResults.empty(queryInfo), numberOfHits, 1,
+    protected DocResult(BlackLabIndex index, String field, PropertyValueDoc doc, long numberOfHits) {
+        super(doc, HitResults.empty(index, field), numberOfHits, 1,
                 null, HitGroupScorer.NONE);
     }
 

@@ -143,10 +143,9 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                             false);
                     annotRelation.setHasForwardIndex(false);
 
-                    // Create properties for the other annotations
-                    for (int i = 1; i < annotations.size(); i++) {
-                        ConfigAnnotation annot = annotations.get(i);
-                        if (!annot.isForEach())
+                    // Create annotation writers (except for the main annotation, which is already created)
+                    for (ConfigAnnotation annot: annotations) {
+                        if (!annot.isForEach() && !annot.getName().equals(mainAnnotation.getName()))
                             fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
                                     annot.isForwardIndex());
                     }
@@ -317,7 +316,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
              * defined)
              */
             protected String processMetadataValue(String name, String value) {
-                ConfigMetadataField f = config.getMetadataField(name);
+                ConfigMetadataField f = config.getMetadataFieldRecursive(name);
                 if (f != null)
                     value = f.getCompiledProcessSteps().performSingle(value, metadataFieldValues);
                 return value;
@@ -358,14 +357,14 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                 value = StringUtil.trimWhitespace(value);
                 if (!value.isEmpty()) {
                     metadataFieldValues.computeIfAbsent(indexAsName, __ -> {
-                        ConfigMetadataField conf = config.getMetadataField(indexAsName);
+                        ConfigMetadataField conf = config.getMetadataFieldRecursive(indexAsName);
                         if (conf != null && conf.getSortValues()) {
                             return new TreeSet<>(BlackLab.defaultCollator()::compare);
                         } else {
                             return new ArrayList<>();
                         }
                     }).add(value);
-                    getDocWriter().metadata().registerMetadataField(indexAsName);
+                    getDocWriter().metadata().metadataFields().register(indexAsName);
                 }
             }
 

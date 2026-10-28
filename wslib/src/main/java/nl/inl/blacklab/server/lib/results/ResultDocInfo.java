@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
@@ -18,7 +19,6 @@ import org.apache.lucene.util.BitSet;
 
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -39,20 +39,14 @@ public class ResultDocInfo {
     private Map<String, List<String>> metadata;
 
     static class Fragment {
-        private final String field;
         private final int start;
         private final int end;
         private final Map<String, List<String>> metadata;
 
-        public Fragment(String field, int start, int end, Map<String, List<String>> metadata) {
-            this.field = field;
+        public Fragment(int start, int end, Map<String, List<String>> metadata) {
             this.start = start;
             this.end = end;
             this.metadata = metadata;
-        }
-
-        public String getField() {
-            return field;
         }
 
         public int getStart() {
@@ -68,7 +62,7 @@ public class ResultDocInfo {
         }
     }
 
-    private List<Fragment> fragments = Collections.emptyList();
+    private Map<String, List<Fragment>> fragmentsPerField = Collections.emptyMap();
 
     private final Map<String, Integer> lengthInTokensPerField = new LinkedHashMap<>();
 
@@ -99,7 +93,7 @@ public class ResultDocInfo {
 
             if (index.metadata().metadataFields().anyOccurInFragments()) {
                 // Find fragments for this document
-                this.fragments = new ArrayList<>();
+                this.fragmentsPerField = new TreeMap<>();
                 try {
                     // Find the segment the doc and its fragments are in
                     BitSetProducer fullDocsBitSetProducer = new QueryBitSetProducer(
@@ -125,7 +119,7 @@ public class ResultDocInfo {
                         String field = dvAnnotatedField.lookupOrd(dvAnnotatedField.ordValue()).utf8ToString();
                         int start = (int) dvFragStart.longValue();
                         int end = (int) dvFragEnd.longValue();
-                        fragments.add(new Fragment(field, start, end, fragMeta));
+                        fragmentsPerField.computeIfAbsent(field, k -> new ArrayList<>()).add(new Fragment(start, end, fragMeta));
                         // Go to the next fragment
                         fragDocId++;
                         dvAnnotatedField.nextDoc();
@@ -149,7 +143,7 @@ public class ResultDocInfo {
             if (f.tokenLengthField() != null) {
                 String strDocLength = document.get(f.tokenLengthField());
                 length = strDocLength == null ? 0 :
-                        Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                        BlackLabIndex.decodeTokenLengthField(Integer.parseInt(strDocLength));
             }
             lengthInTokensPerField.put(f.name(), length);
         }
@@ -179,8 +173,8 @@ public class ResultDocInfo {
         return metadata;
     }
 
-    public List<Fragment> getFragments() {
-        return fragments;
+    public Map<String, List<Fragment>> getFragments() {
+        return Collections.unmodifiableMap(fragmentsPerField);
     }
 
     public Integer getLengthInTokens() {

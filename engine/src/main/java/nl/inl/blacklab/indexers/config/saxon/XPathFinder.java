@@ -264,6 +264,8 @@ public class XPathFinder {
                             if (resultIt != null && resultIt.hasNext())
                                 return true;
                             if (ctxIt.hasNext()) {
+                                SaxonHelper.registerControllerForCurrentThread(
+                                        selector.getUnderlyingXPathContext().getXPathContextObject().getController());
                                 selector.setContextItem(ctxIt.next());
                                 resultIt = selector.iterator();
                                 continue;

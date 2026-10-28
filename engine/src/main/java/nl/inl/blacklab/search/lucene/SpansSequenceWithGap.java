@@ -366,9 +366,9 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        first.setHitQueryContext(context);
-        second.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        first.setSpansContext(context);
+        second.setSpansContext(context);
     }
 
     @Override

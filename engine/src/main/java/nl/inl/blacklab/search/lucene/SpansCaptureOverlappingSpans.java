@@ -19,7 +19,7 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
     private int captureAsIndex = -1;
 
     /** Our hit query context */
-    private HitQueryContext context;
+    private SpansContext context;
 
     /**
      * Match info for current hit
@@ -107,8 +107,8 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
             return capturedSpans;
         }
 
-        public void setHitQueryContext(HitQueryContext context) {
-            spansToCapture.setHitQueryContext(context);
+        public void setSpansContext(SpansContext context) {
+            spansToCapture.setSpansContext(context);
         }
 
         @Override
@@ -160,9 +160,9 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
-        capturer.setHitQueryContext(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
+        capturer.setSpansContext(context);
         this.context = context;
         this.captureAsIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.LIST_OF_RELATIONS);
         assert captureAsIndex >= 0 : "Negative captureAs index";

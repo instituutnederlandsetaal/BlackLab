@@ -68,7 +68,7 @@ public class TestPayloadUtils {
         for (int i = 0; i < starts.length; i++) {
             // Integrated index type: writes start and end position
             BytesRef b = payloadCodec.inlineTagPayload(starts[i], ends[i], 0, true);
-            RelationInfo r = RelationInfo.create(new MockAnnotatedField());
+            RelationInfo r = RelationInfo.create("test");
             payloadCodec.deserialize(starts[i], new ByteArrayDataInput(b.bytes), r);
             Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());

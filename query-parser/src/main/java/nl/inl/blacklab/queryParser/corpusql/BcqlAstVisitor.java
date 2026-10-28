@@ -129,7 +129,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
         for (int i = 1; i < cvs.size(); i++) {
             String op = ctx.comparisonOperator(i - 1).getText();
             TextPattern clause2 = visit(cvs.get(i));
-            result = new TextPatternCompare(result, clause2, MatchFilterCompare.Operator.fromSymbol(op));
+            result = new TextPatternCompare(result, clause2, MatchFilterCompare.Operator.fromSymbol(op), null);
         }
         return result;
     }
@@ -425,6 +425,12 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
     public TextPattern visitQueryFunctionCall(BcqlParser.QueryFunctionCallContext ctx) {
         String name = ctx.functionName().getText();
         List<TextPattern> params = commaSeparatedParamList(ctx.commaSeparatedParamList());
+        if (name.equals("str") && params.size() == 1 && params.get(0) instanceof TextPatternCompare cmp &&
+            cmp.isEqualsDefaultAnnotation()) {
+            // str('bla') should not be parsed as a function call with a query argument,
+            // but as a simple literal string
+            return cmp.getRightClause();
+        }
         return new TextPatternFunctionCall(name, params);
     }
 
@@ -465,7 +471,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
         } else if (ctx.positionWord() != null) {
             return visit(ctx.positionWord());
         } else {
-            return new TextPatternAnyToken(1, 1);
+            return TextPatternAnyToken.ANY_SINGLE_TOKEN;
         }
     }
 
@@ -479,7 +485,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
         String unescaped = BcqlQueryLanguageParser.getRegexFromQuotedString(ctx.getText());
         TextPattern result = new TextPatternValue(ConstraintValue.get(unescaped));
         if (quotedStringIsQuery)
-            result = new TextPatternCompare(TextPatternDefaultValue.get(), result, MatchFilterCompare.Operator.EQUAL);
+            result = new TextPatternCompare(TextPatternDefaultValue.get(), result, MatchFilterCompare.Operator.EQUAL, null);
         return result;
     }
 }

@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PInteger;
 import nl.inl.blacklab.plugins.param.PQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryAdjustHits;
@@ -39,7 +39,7 @@ public class QueryFunctionMeetWithin extends QueryFunction {
                 Arrays.asList(null, null, null, 0, 0), false);
     }
 
-    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         BLSpanQuery findClause = (BLSpanQuery) parameters.get(0);
         BLSpanQuery nearClause = (BLSpanQuery) parameters.get(1);
         BLSpanQuery withinClause = (BLSpanQuery) parameters.get(2);
@@ -48,7 +48,7 @@ public class QueryFunctionMeetWithin extends QueryFunction {
         return getBlSpanQuery(context, findClause, nearClause, withinClause, contextStart, contextEnd);
     }
 
-    static @NonNull BLSpanQuery getBlSpanQuery(QueryExecutionContext context, BLSpanQuery findClause,
+    static @NonNull BLSpanQuery getBlSpanQuery(TextPatternContext context, BLSpanQuery findClause,
             BLSpanQuery nearClause, BLSpanQuery withinClause,
             int contextStart, int contextEnd) {
         if (withinClause == null) {
@@ -104,12 +104,12 @@ public class QueryFunctionMeetWithin extends QueryFunction {
     }
 
     /** A call to meet with context start and end both positive */
-    private static @NonNull BLSpanQuery nearAfterFind(QueryExecutionContext context, BLSpanQuery findClause,
+    private static @NonNull BLSpanQuery nearAfterFind(TextPatternContext context, BLSpanQuery findClause,
             BLSpanQuery nearClause, boolean negateNear, int contextStart, int contextEnd, BLSpanQuery withinClause) {
         // e.g. meet("find", "near", 2, 5) means near is 2-5 tokens after find
         // query becomes: "find" (?= []{1, 4} "near")
         SpanQueryAnyToken gap = contextStart == 1 && contextEnd == 1 ? null :
-                new SpanQueryAnyToken(context.queryInfo(), contextStart - 1, contextEnd - 1,
+                new SpanQueryAnyToken(context.queryContext(), contextStart - 1, contextEnd - 1,
                         context.luceneField());
         List<BLSpanQuery> clauses = new ArrayList<>(List.of(findClause, nearClause));
         if (gap != null)
@@ -147,11 +147,11 @@ public class QueryFunctionMeetWithin extends QueryFunction {
     }
 
     /** A call to meet with context start and end both negative */
-    private static @NonNull BLSpanQuery nearBeforeFind(QueryExecutionContext context, BLSpanQuery findClause,
+    private static @NonNull BLSpanQuery nearBeforeFind(TextPatternContext context, BLSpanQuery findClause,
             BLSpanQuery nearClause, boolean negateNear, int contextStart, int contextEnd, BLSpanQuery withinClause) {
         // e.g. meet("find", "near", -5, -2) means near is 2-5 tokens before find
         // query becomes: (?<= "near" []{1,4} ) "find"
-        SpanQueryAnyToken gap = contextStart == -1 && contextEnd == -1 ? null : new SpanQueryAnyToken(context.queryInfo(), -contextEnd - 1, -contextStart - 1,
+        SpanQueryAnyToken gap = contextStart == -1 && contextEnd == -1 ? null : new SpanQueryAnyToken(context.queryContext(), -contextEnd - 1, -contextStart - 1,
                 context.luceneField());
         List<BLSpanQuery> clauses = new ArrayList<>(List.of(nearClause, findClause));
         if (gap != null)

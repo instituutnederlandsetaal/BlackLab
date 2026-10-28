@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.lib.results;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,9 +13,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.ResultGroups;
@@ -134,15 +131,11 @@ public class ResultHitsGrouped {
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
         MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
-        Set<AnnotatedField> otherFields = new HashSet<>();
-        for (MatchInfo.Def def : matchInfoDefs.currentList()) {
-            if (def.getTargetField() != null)
-                otherFields.add(def.getTargetField());
-        }
+        String searchField = groups.field().name();
+        Set<String> otherFields = matchInfoDefs.getOtherFields(searchField);
 
         ResultGroups groups1 = getGroups();
         WindowStats window1 = getWindow();
-        AnnotatedField searchField = groups.field();
         ResultsStats hitsStats1 = getHitsStats();
         ResultsStats docsStats1 = getDocsStats();
         summaryNumHits = new ResultSummaryNumHits(hitsStats1, docsStats1, true, timings, getSubcorpusSize());

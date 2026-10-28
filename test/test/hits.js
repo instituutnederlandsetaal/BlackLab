@@ -6,7 +6,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged, expectUrlUnchanged, sanitizeResponse} = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged, sanitizeResponse, expectCorpusUrlUnchanged} = require("./compare-responses");
 const { corpusUrl } = require("./util");
 
 /**
@@ -79,21 +79,36 @@ expectHitsUnchanged('test', 'view single group', {
 });
 
 // Matching doc facets
-expectUrlUnchanged('test', 'hits', 'document facets',
-        corpusUrl('test') + '/hits/?patt=%22the%22&number=0&facets=field:pid');
+expectCorpusUrlUnchanged('test', 'hits', 'document facets',
+        '/hits/?patt=%22the%22&number=0&facets=field:pid');
 
 // Hits CSV
-expectUrlUnchanged('test', 'hits', 'CSV results',
-        corpusUrl('test') + '/hits/?patt=%22the%22', 'text/csv');
+expectCorpusUrlUnchanged('test', 'hits', 'CSV results',
+        '/hits/?patt=%22the%22', 'text/csv');
 
 // /termfreq operation
-expectUrlUnchanged('test', 'hits', 'Termfreq word sensitive',
-        corpusUrl('test') + '/termfreq/?annotation=word&sensitive=true');
-expectUrlUnchanged('test', 'hits', 'Termfreq lemma insensitive',
-        corpusUrl('test') + '/termfreq/?annotation=lemma');
+expectCorpusUrlUnchanged('test', 'hits', 'Termfreq word sensitive',
+        '/termfreq/?annotation=word&sensitive=true');
+expectCorpusUrlUnchanged('test', 'hits', 'Termfreq lemma insensitive',
+        '/termfreq/?annotation=lemma');
 
 
 expectHitsUnchanged("fragments", "hits in fragments", { patt: '"the"', filter: 'year:1900' });
 expectHitsUnchanged("fragments", "hit in adjacent fragments", { patt: '"Lindenlaan" "this"', filter: 'year:1976 OR year:2026' });
 expectHitsUnchanged("fragments", "hit beyond matching fragment", { patt: '"Lindenlaan" "this"', filter: 'year:1976' });
 expectHitsUnchanged("fragments", "inherited metadata", { patt: '"dog"', filter: 'author:Piet' });
+expectHitsUnchanged("fragments", "inline tag fragment 1", { patt: '"jumps"', filter: 'ftype:inline' });
+expectHitsUnchanged("fragments", "inline tag fragment 2", { patt: '"starship"', filter: 'author:majel' });
+
+expectHitsUnchanged("parallel", "parallel hits", {
+    patt: '"Dit" =w=>en _',
+    field: 'contents__nl',
+    adjusthits: 'true',
+    withspans: 'true'
+});
+expectHitsUnchanged("parallel", "parallel hits with rfield", {
+    patt: 'rfield("Dit" =w=>en _, "en")',
+    field: 'contents__nl',
+    adjusthits: 'true',
+    withspans: 'true',
+});

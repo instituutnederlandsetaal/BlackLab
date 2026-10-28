@@ -48,7 +48,7 @@ public class TokensPerMetaValue {
                     // Loop over the values
                     for (Map.Entry<String, Long> entry: values.valueList().getValues().entrySet()) {
                         // Determine token count for this value
-                        Query filter = LuceneUtil.parseLuceneQuery(index, "\"" + entry.getKey().toLowerCase() + "\"",
+                        Query filter = LuceneUtil.parseLuceneQuery(index.metadataFields().typeGetter(), "\"" + entry.getKey().toLowerCase() + "\"",
                                 BuiltinAnalyzers.DUTCH.getAnalyzer(), field.name());
                         DocResults docs = index.queryDocuments(filter);
                         long totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(index, annotatedFieldName));

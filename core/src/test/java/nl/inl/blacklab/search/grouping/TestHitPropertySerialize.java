@@ -25,7 +25,7 @@ public class TestHitPropertySerialize {
 
     private static final MockTerms terms = new MockTerms("aap", "noot", "mies");
 
-    private static final Hits hits = Hits.empty(new Hits.HitsContext(mockIndex.mainAnnotatedField()));
+    private static final Hits hits = Hits.empty(new Hits.Context(mockIndex));
 
     private static Annotation lemmaAnnotation;
 

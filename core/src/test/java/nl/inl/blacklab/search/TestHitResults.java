@@ -20,7 +20,7 @@ public class TestHitResults {
         int[] aStart = { 1, 2 };
         int[] aEnd = { 2, 3 };
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.fromLists(index.mainAnnotatedField(), aDoc, aStart, aEnd);
+            Hits hits = Hits.fromLists(index, index.mainAnnotatedField().name(), aDoc, aStart, aEnd);
     
             int i = 0;
             for (EphemeralHit hit: hits) {

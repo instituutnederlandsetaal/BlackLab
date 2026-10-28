@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 public class MatchFilterFunctionCall extends MatchFilter {
 
@@ -43,9 +43,9 @@ public class MatchFilterFunctionCall extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         for (MatchFilter p: parameters) {
-            p.setHitQueryContext(context);
+            p.setSpansContext(context);
         }
     }
 

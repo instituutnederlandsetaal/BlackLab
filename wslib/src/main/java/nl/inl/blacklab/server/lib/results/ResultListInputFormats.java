@@ -8,7 +8,6 @@ import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.lib.User;
 
 public class ResultListInputFormats {
 
@@ -18,14 +17,14 @@ public class ResultListInputFormats {
 
     private final boolean debugMode;
 
-    ResultListInputFormats(User user, IndexManager indexMan, boolean debugMode) {
-        userInfo = new ResultUserInfo(user, indexMan);
+    ResultListInputFormats(ResultUserInfo userInfo, IndexManager indexMan, boolean debugMode) {
+        this.userInfo = userInfo;
         this.debugMode = debugMode;
 
         // List all available input formats
-        if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
+        if (userInfo.isLoggedIn() && indexMan.getUserFormatManager() != null) {
             // Make sure users's formats are loaded
-            indexMan.getUserFormatManager().loadUserFormats(user.getId(), null);
+            indexMan.getUserFormatManager().loadUserFormats(userInfo.getUserId(), null);
         }
         inputFormats = new ArrayList<>();
         for (InputFormatInfo inputFormat: DocumentFormats.getFormats()) {

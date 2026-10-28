@@ -206,15 +206,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             writer.write(NT_CALL_FUNC,KEY_NAME, tp.getFunctionName(), KEY_ARGS, tp.getArgs());
         });
 
-        // Regex
-        jsonSerializers.put(TextPatternRegex.class, (pattern, writer) -> {
-            TextPatternRegex tp = (TextPatternRegex) pattern;
-            writer.write(NT_REGEX,
-                    KEY_VALUE, tp.getValue(),
-                    KEY_ANNOTATION, tp.getAnnotation(),    // (omitted if null)
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity())); // (omitted if null)
-        });
-
         // Relation match
         jsonSerializers.put(TextPatternRelationMatch.class, (pattern, writer) -> {
             TextPatternRelationMatch tp = (TextPatternRelationMatch) pattern;
@@ -270,21 +261,13 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));
         });
 
-        // Term
-        jsonSerializers.put(TextPatternTerm.class, (pattern, writer) -> {
-            TextPatternTerm tp = (TextPatternTerm) pattern;
-            writer.write(NT_TERM,
-                    KEY_VALUE, tp.getValue(),
-                    KEY_ANNOTATION, tp.getAnnotation(),    // (omitted if null)
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity())); // (omitted if null)
-        });
-
         // TextPatternCompare
         jsonSerializers.put(TextPatternCompare.class, (pattern, writer) -> {
             TextPatternCompare tp = (TextPatternCompare) pattern;
             writer.write(NT_COMPARE,
                     KEY_CLAUSES, List.of(tp.getLeftClause(), tp.getRightClause()),
-                    KEY_OPERATION, tp.getOperator().toString());
+                    KEY_OPERATION, tp.getOperator().toString(),
+                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
         });
 
         // TextPatternImplication
@@ -365,7 +348,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             return new TextPatternCompare(
                     cl.get(0),
                     cl.get(1),
-                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION))
+                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION)),
+                    optArgSensitivity(args)
             );
         }
         case NT_CONSTRAINED:
@@ -445,7 +429,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     optArgAdjust(args),
                     (String) args.get(KEY_CAPTURE));
         case NT_TERM:
-            return new TextPatternTerm(
+            return TextPattern.term(
                     (String) args.get(KEY_VALUE),
                     (String) args.get(KEY_ANNOTATION),
                     optArgSensitivity(args));

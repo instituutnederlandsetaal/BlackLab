@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
@@ -36,7 +36,7 @@ public class TextPatternSequence extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         List<BLSpanQuery> chResults = new ArrayList<>();
         for (TextPattern cl : clauses) {
             chResults.add(cl.toQuery(context));

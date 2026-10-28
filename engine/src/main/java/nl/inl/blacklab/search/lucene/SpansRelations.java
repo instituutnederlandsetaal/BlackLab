@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
@@ -17,7 +16,6 @@ import org.apache.lucene.store.ByteArrayDataInput;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -76,7 +74,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     private final boolean spansMayIncludeRoots = true;
 
-    private final AnnotatedField sourceField;
+    private final String sourceField;
 
     /** For this query, could target field vary with each hit?
      *
@@ -101,7 +99,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param spanMode                      what span to return for the relations found
      * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
-    public SpansRelations(AnnotatedField sourceField, String relationType, BLSpans relationsMatches,
+    public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         super(relationsMatches,
@@ -117,15 +115,16 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         // Find the target field from the relation class (e.g. for class al__de, target field will be something like
         // contents__de)
         // Be careful not to interpret special relations class __tag as a parallel field!
         String relClass = RelationUtil.classFromFullType(relationType);
         boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
-        AnnotatedField targetField = StringUtils.isEmpty(version) ? sourceField :
-                context.index().annotatedField(AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField().name(), version));
+        String annotatedFieldName = context.getDefaultFieldName();
+        String targetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedFieldName, version);
+        String targetField = version.isEmpty() ? sourceField : targetFieldName;
 
         // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.
         // If this is the case, we'll set target field per matched relation, based on the relation class
@@ -207,7 +206,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             if (info.mayHaveInfoInRelationIndex()) {
                 // Get them from relation info index
                 int infoRelationId = info.getRelationId();
-                String f = relInfo.relationsField(info.getField().name());
+                String f = relInfo.relationsField(info.getField());
                 attributes = relInfo.getAttributes(f, docId, infoRelationId);
             } else {
                 // No extra info was stored, no need to check

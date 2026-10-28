@@ -335,9 +335,9 @@ class SpansAndSameRelationIdOld extends BLSpans {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         for (SpansInBuckets subSpan: subSpans) {
-            subSpan.setHitQueryContext(context);
+            subSpan.setSpansContext(context);
         }
     }
 

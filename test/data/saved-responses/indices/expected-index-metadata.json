@@ -131,7 +131,7 @@
     "pid": {
       "fieldName": "pid",
       "isAnnotatedField": false,
-      "type": "TOKENIZED",
+      "type": "UNTOKENIZED",
       "analyzer": "DEFAULT",
       "fieldValues": {
         "PBsve430": 1

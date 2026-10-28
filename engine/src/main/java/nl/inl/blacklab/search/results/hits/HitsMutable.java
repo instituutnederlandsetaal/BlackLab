@@ -22,7 +22,7 @@ public interface HitsMutable extends Hits {
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsListAbstract create(Hits.HitsContext context,
+    static HitsListAbstract create(Context context,
             long initialCapacity, boolean allowHugeLists, boolean mustLock) {
         return create(context, initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
@@ -37,7 +37,7 @@ public interface HitsMutable extends Hits {
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsListAbstract create(Hits.HitsContext context,
+    static HitsListAbstract create(Context context,
             long initialCapacity, long maxCapacity, boolean mustLock) {
         if (maxCapacity > Constants.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)

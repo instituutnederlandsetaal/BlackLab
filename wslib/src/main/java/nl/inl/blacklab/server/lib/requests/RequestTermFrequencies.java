@@ -25,7 +25,7 @@ public record RequestTermFrequencies(
 ) {
 
     public static RequestTermFrequencies fromParams(QueryParams qpar) {
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         AnnotatedField field = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
         AnnotationSensitivity annotSensitivity = getAnnotationSensitivity(
                 field,
@@ -50,8 +50,7 @@ public record RequestTermFrequencies(
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         if (sensitive == null)
             sensitive = defaultToSensitive;
-        MatchSensitivity matchSensitivity = MatchSensitivity.caseAndDiacriticsSensitive(
-                sensitive);
+        MatchSensitivity matchSensitivity = sensitive ? MatchSensitivity.SENSITIVE : MatchSensitivity.INSENSITIVE;
         WebserviceOperations.ensureHasSensitivity(annotation, matchSensitivity);
         return annotation.sensitivity(matchSensitivity);
     }

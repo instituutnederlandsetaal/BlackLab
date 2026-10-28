@@ -9,7 +9,7 @@
  *
  * Other notable classes in this package:
  *
- * - {@link nl.inl.blacklab.search.lucene.HitQueryContext} contains capture group information
+ * - {@link nl.inl.blacklab.search.lucene.SpansContext} contains capture group information
  * - {@link nl.inl.blacklab.search.lucene.DocFieldLengthGetter} allows us to get the document's length in tokens, needed for some classes
  */
 package nl.inl.blacklab.search.lucene;

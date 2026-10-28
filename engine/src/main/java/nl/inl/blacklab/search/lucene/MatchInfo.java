@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Information about a match (captured while matching).
  *
@@ -88,19 +86,19 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
      *  If this is not a parallel corpus, this will always be the field that was searched.
      *  Never null.
      */
-    private final AnnotatedField field;
+    private final String field;
 
-    MatchInfo(AnnotatedField field) {
+    MatchInfo(String field) {
         assert field != null;
         this.field = field;
     }
 
-    public AnnotatedField getField() {
+    public String getField() {
         return field;
     }
 
     protected String toStringOptFieldName(String defaultField) {
-        return field.name().equals(defaultField) ? "" : " (" + getField() + ")";
+        return field.equals(defaultField) ? "" : " (" + getField() + ")";
     }
 
     public abstract Type getType();
@@ -182,12 +180,12 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         private Type type;
 
         /** What field is this match info for? Never null. */
-        private final AnnotatedField field;
+        private final String field;
 
         /** Target field of (list of) relations, or null if same as source or not applicable. */
-        private final AnnotatedField targetField;
+        private final String targetField;
 
-        public Def(int index, String name, Type type, AnnotatedField field, AnnotatedField targetField) {
+        public Def(int index, String name, Type type, String field, String targetField) {
             assert index >= 0 : "Match info may not have negative index";
             this.index = index;
             this.name = name;
@@ -209,11 +207,11 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
             return type;
         }
 
-        public AnnotatedField getField() {
+        public String getField() {
             return field;
         }
 
-        public AnnotatedField getTargetField() {
+        public String getTargetField() {
             return targetField;
         }
 

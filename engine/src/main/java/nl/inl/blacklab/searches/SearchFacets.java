@@ -4,7 +4,6 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.stats.Facets;
 
 /** A search that yields multiple doc groupings with only counts (no stored results). */
@@ -13,8 +12,8 @@ public class SearchFacets extends AbstractSearch<Facets> {
     private final SearchDocs source;
     private final List<DocProperty> properties;
 
-    public SearchFacets(QueryInfo queryInfo, SearchDocs source, List<DocProperty> properties) {
-        super(queryInfo);
+    public SearchFacets(SearchDocs source, List<DocProperty> properties) {
+        super(source.context());
         this.source = source;
         this.properties = properties;
     }

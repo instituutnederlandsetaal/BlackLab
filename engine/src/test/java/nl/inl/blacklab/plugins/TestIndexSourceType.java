@@ -14,7 +14,7 @@ public class TestIndexSourceType {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        BlackLab.implicitInstance(); // init plugin system
+        BlackLab.engine(); // init plugin system
     }
 
     public void assertParse(String expectedScheme, String expectedPath, String uri) {

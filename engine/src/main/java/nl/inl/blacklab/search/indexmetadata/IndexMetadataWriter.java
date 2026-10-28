@@ -60,14 +60,6 @@ public interface IndexMetadataWriter extends IndexMetadata {
     void setContentViewable(boolean contentViewable);
 
     /**
-     * Register a metadata field.
-     * 
-     * @param name name of the field
-     * @return the field descriptor
-     */
-    MetadataField registerMetadataField(String name);
-
-    /**
      * Get the metadata fields.
      * 
      * @return the metadata fields

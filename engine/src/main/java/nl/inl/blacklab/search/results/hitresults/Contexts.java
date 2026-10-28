@@ -183,7 +183,7 @@ public class Contexts {
 
         //AnnotForwardIndex fi = hits.index().annotationForwardIndex(annotation);
         AnnotationForwardIndex fi = null;
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        String luceneField = annotation.mainSensitivity().luceneField();
 
         // Get the context
         // Group hits per document
@@ -311,7 +311,7 @@ public class Contexts {
         }
 
         // Transfer from map to list
-        return new TermFrequencyList(hitResults.queryInfo(), wordFreq, sort);
+        return new TermFrequencyList(hitResults.index(), hitResults.fieldName(), wordFreq, sort);
     }
 
 }

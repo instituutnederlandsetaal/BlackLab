@@ -12,13 +12,13 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -26,12 +26,14 @@ import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -45,7 +47,6 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -68,11 +69,7 @@ public class ParamUtil {
 
     /** Resolve the index a request wants to access */
     public static BlackLabIndex index(String corpusName) {
-        try {
-            return IndexManager.get().getIndex(corpusName).blIndex();
-        } catch (Exception e) {
-            throw new InvalidIndex(e);
-        }
+        return QueryParams.DEFAULT_INDEX_RESOLVER.resolve(corpusName);
     }
 
     /**
@@ -239,11 +236,11 @@ public class ParamUtil {
         return sortBy == null ? null : DocProperty.deserialize(index, sortBy);
     }
 
-    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, String groupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
+    public static HitGroupProperty hitGroupSortProperty(WebserviceOperation operation, boolean hasGroupBy, String sortBy, String viewGroup, HitGroupProperty defaultSortBy) {
         if (operation.isDocsOperation())
             return defaultSortBy;
         HitGroupProperty sortProp = null;
-        if (groupBy != null) {
+        if (hasGroupBy) {
             if (sortBy != null && viewGroup == null) { // Sorting refers to results within the group when viewing contents of a group
                 sortProp = HitGroupProperty.deserialize(sortBy);
             }
@@ -255,10 +252,10 @@ public class ParamUtil {
         return sortProp;
     }
 
-    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, String groupBy, String viewGroup, String sortBy, ContextSize contextSize) {
+    public static HitProperty hitsSortProperty(WebserviceOperation operation, AnnotatedField field, boolean hasGroupBy, String viewGroup, String sortBy, ContextSize contextSize) {
         if (operation.isDocsOperation())
             return null;
-        if (groupBy != null && viewGroup == null) {
+        if (hasGroupBy && viewGroup == null) {
             // looking at groups, or results within a group, don't bother sorting the underlying results
             // themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
             return null;
@@ -396,6 +393,11 @@ public class ParamUtil {
                 } else if (key.equals(HitGroupCollocationScorer.KEY_PATTERN) && value instanceof String) {
                     // Parse BCQL pattern into a TextPattern object
                     value = BcqlQueryLanguageParser.parseQuery(value.toString());
+                } else if (key.equals(HitGroupCollocationScorer.KEY_GROUP_BY) && value instanceof String) {
+                    // Parse BCQL pattern gap data into a list of maps
+                    value = ParamUtil.getGroupBy(WebserviceOperation.HITS, field, value.toString(), null);
+                    if (value == null)
+                        value = new HitPropertyHitText(field.index(), field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
                 }
                 configParsed.put(key, value);
             }
@@ -414,22 +416,26 @@ public class ParamUtil {
                 .orElse(HitGroupScorer.NONE);
     }
 
-    public static HitProperty getHitsGroupProperty(WebserviceOperation operation, String groupBy,
-            AnnotatedField annotatedField, ContextSize context) {
-        if (groupBy == null || operation.isDocsOperation()) {
-            // No grouping requested or not a hits grouping
-            return null;
+    public static @Nullable HitProperty getGroupBy(WebserviceOperation operation, AnnotatedField annotatedField,
+            String groupBySpec, ContextSize context) {
+        HitProperty groupBy = null;
+        if (!StringUtils.isEmpty(groupBySpec) && !operation.isDocsOperation()) {
+            // Hits grouping requested
+            try {
+                groupBy = HitProperty.deserialize(annotatedField, groupBySpec, context);
+            } catch (IllegalArgumentException e) {
+                // leads to throw below
+            }
+            if (groupBy == null)
+                throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBySpec + "'.");
         }
-        HitProperty prop = HitProperty.deserialize(annotatedField, groupBy, context);
-        if (prop == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
-        return prop;
+        return groupBy;
     }
 
     public static Query filterQuery(QueryParams qpar) throws BlsException {
-        return filterQuery(index(qpar.getCorpusName()), qpar.get(WsParam.FILTER_LANGUAGE),
+        return filterQuery(qpar.getCorpusRef(), qpar.get(WsParam.FILTER_LANGUAGE),
                 qpar.get(WsParam.FILTER),
-                qpar.get(WsParam.DOC_PID), qpar.getFallbackFilterQuery());
+                qpar.get(WsParam.DOC_PID));
     }
 
     /**
@@ -437,15 +443,15 @@ public class ParamUtil {
      *
      * Uses docPid (if specified), otherwise filter/filterLang.
      *
-     * @param index index we're searching
+     * @param corpusRef corpus we're searching
      * @param filterLang filter query language (e.g. "lucene")
      * @param filterQuery filter query string
      * @param docPid filter on this specific document (ignore filterQuery)
-     * @param fallbackFilterQuery optional filter query to use if no filter query or docPid
-     * @return document filter query
+     * @return document filter query, or null if none specified
      */
-    public static Query filterQuery(BlackLabIndex index, String filterLang, String filterQuery, String docPid, Query fallbackFilterQuery) throws BlsException {
-        Query result;
+    public static Query filterQuery(QueryParams.CorpusRefByName corpusRef, String filterLang, String filterQuery, String docPid) throws BlsException {
+        BlackLabIndex index = corpusRef.index();
+        Query result = null;
         if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)
             int luceneDocId = index.getDocIdFromPid(docPid);
@@ -454,8 +460,7 @@ public class ParamUtil {
             result = new SingleDocIdFilter(luceneDocId);
         } else if (!StringUtils.isEmpty(filterQuery)) {
             result = BlsUtils.parseFilter(index, filterQuery, filterLang);
-        } else
-            result = fallbackFilterQuery;
+        }
         return result;
     }
 

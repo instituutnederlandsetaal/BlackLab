@@ -33,7 +33,8 @@ public class ResultServerInfo {
 
         User user = request.user();
         IndexManager indexManager = request.indexManager();
-        userInfo = new ResultUserInfo(user, indexManager);
+        String clientIp = request.clientIp();
+        userInfo = new ResultUserInfo(user, indexManager, clientIp);
         plugins = new ResultListPlugins();
         indexStatuses = new ArrayList<>();
         Collection<Index> indices = indexManager.getAllAvailableCorpora(user);

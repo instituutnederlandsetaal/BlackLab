@@ -19,7 +19,6 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -56,7 +55,7 @@ public class ResultAutocomplete {
          * Take care to pass the sensitivity we're using
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
-        boolean sensitiveMatching = true;
+        MatchSensitivity sensitivity;
         String annotationName = req.annotationName();
         String fieldName = req.fieldName();
         String luceneField;
@@ -71,32 +70,29 @@ public class ResultAutocomplete {
                         "Annotated field '" + fieldName + "' has no annotation '" + annotationName + "'.");
             Annotation annotation = annotations.get(annotationName);
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
-                sensitiveMatching = false;
+                sensitivity = MatchSensitivity.INSENSITIVE;
                 luceneField = annotation.sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
             } else {
-                sensitiveMatching = true;
-                AnnotationSensitivity s = annotation.offsetsSensitivity(); // TODO: why!? get rid of this?
-                if (s == null)
-                    s = annotation.sensitivity(MatchSensitivity.SENSITIVE);
-                luceneField = s.luceneField();
+                sensitivity = annotation.mainSensitivity().sensitivity();
+                luceneField = annotation.mainSensitivity().luceneField();
             }
         } else {
             // Must be a metadata field. These are always insensitive.
             luceneField = fieldName;
-            sensitiveMatching = false;
+            sensitivity = MatchSensitivity.INSENSITIVE;
         }
         IndexReader reader = index.reader();
 
         if (!req.autocompleteType().equalsIgnoreCase("term")) {
-            terms = findMetadataFieldValuesByToken(reader, index, luceneField, term);
+            terms = findMetadataFieldValuesByToken(reader, index, luceneField, term, sensitivity);
         } else {
-            terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+            terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitivity, MAX_VALUES);
         }
     }
 
     private static List<String> findMetadataFieldValuesByToken(IndexReader reader, BlackLabIndex index, String fieldName,
-            String term) {
-        List<String> matchingTokens = LuceneUtil.findTermsByPrefix(reader, fieldName, term, true, MAX_VALUES * 10L);
+            String term, MatchSensitivity sensitivity) {
+        List<String> matchingTokens = LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitivity, MAX_VALUES * 10L);
         return findMetadataFieldValuesByMatchingTokens(reader, index, fieldName, matchingTokens);
     }
 

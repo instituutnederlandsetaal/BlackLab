@@ -92,18 +92,12 @@ metadata:
     # <metadata/> tag has an id attribute we want to index as docId
   - name: docId
     valuePath: "@id"
-    type: untokenized  # persistent identifier should be untokenized!
+    role: pid  # this field persistently identifies our documents
 
     # Each <meta/> tag corresponds with a metadata field
   - forEachPath: meta
     namePath: "@name"   # name attribute contains field name
     valuePath: .        # element text is the field value
-
-corpusConfig:
-  specialFields:
-    # What metadata field persistently identifies our documents?
-    # (should be configured with type: untokenized)
-    pidField: docId
 ```
 
 To use this configuration, you should save it with a name like `simple-input-format.blf.yaml` (`blf` stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of `$BLACKLAB_CONFIG_DIR/formats/` (if this environment variable is set), `$HOME/.blacklab/formats/` or `/etc/blacklab/formats/`.

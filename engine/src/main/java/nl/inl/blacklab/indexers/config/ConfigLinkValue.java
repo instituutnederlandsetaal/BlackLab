@@ -39,14 +39,6 @@ public class ConfigLinkValue {
         }
     }
 
-    public ConfigLinkValue copy() {
-        ConfigLinkValue cp = new ConfigLinkValue();
-        cp.setValuePath(valuePath);
-        cp.setValueField(valueField);
-        cp.process.addAll(process);
-        return cp;
-    }
-
     public String getValuePath() {
         return valuePath;
     }

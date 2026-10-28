@@ -126,7 +126,6 @@ This the current list of modules:
 | `contrib/*`       | some modules that serve specific functions that some projects may need, but many don't. Currently contains plugins to convert and tag input documents before indexing, as well as some legacy `DocIndexer` implementations. |
 | `core`            | will build the main BlackLab Java library. Doesn't contain any Java code itself but combines other modules (the main module is engine).                                                                                     |
 | `engine`          | implements most of the BlackLab functionality.                                                                                                                                                                              |
-| `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar.                                                                                                                                        |
 | `mocks`           | mock objects useful for testing. Shouldn't be included in library build.                                                                                                                                                    |
 | `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser).                                                                                                                          |
 | `server`          | the BlackLab Server REST API                                                                                                                                                                                                |
@@ -224,5 +223,42 @@ BLSpans
   # Bucketed spans allow random access to a group of matches
   SpansInBucketsPerDocument   (all matches from 1 doc in 1 bucket)
   SpansInBucketsConsecutive   (all consecutive matches in 1 bucket for repetition matching)
-
 ```
+
+### Context objects
+
+BlackLab uses various context objects to pass information around when interpreting and executing queries.
+You can think of these as properties needed for a phase in the whole search process. Properties are usually constant (i.e. index) but different parts of the query might have slightly different contexts (i.e. what parallel version this part of the query searches).
+
+- index is a complex API; do we need to pass the whole thing around? maybe just pass the parts we need (e.g. `BlackLabIndexForQuery` interface), such as a way to access forward indexes, content stores and certain index metadata. Phases after `Search*` don't need the `find` methods for example.
+
+#### Search.Context (NEW))
+
+- each `Search` has one
+- knows index, field, cache, timings(DEBUG)
+
+#### TextPatternContext (formerly QueryExecutionContext)
+
+- used during translation of `TextPattern` to `BLSpanQuery`
+- knows index, field, current parallel version, annotation, sensitivity, def.rel.class, capture names, 
+  inconstraint
+
+#### BLSpanQuery.Context
+
+- each `BLSpanQuery` has one
+- knows index and search field
+- get a reduced API to the index (`BlackLabIndexForQuery`) to improve testability. Could be done for other context as well.
+
+### MISSING? Context for actually executing the query
+
+- This would cover how to execute: what executor, max threads, etc. - we can ask the index, but better to isolate these settings in a separate context object?
+
+#### SpansContext (formerly HitQueryContext)
+
+- each `BLSpans` gets one
+- knows default field / current field, `MatchInfoDefs`
+
+#### Hits.Context (formerly Hits.HitsContext)
+
+- each `Hits` gets one
+- knows index, field, `MatchInfoDefs`, originating segment (if segment hits)

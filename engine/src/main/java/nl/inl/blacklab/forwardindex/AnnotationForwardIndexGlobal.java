@@ -100,7 +100,7 @@ public class AnnotationForwardIndexGlobal implements AnnotationForwardIndex {
     public long docLength(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
         AnnotationForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
-        return (int)fi.docLength(docId - lrc.docBase);
+        return fi.docLength(docId - lrc.docBase);
     }
 
     @Override
@@ -110,6 +110,6 @@ public class AnnotationForwardIndexGlobal implements AnnotationForwardIndex {
 
     @Override
     public String getLuceneFieldName() {
-        return annotation.forwardIndexSensitivity().luceneField();
+        return annotation.mainSensitivity().luceneField();
     }
 }

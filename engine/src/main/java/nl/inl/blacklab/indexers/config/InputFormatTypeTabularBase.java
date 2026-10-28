@@ -30,8 +30,8 @@ public abstract class InputFormatTypeTabularBase extends InputFormatTypeConfig {
                 // Remove unwanted unprintable characters and normalize to canonical unicode composition
                 value = StringUtil.sanitizeAndNormalizeUnicode(value);
                 ProcessingStep process = annotation.getCompiledProcessSteps();
-                if (process instanceof ProcessingInstructionIdentity || process.canProduceMultipleValues()) {
-                    if (process instanceof ProcessingInstructionIdentity) {
+                if (process instanceof ProcessingInstructionIdentity.ProcessingStepIdentity || process.canProduceMultipleValues()) {
+                    if (process instanceof ProcessingInstructionIdentity.ProcessingStepIdentity) {
                         // No explicit processing steps defined.
                         // Perform the split processing step that is implicit for tabular formats.
                         process = new ProcessingInstructionSplit.ProcessingStepSplit(multipleValuesSeparatorRegex, "", "all");

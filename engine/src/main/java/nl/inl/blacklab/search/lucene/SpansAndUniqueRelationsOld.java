@@ -61,7 +61,7 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
     /** Keeps our subspans in order, and keeps track of total length and end position. */
     private final SpanTotalLengthEndPositionWindow spanWindow;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** Sorted serialized representation of the relationInfos we've returned
      *  at the current start/end position. We use this to avoid the A/B vs. B/A problem:
@@ -290,8 +290,8 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.context = context;
     }
 

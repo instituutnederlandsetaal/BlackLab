@@ -46,7 +46,7 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
 
     private SearchHitGroups getSearch() {
         return index.search(helper.annotations().annotatedField())
-                .find(new CompleteQuery(new TextPatternAnyToken(1)))
+                .find(new CompleteQuery(TextPatternAnyToken.ANY_SINGLE_TOKEN))
                 .groupStats(getGroupBy(), 0, HitGroupScorer.NONE)
                 .sort(new HitGroupPropertyIdentity());
     }

@@ -7,7 +7,7 @@ import java.util.Optional;
 /**
  * The different webservice parameters and their default values.
  * <p>
- * Used by BLS, the Solr component and the proxy.
+ * Used by BLS and the proxy.
  * <p>
  * Note that there are still some parameters not covered here; those are parameters
  * used in operations that have not been extracted to the wslib module yet. They should

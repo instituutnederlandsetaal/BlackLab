@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -219,7 +218,7 @@ public class ResultDocs {
 
         SearchTimer timer = search.timer();
         SearchTimings timings = new SearchTimings(timer.time(), totalTime);
-        AnnotatedField searchField = docs == null ? groups.field() : docs.field();
+        String searchField = docs == null ? groups.field().name() : docs.field().name();
         TextPattern originalPattern = optRequestHits == null ? null : optRequestHits.patternOriginal();
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;

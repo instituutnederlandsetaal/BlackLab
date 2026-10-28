@@ -296,7 +296,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             if (part.direction == 1) {
                 // From hit end forwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                     int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                     starts[j] = pos + smaller;
                     ends[j] = pos + larger + 1;
@@ -304,7 +304,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             } else {
                 // From hit end backwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                     int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                     int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                     starts[j] = Math.max(start, end - larger);
@@ -315,7 +315,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             if (part.direction == 1) {
                 // From hit start forwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                     int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                     int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                     starts[j] = Math.min(end, start + smaller);
@@ -324,7 +324,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             } else {
                 // From hit start backwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                     int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                     starts[j] = Math.max(0, start - larger);
                     ends[j] = Math.max(0, start - smaller + 1);

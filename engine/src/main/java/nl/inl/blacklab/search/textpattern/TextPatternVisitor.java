@@ -33,8 +33,6 @@ public interface TextPatternVisitor<T> {
 
     T visitPropertySelect(TextPatternPropertySelect textPatternPropertySelect);
 
-    T visitRegex(TextPatternRegex textPatternRegex);
-
     T visitRelationMatch(TextPatternRelationMatch textPatternRelationMatch);
 
     T visitRepetition(TextPatternRepetition textPatternRepetition);
@@ -44,8 +42,6 @@ public interface TextPatternVisitor<T> {
     T visitSettings(TextPatternSettings textPatternSettings);
 
     T visitTags(TextPatternTags textPatternTags);
-
-    T visitTerm(TextPatternTerm textPatternTerm);
 
     T visitValue(TextPatternValue textPatternValue);
 

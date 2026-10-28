@@ -1,4 +1,0 @@
-proxyTarget:
-    url: http://solr:8983/solr
-    protocol: solr
-    defaultCorpusName: test      # needed for "server-wide" BLS operations (Solr request always needs a core)

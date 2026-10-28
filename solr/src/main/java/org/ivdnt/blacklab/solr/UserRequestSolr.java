@@ -24,6 +24,8 @@ public class UserRequestSolr implements UserRequest {
     /** BlackLab parameters are prefixed with this in Solr requests */
     public static final String BL_PAR_PREFIX = "bl.";
 
+    private final QueryParams.CorpusRefByName corpusRef;
+
     private final ResponseBuilder rb;
 
     private final BlackLabSearchComponent searchComponent;
@@ -33,6 +35,12 @@ public class UserRequestSolr implements UserRequest {
     public UserRequestSolr(ResponseBuilder rb, BlackLabSearchComponent searchComponent) {
         this.rb = rb;
         this.searchComponent = searchComponent;
+        this.corpusRef = new QueryParams.CorpusRefByName(rb.req.getCore().getName());
+    }
+
+    @Override
+    public QueryParams.CorpusRefByName getCorpusRef() {
+        return corpusRef;
     }
 
     @Override
@@ -94,25 +102,25 @@ public class UserRequestSolr implements UserRequest {
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = QueryParams.fromJson(getCorpusName(), operation, blReq, fallbackFilterQuery, config, isDebugMode);
+                qpSolr = QueryParams.fromJson(corpusRef, operation, blReq, fallbackFilterQuery, config, isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = QueryParamsSolrUtil.getParams(getCorpusName(), solrParams, fallbackFilterQuery, config, isDebugMode);
+            qpSolr = QueryParamsSolrUtil.getParams(corpusRef, solrParams, fallbackFilterQuery, config, isDebugMode);
         }
         return qpSolr;
     }
 
     @Override
-    public String getCorpusName() {
-        return rb.req.getCore().getName();
+    public boolean isDebugMode() {
+        return rb.req.getHttpSolrCall() == null || getSearchManager().isDebugMode(getRemoteAddr());
     }
 
     @Override
-    public boolean isDebugMode() {
-        return rb.req.getHttpSolrCall() == null || getSearchManager().isDebugMode(getRemoteAddr());
+    public String clientIpAddress() {
+        return getRemoteAddr();
     }
 
     @Override

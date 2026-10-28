@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.lib.results;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +21,6 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
@@ -267,15 +265,9 @@ public class ResultHits {
         summaryNumHits = new ResultSummaryNumHits(hitsStats1, docsStats1, reqHits.waitForTotal(), searchTimings,
                 matchingDocsSize);
         MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
-        Set<AnnotatedField> otherFields = new HashSet<>();
-        for (MatchInfo.Def def : matchInfoDefs.currentList()) {
-            otherFields.add(def.getField());
-            if (def.getTargetField() != null)
-                otherFields.add(def.getTargetField());
-        }
-        otherFields.remove(hitResults.field());
+        String searchField = hitResults.field().name();
+        Set<String> otherFields = matchInfoDefs.getOtherFields(searchField);
         WindowStats window1 = window.windowStats();
-        AnnotatedField searchField = hitResults.field();
         summaryCommonFields = new ResultSummaryCommonFields(reqHits.patternOriginal(), searchTimings, matchInfoDefs, null, window1, searchField,
                 otherFields, reqHits.sampleParams(), paramsForResponse, null, summaryNumHits
         );

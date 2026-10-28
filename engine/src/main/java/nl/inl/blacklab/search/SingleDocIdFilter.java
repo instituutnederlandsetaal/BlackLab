@@ -23,10 +23,10 @@ import nl.inl.blacklab.exceptions.BlackLabException;
  */
 public class SingleDocIdFilter extends Query {
 
-    final int luceneDocId;
+    final int globalLuceneDocId;
 
     public SingleDocIdFilter(int luceneDocId) {
-        this.luceneDocId = luceneDocId;
+        this.globalLuceneDocId = luceneDocId;
     }
 
     @Override
@@ -44,9 +44,10 @@ public class SingleDocIdFilter extends Query {
                     @Override
                     public Scorer get(long leadCost) {
                         return new Scorer() {
+                            private final int segmentLuceneDocId = globalLuceneDocId - ctx.docBase;
                             @Override
                             public int docID() {
-                                return luceneDocId;
+                                return segmentLuceneDocId;
                             }
 
                             @Override
@@ -57,12 +58,10 @@ public class SingleDocIdFilter extends Query {
                             @Override
                             public DocIdSetIterator iterator() {
                                 // Check that id could be in this segment, and bits allows this doc id
-                                if (luceneDocId >= ctx.docBase) {
-                                    // Check that the id is really in this segment by looking at the next segment
-                                    if (ctx.reader().maxDoc() > luceneDocId) {
-                                        // Doc occurs in this segment.
-                                        return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
-                                    }
+                                // Compare the segment-local document id with the segment size.
+                                if (segmentLuceneDocId >= 0 && segmentLuceneDocId < ctx.reader().maxDoc()) {
+                                    // Doc occurs in this segment.
+                                    return new SingleDocIdSet(segmentLuceneDocId).iterator();
                                 }
                                 // We're in the wrong segment. Return empty set.
                                 try {
@@ -101,14 +100,14 @@ public class SingleDocIdFilter extends Query {
 
     @Override
     public String toString(String field) {
-        return "SingleDocIdFilter(" + luceneDocId + ")";
+        return "SingleDocIdFilter(" + globalLuceneDocId + ")";
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + luceneDocId;
+        result = prime * result + globalLuceneDocId;
         return result;
     }
 
@@ -121,7 +120,7 @@ public class SingleDocIdFilter extends Query {
         if (getClass() != obj.getClass())
             return false;
         SingleDocIdFilter other = (SingleDocIdFilter) obj;
-        if (luceneDocId != other.luceneDocId)
+        if (globalLuceneDocId != other.globalLuceneDocId)
             return false;
         return true;
     }

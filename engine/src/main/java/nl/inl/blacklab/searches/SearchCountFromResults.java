@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
 import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult.CountType;
@@ -26,8 +25,8 @@ public class SearchCountFromResults<T extends Results> extends SearchCount {
      */
     private final CountType type;
 
-    public SearchCountFromResults(QueryInfo queryInfo, SearchForResults<T> source, CountType type) {
-        super(queryInfo);
+    public SearchCountFromResults(SearchForResults<T> source, CountType type) {
+        super(source);
         this.source = source;
         this.type = type;
     }

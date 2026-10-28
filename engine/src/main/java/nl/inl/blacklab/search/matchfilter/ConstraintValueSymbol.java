@@ -11,7 +11,7 @@ public class ConstraintValueSymbol extends ConstraintValue {
 
     ConstraintValueSymbol(String value) {
         if (value == null)
-            throw new IllegalArgumentException("s cannot be null!");
+            throw new IllegalArgumentException("symbol name cannot be null!");
         this.value = value;
     }
 

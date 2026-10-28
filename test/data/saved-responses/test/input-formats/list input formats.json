@@ -1,0 +1,18 @@
+{
+  "supportedInputFormats": {
+    "voice-tei": {
+      "configurationBased": true,
+      "description": "A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.",
+      "displayName": "TEI as used by the VOICE project",
+      "helpUrl": "http://www.tei-c.org/Guidelines/P5/",
+      "isVisible": true
+    }
+  },
+  "user": {
+    "canCreateIndex": false,
+    "clientIp": "VALUE_REMOVED",
+    "debugMode": false,
+    "id": null,
+    "loggedIn": false
+  }
+}

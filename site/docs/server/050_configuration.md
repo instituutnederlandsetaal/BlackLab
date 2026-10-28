@@ -311,7 +311,7 @@ indexing:
     # What to do if a document with the same persistent identifier
     # already exists in the index.
     # Options: fail (default), replace, skip
-    # (note that this will never apply if no pidField has been configured!)
+    # (note that this will never apply if no persistent identifier metadata field (role: pid) has been configured!)
     ifDocumentExists: fail
     
     # Should inline tags and relations be indexed case- and accent-sensitively?

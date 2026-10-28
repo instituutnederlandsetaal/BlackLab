@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.extensions;
 import java.util.List;
 
 import nl.inl.blacklab.plugins.param.PString;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -27,13 +27,13 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
         QueryExtensions.register("punctBefore", "Find punctuation before a token",
             List.of(PString.any("regex")),
                 List.of(REGEX_ANY_NON_WS),
-            (queryInfo, context, args) ->
+            (context, args) ->
                     getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS)
         );
         QueryExtensions.register("punctAfter", "Find punctuation after a token",
             List.of(PString.any("regex")),
             List.of(REGEX_ANY_NON_WS),
-            (queryInfo, context, args) -> {
+            (context, args) -> {
                 BLSpanQuery punctQuery = getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS);
                 return new SpanQueryAdjustHits(punctQuery, -1, -1);
             }
@@ -47,7 +47,7 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
      * @param regex the regex to match
      * @return the query
      */
-    private static BLSpanQuery getPunctQuery(QueryExecutionContext context, String regex) {
+    private static BLSpanQuery getPunctQuery(TextPatternContext context, String regex) {
         return TextPattern.regex(regex, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                 MatchSensitivity.INSENSITIVE).toQuery(context);
     }

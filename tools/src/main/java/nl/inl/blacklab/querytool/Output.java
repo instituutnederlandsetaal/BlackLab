@@ -137,7 +137,7 @@ public class Output {
             // For relations, we have to either highlight the source or the target, which may be in different
             // fields.
 
-            boolean isSourceField = rel.getField().equals(annotatedField);
+            boolean isSourceField = rel.getField().equals(annotatedField.name());
             if ((pos == rel.getSourceStart() || pos + 1 == rel.getSourceEnd()) && isSourceField) {
                 // Highlight relation source
                 start = rel.getSourceStart();
@@ -150,14 +150,14 @@ public class Output {
                 String optRelType = (name.contains(relType) ? "" : " " + relType);
                 nameSuffix = optRelType + " →";
             }
-            boolean isTargetField = rel.getTargetField().equals(annotatedField);
+            boolean isTargetField = rel.getTargetField().equals(annotatedField.name());
             if ((pos == rel.getTargetStart() || pos + 1 == rel.getTargetEnd()) && isTargetField) {
                 // Highlight relation target
                 start = rel.getTargetStart();
                 end = rel.getTargetEnd();
                 namePrefix = "→";
             }
-        } else if (mi.getField().equals(annotatedField)) {
+        } else if (mi.getField().equals(annotatedField.name())) {
             // Match info is in this field; not a relation, so just use the full span
             start = mi.getSpanStart();
             end = mi.getSpanEnd();
@@ -487,7 +487,7 @@ public class Output {
     }
 
     public void hits(HitResults total, HitResults window, QueryToolImpl queryTool) {
-        BlackLabIndex index = window.queryInfo().index();
+        BlackLabIndex index = total.index();
 
         if (!isShowConc()) {
             if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
@@ -515,18 +515,18 @@ public class Output {
                         Collections.emptyMap());
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
-                Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
+                Map<String, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {
                     EphemeralHit fhit = new EphemeralHit();
-                    for (Map.Entry<AnnotatedField, Kwic> e: fkwics.entrySet()) {
-                        AnnotatedField annotatedField = e.getKey();
+                    for (Map.Entry<String, Kwic> e: fkwics.entrySet()) {
+                        String annotatedField = e.getKey();
                         Kwic kwic = e.getValue();
                         int doc = hit.doc();
                         int start = kwic.fragmentStartInDoc();
                         int end = kwic.fragmentEndInDoc();
                         fhit.set(doc, start, end, hit.matchInfos());
                         hitToShow.addForeign(annotatedField,
-                                showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                                showHitFromForwardIndex(fhit, kwic, matchInfo, index.annotatedField(annotatedField)));
                     }
                 }
             } else {
@@ -562,8 +562,8 @@ public class Output {
                 line(String.format(format, hitNr, hit.left, hit.hitText, hit.right));
             else
                 line(String.format(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right));
-            for (Map.Entry<AnnotatedField, HitToShow> e: hit.foreignHits.entrySet()) {
-                String fieldName = e.getKey().name();
+            for (Map.Entry<String, HitToShow> e: hit.foreignHits.entrySet()) {
+                String fieldName = e.getKey();
                 HitToShow fhit = e.getValue();
                 line(String.format("    %s: %s%s%s", fieldName, fhit.left, fhit.hitText, fhit.right));
             }
@@ -641,7 +641,7 @@ public class Output {
     }
 
     public void docs(DocResults window, long docsCounted) {
-        BlackLabIndex index = window.queryInfo().index();
+        BlackLabIndex index = window.index();
         // Compile hits display info and calculate necessary width of left context column
         String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;
@@ -689,7 +689,7 @@ public class Output {
         /**
          * Hits in other fields (parallel corpora)
          */
-        public final Map<AnnotatedField, HitToShow> foreignHits = new TreeMap<>();
+        public final Map<String, HitToShow> foreignHits = new TreeMap<>();
 
         public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> matchInfos) {
             super();
@@ -700,7 +700,7 @@ public class Output {
             this.matchInfos = matchInfos;
         }
 
-        public void addForeign(AnnotatedField field, HitToShow hitToShow) {
+        public void addForeign(String field, HitToShow hitToShow) {
             foreignHits.put(field, hitToShow);
         }
     }

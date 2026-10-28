@@ -3,21 +3,17 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A query matching a fixed, predetermined span for every matching document.
@@ -49,8 +45,8 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
 
     private final int end;
 
-    public SpanQueryFixedSpan(QueryInfo queryInfo, String luceneField, int start, int end) {
-        super(queryInfo);
+    public SpanQueryFixedSpan(Context context, String luceneField, int start, int end) {
+        super(context);
         this.luceneField = luceneField;
         this.start = start;
         this.end = end;
@@ -122,8 +118,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                             if (currentDoc >= maxDoc)
                                 break;
                             boolean currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
-                            int docLength = lengthGetter.getFieldLength(currentDoc)
-                                    - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                            int docLength = lengthGetter.getFieldLength(currentDoc);
                             boolean currentDocIsTooShort = docLength < end;
                             skipThisDoc = currentDocIsDeletedDoc || currentDocIsTooShort;
                         } while (currentDoc < maxDoc && skipThisDoc);
@@ -169,7 +164,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                     }
 
                     @Override
-                    protected void passHitQueryContextToClauses(HitQueryContext context) {
+                    protected void passSpansContextToClauses(SpansContext context) {
                         // (no clauses)
                     }
 
@@ -258,7 +253,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
 
     @Override
     public BLSpanQuery inverted() {
-        return new SpanQueryAnyToken(queryInfo, 1, 1, luceneField);
+        return new SpanQueryAnyToken(context, 1, 1, luceneField);
     }
 
     @Override

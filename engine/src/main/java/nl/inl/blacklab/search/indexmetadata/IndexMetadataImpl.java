@@ -31,6 +31,7 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
@@ -46,7 +47,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
@@ -183,9 +183,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         private void updateMetadataDoc(BlackLabIndexWriter indexWriter, String metadataJson) throws IOException {
             // Create a metadata document with the metadata JSON, config format file,
             // and a marker field to we can find it again
-            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument(BLInputDocument.DocType.INDEXMETADATA);
+            BLInputDocument indexmetadataDoc = new BLInputDocument(BLInputDocument.DocType.INDEXMETADATA);
             indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
-            indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
+            indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER,
+                    BLFieldType.INDEX_METADATA_MARKER_FIELD_TYPE);
             TermQuery query = new TermQuery(METADATA_DOC_QUERY.getTerm());
             indexWriter.writer().updateDocuments(query, List.of(indexmetadataDoc), true);
         }
@@ -610,10 +611,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     @Override
     public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         String fieldName = fieldWriter.name();
-        AnnotatedFieldImpl cf;
-        if (annotatedFields.exists(fieldName)) {
-            cf = annotatedFields.get(fieldName);
-        } else {
+        AnnotatedFieldImpl cf = annotatedFields.get(fieldName);
+        if (cf == null) {
             ensureNotFrozen();
 
             // Not registered yet; do so now. Note that we only add the main annotation,
@@ -626,11 +625,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // they have a forward index, and the main annotation are all registered correctly.
         for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
             AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.name());
-            for (String suffix: annotationWriter.sensitivitySuffixes()) {
-                annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
+            for (MatchSensitivity matchSensitivity: annotationWriter.sensitivitySuffixes()) {
+                annotation.addSensitivity(matchSensitivity);
             }
             if (annotationWriter.includeOffsets())
-                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+                annotation.setOffsetsMatchSensitivity(annotationWriter.mainSensitivity());
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotation.createSensitivities(annotationWriter.getSensitivitySetting());
             //annotation.setOffsetsSensitivity(annotation.mainSensitivity().sensitivity());
@@ -771,14 +770,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             continue;
                         CorpusSize.Count fieldCount = countPerField.get(field.name());
                         // Add up token counts for all the documents
-                        String luceneField = annot.forwardIndexSensitivity().luceneField();
+                        String luceneField = annot.mainSensitivity().luceneField();
                         AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                         int docLength = (int) fi.docLength(segmentDocId);
-                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
+                        if (docLength > 0) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)
                             fieldCount.add(1,
-                                    (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                                    (long) docLength);
                             documentVersionCount++;
                             if (firstField) {
                                 documentCount++;
@@ -812,11 +811,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // However, we do want to keep track of it while creating or appending.
         // We just don't check that the metadata isn't frozen (we don't care what value gets written there)
         tokenCount += tokensProcessed;
-    }
-
-    @Override
-    public synchronized MetadataField registerMetadataField(String fieldName) {
-        return metadataFields.register(fieldName);
     }
 
     /**

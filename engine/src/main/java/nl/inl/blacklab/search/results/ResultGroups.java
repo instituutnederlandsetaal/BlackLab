@@ -34,11 +34,4 @@ public interface ResultGroups {
      */
     long size();
     
-    /**
-     * Get our original query info.
-     * 
-     * @return query info
-     */
-    QueryInfo queryInfo();
-
 }

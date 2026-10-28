@@ -3,9 +3,7 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,26 +16,21 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
-import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.util.CurrentThreadExecutorService;
 import nl.inl.util.VersionFile;
 
 /**
  * Main BlackLab instance, from which indexes can be opened.
  *
- * If you don't instantiate this, but call BlackLab.openIndex() directly,
- * an implicit instance will be created that will be closed when you close
- * the last index.
- *
- * Instantiating this explicitly has the advantage of being able to pass
- * parameters, such as the number of search thread you want (default 4).
+ * If you call BlackLab.open(), an implicit instance will be created
+ * that will be closed when you close the last index. If you want more
+ * control, you can call BlackLab.createEngine() to create your own
+ * instance of BlackLabEngine. This has the advantage of being able to pass
+ * parameters, such as the number of search thread you want (default autodetect).
  */
 public final class BlackLabEngine implements AutoCloseable {
 
@@ -50,14 +43,12 @@ public final class BlackLabEngine implements AutoCloseable {
     public static final int POOL_TERMINATE_WAIT_SEC = 10;
 
     /**
-     * All BlackLabEngines that have been instantiated, so we can close them on shutdown.
+     * The single BlackLabEngine instance, so we can close it on shutdown.
      */
-    private static final Set<BlackLabEngine> engines = new HashSet<>();
+    private static BlackLabEngine instance = null;
 
-    /**
-     * Map from IndexReader to BlackLab, for use from inside SpanQuery/Spans classes
-     */
-    private static final Map<IndexReader, BlackLabEngine> indexReader2BlackLabEngine = new IdentityHashMap<>();
+    /** Indexes to close when this engine is closed. */
+    private static final Set<BlackLabIndex> openIndexes = new HashSet<>();
 
     /** When autodetecting maxThreadsPerSearch, divide #CPUs by this number */
     private static final int THREADS_PER_SEARCH_AUTO_DIVIDER = 2;
@@ -70,10 +61,9 @@ public final class BlackLabEngine implements AutoCloseable {
 
     /** Close all opened engines */
     static synchronized void closeAll() {
-        List<BlackLabEngine> copy = new ArrayList<>(engines);
-        engines.clear();
-        for (BlackLabEngine engine : copy) {
-            engine.close();
+        if (instance != null) {
+            instance.close();
+            instance = null;
         }
     }
 
@@ -81,11 +71,6 @@ public final class BlackLabEngine implements AutoCloseable {
         // On program exit, make sure all the engines (and their threads) have been closed, or we might hang.
         Runtime.getRuntime().addShutdownHook(new Thread(BlackLabEngine::closeAll));
     }
-
-    /**
-     * Map from IndexReader to BlackLabIndex, for use from inside SpanQuery/Spans classes
-     */
-    private final Map<IndexReader, BlackLabIndex> indexReader2BlackLabIndex = new IdentityHashMap<>();
 
     /** Thread on which we run initializations (opening forward indexes, etc.).
      *  Single-threaded because these kinds of initializations are memory and CPU heavy. */
@@ -103,15 +88,17 @@ public final class BlackLabEngine implements AutoCloseable {
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
 
-    /** How to create indexing objects. By default, use the "direct to Lucene" implementation. */
-    private BLIndexObjectFactory indexObjectFactory = BLIndexObjectFactoryLucene.INSTANCE;
+    /** Were we implicitly created? If so, also implicitly close when the last index is closed */
+    private final boolean implicit;
 
     /** Was close() called on this engine? */
     private boolean wasClosed;
 
-    BlackLabEngine(int maxThreadsPerSearch) {
-        synchronized (engines) {
-            engines.add(this);
+    BlackLabEngine(int maxThreadsPerSearch, boolean implicit) {
+        synchronized (BlackLabEngine.class) {
+            if (instance != null)
+                throw new IllegalStateException("There can be only one BlackLabEngine instance");
+            instance = this;
         }
         initializationExecutorService = Executors.newSingleThreadExecutor(runnable -> {
             Thread worker = Executors.defaultThreadFactory().newThread(runnable);
@@ -129,6 +116,7 @@ public final class BlackLabEngine implements AutoCloseable {
 
         this.maxThreadsPerSearch = maxThreadsPerSearch < 0 ? chooseDefaultMaxThreadsPerSearch() :
                 maxThreadsPerSearch;
+        this.implicit = implicit;
     }
 
     public static int chooseDefaultMaxThreadsPerSearch() {
@@ -137,19 +125,22 @@ public final class BlackLabEngine implements AutoCloseable {
         return n;
     }
 
-    /**
-     * Set the index object factory to use.
-     *
-     * Use this to indicate whether we're indexing directly to Lucene (default)
-     * or via Solr.
-     *
-     * CAUTION: call this once, before doing anything else with this engine, or
-     * unpredictable behaviour may result!
-     *
-     * @param factory index object factory to use
-     */
-    public void setIndexObjectFactory(BLIndexObjectFactory factory) {
-        this.indexObjectFactory = factory;
+    public static synchronized BlackLabEngine singleInstance() {
+        if (instance == null)
+            throw new IllegalStateException("There must be exactly one engine for this method to be used");
+        return instance;
+    }
+
+    public static synchronized BlackLabEngine getOrCreateImplicit() {
+        if (instance == null) {
+            // -1 = choose max. threads per operation automatically
+            return new BlackLabEngine(-1, true);
+        }
+        return instance;
+    }
+
+    public static BlackLabEngine create(int maxThreadsPerSearch) {
+        return new BlackLabEngine(maxThreadsPerSearch, false);
     }
 
     /**
@@ -175,19 +166,6 @@ public final class BlackLabEngine implements AutoCloseable {
             // Preserve interrupt status
             Thread.currentThread().interrupt();
         }
-    }
-
-    public static BlackLabIndex indexFromReader(String indexName, IndexReader reader, boolean wrapIfNotFound, boolean writeMode) {
-        BlackLabEngine blackLabEngine;
-        synchronized (indexReader2BlackLabEngine) {
-            blackLabEngine = indexReader2BlackLabEngine.get(reader);
-        }
-        if (blackLabEngine == null && wrapIfNotFound) {
-            // If the IndexReader doesn't have a BlackLabIndex yet, create one in the implicit engine.
-            // (used with Solr, who manages IndexReaders for us)
-            blackLabEngine = BlackLab.implicitInstance();
-        }
-        return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(indexName, reader, wrapIfNotFound, writeMode);
     }
 
     /**
@@ -225,29 +203,27 @@ public final class BlackLabEngine implements AutoCloseable {
     public synchronized void close() {
         if (wasClosed)
             return;
+        synchronized (BlackLabEngine.class) {
+            if (instance == this)
+                instance = null;
+            else
+                throw new IllegalStateException("Cannot close engine: this is not the current instance");
+        }
         wasClosed = true;
         closeExecutorPool(searchExecutorService);
         closeExecutorPool(initializationExecutorService);
-        synchronized (indexReader2BlackLabIndex) {
-
-            List<BlackLabIndex> copy = new ArrayList<>(indexReader2BlackLabIndex.values()); // avoid concurrent mod.
+        synchronized (openIndexes) {
+            List<BlackLabIndex> copy = new ArrayList<>(openIndexes); // avoid concurrent mod.
             for (BlackLabIndex index: copy) {
                 index.close();
             }
         }
-        synchronized (engines) {
-            engines.remove(this);
-        }
-    }
-
-    public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexName, this, reader, null, true, false, format);
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
         checkSupportedIndexType(indexDir, false);
-        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, false, false, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, indexDir, false, false, null);
     }
 
     private static void checkSupportedIndexType(File indexDir, boolean createNewIndex) {
@@ -264,21 +240,6 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     /**
-     * Get a BlackLabIndex instance from an already opened IndexReader.
-     *
-     * Used for Solr integration, where Solr manages IndexReader instances.
-     *
-     * CAUTION: this only works with the integrated index format. 
-     *
-     * @param reader reader to wrap
-     * @return a BlackLabIndex instance with this reader
-     */
-    public BlackLabIndex wrapIndexReader(String indexName, IndexReader reader, boolean indexMode) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexName, this, reader, null, indexMode, false,
-                null);
-    }
-
-    /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
      * @param indexDir the index directory
@@ -290,7 +251,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         checkSupportedIndexType(indexDir, forceCreateNew);
-        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, indexDir, true, forceCreateNew, null);
     }
 
     /**
@@ -306,7 +267,7 @@ public final class BlackLabEngine implements AutoCloseable {
     public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
 
-        if (config != null && config.getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) == null) {
+        if (config != null && !config.hasPidField()) {
             logger.warn("YOUR DOCUMENT IDs ARE NOT PERSISTENT! The input format " + config.getName() + " " +
                     "does not specify a persistent identifier (pid) field. This will work, but random ids will " +
                     "be assigned to your documents every time you index. So reindexing may assign totally different " +
@@ -316,7 +277,7 @@ public final class BlackLabEngine implements AutoCloseable {
         }
 
         checkSupportedIndexType(indexDir, createNewIndex);
-        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
+        return new BlackLabIndexImpl(indexDir.getName(), this, indexDir, true, createNewIndex, config);
     }
 
     /**
@@ -333,24 +294,14 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     public synchronized void registerIndex(IndexReader reader, BlackLabIndex index) {
-        indexReader2BlackLabIndex.put(reader, index);
-        synchronized (indexReader2BlackLabEngine) {
-            indexReader2BlackLabEngine.put(reader, this);
-        }
+        openIndexes.add(index);
     }
 
     public synchronized void removeIndex(BlackLabIndex index) {
-        synchronized (indexReader2BlackLabEngine) {
-            indexReader2BlackLabEngine.remove(index.reader());
-        }
-        indexReader2BlackLabIndex.remove(index.reader());
-        if (BlackLab.isImplicitInstance(this) && indexReader2BlackLabIndex.isEmpty()) {
+        openIndexes.remove(index);
+        if (implicit && openIndexes.isEmpty()) {
             // We are the implicit instance and our last searcher has been closed. Clean up.
-            try {
-                close();
-            } finally {
-                BlackLab.discardImplicitInstance();
-            }
+            close();
         }
     }
 
@@ -365,44 +316,14 @@ public final class BlackLabEngine implements AutoCloseable {
     /**
      * Get the appropriate search executor service for the given number of threads.
      *
-     * If the number of threads is 2 or more, we use the regular
-     * search executor service. If the number of threads is 1, we just use a
-     * CurrentThreadExecutorService.
+     * If the number of threads is 1 or less, we use a CurrentThreadExecutorService.
+     * If the number of threads is 2 or more, we use the regular search executor service.
      *
      * @param numThreads number of threads to use for searching
      * @return the executor service
      */
     public ExecutorService searchExecutorService(int numThreads) {
-        return numThreads >= 2
-                ? searchExecutorService()
-                : new CurrentThreadExecutorService();
-    }
-
-    /**
-     * Given an IndexReader, return corresponding BlackLabIndex.
-     *
-     * @param reader IndexReader to get the BlackLabIndex for
-     * @param wrapIfNotFound if true, a new BlackLabIndex instance will be created for this IndexReader if none
-     *                       existed yet. Used with Solr.
-     * @return BlackLabIndex instance for this IndexReader
-     */
-    public synchronized BlackLabIndex getIndexFromReader(String indexName, IndexReader reader, boolean wrapIfNotFound, boolean writeMode) {
-        BlackLabIndex blackLabIndex = indexReader2BlackLabIndex.get(reader);
-        if (blackLabIndex == null && wrapIfNotFound) {
-            // We don't have a BlackLabIndex instance for this IndexReader yet. This can occur if e.g.
-            // Solr is in charge of opening IndexReaders. Create a new instance now and register it.
-            try {
-                blackLabIndex = wrapIndexReader(indexName, reader, false);
-                registerIndex(reader, blackLabIndex);
-            } catch (ErrorOpeningIndex e) {
-                throw new InvalidIndex(e);
-            }
-        }
-        return blackLabIndex;
-    }
-
-    synchronized  BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
-        return (BlackLabIndexWriter) wrapIndexReader(indexName, reader, true);
+        return numThreads <= 1 ? new CurrentThreadExecutorService() : searchExecutorService();
     }
 
     public int maxThreadsPerSearch() {
@@ -413,9 +334,5 @@ public final class BlackLabEngine implements AutoCloseable {
         if (max < 1)
             throw new IllegalArgumentException("maxThreadsPerSearch must be at least 1 (got " + max + ")");
         this.maxThreadsPerSearch = max;
-    }
-
-    public BLIndexObjectFactory indexObjectFactory() {
-        return indexObjectFactory;
     }
 }

@@ -1,9 +1,8 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 
 /**
  * A search operation that yields groups of hits.
@@ -14,8 +13,8 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
 
     private final SampleParameters sampleParameters;
 
-    public SearchHitGroupsSampled(QueryInfo queryInfo, SearchHitGroups source, SampleParameters sampleParameters) {
-        super(queryInfo);
+    public SearchHitGroupsSampled(SearchHitGroups source, SampleParameters sampleParameters) {
+        super(source.context());
         this.source = source;
         this.sampleParameters = sampleParameters;
     }

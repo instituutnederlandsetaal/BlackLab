@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 
 /**
@@ -230,7 +229,7 @@ class SpansExpansionRaw extends BLFilterDocsSpans<BLSpans> {
                 if (in.docID() != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = in.docID();
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId);
                 }
                 maxExpandSteps = tokenLength - end;
             }

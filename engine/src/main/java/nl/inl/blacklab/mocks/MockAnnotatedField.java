@@ -3,6 +3,7 @@ package nl.inl.blacklab.mocks;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
@@ -142,5 +143,14 @@ public class MockAnnotatedField implements AnnotatedField {
         if (field instanceof MockAnnotatedField)
             return name().compareTo(field.name());
         return getClass().getName().compareTo(field.getClass().getName());
+    }
+
+    @Override
+    public String toString() {
+        return "MockAnnotatedField{" +
+                "name='" + name + '\'' +
+                ", annotations=" + annotations.stream().map(Annotation::name).collect(Collectors.joining(", ")) +
+                ", index=" + index +
+                '}';
     }
 }

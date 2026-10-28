@@ -201,7 +201,7 @@
         "PRint602": 1
       },
       "isAnnotatedField": false,
-      "type": "TOKENIZED",
+      "type": "UNTOKENIZED",
       "valueListComplete": true
     },
     "title": {

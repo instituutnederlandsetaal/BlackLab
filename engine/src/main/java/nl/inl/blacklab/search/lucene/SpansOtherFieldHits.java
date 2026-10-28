@@ -5,8 +5,6 @@ import java.util.Arrays;
 
 import org.apache.lucene.queries.spans.FilterSpans;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * Gets the hits in other fields (from the matchInfo).
  *
@@ -20,7 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
-    private final AnnotatedField targetField;
+    private final String targetField;
 
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
@@ -28,13 +26,13 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     /** Adjusted end position of current hit */
     private int endAdjusted = -1;
 
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** Our clause's match info */
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final AnnotatedField clauseField;
+    private final String clauseField;
 
     /**
      * Constructs a SpansRelationSpanAdjust.
@@ -43,7 +41,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
      * @param targetField other field to get hits for
      *
      */
-    public SpansOtherFieldHits(BLSpans in, AnnotatedField targetField, AnnotatedField clauseField) {
+    public SpansOtherFieldHits(BLSpans in, String targetField, String clauseField) {
         super(in, SpanQueryOtherFieldHits.createGuarantees());
         this.targetField = targetField;
         this.clauseField = clauseField;
@@ -128,13 +126,13 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
+    protected void passSpansContextToClauses(SpansContext context) {
         this.context = context;
-        super.passHitQueryContextToClauses(context.withField(clauseField));
+        super.passSpansContextToClauses(context.withField(clauseField));
     }
 
     @Override
-    public AnnotatedField getOverriddenField() {
+    public String getOverriddenField() {
         return targetField;
     }
 

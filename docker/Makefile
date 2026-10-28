@@ -112,7 +112,6 @@ build:
 	$(COMPOSE_COMMAND)$(ALL_PROFILES) build$(BUILD_OPT)
 	# Make sure images are always tagged as latest, even if we override VERSION
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):$(VERSION)        $(IMAGE_NAME_PREFIX):latest
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:$(VERSION)   $(IMAGE_NAME_PREFIX)-solr:latest
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)  $(IMAGE_NAME_PREFIX)-proxy:latest
 
 # Build images (plain output for CI)
@@ -122,7 +121,6 @@ build-plain:
 # Tag latest images with tag VERSION (default: latest)
 tag:
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX):latest        $(IMAGE_NAME_PREFIX):$(VERSION)
-	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-solr:latest   $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) tag $(IMAGE_NAME_PREFIX)-proxy:latest  $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 
 # Tag latest images with most recent git commit hash
@@ -136,7 +134,6 @@ lsi:
 # Remove images with tag VERSION (default: latest)
 rmi:
 	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX):$(VERSION)
-	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) rmi $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 
 rmi-commit:
@@ -145,10 +142,8 @@ rmi-commit:
 # Tag latest images with VERSION (default: latest) and push to Docker Hub
 push: tag
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):$(VERSION)
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX):latest
-	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-solr:latest
 	$(DOCKER_COMMAND) push $(IMAGE_NAME_PREFIX)-proxy:latest
 
 # Tag images with most recent git commit hash and push them to Docker Hub
@@ -166,7 +161,6 @@ release-commit:
 # Pull images with version VERSION (default: latest) from Docker Hub
 pull:
 	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX):$(VERSION)
-	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-solr:$(VERSION)
 	$(DOCKER_COMMAND) pull $(IMAGE_NAME_PREFIX)-proxy:$(VERSION)
 
 # Pull images with version VERSION (default: latest) from Docker Hub

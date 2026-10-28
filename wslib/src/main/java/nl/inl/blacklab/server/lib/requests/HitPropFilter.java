@@ -18,7 +18,7 @@ public record HitPropFilter(HitProperty prop, PropertyValue value) {
                 qpar.get(WsParam.HIT_FILTER_VALUE))) {
             String hitFilterCrit = qpar.get(WsParam.HIT_FILTER_CRITERIUM);
             String hitFilterVal = qpar.get(WsParam.HIT_FILTER_VALUE);
-            BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+            BlackLabIndex index = qpar.getCorpusRef().index();
             AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
             ContextSize context = ParamUtil.getContext(qpar);
             HitProperty prop = HitProperty.deserialize(annotatedField, hitFilterCrit, context);

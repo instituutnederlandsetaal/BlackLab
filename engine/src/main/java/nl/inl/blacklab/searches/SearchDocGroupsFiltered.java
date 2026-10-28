@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 
 /** A search that yields groups of documents. */
@@ -15,8 +14,8 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
 
     private final PropertyValue value;
 
-    public SearchDocGroupsFiltered(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
-        super(queryInfo);
+    public SearchDocGroupsFiltered(SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
+        super(source);
         this.source = source;
         this.property = property;
         this.value = value;

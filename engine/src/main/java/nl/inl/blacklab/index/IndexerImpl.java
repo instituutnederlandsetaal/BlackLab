@@ -9,6 +9,7 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -19,6 +20,7 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -78,10 +80,10 @@ class IndexerImpl implements DocWriter, Indexer {
     private InputFormat inputFormat;
 
     /** How to index metadata fields (tokenized) */
-    private BLFieldType metadataFieldTypeTokenized;
+    private IndexableFieldType metadataFieldTypeTokenized;
 
     /** How to index metadata fields (untokenized) */
-    private BLFieldType metadataFieldTypeUntokenized;
+    private IndexableFieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
     private final List<File> linkedFileDirs = new ArrayList<>();
@@ -165,8 +167,8 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private void initMetadataFieldTypes() {
-        metadataFieldTypeTokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(true);
-        metadataFieldTypeUntokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(false);
+        metadataFieldTypeTokenized = BLFieldType.metadata(true);
+        metadataFieldTypeUntokenized = BLFieldType.metadata(false);
     }
 
     private String formatError(String formatIdentifier) {
@@ -197,7 +199,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public BLFieldType metadataFieldType(boolean tokenized) {
+    public IndexableFieldType metadataFieldType(boolean tokenized) {
         return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
     }
 
@@ -314,12 +316,13 @@ class IndexerImpl implements DocWriter, Indexer {
             String contentStoreName) {
         // Store as a field in the document (codec makes sure random access is possible)
         AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
-        if (annotatedFields.exists(contentStoreName)) {
-            annotatedFields.get(contentStoreName).setContentStore(true);
+        AnnotatedFieldImpl annotatedField = annotatedFields.get(contentStoreName);
+        if (annotatedField != null) {
+            annotatedField.setContentStore(true);
         }
 
         String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-        BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
+        IndexableFieldType fieldType = BLFieldType.contentStore();
 
         currentDoc.addField(luceneFieldName, document.toString(), fieldType);
     }
@@ -434,25 +437,14 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public BLIndexObjectFactory indexObjectFactory() {
-        return indexWriter.indexObjectFactory();
-    }
-
-    @Override
     public boolean needsPrimaryValuePayloads() {
         return indexWriter.needsPrimaryValuePayloads();
-    }
-
-    /** Get the strategy to use for indexing relations. */
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
-        return indexWriter.getRelationsStrategy();
     }
 
     @Override
     public void debugForceMerge() {
         try {
-            ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
+            indexWriter().writer().getWriter().forceMerge(1);
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }

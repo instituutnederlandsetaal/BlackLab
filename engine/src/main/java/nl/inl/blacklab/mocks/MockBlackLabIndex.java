@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -19,33 +18,31 @@ import com.ibm.icu.text.Collator;
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexForQuery;
 import nl.inl.blacklab.search.DocTask;
-import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.indexmetadata.FreqListCache;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
-import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -69,6 +66,13 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private final BlackLabEngine blackLab;
 
+    private final BlackLabIndexForQuery forQuery = BlackLabIndex.forQuery(this);
+
+    @Override
+    public BlackLabIndexForQuery forQuery() {
+        return forQuery;
+    }
+
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata(this);
@@ -77,12 +81,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
-        blackLab = BlackLab.implicitInstance();
+        blackLab = BlackLab.engine();
         blackLab.registerIndex(null, this);
-    }
-    
-    public QueryInfo createDefaultQueryInfo() {
-        return QueryInfo.create(this, mainAnnotatedField());
     }
 
     @Override
@@ -106,9 +106,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField field, QueryInfo queryInfo) {
-        return QueryExecutionContext.get(this, field.defaultSearchAnnotation(),
-                MatchSensitivity.INSENSITIVE, queryInfo);
+    public TextPatternContext textPatternContext(String field) {
+        return TextPatternContext.get(field,
+                annotatedField(field).defaultSearchAnnotation().name(),
+                MatchSensitivity.INSENSITIVE, this);
     }
 
     @Override
@@ -175,7 +176,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
+    public HitResults find(BLSpanQuery query, SearchSettings settings) {
         throw new UnsupportedOperationException();
     }
 
@@ -201,7 +202,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public MatchSensitivity defaultMatchSensitivity() {
-        return MatchSensitivity.CASE_INSENSITIVE;
+        return MatchSensitivity.INSENSITIVE;
     }
 
     @Override
@@ -240,10 +241,33 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+    public SearchEmpty search(String field, boolean useCache) {
         throw new UnsupportedOperationException();
     }
-    
+
+    Map<AnnotatedField, Map<CompleteQuery, Long>> countHitsResponses = new HashMap<>();
+
+    public void clearCountHitsResponses() {
+        countHitsResponses.clear();
+    }
+
+    /** Set up a future response to countHits call. */
+    public void putCountHitsResponse(AnnotatedField field, CompleteQuery completeQuery, long response) {
+        countHitsResponses
+                .computeIfAbsent(field, k -> new HashMap<>())
+                .put(completeQuery, response);
+    }
+
+    @Override
+    public long countHits(AnnotatedField field, CompleteQuery completeQuery) {
+        Long result = countHitsResponses
+                .getOrDefault(field, new HashMap<>())
+                .get(completeQuery);
+        if (result == null)
+            throw new IllegalArgumentException("No response set for input: " + field + ", " + completeQuery);
+        return result;
+    }
+
     @Override
     public void setCache(SearchCache cache) {
         throw new UnsupportedOperationException();
@@ -281,20 +305,21 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public Document luceneDoc(int docId, boolean includeContentStores) {
-        if (includeContentStores)
-            throw new UnsupportedOperationException("Always skips content stores");
-        try {
-            return reader().storedFields().document(docId);
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
+        throw new UnsupportedOperationException("luceneDoc is not supported in MockBlackLabIndex");
+//        if (includeContentStores)
+//            throw new UnsupportedOperationException("Always skips content stores");
+//        try {
+//            return reader().document(docId);
+//        } catch (IOException e) {
+//            throw new InvalidIndex(e);
+//        }
     }
 
-    @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
-            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
-        throw new UnsupportedOperationException();
-    }
+//    @Override
+//    public BLSpanQuery tagQuery(BLSpanQuery.Context context, AnnotationSensitivity luceneField, String tagNameRegex,
+//            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs, boolean implicitCapture) {
+//        throw new UnsupportedOperationException();
+//    }
 
     @Override
     public IndexType getType() {
@@ -308,11 +333,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public RelationsStrategy getRelationsStrategy() {
         throw new UnsupportedOperationException();
     }
 

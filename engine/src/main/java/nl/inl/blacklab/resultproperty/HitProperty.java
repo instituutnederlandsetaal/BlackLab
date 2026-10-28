@@ -40,7 +40,6 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     /**
      * Convert the String representation of a HitProperty back into the HitProperty
      *
-     * @param index our index
      * @param field field we're searching
      * @param serialized the serialized object
      * @return the HitProperty object, or null if it could not be deserialized
@@ -186,6 +185,12 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     HitProperty(HitProperty prop, PropContext context, boolean invert) {
         this.context = prop.context.adjustedWith(context);
         this.reverse = invert != prop.reverse;
+    }
+
+    public static HitProperty combine(List<HitPropertyHitText> list) {
+        if (list.size() == 1)
+            return list.get(0);
+        return new HitPropertyMultiple(list.toArray(HitPropertyHitText[]::new));
     }
 
     /**
@@ -368,8 +373,8 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * <p>
      * This should produce a query equivalent to <code>(?< "good" ) "dog"</code>.
      *
-     * @param property      hit property to refine with
-     * @param index         index to search
+     * @param index         index to search (only needed for HitPropertyDoc, HitPropertyStoredField, etc.)
+     * @param original      query to refine
      * @param propertyValue property value to refine with
      * @return refined query, or null if query couldn't be refined this way
      */
@@ -381,11 +386,26 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         return Optional.empty();
     }
 
+    /** Check if this property can refine a query with a property/value criterium. */
     public boolean canRefineQuery() {
         // Subclasses should override if they can refine a query
         return false;
     }
 
+    /**
+     * Refine the given query with the given property/value criterium.
+     * <p>
+     * This can be used to find the hits that would end up in a specific group if grouped.
+     * For example: refine the query <code>"dog"</code> with
+     * {@link HitPropertyBeforeHit} (1)
+     * and {@link PropertyValueContextWords} "good".
+     * <p>
+     * This should produce a query equivalent to <code>(?< "good" ) "dog"</code>.
+     *
+     * @param query query to refine
+     * @param value property value to refine with
+     * @return refined query
+     */
     protected RefiningQuery refineQuery(RefiningQuery query, PropertyValue value) {
         // Subclasses should override if they can refine a query
         throw new UnsupportedOperationException();

@@ -1,6 +1,6 @@
 # Clear results cache
 
-**URL** : `/blacklab-server/<corpus-name>/cache-clear`
+**URL** : `/blacklab-server/cache-clear`
 
 **Method** : `POST`
 

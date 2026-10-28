@@ -5,16 +5,25 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.Controller;
 import net.sf.saxon.lib.ResourceRequest;
+import net.sf.saxon.om.DocumentKey;
+import net.sf.saxon.om.DocumentPool;
+import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.trans.XPathException;
@@ -31,6 +40,8 @@ import nl.inl.util.fileprocessor.FileReference;
  * A helper for indexing using Saxon.
  */
 public class SaxonHelper {
+
+    private static final Logger logger = LogManager.getLogger(SaxonHelper.class);
 
     static Processor saxonProcessor = new Processor(false);
 
@@ -54,6 +65,16 @@ public class SaxonHelper {
         uriContentsCache = new ObjectCache<>(SaxonHelper::getContentsForUri, s -> {},
                 CACHE_CONTENTS_NUM, CACHE_CONTENTS_SEC);
     }
+
+    /**
+     * Keep track of URIs resolved via doc() on this thread, so we can clear those parsed documents from Saxon's
+     * global document pool once we finish indexing a single input document.
+     */
+    private static final ThreadLocal<Set<String>> docUrisLoadedByCurrentThread = ThreadLocal.withInitial(HashSet::new);
+
+    /** Cached XPathSelectors keep a Controller; track those controllers per thread so we can clear their doc() pools. */
+    private static final ThreadLocal<Set<Controller>> controllersUsedByCurrentThread =
+            ThreadLocal.withInitial(() -> java.util.Collections.newSetFromMap(new IdentityHashMap<>()));
 
     private static String getContentsForUri(String uri) {
         try {
@@ -85,10 +106,46 @@ public class SaxonHelper {
     }
 
     private static Source resolve(ResourceRequest req) {
+        docUrisLoadedByCurrentThread.get().add(req.uri);
         String contents = uriContentsCache.acquire(req.uri);
+        if (contents == null)
+            return null; // let Saxon use default URI resolution
         uriContentsCache.releaseObject(contents); // we can release it right away, it's just a string reference
         // Return a StreamSource with the contents for Saxon to parse
         return new StreamSource(new StringReader(contents), req.uri);
+    }
+
+    /**
+     * Remove doc() documents loaded on this thread from Saxon's global document pool.
+     *
+     * Needed because this processor is shared and long-lived; without cleanup, indexing many documents with
+     * doc('plugin:...') references can keep parsed linked documents alive indefinitely.
+     */
+    public static void clearDocUrisLoadedByCurrentThread() {
+        for (Controller controller : controllersUsedByCurrentThread.get()) {
+            controller.clearDocumentPool();
+        }
+        controllersUsedByCurrentThread.get().clear();
+
+        Set<String> uris = docUrisLoadedByCurrentThread.get();
+        if (uris.isEmpty())
+            return;
+        DocumentPool pool = saxonProcessor.getUnderlyingConfiguration().getGlobalDocumentPool();
+        for (String uri : uris) {
+            try {
+                TreeInfo tree = pool.find(new DocumentKey(uri));
+                if (tree != null)
+                    pool.discard(tree);
+            } catch (Exception e) {
+                logger.debug("Error discarding doc() URI from Saxon document pool: {}", uri, e);
+            }
+        }
+        uris.clear();
+    }
+
+    static void registerControllerForCurrentThread(Controller controller) {
+        if (controller != null)
+            controllersUsedByCurrentThread.get().add(controller);
     }
 
     private SaxonHelper() {}

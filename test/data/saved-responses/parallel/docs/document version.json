@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?><text lang="de">
+            <s xml:id="de_s1">
+                <w xml:id="de_w1">Dies</w>
+                <w xml:id="de_w2">ist</w>
+                <w xml:id="de_w3">ein</w>
+                <w xml:id="de_w4">Beispiel</w>
+            </s>
+            <s xml:id="de_s2">
+                <w xml:id="de_w5">Wir</w>
+                <w xml:id="de_w6">testen</w>
+                <w xml:id="de_w7">parallele</w>
+                <w xml:id="de_w8">Saetze</w>
+            </s>
+            <s xml:id="de_s3">
+                <w xml:id="de_w9">Kleine</w>
+                <w xml:id="de_w10">Korpora</w>
+                <w xml:id="de_w11">helfen</w>
+            </s>
+        </text>

@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Search operation that yields collocations.
@@ -13,8 +12,8 @@ public class SearchCollocationsSorted extends SearchCollocations {
     private final SearchCollocations source;
     private final ResultProperty property;
 
-    public SearchCollocationsSorted(QueryInfo queryInfo, SearchCollocations source, ResultProperty property) {
-        super(queryInfo);
+    public SearchCollocationsSorted(SearchCollocations source, ResultProperty property) {
+        super(source.context());
         this.source = source;
         this.property = property;
     }

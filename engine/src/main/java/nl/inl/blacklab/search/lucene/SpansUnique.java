@@ -25,7 +25,7 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
     /** Match info for the previous match */
     MatchInfo[] curMatchInfo = null;
 
-    HitQueryContext context;
+    SpansContext context;
 
     /**
      * Construct SpansUnique.
@@ -52,8 +52,8 @@ class SpansUnique extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.context = context;
     }
 

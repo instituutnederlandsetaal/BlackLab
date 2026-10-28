@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterSpan;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
@@ -36,7 +36,7 @@ public class TextPatternPropertySelect extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         // Evaluate left and right sides, getting the symbol, not MatchFilterSpan
         if (!context.isInConstraint())
             throw new InvalidQuery("Property selector . can only be used in constraints");
@@ -46,7 +46,8 @@ public class TextPatternPropertySelect extends TextPattern {
         if (!(resultLabel instanceof MatchFilterSpan mfs))
             throw new InvalidQuery("Expected a reference to a span left of . for token annotation reference");
         if (tpAnnotation instanceof TextPatternValue tpv && tpv.value instanceof ConstraintValueSymbol cvsa) {
-            return new MatchFilterTokenAnnotation(mfs.getGroupName(), cvsa.getValue());
+            String forwardIndexLuceneField = context.indexForQuery().annotatedFieldNameMainLuceneField(context.fieldName(), cvsa.getValue());
+            return new MatchFilterTokenAnnotation(forwardIndexLuceneField, context.fieldName(), mfs.getGroupName(), cvsa.getValue());
         } else
             throw new InvalidQuery("Expected an annotation name right of . for token annotation reference");
     }

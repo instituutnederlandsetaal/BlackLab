@@ -2,15 +2,14 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 
 /** A search that yields groups of hits. */
 public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
 
-    protected SearchHitGroups(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected SearchHitGroups(Context context) {
+        super(context);
     }
 
     /**
@@ -22,7 +21,7 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
     public SearchHitGroups sort(HitGroupProperty sortBy) {
         if (sortBy == null)
             return this;
-        return new SearchHitGroupsSorted(queryInfo(), this, sortBy);
+        return new SearchHitGroupsSorted(this, sortBy);
     }
     
     /**
@@ -32,7 +31,7 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
      * @return resulting operation
      */
     public SearchHitGroups sample(SampleParameters par) {
-        return new SearchHitGroupsSampled(queryInfo(), this, par);
+        return new SearchHitGroupsSampled(this, par);
     }
 
     /**
@@ -43,7 +42,7 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
      * @return resulting operation
      */
     public SearchHitGroups filter(HitGroupProperty property, PropertyValue value) {
-        return new SearchHitGroupsFiltered(queryInfo(), this, property, value);
+        return new SearchHitGroupsFiltered(this, property, value);
     }
 
     /**
@@ -54,7 +53,7 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
      * @return resulting operation
      */
     public SearchHitGroups window(long first, long number) {
-        return new SearchHitGroupsWindow(queryInfo(), this, first, number);
+        return new SearchHitGroupsWindow(this, first, number);
     }
 
 }

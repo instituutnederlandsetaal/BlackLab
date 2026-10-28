@@ -7,9 +7,11 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
+import nl.inl.util.RangeRegex;
 import nl.inl.util.StringUtil;
 
 /**
@@ -66,10 +68,10 @@ public class TextPatternTags extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(TextPatternContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
-        String optDesensitizedElNameRegex = context.optDesensitize(elementNameRegex);
+        String optDesensitizedElNameRegex = context.getSensitivity().desensitize(elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, TextPattern> e : attributes.entrySet()) {
             TextPattern tp = e.getValue();
@@ -77,13 +79,13 @@ public class TextPatternTags extends TextPattern {
             String regex;
             if (o instanceof ConstraintValue cvs) {
                 if (o instanceof ConstraintValueIntRange cvir)
-                    regex = TextPatternCompare.regexForRange(cvir.getMin(), cvir.getMax());
+                    regex = RangeRegex.forRange(cvir.getMin(), cvir.getMax());
                 else
                     regex = cvs.asString().getValue();
             } else {
                 throw new IllegalArgumentException("Attribute value must evaluate to a string or int range");
             }
-            attrOptIns.put(e.getKey(), context.optDesensitize(regex));
+            attrOptIns.put(e.getKey(), context.getSensitivity().desensitize(regex));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
@@ -97,7 +99,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        return context.index().tagQuery(context.queryInfo(), context.luceneFieldRef(),
+        return SpanQueryRelations.tagQuery(context.queryContext(), context.annotationSensitivity(),
                 optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto, implicitCapture);
     }
 

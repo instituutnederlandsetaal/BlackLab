@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -44,7 +45,7 @@ import nl.inl.util.JsonSchemaUtil;
  * Handle all the different webservice requests, given the requested operation,
  * parameters and output stream.
  * <p>
- * This is used for both the BLS and Solr webservices.
+ * This is used for BLS.
  */
 public class WebserviceRequestHandler {
 
@@ -108,11 +109,12 @@ public class WebserviceRequestHandler {
      * Show server information.
      *
      * @param request parameters
+     * @param config server configuration
      * @param rs output stream
      */
-    public static void opServerInfo(RequestServerInfo request, ResponseStreamer rs) {
+    public static void opServerInfo(RequestServerInfo request, BLSConfig config, ResponseStreamer rs) {
         ResultServerInfo serverInfo = new ResultServerInfo(request);
-        rs.serverInfo(serverInfo);
+        rs.serverInfo(serverInfo, config);
     }
 
     /**
@@ -262,8 +264,9 @@ public class WebserviceRequestHandler {
         rs.formatInfoResponse(result);
     }
 
-    public static void opListInputFormats(User user, IndexManager indexMan, ResponseStreamer rs, boolean debugMode) {
-        ResultListInputFormats result = new ResultListInputFormats(user, indexMan, debugMode);
+    public static void opListInputFormats(User user, IndexManager indexMan, String clientIp, ResponseStreamer rs, boolean debugMode) {
+        ResultUserInfo userInfo = new ResultUserInfo(user, indexMan, clientIp);
+        ResultListInputFormats result = new ResultListInputFormats(userInfo, indexMan, debugMode);
         rs.listFormatsResponse(result);
     }
 
@@ -320,6 +323,9 @@ public class WebserviceRequestHandler {
                 }
             }
             ds.endMap().endEntry();
+            ds.entry("searchField", request.searchField().name());
+            if (request.explain())
+                ResponseStreamer.explain(ds, request.searchField(), request.textPattern());
         }
         ds.endMap();
     }

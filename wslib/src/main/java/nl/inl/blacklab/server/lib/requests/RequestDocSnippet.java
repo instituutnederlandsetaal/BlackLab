@@ -29,7 +29,7 @@ public record RequestDocSnippet(
         boolean hasHitStartEnd = qpar.optInteger(WsParam.HIT_START).isPresent();
         int maxContextSize = config.getParameters().getContextSize().getMaxInt();
         int maxSnippetSize = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
-        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        BlackLabIndex index = qpar.getCorpusRef().index();
         return new RequestDocSnippet(
                 qpar.get(WsParam.DOC_PID),
                 ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD)),

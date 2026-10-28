@@ -237,7 +237,7 @@ Here's how the above example queries are translated:
 
 As you can see, the pseudo-annotations extend your regular expression with optional whitespace. The `punctAfter` pseudo-annotation also uses a lookahead to account for the fact that the punctuation is indexed at the position of the following word.
 
-Like noted abovem `punctBefore` and `punctAfter` look like annotations, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index. `punctBefore` and `punctAfter` are actually _query functions_. The query:
+Like noted above, `punctBefore` and `punctAfter` look like annotations, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index. `punctBefore` and `punctAfter` are actually _query functions_. The query:
 
 ```
 [punctAfter=","]

@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Base class for non-Hits Results (docs, groups, termfrequency). */
 public abstract class ResultsList<T> extends ResultsAbstract {
@@ -17,8 +18,8 @@ public abstract class ResultsList<T> extends ResultsAbstract {
     /** The results. */
     protected List<T> results;
 
-    protected ResultsList(QueryInfo queryInfo) {
-        super(queryInfo);
+    protected ResultsList(BlackLabIndex index, String field) {
+        super(index, field);
         results = new ArrayList<>();
     }
 

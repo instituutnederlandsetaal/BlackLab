@@ -279,12 +279,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return anyRewritten;
     }
 
-    static boolean optimizeClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {
+    static boolean optimizeClauses(List<BLSpanQuery> clauses, BlackLabIndex index) throws IOException {
         boolean anyRewritten = false;
         // Rewrite all clauses.
         for (int i = 0; i < clauses.size(); i++) {
             BLSpanQuery child = clauses.get(i);
-            BLSpanQuery rewritten = child.optimize(reader);
+            BLSpanQuery rewritten = child.optimize(index);
             if (child != rewritten) {
                 // Replace the child with the rewritten version
                 anyRewritten = true;
@@ -364,19 +364,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanQuery optimize(IndexReader reader) throws IOException {
+    public BLSpanQuery optimize(BlackLabIndex index) throws IOException {
         //super.optimize(reader);
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
-        boolean anyRewritten = performQueryOptimizations(index, cl);
+        boolean anyRewritten = performQueryOptimizations(index.reader(), cl);
 
         // Optimize each clause, and flatten again if necessary
         // NOTE: this seems redundant because we've already flattened, and optimize() is only implemented by
         // SpanQuerySequence - could we get rid of optimize() and just do all this in rewrite(), before rewriting each
         // clause?
-        anyRewritten |= optimizeClauses(cl, reader);
+        anyRewritten |= optimizeClauses(cl, index);
 
         // If there's just one clause (left), return that directly
         // (regardless of whether anything was rewritten)
@@ -391,7 +390,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));
     }
 
-    private boolean performQueryOptimizations(BlackLabIndex index, List<BLSpanQuery> cl) {
+    private boolean performQueryOptimizations(IndexReader reader, List<BLSpanQuery> cl) {
         // Flatten nested sequences.
         // This doesn't change the query because the sequence operator is associative.
         boolean anyRewritten = flattenSequence(cl);
@@ -408,7 +407,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
         // as dealing with each of these (sometimes frequent) terms, which can be significant.
-        anyRewritten |= combineAdjacentClauses(cl, index.reader(), ClauseCombiner.all());
+        anyRewritten |= combineAdjacentClauses(cl, reader, ClauseCombiner.all());
         return anyRewritten;
     }
 
@@ -417,8 +416,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
-        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
-        boolean anyRewritten = performQueryOptimizations(index, cl);
+        boolean anyRewritten = performQueryOptimizations(reader, cl);
 
         // Rewrite each clause, and flatten again if necessary
         anyRewritten |= rewriteClauses(cl, reader);

@@ -91,7 +91,12 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     @Override
     public MetadataFieldImpl addFromConfig(ConfigMetadataField f) {
         MetadataFieldImpl fieldDesc = MetadataFieldImpl.fromConfig(f, this);
-        put(f.getName(), fieldDesc);
+        synchronized (this) {
+            ensureNotFrozen();
+            if (fieldDesc.role() == MetadataField.Role.PID)
+                setPidField(fieldDesc.name());
+            metadataFieldInfos.put(f.getName(), fieldDesc);
+        }
         return fieldDesc;
     }
 
@@ -272,12 +277,6 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     }
 
     @Override
-    public synchronized void put(String fieldName, MetadataFieldImpl fieldDesc) {
-        ensureNotFrozen();
-        metadataFieldInfos.put(fieldName, fieldDesc);
-    }
-
-    @Override
     public void clearSpecialFields() {
         ensureNotFrozen();
         pidField = null;
@@ -353,8 +352,8 @@ public class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         if (field != null) {
             field.setOccursInFragments();
             if (!anyOccurInFragments) {
-                anyOccurInFragments = true;
                 ensureNotFrozen();
+                anyOccurInFragments = true;
             }
         } else {
             throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");

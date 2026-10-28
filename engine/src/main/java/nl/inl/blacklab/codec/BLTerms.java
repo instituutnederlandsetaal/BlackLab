@@ -15,7 +15,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.BLFieldTypeLucene;
+import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -66,7 +66,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         try {
             org.apache.lucene.index.Terms delegateTerms = postingsReader.delegateFieldsProducer.terms(fieldName);
             if (delegateTerms != null) {
-                Collators collators = BLFieldTypeLucene.getFieldCollators(postingsReader.state.fieldInfos.fieldInfo(fieldName));
+                Collators collators = BLFieldType.getFieldCollators(postingsReader.state.fieldInfos.fieldInfo(fieldName));
                 return new BLTerms(field, collators, delegateTerms, postingsReader);
             }
             return null;

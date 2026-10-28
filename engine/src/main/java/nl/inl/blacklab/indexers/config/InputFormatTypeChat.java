@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -463,12 +464,12 @@ public class InputFormatTypeChat extends InputFormatTypeConfig {
                     }
                 }
 
-                Map<String, List<String>> atts = CollectionsUtil.toMapOfLists(blockMetadata);
-                inlineTag(blockTagName, true, atts);
+                Map<String, Collection<String>> atts = CollectionsUtil.toMapOfCollections(blockMetadata);
+                inlineTag(blockTagName, true, atts, AnnotationType.SPAN);
             }
 
             private void endBlock() {
-                inlineTag(blockTagName, false, null);
+                inlineTag(blockTagName, false, null, AnnotationType.SPAN);
             }
 
             private void addWords(String line) {

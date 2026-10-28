@@ -5,7 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PInteger;
 import nl.inl.blacklab.plugins.param.PQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -23,7 +23,7 @@ public class QueryFunctionMeet extends QueryFunction {
                 null, false);
     }
 
-    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(TextPatternContext context, List<Object> parameters) {
         BLSpanQuery findClause = (BLSpanQuery) parameters.get(0);
         BLSpanQuery nearClause = (BLSpanQuery) parameters.get(1);
         int contextStart = (Integer) parameters.get(2);

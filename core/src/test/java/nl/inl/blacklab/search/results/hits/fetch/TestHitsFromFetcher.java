@@ -21,10 +21,9 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
@@ -32,7 +31,8 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestHitsFromFetcher {
-    public static final Hits.HitsContext DUMMY_CONTEXT = new Hits.HitsContext(null, MatchInfoDefs.EMPTY, null);
+    public static final Hits.Context DUMMY_CONTEXT = new Hits.Context(null,"test",
+            MatchInfoDefs.EMPTY, null);
 
     public final TestIndex testIndex = TestIndex.get();
 
@@ -67,7 +67,7 @@ public class TestHitsFromFetcher {
             }
 
             @Override
-            public Hits.HitsContext context() {
+            public Hits.Context context() {
                 return DUMMY_CONTEXT;
             }
 
@@ -130,7 +130,7 @@ public class TestHitsFromFetcher {
             }
 
             @Override
-            public Hits.HitsContext context() {
+            public Hits.Context context() {
                 return DUMMY_CONTEXT;
             }
 
@@ -156,9 +156,8 @@ public class TestHitsFromFetcher {
     @Test
     public void testSublist() throws IOException {
         BlackLabIndex index = testIndex.index();
-        QueryInfo queryInfo = QueryInfo.create(index);
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(queryInfo, patternQuery);
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(index.defaultQueryContext(), 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(index, index.mainAnnotatedField().name(), patternQuery);
         Hits whole = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         int subListStart = 11;
         int subListLength = 15;
@@ -169,27 +168,26 @@ public class TestHitsFromFetcher {
         }
     }
 
-    private static List<HitPublisher> getPublishers(QueryInfo queryInfo, BLSpanQuery patternQuery)
+    private static List<HitPublisher> getPublishers(BlackLabIndex index, String field, BLSpanQuery patternQuery)
             throws IOException {
-        BlackLabIndex index = queryInfo.index();
         BLSpanWeight weight = patternQuery.createWeight(index.searcher(),
                 ScoreMode.COMPLETE_NO_SCORES, 1.0f);
         List<HitPublisher> publishers = new ArrayList<>();
         ExecutorService service = Executors.newFixedThreadPool(2);
-        HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
+        SpansContext spansContext = new SpansContext(field);
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats, true));
+            publishers.add(new HitPublisherSpans(index, lrc, weight, spansContext, service, hitsStats, docsStats));
         }
         return publishers;
     }
 
     @Test
     public void testSort() throws IOException {
-        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
-        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        List<HitPublisher> publishers = getPublishers(queryInfo, patternQuery);
+        BlackLabIndex index = testIndex.index();
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(index.defaultQueryContext(), 1, 1, "contents%word@i");
+        List<HitPublisher> publishers = getPublishers(index, index.mainAnnotatedField().name(), patternQuery);
         Hits unsorted = new HitsFromPublishers(publishers, SearchSettings.DEFAULT);
         HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
         Hits sorted = unsorted.sorted(sortBy);

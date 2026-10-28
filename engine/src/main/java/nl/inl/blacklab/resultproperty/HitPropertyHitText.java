@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jspecify.annotations.NonNull;
 
@@ -52,7 +51,10 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     @Override
     @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
-        return original.withPattern(new TextPatternAnd(original.pattern(), propTextPattern));
+        TextPattern tp = original.pattern() == null ?
+                propTextPattern :
+                new TextPatternAnd(original.pattern(), propTextPattern);
+        return original.withPattern(tp);
     }
 
     @Override
@@ -72,7 +74,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
             // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
             // Determine start and end using matchInfo instead.
             fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
-                int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
                 starts[hitIndex] = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                 ends[hitIndex] = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
             });

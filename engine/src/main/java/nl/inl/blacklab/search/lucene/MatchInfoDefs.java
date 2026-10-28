@@ -3,12 +3,14 @@ package nl.inl.blacklab.search.lucene;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Definitions of match information (captured groups) for a query.
@@ -22,7 +24,7 @@ public class MatchInfoDefs {
 
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
-        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
             throw new UnsupportedOperationException("Cannot add to immutable object MatchInfoDefs.EMPTY");
         }
     };
@@ -41,6 +43,15 @@ public class MatchInfoDefs {
         this.defs.addAll(defs);
     }
 
+    public @NonNull Set<String> getOtherFields(String searchField) {
+        Set<String> otherFields = new HashSet<>();
+        for (MatchInfo.Def def : currentList()) {
+            if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
+                otherFields.add(def.getTargetField());
+        }
+        return otherFields;
+    }
+
     public Map<String, MatchInfo> getMap(MatchInfo[] matchInfo, boolean omitEmptyCaptures) {
         if (matchInfo == null)
             return Collections.emptyMap();
@@ -55,7 +66,7 @@ public class MatchInfoDefs {
         return map;
     }
 
-    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
         MatchInfo.Def e = new MatchInfo.Def(defs.size(), name, type, field, targetField);
         defs.add(e);
         return e;
@@ -65,7 +76,7 @@ public class MatchInfoDefs {
         return defs.get(i);
     }
 
-    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
+    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, String field, String targetField) {
         Optional<MatchInfo.Def> mi = defs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();

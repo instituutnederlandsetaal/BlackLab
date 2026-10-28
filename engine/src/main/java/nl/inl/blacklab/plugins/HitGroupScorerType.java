@@ -3,7 +3,8 @@ package nl.inl.blacklab.plugins;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 
@@ -38,6 +39,19 @@ public abstract class HitGroupScorerType extends Plugin {
     public abstract Type getType();
 
     /**
+     * Does this scorer need the total population frequency to calculate its score?
+     * <p>
+     * Determining this value may require an additional document or relation query. This defaults to true so existing
+     * scorer plugins continue to receive the value; implementations that do not use {@code totalFrequency} should
+     * override this method and return false.
+     *
+     * @return true if {@code totalFrequency} must be calculated before constructing this scorer
+     */
+    public boolean needsTotalFrequency() {
+        return true;
+    }
+
+    /**
      * Get a scorer for a group representing a collocate of a word or query.
      * <p>
      * Check getType() to make sure this HitGroupScorerProvider does collocation scoring.
@@ -46,22 +60,22 @@ public abstract class HitGroupScorerType extends Plugin {
      * If you're finding collocations for "ship" and want to score the resulting groups of collocates,
      * call this method on a supporting scorer provider to get the scorer.
      *
-     * @param collocateAnnotation annotation sensitivity used by the collocate. E.g. if we're looking for words
-     *                            around the lemma "ship", and we're looking case-insensitively, this would be the
-     *                            case-insensitive alternative of the word annotation. Used to find frequency from
-     *                            group identity.
+     * @param field               the field the collocates are in
+     * @param groupBy             group by property
      * @param filter              document filter
-     * @param totalFrequency      number of words in the corpus (for proximity collocations), or cardinality of the
-     *                            relation (for relation-based collocations).
+     * @param totalFrequency      number of words in the selected (sub)corpus (for proximity collocations), or
+     *                            cardinality of the relation (for relation-based collocations); -1 if
+     *                            {@link #needsTotalFrequency()} returns false
      * @param wordFrequency       total frequency of the search word (or query) we're finding collocations *for* ("ship" in
      *                            the example)
      * @param collocationType     collocation type, e.g. proximity, relation sources or targets.
      * @param relationType        relation type if we're finding relation collocations, null otherwise
+     * @param loose               allow fast-and-loose calculation (terms in some deleted docs may still be counted)?
      * @return collocate scorer
      */
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter,
+    public HitGroupScorer getCollocationScorer(AnnotatedField field, HitProperty groupBy, Query filter,
             long totalFrequency, long wordFrequency, HitGroupCollocationScorer.CollocationType collocationType,
-            String relationType) {
+            String relationType, boolean loose) {
         throw new PluginException("HitGroupScorerType " + getName() + " does not support collocation scoring");
     }
 

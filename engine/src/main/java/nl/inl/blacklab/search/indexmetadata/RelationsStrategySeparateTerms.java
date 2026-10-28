@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -21,13 +22,12 @@ import org.apache.lucene.util.automaton.RegExp;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactorySameRelationId;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.util.StringUtil;
 
 /**
  * A span/relation strategy where the type (span name) and any attributes are indexed
@@ -70,7 +70,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param attributes       any attributes for this relation
      * @return term to index in Lucene
      */
-    private static List<String> indexTerms(String fullRelationType, Map<String, List<String>> attributes) {
+    private static List<String> indexTerms(String fullRelationType, Map<String, Collection<String>> attributes) {
         // Add a special term not used for searching, only to write the relation index
         // It consists of the relation type and the attributes and their values, all unprocessed
         // (i.e. not lowercased, etc.)
@@ -200,9 +200,9 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      */
     private static String tagAttributeRegex(String relTypeRegex, String nameRegex, String valueRegex) {
         if (StringUtils.isEmpty(relTypeRegex))
-            relTypeRegex = ".+";
+            relTypeRegex = RelationUtil.ANY_TYPE_REGEX;
         if (StringUtils.isEmpty(nameRegex))
-            nameRegex = ".+";
+            nameRegex = StringUtil.REGEX_ANY_NON_EMPTY_VALUE;
         return RelationUtil.optParRegex(relTypeRegex) + ATTR_SEPARATOR +
                 RelationUtil.optParRegex(nameRegex) + KEY_VALUE_SEPARATOR +
                 RelationUtil.optParRegex(valueRegex);
@@ -225,15 +225,15 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public BLSpanQuery getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex,
+    public BLSpanQuery getRelationsQuery(BLSpanQuery.Context context, AnnotationSensitivity relationField, String relationTypeRegex,
             Map<String, String> attributes) {
         // Construct the clause from the field, relation type and attributes
-        List<String> regexes = searchRegexes(queryInfo.index(), relationTypeRegex, attributes);
+        List<String> regexes = searchRegexes(relationTypeRegex, attributes);
         assert regexes.size() == (attributes == null ? 0 : attributes.size()) + 1;
         List<BLSpanQuery> queries = new ArrayList<>();
         for (String regex: regexes) {
             RegexpQuery regexpQuery = new RegexpQuery(new Term(relationField.luceneField(), regex), RegExp.DEPRECATED_COMPLEMENT);
-            queries.add(new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery));
+            queries.add(new BLSpanMultiTermQueryWrapper<>(context, regexpQuery));
         }
         SpanQueryAnd q =  new SpanQueryAnd(queries);
         q.setFilter(SpansAndFilterFactorySameRelationId.INSTANCE);
@@ -251,7 +251,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @return regexes to find this relation (first is the type, rest are attributes)
      */
     @Override
-    public List<String> searchRegexes(BlackLabIndex index, String fullRelationTypeRegex,
+    public List<String> searchRegexes(String fullRelationTypeRegex,
             Map<String, String> attributes) {
         String typeRegex = RelationUtil.optParRegex(fullRelationTypeRegex);
         if (attributes == null || attributes.isEmpty())
@@ -279,7 +279,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         List<String> terms = indexTerms(fullType, attributes);
         indexTermFunc.accept(terms.get(0), payload);
 
@@ -294,7 +294,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, Collection<String>> attributes) {
         // Always assign a relation id, because we need it to match tags to attributes,
         // even if there's no extra information stored in the relation index (which there should be
         // if there's attributes, but ok).

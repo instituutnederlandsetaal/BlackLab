@@ -12,17 +12,11 @@ public interface Results extends SearchResult {
      */
     long NO_LIMIT = Long.MAX_VALUE;
 
-    /**
-     * Get information about the original query.
-     * <p>
-     * This includes the index, field, max. settings, and max. stats
-     * (whether the max. settings were reached).
-     *
-     * @return query info
-     */
-    QueryInfo queryInfo();
+    String fieldName();
 
-    AnnotatedField field();
+    default AnnotatedField field() {
+        return index().annotatedField(fieldName());
+    }
 
     BlackLabIndex index();
 

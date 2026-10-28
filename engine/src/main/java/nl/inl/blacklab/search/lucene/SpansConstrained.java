@@ -15,7 +15,7 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
     private final MatchFilter constraint;
 
     /** The hit query context, which contains captured group information */
-    private HitQueryContext context;
+    private SpansContext context;
 
     /** The current match info (captured groups, relations, etc.) */
     private MatchInfo[] matchInfo;
@@ -33,10 +33,10 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    protected void passHitQueryContextToClauses(HitQueryContext context) {
-        super.passHitQueryContextToClauses(context);
+    protected void passSpansContextToClauses(SpansContext context) {
+        super.passSpansContextToClauses(context);
         this.context = context;
-        constraint.setHitQueryContext(context);
+        constraint.setSpansContext(context);
     }
 
     @Override

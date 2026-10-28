@@ -50,15 +50,6 @@ public final class AnnotatedFieldNameUtil {
      */
     static final String BOOKKEEPING_SEP = "#";
 
-    /** Length of SENSITIVITY_SEP */
-    static final int SENSITIVITY_SEP_LEN = SENSITIVITY_SEP.length();
-
-    /** Length of ANNOT_SEP */
-    static final int ANNOT_SEP_LEN = ANNOT_SEP.length();
-
-    /** Length of BOOKKEEPING_SEP */
-    static final int BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
-
     private AnnotatedFieldNameUtil() {
     }
 
@@ -74,90 +65,32 @@ public final class AnnotatedFieldNameUtil {
      * Construct Lucene field name for annotated field bookkeeping subfield.
      *
      * @param fieldName the base field name
-     * @param annotName the annotation name, or null if this is bookkeeping for the whole field
-     * @param bookkeepName name of the bookkeeping value
-     * @return the Lucene field name
-     */
-    static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
-        String fieldAnnotName;
-        boolean annotGiven = annotName != null && !annotName.isEmpty();
-        if (fieldName == null || fieldName.isEmpty()) {
-            if (annotGiven) {
-                fieldAnnotName = annotName;
-            } else
-                throw new IllegalArgumentException("Must specify a base name, a annotation name or both: " + fieldName
-                        + ", " + annotName + ", " + bookkeepName);
-        } else {
-            fieldAnnotName = fieldName + (annotGiven ? ANNOT_SEP + annotName : "");
-        }
-
-        if (bookkeepName == null || bookkeepName.isEmpty())
-            return fieldAnnotName;
-        return fieldAnnotName + BOOKKEEPING_SEP + bookkeepName;
-    }
-
-    /**
-     * Construct Lucene field name for annotated field bookkeeping subfield.
-     *
-     * @param fieldName the base field name
      * @param bookkeepName name of the bookkeeping value
      * @return the Lucene field name
      */
     static String bookkeepingField(String fieldName, String bookkeepName) {
-        return bookkeepingField(fieldName, null, bookkeepName);
-    }
-
-    /**
-     * Construct (partial) Lucene field name for annotation on annotated field. 
-     *
-     * @param fieldName the base field name, or null to leave this part out
-     * @param annotName the annotation name (required)
-     * @param sensitivityName the sensitivity name, or null to leave this part out
-     * @return the (partial) Lucene field name
-     */
-    public static String annotationField(String fieldName, String annotName, String sensitivityName) {
-        String fieldAnnotName;
-        boolean annotGiven = annotName != null && !annotName.isEmpty();
-        if (!annotGiven) {
-            throw new IllegalArgumentException("Must specify a annotation name");
-        }
         if (fieldName == null || fieldName.isEmpty()) {
-            fieldAnnotName = annotName;
-        } else {
-            fieldAnnotName = fieldName + ANNOT_SEP + annotName;
+            throw new IllegalArgumentException("Must specify a base field name: " + fieldName
+                    + ", " + bookkeepName);
         }
-
-        if (sensitivityName == null || sensitivityName.isEmpty()) {
-            return fieldAnnotName;
-        }
-        return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;
+        if (bookkeepName == null || bookkeepName.isEmpty())
+            return fieldName;
+        return fieldName + BOOKKEEPING_SEP + bookkeepName;
     }
 
     /**
-     * Construct partial Lucene field name for annotation on annotated field.
-     * 
-     * Sensitivity part is not included.
+     * Construct Lucene field name for annotation on annotated field.
      *
-     * @param fieldName the base field name, or null to leave this part out
-     * @param annotName the annotation name (required)
-     * @return the partial Lucene field name
+     * @param fieldName the base field name
+     * @param annotName the annotation name
+     * @param sensitivity the sensitivity
+     * @return the Lucene field name
      */
-    public static String annotationField(String fieldName, String annotName) {
-        return annotationField(fieldName, annotName, null);
-    }
-
-    /**
-     * Construct a annotation alternative name from a field annotation name
-     * 
-     * @param fieldAnnotName the field annotation name
-     * @param sensitivityName the alternative name
-     * @return the field annotation alternative name
-     */
-    public static String annotationSensitivity(String fieldAnnotName, String sensitivityName) {
-        if (sensitivityName == null || sensitivityName.isEmpty()) {
-            throw new IllegalArgumentException("Must specify an sensitivity name");
+    public static String luceneName(String fieldName, String annotName, MatchSensitivity sensitivity) {
+        if (fieldName == null || annotName == null || sensitivity == null) {
+            throw new IllegalArgumentException("All parameters must be specified: " + fieldName + ", " + annotName + ", " + sensitivity);
         }
-        return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;
+        return fieldName + ANNOT_SEP + annotName + SENSITIVITY_SEP + sensitivity.luceneFieldSuffix();
     }
 
     /**
@@ -166,11 +99,10 @@ public final class AnnotatedFieldNameUtil {
      * @param luceneFieldName the Lucene index field name, with possibly a annotation
      *            and/or alternative added
      * @return an array of size 1-4, containing the field name, and optionally the
-     *         annotation name, alternative name and bookkeeping field name.
+     *         annotation name, sensitivity name and bookkeeping field name.
      *
      *         Annotation name may be null if this is a main bookkeeping field.
-     *         Alternative name may be null if this is a bookkeeping field or if it
-     *         indicates the main annotation (not an alternative).
+     *         Sensitivity name may be null if this is a bookkeeping field.
      */
     public static String[] getNameComponents(String luceneFieldName) {
 
@@ -179,9 +111,9 @@ public final class AnnotatedFieldNameUtil {
         Field names can be one of the following:
         
         (1) Annotation:              base%annot (e.g. word, lemma, pos)
-        (2) Main bookkeeping:        base#cid
+        (2) Main bookkeeping:        base#cs
         (3) Annotation bookkeeping:  base%annot#fiid
-        (4) Annotation alternative:  base%annot@alt
+        (4) Annotation sensitivity:  base%annot@sensitivity (e.g. base%lemma@i)
         
         */
 
@@ -196,12 +128,12 @@ public final class AnnotatedFieldNameUtil {
         if (annotSepPos >= 0) {
             // Annotation given (1/3/4)
             baseName = luceneFieldName.substring(0, annotSepPos);
-            int afterAnnotSepPos = annotSepPos + ANNOT_SEP_LEN;
+            int afterAnnotSepPos = annotSepPos + ANNOT_SEP.length();
 
             if (altSepPos >= 0) {
-                // Annotation and alternative given (4)
+                // Annotation and sensitivity given (4)
                 annotName = luceneFieldName.substring(afterAnnotSepPos, altSepPos);
-                sensitivityName = luceneFieldName.substring(altSepPos + SENSITIVITY_SEP_LEN);
+                sensitivityName = luceneFieldName.substring(altSepPos + SENSITIVITY_SEP.length());
                 return new String[] { baseName, annotName, sensitivityName };
             }
 
@@ -209,11 +141,11 @@ public final class AnnotatedFieldNameUtil {
             if (bookkeepingSepPos >= 0 && bookkeepingSepPos > annotSepPos) {
                 // Annotation plus bookkeeping subfield given. (3)
                 annotName = luceneFieldName.substring(afterAnnotSepPos, bookkeepingSepPos);
-                bookkeepingName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP_LEN);
+                bookkeepingName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP.length());
                 return new String[] { baseName, annotName, null, bookkeepingName };
             }
 
-            // Plain annotation, no alternative or bookkeeping (1)
+            // Plain annotation, no annotationsensitivity or bookkeeping (1)
             annotName = luceneFieldName.substring(afterAnnotSepPos);
             return new String[] { baseName, annotName };
         }
@@ -226,7 +158,7 @@ public final class AnnotatedFieldNameUtil {
         if (bookkeepingSepPos >= 0) {
             // Main bookkeeping field (2)
             baseName = luceneFieldName.substring(0, bookkeepingSepPos);
-            sensitivityName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP_LEN);
+            sensitivityName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP.length());
             return new String[] { baseName, null, null, sensitivityName };
         }
 
@@ -373,23 +305,6 @@ public final class AnnotatedFieldNameUtil {
         if (StringUtils.isEmpty(newVersion))
             return parallelFieldName;
         return baseFromParallelFieldName(parallelFieldName) + PARALLEL_VERSION_SEPARATOR + newVersion;
-    }
-
-    /**
-     * Check if these two fields have the same parallel base field, i.e. are different versions of the same content.
-     *
-     * Examples:
-     * - "contents__nl" and "contents__de" have the same parallel base field ("contents")
-     * - "contents__nl" and "metadata__nl" do not have the same parallel base field
-     *
-     * @param field1 first field name
-     * @param field2 second field name
-     * @return true if they have the same parallel base field, false if not
-     */
-    public static boolean isSameParallelBaseField(String field1, String field2) {
-        String f1 = baseFromParallelFieldName(field1);
-        String f2 = baseFromParallelFieldName(field2);
-        return f1.equals(f2);
     }
 
 }

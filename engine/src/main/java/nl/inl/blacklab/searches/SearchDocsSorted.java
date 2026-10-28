@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsSorted extends SearchDocs {
@@ -11,8 +10,8 @@ public class SearchDocsSorted extends SearchDocs {
 
     private final DocProperty property;
 
-    public SearchDocsSorted(QueryInfo queryInfo, SearchDocs docsSearch, DocProperty sortBy) {
-        super(queryInfo);
+    public SearchDocsSorted(SearchDocs docsSearch, DocProperty sortBy) {
+        super(docsSearch.context());
         this.source = docsSearch;
         this.property = sortBy;
     }

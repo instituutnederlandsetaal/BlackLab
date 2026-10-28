@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -41,11 +41,11 @@ public class TextPatternAnd extends TextPattern {
     }
 
     @Override
-    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(TextPatternContext context) throws InvalidQuery {
         if (context.isInConstraint()) {
             // We're in the constraint part of the query; create MatchFilter
             if (clauses.size() != 2)
-                throw new IllegalStateException("AND in constraint context requires exactly two clauses");
+                throw new InvalidQuery("AND in constraint context requires exactly two clauses");
             MatchFilter a = clauses.get(0).toMatchFilter(context);
             MatchFilter b = clauses.get(1).toMatchFilter(context);
             return new MatchFilterAnd(a, b);

@@ -83,11 +83,28 @@ public interface UserRequest {
     boolean isDebugMode();
 
     /**
+     * Get the user's IP address, taking into account any proxy headers.
+     * @return user's IP address
+     */
+    String clientIpAddress();
+
+    /**
      * Get the name of the corpus we're accessing.
      *
      * @return corpus name
      */
-    public String getCorpusName();
+    default String getCorpusName() {
+        return getCorpusRef().name();
+    }
+
+    /**
+     * Get reference to the corpus we're accessing.
+     *
+     * The corpus reference knows the corpus name and can resolve to the index object.
+     *
+     * @return corpus reference
+     */
+    QueryParams.CorpusRefByName getCorpusRef();
 
     ApiVersion apiVersion();
 }

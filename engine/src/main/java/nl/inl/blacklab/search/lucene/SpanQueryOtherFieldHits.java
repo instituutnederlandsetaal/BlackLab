@@ -12,9 +12,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.QueryInfo;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Determine foreign hits from a specific field.
@@ -27,12 +25,16 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         return SpanGuarantees.NONE;
     }
 
+    public static Context getContext(Context context, String targetField) {
+        return targetField == null ? context : context.withField(targetField);
+    }
+
     private final BLSpanQuery clause;
 
-    private final AnnotatedField targetField;
+    private final String targetField;
 
-    public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField) {
-        super(clause.queryInfo);
+    public SpanQueryOtherFieldHits(BLSpanQuery clause, @NonNull String targetField) {
+        super(getContext(clause.context, targetField));
         this.clause = clause;
         this.targetField = targetField;
 
@@ -85,7 +87,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansOtherFieldHits(spans, targetField, clause.getAnnotatedField());
+            return new SpansOtherFieldHits(spans, targetField, clause.getAnnotatedFieldName());
         }
     }
 
@@ -120,14 +122,14 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     @Override
     public String getField() {
         if (targetField != null)
-            return targetField.name();
-        return clause.getAnnotatedField().name();
+            return targetField;
+        return clause.getAnnotatedFieldName();
     }
 
     @Override
     public String getRealField() {
         if (targetField != null)
-            return targetField.name(); // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
+            return targetField; // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
         return clause.getRealField();
     }
 
@@ -142,8 +144,8 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     }
 
     @Override
-    public void setQueryInfo(QueryInfo queryInfo) {
-        super.setQueryInfo(queryInfo);
-        clause.setQueryInfo(queryInfo);
+    public void setContext(Context context) {
+        super.setContext(context);
+        clause.setContext(clause.getAnnotatedFieldName() == null ? context : context.withField(clause.getAnnotatedFieldName()));
     }
 }

@@ -24,9 +24,9 @@ public class RequestHandlerServerInfo extends RequestHandler {
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
         RequestServerInfo request = RequestServerInfo.fromParams(indexMan, user,
-                qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO),
+                getClientIp(), qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO),
                 debugMode);
-        WebserviceRequestHandler.opServerInfo(request, rs);
+        WebserviceRequestHandler.opServerInfo(request, searchMan.config(), rs);
         return HTTP_OK;
     }
 

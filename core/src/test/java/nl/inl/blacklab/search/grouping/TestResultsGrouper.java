@@ -1,16 +1,12 @@
 package nl.inl.blacklab.search.grouping;
 
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.similarities.BM25Similarity;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
@@ -26,12 +22,7 @@ public class TestResultsGrouper {
     @Test
     public void testGrouper() {
         MockBlackLabIndex index = new MockBlackLabIndex();
-        
-        IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
-        Mockito.when(indexSearcher.getSimilarity()).thenReturn(new BM25Similarity());
-
-        index.setIndexSearcher(indexSearcher);
-        HitResults hitResults = HitResults.list(QueryInfo.create(index), doc, start, end);
+        HitResults hitResults = HitResults.list(index, index.mainAnnotatedField().name(), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT, HitGroupScorer.NONE);
 

@@ -19,15 +19,15 @@ public class RangeRegex {
      * string or word boundaries, you should add them to the regex yourself.
      */
     public static String forRange(int min, int max) {
+        if (min > max)
+            return REGEX_WITHOUT_MATCHES;
         if (min < 0)
             throw new IllegalArgumentException("min and max should be non-negative");
-        if (min > max)
-            throw new IllegalArgumentException("min should be less than or equal to max");
         String regex = regexRange(min, max);
 
         // Simplify regex by replacing e.g. [0-9][0-9][0-9] with [0-9]{3}
         Matcher simplified = Pattern.compile("(?:\\[0-9\\]){2,}").matcher(regex);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (simplified.find()) {
             int n = simplified.group().length() / 5;
             simplified.appendReplacement(sb, "[0-9]" + repetition(n, n));

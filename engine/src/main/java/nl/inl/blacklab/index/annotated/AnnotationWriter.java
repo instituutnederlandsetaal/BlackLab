@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.api.list.primitive.IntList;
@@ -20,7 +21,6 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -78,10 +78,10 @@ public class AnnotationWriter {
      * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
      */
-    private final Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
+    private final Map<MatchSensitivity, TokenFilterAdder> sensitivities = new HashMap<>();
 
     /** The main sensitivity (the one that gets character offsets if desired) */
-    private String mainSensitivity;
+    private MatchSensitivity mainSensitivity;
 
     /** The annotation name */
     private final String annotationName;
@@ -98,7 +98,7 @@ public class AnnotationWriter {
     /** If this is a relations annotation: the indexing strategy to use. Otherwise null. */
     private final RelationsStrategy relationsStrategy;
 
-    public String mainSensitivity() {
+    public MatchSensitivity mainSensitivity() {
         return mainSensitivity;
     }
 
@@ -131,7 +131,7 @@ public class AnnotationWriter {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
-        relationsStrategy = name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME) ? fieldWriter.getRelationsStrategy() : null;
+        relationsStrategy = name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME) ? RelationsStrategySeparateTerms.INSTANCE : null;
         this.sensitivitySetting = sensitivity;
         if (fieldWriter.field() != null) {
             annotation = fieldWriter.field().annotation(annotationName);
@@ -140,19 +140,19 @@ public class AnnotationWriter {
         mainSensitivity = null;
         if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
             // Add sensitive sensitivity
-            mainSensitivity = MatchSensitivity.SENSITIVE.luceneFieldSuffix();
+            mainSensitivity = MatchSensitivity.SENSITIVE;
             sensitivities.put(mainSensitivity, null);
         }
         if (sensitivity != AnnotationSensitivities.ONLY_SENSITIVE) {
             // Add insensitive sensitivity
-            sensitivities.put(MatchSensitivity.INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, true));
+            sensitivities.put(MatchSensitivity.INSENSITIVE, new DesensitizerAdder(true, true));
             if (mainSensitivity == null)
-                mainSensitivity = MatchSensitivity.INSENSITIVE.luceneFieldSuffix();
+                mainSensitivity = MatchSensitivity.INSENSITIVE;
         }
         if (sensitivity == AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE) {
             // Add case-insensitive and diacritics-insensitive sensitivity
-            sensitivities.put(MatchSensitivity.CASE_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, false));
-            sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(false, true));
+            sensitivities.put(MatchSensitivity.CASE_INSENSITIVE, new DesensitizerAdder(true, false));
+            sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE, new DesensitizerAdder(false, true));
         }
 
         this.includeOffsets = includeOffsets;
@@ -165,11 +165,11 @@ public class AnnotationWriter {
         maximumValueLength = BlackLab.config().getIndexing().getMaxValueLength();
     }
 
-    public Collection<String> sensitivitySuffixes() {
+    public Collection<MatchSensitivity> sensitivitySuffixes() {
         return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
+    TokenStream tokenStream(MatchSensitivity sensitivity, IntList startChars, IntList endChars) {
         boolean debugMode = AnnotationWriter.class.desiredAssertionStatus();
         if (relationsStrategy instanceof RelationsStrategySeparateTerms &&
                 annotationName.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
@@ -196,7 +196,7 @@ public class AnnotationWriter {
         } else {
             ts = new TokenStreamFromList(values, increments, payloads);
         }
-        TokenFilterAdder filterAdder = sensitivities.get(sensitivityName);
+        TokenFilterAdder filterAdder = sensitivities.get(sensitivity);
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
 
@@ -212,24 +212,24 @@ public class AnnotationWriter {
         return ts;
     }
 
-    BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName, RelationsStrategy relationsStrategy) {
-        boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
+    IndexableFieldType getFieldType(MatchSensitivity sensitivity, RelationsStrategy relationsStrategy) {
+        boolean isMainSensitivity = sensitivity.equals(mainSensitivity);
 
         // Main sensitivity of main annotation gets character offsets
         // (if it's the main annotation of an annotated field)
         boolean offsets = includeOffsets && isMainSensitivity;
 
         // Main sensitivity of main annotation may get content store
-        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, relationsStrategy);
+        return BLFieldType.annotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, relationsStrategy);
     }
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
             IntList endChars) {
-        for (String sensitivityName : sensitivities.keySet()) {
-            BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName, relationsStrategy);
-            TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
-            String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
-                    annotationName, sensitivityName);
+        for (MatchSensitivity sensitivity : sensitivities.keySet()) {
+            IndexableFieldType fieldType = getFieldType(sensitivity, relationsStrategy);
+            TokenStream tokenStream = tokenStream(sensitivity, startChars, endChars);
+            String luceneFieldName = AnnotatedFieldNameUtil.luceneName(annotatedFieldName,
+                    annotationName, sensitivity);
             doc.addAnnotationField(luceneFieldName, tokenStream, fieldType);
         }
     }
@@ -457,7 +457,7 @@ public class AnnotationWriter {
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, List<String>> attributes) {
+            Map<String, Collection<String>> attributes) {
 
         // NOTE: for single-term strategy, we only create a relationId if we know the end position. If we don't,
         // the payload will be added later (when the closing tag is encountered) with
@@ -466,19 +466,19 @@ public class AnnotationWriter {
         int relationId = relationsStrategy.getRelationId(this, endPos, attributes);
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
         RelationInfo relationInfo = RelationInfo.create(false, startPos, startPos,
-                endPos, endPos, relationId, field(), hasExtraInfoStored);
+                endPos, endPos, relationId, field().name(), hasExtraInfoStored);
         String fullRelationType;
         fullRelationType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, relationInfo);
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
-            int targetStart, int targetEnd, Map<String, List<String>> attributes) {
+            int targetStart, int targetEnd, Map<String, Collection<String>> attributes) {
         int relationId = relationsStrategy.getRelationId(this, targetStart, attributes);
           //getNextRelationId(attributes != null && !attributes.isEmpty());
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
         RelationInfo relationInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd,
-                targetStart, targetEnd, relationId, field(), hasExtraInfoStored);
+                targetStart, targetEnd, relationId, field().name(), hasExtraInfoStored);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
@@ -488,7 +488,7 @@ public class AnnotationWriter {
         indexRelation(fullRelationType, attributes, relationInfo);
     }
 
-    private int indexRelation(String fullRelationType, Map<String, List<String>> attributes, RelationInfo relationInfo) {
+    private int indexRelation(String fullRelationType, Map<String, Collection<String>> attributes, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
         // integrated index; everything is indexed as a single term
@@ -511,10 +511,6 @@ public class AnnotationWriter {
         if (!maybeExtraInfo)
             return RelationInfo.RELATION_ID_NO_INFO;
         return nextRelationId++;
-    }
-
-    public RelationsStrategy getRelationsStrategy() {
-        return relationsStrategy;
     }
 
     public int getRelationIdAtIndex(int tagIndex) {

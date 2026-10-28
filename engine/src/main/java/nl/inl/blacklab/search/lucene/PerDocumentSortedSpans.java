@@ -20,7 +20,7 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    private HitQueryContext hitQueryContext;
+    private SpansContext spansContext;
 
     PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
@@ -122,8 +122,8 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
             // Eliminate any duplicates
             int prevEnd;
             int prevStart;
-            MatchInfo[] prevInfo = childClausesCaptureMatchInfo ? new MatchInfo[hitQueryContext.numberOfMatchInfos()] : null;
-            MatchInfo[] curInfo = childClausesCaptureMatchInfo ? new MatchInfo[hitQueryContext.numberOfMatchInfos()] : null;
+            MatchInfo[] prevInfo = childClausesCaptureMatchInfo ? new MatchInfo[spansContext.numberOfMatchInfos()] : null;
+            MatchInfo[] curInfo = childClausesCaptureMatchInfo ? new MatchInfo[spansContext.numberOfMatchInfos()] : null;
             do {
                 if (indexInBucket == -2 || indexInBucket >= in.bucketSize() - 1) {
                     // Bucket exhausted or no bucket yet; get one
@@ -165,9 +165,9 @@ final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
     }
 
     @Override
-    public void passHitQueryContextToClauses(HitQueryContext context) {
-        this.hitQueryContext = context;
-        in.setHitQueryContext(context);
+    public void passSpansContextToClauses(SpansContext context) {
+        this.spansContext = context;
+        in.setSpansContext(context);
     }
 
     @Override

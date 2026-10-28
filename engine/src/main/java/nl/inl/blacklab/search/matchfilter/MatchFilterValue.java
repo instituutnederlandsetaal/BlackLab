@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.matchfilter;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.SpansContext;
 
 /** A simple value (string, number, ...) */
 public class MatchFilterValue extends MatchFilter {
@@ -44,7 +44,7 @@ public class MatchFilterValue extends MatchFilter {
     }
 
     @Override
-    public void setHitQueryContext(HitQueryContext context) {
+    public void setSpansContext(SpansContext context) {
         // NOP
     }
 

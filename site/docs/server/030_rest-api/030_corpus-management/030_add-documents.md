@@ -12,7 +12,7 @@ Files uploaded may be regular files or `.zip` or `.tar.gz` archives.
 
 The document format is always the index' default format set during creation.
 
-If a `pidField` has been configured, and the document's PID already exists, it will be updated automatically.
+If a `pidField` has been configured (add `role: pid` to a metadata field), and the document's PID already exists, it will be updated automatically.
 
 | Parameter    | Description                                                                                                                              |
 |--------------|------------------------------------------------------------------------------------------------------------------------------------------|
@@ -68,4 +68,3 @@ The plugins referred to must be indicated to be "web-safe". That is, the plugin 
 
 - add `format` parameter to make it possible to override the default document format, so you can add documents of several formats to one index
 - should probably return `201 Created`
-- should this automatically update existing documents based on `pidField`? Or at least as an option, e.g. `overwrite=true`?

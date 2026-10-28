@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.docs.DocResults;
 
@@ -11,8 +10,8 @@ public class SearchDocsSampled extends SearchDocs {
 
     private final SampleParameters sampleParameters;
 
-    public SearchDocsSampled(QueryInfo queryInfo, SearchDocs docsSearch, SampleParameters sampleParameters) {
-        super(queryInfo);
+    public SearchDocsSampled(SearchDocs docsSearch, SampleParameters sampleParameters) {
+        super(docsSearch.context());
         this.source = docsSearch;
         this.sampleParameters = sampleParameters;
     }
