@@ -22,7 +22,8 @@
       "facets": "field:title",
       "indexname": "test",
       "number": 0,
-      "op": "docs"
+      "op": "docs",
+      "waitfortotal": true
     },
     "results": {
       "stats": {

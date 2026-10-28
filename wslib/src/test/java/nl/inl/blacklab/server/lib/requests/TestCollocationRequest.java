@@ -1,8 +1,6 @@
 package nl.inl.blacklab.server.lib.requests;
 
-import java.io.File;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.AfterClass;
@@ -15,7 +13,6 @@ import nl.inl.blacklab.resultproperty.HitGroupPropertyScore;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -29,16 +26,8 @@ public class TestCollocationRequest {
 
     private static AnnotatedField field;
 
-    private static File tmpDir;
-
     @BeforeClass
     public static void beforeClass() {
-        BLSConfig blsConfig = new BLSConfig();
-        tmpDir = new File(System.getProperty("java.io.tmpdir"), "blacklab-tmp");
-        if (!tmpDir.mkdirs())
-            throw new IllegalStateException("Unable to create tmp directory: " + tmpDir.getAbsolutePath());
-        blsConfig.setIndexLocations(List.of(tmpDir.getAbsolutePath())); // prevent error
-        BlsMain.create(blsConfig);
         index = new MockBlackLabIndex();
         field = index.mainAnnotatedField();
     }
@@ -47,9 +36,6 @@ public class TestCollocationRequest {
     public static void afterClass() {
         index = null;
         field = null;
-        if (!tmpDir.delete())
-            throw new IllegalStateException("Unable to delete tmp directory: " + tmpDir.getAbsolutePath());
-        tmpDir = null;
     }
 
     private static final QueryParams.IndexResolver testResolver = corpusName -> {
@@ -116,19 +102,6 @@ public class TestCollocationRequest {
             Assert.assertNull(count.sortBy());
         }
     }
-
-//    @Test
-//    public void testCollocationGroupingOverridesExplicitGroup() {
-//        // Ensure that countHits call will not fail if the expected query is used.
-//        setUpCountHitsResponse("\"eat\"");
-//
-//        RequestHits request = RequestHits.fromParamsCollocations(params(Map.of(
-//                WsParam.GROUP_BY, "hit:lemma:s",
-//                WsParam.SORT_BY, "-identity")), false);
-//        Assert.assertEquals("hit:contents%lemma:s", request.groupBy().serialize());
-//        Assert.assertEquals("-identity", request.sortGroupsBy().serialize());
-//        Assert.assertNull(request.sortBy());
-//    }
 
     private static void setUpCountHitsResponse(String query) {
         TextPattern pattEat = index.getQueryParser("bcql").parse(query).pattern();
