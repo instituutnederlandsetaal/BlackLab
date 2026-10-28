@@ -626,7 +626,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 // Rewrite query (we store the original query, not the rewritten one)
                 Query rewritten;
                 try {
-                    rewritten = query.rewrite(index.reader());
+                    rewritten = query.rewrite(index().searcher());
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }

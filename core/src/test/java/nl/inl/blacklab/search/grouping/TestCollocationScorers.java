@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.grouping;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
@@ -87,7 +88,7 @@ public class TestCollocationScorers {
     @Test
     public void testFilteredFrequenciesAcrossSegments() {
         Query filter = new TermInSetQuery("title",
-                new BytesRef("pangram"), new BytesRef("star"), new BytesRef("bastardized"));
+                Set.of(new BytesRef("pangram"), new BytesRef("star"), new BytesRef("bastardized")));
         AnnotationSensitivity lemma = index.mainAnnotatedField().annotation("lemma")
                 .sensitivity(MatchSensitivity.INSENSITIVE);
 
@@ -134,10 +135,10 @@ public class TestCollocationScorers {
                 """, "<doc pid='doc2' selection='other'><w>seed</w><w>near</w></doc>")) {
             // Outer [1,5) and inner [2,4) overlap: N=4, seed=2, near=2, matching near positions=2.
             assertFragmentScore(fragments.index(), new TermInSetQuery("selection",
-                    new BytesRef("outer"), new BytesRef("inner")), 4, 2);
+                    Set.of(new BytesRef("outer"), new BytesRef("inner"))), 4, 2);
             // A matching parent supersedes its fragments: N=7, seed=2, near=3, matching near positions=2.
             assertFragmentScore(fragments.index(), new TermInSetQuery("selection",
-                    new BytesRef("document"), new BytesRef("outer"), new BytesRef("inner")), 7, 3);
+                    Set.of(new BytesRef("document"), new BytesRef("outer"), new BytesRef("inner"))), 7, 3);
         }
     }
 

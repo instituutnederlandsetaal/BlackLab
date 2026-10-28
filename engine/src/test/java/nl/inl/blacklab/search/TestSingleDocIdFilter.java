@@ -40,7 +40,7 @@ public class TestSingleDocIdFilter {
                 IndexSearcher searcher = new IndexSearcher(reader);
                 for (int docId = 0; docId < reader.maxDoc(); docId++) {
                     var matches = searcher.search(new SingleDocIdFilter(docId), 1);
-                    assertEquals(1, matches.totalHits.value);
+                    assertEquals(1, matches.totalHits.value());
                     assertEquals(docId, matches.scoreDocs[0].doc);
                 }
                 assertEquals(0, searcher.count(new SingleDocIdFilter(reader.maxDoc())));

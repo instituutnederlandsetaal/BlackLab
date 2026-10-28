@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab60;
 
 import java.io.IOException;
 
@@ -8,26 +8,27 @@ import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 
+import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 
 /**
  * Provides random access to values stored as a content store.
  * Delegates non-content-store reads to the default implementation.
  */
-public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
+public class BlackLab60StoredFieldsReader extends BlackLabStoredFieldsReader {
 
-    public BlackLab40StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
+    public BlackLab60StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
             StoredFieldsReader delegate, String delegateFormatName)
             throws IOException {
-        super(BlackLab40StoredFieldsFormat.NAME, BlackLab40StoredFieldsFormat.VERSION_START,
-                BlackLab40StoredFieldsFormat.VERSION_CURRENT, directory, segmentInfo, ioContext, fieldInfos,
-                delegate, delegateFormatName, true);
+        super(BlackLab60StoredFieldsFormat.NAME, BlackLab60StoredFieldsFormat.VERSION_START,
+                BlackLab60StoredFieldsFormat.VERSION_CURRENT, directory, segmentInfo, ioContext, fieldInfos,
+                delegate, delegateFormatName, false);
     }
 
     @Override
     public StoredFieldsReader clone() {
         try {
-            return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
+            return new BlackLab60StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                     delegate.clone(), delegateFormatName);
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -45,7 +46,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
             // The delegate has a specific merge instance (i.e. didn't return itself).
             // Create a new instance with the new delegate and return that.
             try {
-                return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
+                return new BlackLab60StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                         mergeInstance, delegateFormatName);
             } catch (IOException e) {
                 throw new InvalidIndex(e);

@@ -7,7 +7,7 @@ import org.apache.lucene.search.Query;
 import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.plugins.ExprType;
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TextPatternContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
@@ -167,6 +167,20 @@ public abstract class TextPattern implements TextPatternStruct {
 
     /** A result of evaluating a TextPattern, e.g. BLSpanQuery, MatchFilter, ConstraintValue, ... */
     public interface EvalResult {
+        static @NonNull String describe(EvalResult result) {
+            if (result instanceof ConstraintValue cv) {
+                return cv.getType().name() + " (" + cv + ")";
+            } else if (result instanceof Annotation annotation) {
+                return "annotation (" + annotation.name() + ")";
+            } else if (result instanceof MatchFilter mf) {
+                return "match filter (" + mf + ")";
+            } else if (result instanceof BLSpanQuery q) {
+                return "query (" + q + ")";
+            } else if (result instanceof QueryFunction func) {
+                return "function (" + func.getName() + ")";
+            }
+            return "UNKNOWN EvalResult type: " + result.getClass().getSimpleName();
+        }
     }
 
     TextPattern(int precedence) {
@@ -214,7 +228,7 @@ public abstract class TextPattern implements TextPatternStruct {
         EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
             return mf;
-        throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
+        throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + EvalResult.describe(result));
     }
 
     /**
@@ -230,7 +244,7 @@ public abstract class TextPattern implements TextPatternStruct {
         EvalResult result = evaluate(context);
         if (result instanceof BLSpanQuery q)
             return q;
-        throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
+        throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + EvalResult.describe(result));
     }
 
     public BLSpanQuery toQuery(BlackLabIndex index, String field) throws InvalidQuery {
@@ -240,7 +254,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public BLSpanQuery toQuery(BlackLabIndex index, String field, Query filter) throws InvalidQuery {
         EvalResult result = evaluate(index.textPatternContext(field));
         if (result == null)
-            throw new InvalidQuery("Pattern evaluated to null");
+            throw new IllegalStateException("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {
             if (filter != null) {
                 // Can the filter yield fragments or only regular (full) documents?
@@ -256,7 +270,7 @@ public abstract class TextPattern implements TextPatternStruct {
             }
             return spanQuery;
         }
-        throw new InvalidQuery("Expected a query, but pattern evaluated to a " + ExprType.of(result));
+        throw new InvalidQuery("Expected a query, but pattern evaluated to a " + EvalResult.describe(result));
     }
 
     public TextPattern adjustTextPattern(boolean adjustHits, boolean withSpans) {

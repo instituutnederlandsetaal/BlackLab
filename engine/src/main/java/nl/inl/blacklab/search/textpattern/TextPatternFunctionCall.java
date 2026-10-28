@@ -67,7 +67,9 @@ public class TextPatternFunctionCall extends TextPattern {
                 t instanceof MatchInfo || t instanceof List) {
             return new MatchFilterValue(ConstraintValue.fromObject(t));
         } else {
-            throw new InvalidQuery("Cannot convert value of type " + t.getClass().getSimpleName() + " to MatchFilter");
+            String desc = t instanceof EvalResult er ? EvalResult.describe(er) :
+                    t.getClass().getSimpleName();
+            throw new InvalidQuery("Cannot convert value of type " + desc + " to MatchFilter");
         }
     }
 
