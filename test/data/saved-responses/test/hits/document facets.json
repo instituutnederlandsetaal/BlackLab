@@ -25,7 +25,8 @@
       "indexname": "test",
       "number": 0,
       "op": "hits",
-      "patt": "\"the\""
+      "patt": "\"the\"",
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"the\"",

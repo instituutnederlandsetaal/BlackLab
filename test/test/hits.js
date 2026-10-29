@@ -80,7 +80,7 @@ expectHitsUnchanged('test', 'view single group', {
 
 // Matching doc facets
 expectCorpusUrlUnchanged('test', 'hits', 'document facets',
-        '/hits/?patt=%22the%22&number=0&facets=field:pid');
+        '/hits/?patt=%22the%22&number=0&facets=field:pid&waitfortotal=true');
 
 // Hits CSV
 expectCorpusUrlUnchanged('test', 'hits', 'CSV results',
