@@ -56,13 +56,26 @@ public class HitGroupsTokenFrequencies {
     private HitGroupsTokenFrequencies() {
     }
 
-    private static int countDocument(int docLength, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
-        synchronized (hitsStats) {
-            long counted = Math.min(docLength, hitsStats.getMaxHitsToCount() - hitsStats.countedSoFar());
-            long processed = Math.min(counted, hitsStats.getMaxHitsToProcess() - hitsStats.processedSoFar());
-            hitsStats.add(processed, counted);
-            docsStats.add(processed > 0 ? 1 : 0, counted > 0 ? 1 : 0);
-            return (int) processed;
+    private static class DocumentCounter {
+        private final Object lock = new Object();
+
+        private final ResultsStatsPassive hitsStats;
+
+        private final ResultsStatsPassive docsStats;
+
+        DocumentCounter(ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
+            this.hitsStats = hitsStats;
+            this.docsStats = docsStats;
+        }
+
+        int countDocument(int docLength) {
+            synchronized (lock) {
+                long counted = Math.min(docLength, hitsStats.getMaxHitsToCount() - hitsStats.countedSoFar());
+                long processed = Math.min(counted, hitsStats.getMaxHitsToProcess() - hitsStats.processedSoFar());
+                hitsStats.add(processed, counted);
+                docsStats.add(processed > 0 ? 1 : 0, counted > 0 ? 1 : 0);
+                return (int) processed;
+            }
         }
     }
 
@@ -259,6 +272,7 @@ public class HitGroupsTokenFrequencies {
                     searchSettings.maxHitsToCount());
             final ResultsStatsPassive docsStats = new ResultsStatsPassive();
             hitsStats.add(0, 0);
+            final DocumentCounter documentCounter = new DocumentCounter(hitsStats, docsStats);
 
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
 
@@ -309,7 +323,7 @@ public class HitGroupsTokenFrequencies {
                                     break;
                                 int globalDocId = docId + lrc.docBase;
                                 final int docLength = (int) fieldLength.get(globalDocId); // excludes dummy closing token!
-                                final int hitsToProcess = countDocument(docLength, hitsStats, docsStats);
+                                final int hitsToProcess = documentCounter.countDocument(docLength);
                                 if (hitsToProcess == 0)
                                     continue;
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(index, fieldName,
@@ -387,7 +401,7 @@ public class HitGroupsTokenFrequencies {
                                 final Document doc = lrc.reader().storedFields().document(segmentDocId, fieldsToLoad);
                                 int docLength = BlackLabIndex.decodeTokenLengthField(
                                         Integer.parseInt(doc.get(lengthTokensFieldName)));
-                                int hitsToProcess = countDocument(docLength, hitsStats, docsStats);
+                                int hitsToProcess = documentCounter.countDocument(docLength);
                                 if (hitsToProcess == 0)
                                     continue;
                                 final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
