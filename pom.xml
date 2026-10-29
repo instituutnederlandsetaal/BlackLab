@@ -258,6 +258,11 @@
                 <version>3.5.6</version>
                 <configuration>
                     <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <systemPropertyVariables>
+                        <!-- Disable automatically loading config files for testing,
+                             so we don't depend on the local environment -->
+                        <blacklab.config.autoload>false</blacklab.config.autoload>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 

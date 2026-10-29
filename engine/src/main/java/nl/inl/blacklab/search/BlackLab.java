@@ -289,6 +289,17 @@ public final class BlackLab {
         return value == null ? "" : value;
     }
 
+    /**
+     * Should BlackLab automatically search the file system for config, plugins, etc.?
+     * <p>
+     * This can be disabled for testing, so we don't depend on the local environment.
+     *
+     * @return true if BlackLab should automatically search for config, plugins, etc., false otherwise
+     */
+    public static boolean autoLoadConfig() {
+        return Boolean.parseBoolean(System.getProperty("blacklab.config.autoload", "true"));
+    }
+
     /** Should we check the current directory for our config directory?
      * This can be useful for testing.
      */

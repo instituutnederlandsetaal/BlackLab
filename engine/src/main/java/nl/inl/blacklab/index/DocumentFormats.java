@@ -150,38 +150,9 @@ public class DocumentFormats {
         }
     }
 
-//    private static void addStandardConfigFormats() {
-//        // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass,
-//        // or this will override those classes.
-//        String[] formats = {
-//                "chat", "cmdi", "conll-u", "csv",
-//                "eaf", "folia", "naf", "sketch-wpl",
-//                "tcf", "tei-p5", "tei-p4-legacy",
-//                "tei-p5-legacy", "testformat", "tsv-frog",
-//                "tsv", "txt" };
-//        for (String formatIdentifier : formats) {
-//            String fileNameRelative = "formats/" + FormatFileNameUtil.yamlFormatFileName(formatIdentifier);
-//            try (InputStream is = DocumentFormats.class.getClassLoader()
-//                    .getResourceAsStream(fileNameRelative)) {
-//                if (is == null)
-//                    continue; // not found
-//
-//                try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-//
-//                    ConfigInputFormat format = ConfigInputFormat.read(reader, false, formatIdentifier);
-//                    format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
-//                    add(format);
-//                }
-//            } catch (InvalidInputFormatConfig | IOException e) {
-//                //formatErrors.put(formatIdentifier, e.getMessage());
-//                InputFormatInfo inputFormat = new InputFormatInfoError(formatIdentifier, e.getMessage());
-//                add(inputFormat);
-//                throw BlackLabException.wrapRuntime(e);
-//            }
-//        }
-//    }
-
     private static void addFromFormatsConfigDir() {
+        if (!BlackLab.autoLoadConfig())
+            return;
         File formatsDir = new File(BlackLab.configDir(), FORMATS_CONFIG_DIR_NAME);
         if (formatsDir.exists() && formatsDir.isDirectory() && formatsDir.canRead())
             addConfigFormatsInDirectories(List.of(formatsDir));

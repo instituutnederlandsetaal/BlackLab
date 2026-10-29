@@ -57,7 +57,7 @@ public class PluginsOfType<T extends Plugin> {
      */
     private final Map<String, PluginData<T>> idToPlugin = new HashMap<>();
 
-    PluginsOfType(Class<T> pluginClass, BLConfigPlugins pluginConfig, URLClassLoader cl) {
+    PluginsOfType(Class<T> pluginClass, BLConfigPlugins pluginConfig, ClassLoader cl) {
         this.pluginClass = pluginClass;
         loadClasses(pluginConfig, cl);
     }
