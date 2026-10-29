@@ -79,17 +79,20 @@ public class TestSearchHitGroups {
         Assert.assertEquals(title + " 2nd group id", "be", g.identity().toString());
     }
 
+    /** Test that {@link nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies}
+     * handles various limits correctly */
     @Test
-    public void testHitGroupLimits() throws InvalidQuery {
+    public void testHitGroupFastPathLimits() throws InvalidQuery {
         HitProperty[] properties = {
                 new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE),
                 new HitPropertyDocumentStoredField(index, "title", "Title")
         };
+        // Various settings of maxHitsToProcess and maxHitsToCount to test with
         long[][] limits = { { 1, 15 }, { 1, -1 }, { 0, 15 }, { 0, 0 }, { 0, -1 }, { 15, 15 },
-                { 15, 25 }, { 15, -1 },
-                { -1, 15 }, { 100, 15 }, { 100, 100 }, { -1, -1 } };
+                { 15, 25 }, { 15, -1 }, { -1, 15 }, { 100, 15 }, { 100, 100 }, { -1, -1 } };
         for (HitProperty property : properties) {
             CompleteQuery query = new CompleteQuery(TextPatternAnyToken.ANY_SINGLE_TOKEN, new MatchAllDocsQuery());
+            // Unlimited search to compare to
             long total = index.search(contents, false).find(query, SearchSettings.UNLIMITED)
                     .groupStats(property, 0, HitGroupScorer.NONE).execute().sumOfGroupSizes();
             for (long[] limit : limits) {
