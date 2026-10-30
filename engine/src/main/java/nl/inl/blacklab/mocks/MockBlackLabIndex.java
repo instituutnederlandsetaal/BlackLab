@@ -103,7 +103,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public IndexReader reader() {
-        return null; // used by Hits
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -198,7 +198,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ForwardIndex forwardIndex(AnnotatedField field) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

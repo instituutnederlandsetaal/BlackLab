@@ -155,7 +155,7 @@ public class MockSpansInBuckets extends SpansInBuckets {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

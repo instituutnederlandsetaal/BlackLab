@@ -11,6 +11,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.DocValuesRandomAccess;
 
@@ -38,7 +39,7 @@ class DocValuesGetterGlobal implements DocValuesGetter {
     public DocValuesGetterGlobal(BlackLabIndex index, String fieldName) {
         this.index = index;
         try {
-            if (index.reader() != null) { // skip for MockIndex (testing)
+            if (!(index instanceof MockBlackLabIndex)) { // skip for MockIndex (testing)
 //                boolean isNumericMetadataField = index.metadataField(fieldName).type().equals(FieldType.NUMERIC);
                 for (LeafReaderContext lrc: index.reader().leaves()) {
                     LeafReader leafReader = lrc.reader();
