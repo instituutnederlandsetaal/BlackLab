@@ -112,3 +112,10 @@ expectHitsUnchanged("parallel", "parallel hits with rfield", {
     adjusthits: 'true',
     withspans: 'true',
 });
+
+expectHitsUnchanged("relations", "all relations", "_ --> _");
+expectHitsUnchanged("relations", "relations type red", "_ -red-> _");
+expectHitsUnchanged("relations", "relations type blue", "_ -blue-> _");
+expectHitsUnchanged("relations", "relations source filter", '".*a.*" --> _');
+expectHitsUnchanged("relations", "relations target filter", '_ --> ".*a.*"');
+expectHitsUnchanged("relations", "relations all filters", '".*a.*" -red|blue-> ".*a.*"');

@@ -113,6 +113,15 @@
       "status": "available",
       "timeModified": "VALUE_REMOVED"
     },
+    "relations": {
+      "count": {
+        "documents": 1,
+        "tokens": 5
+      },
+      "documentFormat": "relations",
+      "status": "available",
+      "timeModified": "VALUE_REMOVED"
+    },
     "test": {
       "count": {
         "documents": 3,

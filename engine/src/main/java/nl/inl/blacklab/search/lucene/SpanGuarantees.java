@@ -39,7 +39,7 @@ public interface SpanGuarantees {
 
         @Override
         public int hitsLengthMax() {
-            return Integer.MAX_VALUE;
+            return BLSpanQuery.MAX_UNLIMITED;
         }
 
         @Override
@@ -72,10 +72,6 @@ public interface SpanGuarantees {
      * Guarantees that the hits are unique.
      */
     SpanGuarantees UNIQUE = new SpanGuaranteesAdapter() {
-        @Override
-        public boolean hitsHaveUniqueStartEnd() {
-            return true;
-        }
 
         @Override
         public boolean hitsHaveUniqueStart() {
@@ -178,11 +174,6 @@ public interface SpanGuarantees {
 
         @Override
         public boolean hitsHaveUniqueEnd() {
-            return true;
-        }
-
-        @Override
-        public boolean hitsHaveUniqueStartEnd() {
             return true;
         }
 

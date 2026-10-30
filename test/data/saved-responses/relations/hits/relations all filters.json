@@ -1,0 +1,245 @@
+{
+  "docInfos": {
+    "test-01": {
+      "mayView": false,
+      "metadata": {
+        "fromInputFile": [
+          "relations.xml"
+        ],
+        "id": [
+          "test-01"
+        ],
+        "title": [
+          "Test relations"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 5
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 2,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "matchInfos": {
+        "redblue": {
+          "attributes": {
+          },
+          "end": 3,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 2,
+          "sourceStart": 1,
+          "start": 1,
+          "targetEnd": 3,
+          "targetStart": 2,
+          "type": "relation"
+        }
+      },
+      "start": 1
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 2,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "matchInfos": {
+        "redblue": {
+          "attributes": {
+          },
+          "end": 5,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 2,
+          "sourceStart": 1,
+          "start": 1,
+          "targetEnd": 5,
+          "targetStart": 4,
+          "type": "relation"
+        }
+      },
+      "start": 1
+    },
+    {
+      "after": {
+        "punct": [
+          ""
+        ],
+        "word": [
+          ""
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 5,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "matchInfos": {
+        "redblue": {
+          "attributes": {
+          },
+          "end": 5,
+          "relClass": "col",
+          "relType": "blue",
+          "sourceEnd": 5,
+          "sourceStart": 4,
+          "start": 2,
+          "targetEnd": 3,
+          "targetStart": 2,
+          "type": "relation"
+        }
+      },
+      "start": 4
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "indexname": "relations",
+      "op": "hits",
+      "patt": "\".*a.*\" -red|blue-> \".*a.*\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\".*a.*\" -red|blue-> \".*a.*\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\".*a.*\" -red|blue-> \".*a.*\"",
+        "children": [
+          {
+            "bcqlFragment": " -red|blue-> \".*a.*\"",
+            "clause": {
+              "bcqlFragment": "\".*a.*\"",
+              "clauses": [
+                {
+                  "bcqlFragment": "_",
+                  "type": "defval"
+                },
+                {
+                  "bcqlFragment": "\".*a.*\"",
+                  "type": "string",
+                  "value": ".*a.*"
+                }
+              ],
+              "operation": "=",
+              "type": "compare"
+            },
+            "relType": "red|blue",
+            "type": "reltarget"
+          }
+        ],
+        "parent": {
+          "bcqlFragment": "\".*a.*\"",
+          "clauses": [
+            {
+              "bcqlFragment": "_",
+              "type": "defval"
+            },
+            {
+              "bcqlFragment": "\".*a.*\"",
+              "type": "string",
+              "value": ".*a.*"
+            }
+          ],
+          "operation": "=",
+          "type": "compare"
+        },
+        "type": "relmatch"
+      },
+      "matchInfos": {
+        "redblue": {
+          "type": "relation"
+        }
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 3,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 3,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 3,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

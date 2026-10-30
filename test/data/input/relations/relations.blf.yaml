@@ -1,0 +1,32 @@
+documentPath: /doc
+processor: saxon    # required to index relations
+
+annotatedFields:
+  contents:
+    containerPath: text
+    wordPath: .//w
+    tokenIdPath: "@xml:id"
+    annotations:
+    - name: word
+      valuePath: .
+      sensitivity: insensitive
+    standoffAnnotations:
+    - path: .//link
+      type: relation
+      relationClass: col
+      valuePath: "@type"
+      sourcePath: "@from"
+      targetPath: "@to"
+    inlineTags:
+    - path: .//s
+
+metadata:
+  containerPath: metadata
+  fields:
+  - forEachPath: ./*
+    namePath: local-name()
+    valuePath: .
+  - name: title
+    type: tokenized
+  - name: id
+    role: pid

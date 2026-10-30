@@ -1,0 +1,395 @@
+{
+  "docInfos": {
+    "test-01": {
+      "mayView": false,
+      "metadata": {
+        "fromInputFile": [
+          "relations.xml"
+        ],
+        "id": [
+          "test-01"
+        ],
+        "title": [
+          "Test relations"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 5
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "before": {
+        "punct": [
+        ],
+        "word": [
+        ]
+      },
+      "docPid": "test-01",
+      "end": 1,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 2,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 1,
+          "sourceStart": 0,
+          "start": 0,
+          "targetEnd": 2,
+          "targetStart": 1,
+          "type": "relation"
+        }
+      },
+      "start": 0
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 2,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 3,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 2,
+          "sourceStart": 1,
+          "start": 1,
+          "targetEnd": 3,
+          "targetStart": 2,
+          "type": "relation"
+        }
+      },
+      "start": 1
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 2,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 5,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 2,
+          "sourceStart": 1,
+          "start": 1,
+          "targetEnd": 5,
+          "targetStart": 4,
+          "type": "relation"
+        }
+      },
+      "start": 1
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "can"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 3,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 3,
+          "relClass": "col",
+          "relType": "red",
+          "sourceEnd": 3,
+          "sourceStart": 2,
+          "start": 0,
+          "targetEnd": 1,
+          "targetStart": 0,
+          "type": "relation"
+        }
+      },
+      "start": 2
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 4,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 5,
+          "relClass": "col",
+          "relType": "blue",
+          "sourceEnd": 4,
+          "sourceStart": 3,
+          "start": 3,
+          "targetEnd": 5,
+          "targetStart": 4,
+          "type": "relation"
+        }
+      },
+      "start": 3
+    },
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "relate"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 4,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 4,
+          "relClass": "col",
+          "relType": "blue",
+          "sourceEnd": 4,
+          "sourceStart": 3,
+          "start": 1,
+          "targetEnd": 2,
+          "targetStart": 1,
+          "type": "relation"
+        }
+      },
+      "start": 3
+    },
+    {
+      "after": {
+        "punct": [
+          ""
+        ],
+        "word": [
+          ""
+        ]
+      },
+      "before": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "docPid": "test-01",
+      "end": 5,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "matchInfos": {
+        "rel": {
+          "attributes": {
+          },
+          "end": 5,
+          "relClass": "col",
+          "relType": "blue",
+          "sourceEnd": 5,
+          "sourceStart": 4,
+          "start": 2,
+          "targetEnd": 3,
+          "targetStart": 2,
+          "type": "relation"
+        }
+      },
+      "start": 4
+    }
+  ],
+  "summary": {
+    "params": {
+      "context": "1",
+      "indexname": "relations",
+      "op": "hits",
+      "patt": "_ --> _",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "_ --> _",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "_ --> _",
+        "children": [
+          {
+            "bcqlFragment": " --> _",
+            "clause": {
+              "bcqlFragment": "_",
+              "type": "defval"
+            },
+            "relType": ".+",
+            "type": "reltarget"
+          }
+        ],
+        "parent": {
+          "bcqlFragment": "_",
+          "type": "defval"
+        },
+        "type": "relmatch"
+      },
+      "matchInfos": {
+        "rel": {
+          "type": "relation"
+        }
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 7,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 7,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 7,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}

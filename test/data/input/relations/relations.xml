@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<doc>
+    <metadata>
+        <id>test-01</id>
+        <title>Test relations</title>
+    </metadata>
+    <text>
+        <s>
+            <w xml:id="0">I</w>
+            <w xml:id="1">can</w>
+            <w xml:id="2">relate</w>
+            <w xml:id="3">to</w>
+            <w xml:id="4">that</w>
+            <links>
+                <link type="red" from="0" to="1" />
+                <link type="red" from="1" to="2" />
+                <link type="red" from="1" to="4" />
+                <link type="red" from="2" to="0" />
+                <link type="blue" from="3" to="4" />
+                <link type="blue" from="3" to="1" />
+                <link type="blue" from="4" to="2" />
+            </links>
+        </s>
+    </text>
+</doc>
