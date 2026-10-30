@@ -44,6 +44,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -130,18 +131,25 @@ public final class LuceneUtil {
         return filterWeight;
     }
 
-    public static void forEachDocument(IndexReader reader, boolean onlyRegularDocs, boolean parallel, DocTask task) {
+    public static void forEachDocument(BlackLabIndex index, boolean onlyRegularDocs, boolean parallel, DocTask task) {
         task.initializeTask();
-        List<LeafReaderContext> leaves = reader.leaves();
+        List<LeafReaderContext> leaves = index.reader().leaves();
         Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
+        int metadataDocId = index.metadata().metadataDocId();
         stream.forEach(lrc -> {
             SortedDocValues dvDocType;
             try {
                 LeafReader leafReader = lrc.reader();
+                // NOTE: corpora indexed with older dev versions of BlackLab may not have the docType field;
+                //       in that case, we just process all documents except the metadata document
                 dvDocType = onlyRegularDocs ? leafReader.getSortedDocValues(BLInputDocument.DOC_TYPE_FIELD_NAME) : null;
                 int ordDocTypeRegularDocument = -1;
+                int segmentMetadaDocId = -1;
                 if (dvDocType != null) {
                     ordDocTypeRegularDocument = dvDocType.lookupTerm(new BytesRef(BLInputDocument.DocType.DOCUMENT.getValue()));
+                } else {
+                    // We don't have _doc_type; just check for the metadata doc id
+                    segmentMetadaDocId = metadataDocId >= lrc.docBase && metadataDocId < lrc.docBase + lrc.reader().maxDoc() ? metadataDocId - lrc.docBase : -1;
                 }
                 DocTask.SegmentTask segTask = task.segmentDocTask(lrc);
                 Bits liveDocs = leafReader.getLiveDocs();
@@ -150,12 +158,16 @@ public final class LuceneUtil {
                     boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
                     if (isLiveDoc) {
                         boolean processDocType;
-                        if (onlyRegularDocs) {
-                            assert dvDocType != null;
+                        if (docId == segmentMetadaDocId) {
+                            // This is the metadata document, which we never want to process
+                            processDocType = false;
+                        } else if (onlyRegularDocs && dvDocType != null) {
+                            // Check the _doc_type field to see if this is a regular document or not
                             int result = dvDocType.advance(docId);
                             assert result == docId;
                             processDocType = dvDocType.ordValue() == ordDocTypeRegularDocument;
                         } else {
+                            // We want to process all docs regardless of _doc_type
                             processDocType = true;
                         }
                         if (processDocType) {
