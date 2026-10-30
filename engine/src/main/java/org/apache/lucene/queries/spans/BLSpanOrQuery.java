@@ -139,12 +139,6 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 // Cannot guarantee because we're merging from different sources.
                 return false;
             }
-
-            @Override
-            public boolean hitsHaveUniqueStartEnd() {
-                // Cannot guarantee because we're merging from different sources.
-                return false;
-            }
         };
     }
 

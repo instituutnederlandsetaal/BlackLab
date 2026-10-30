@@ -54,6 +54,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
 
         @Override
         public int startPosition(int indexInBucket) {
+            assert indexInBucket >= 0 && indexInBucket < startsEnds.size();
             return (int)(startsEnds.getLong(indexInBucket) >> 32);
         }
 
