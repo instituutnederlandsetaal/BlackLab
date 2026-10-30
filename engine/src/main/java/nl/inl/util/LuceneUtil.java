@@ -44,6 +44,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.ParallelDocTask;
@@ -135,6 +136,7 @@ public final class LuceneUtil {
 
     public static void forEachDocument(BlackLabIndex index, boolean onlyRegularDocs, boolean parallel, DocTask task) {
         task.initializeTask();
+        assert !(index instanceof MockBlackLabIndex); // suppress warning about null IndexReader below
         List<LeafReaderContext> leaves = index.reader().leaves();
         Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
         int metadataDocId = index.metadata().metadataDocId();

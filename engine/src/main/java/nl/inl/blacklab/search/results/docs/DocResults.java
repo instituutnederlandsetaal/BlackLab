@@ -33,6 +33,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -637,6 +638,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     numberOfDocuments = 0;
                     Weight weight = index.searcher().createWeight(rewritten, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                     List<AnnotatedField> tokenLengthFields = index.annotatedFields().stream().toList();
+                    assert !(index instanceof MockBlackLabIndex); // doesn't have IndexReader; suppress SonarCloud warning about NPE
                     for (LeafReaderContext r: index.reader().leaves()) {
                         LeafReader reader = r.reader();
                         Bits liveDocs = reader.getLiveDocs();

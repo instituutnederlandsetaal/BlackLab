@@ -200,7 +200,7 @@ public class BlsCache implements SearchCache {
                 searches.put(search, future);
 
             // Can we start the search, or should it remain queued for now?
-            if (!allowQueue || !!cacheDisabled) {
+            if (!allowQueue || cacheDisabled) {
                 // No queueing allowed (i.e. subtask required by another subtask). Start the search right away.
                 // (we also do this if you bypass the cache, because then queueing doesn't work)
                 if (!allowQueue)
