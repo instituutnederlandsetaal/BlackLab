@@ -204,7 +204,7 @@ public abstract class HitGroupCollocationScorer implements HitGroupScorer {
                     if (sensitivity == null)
                         sensitivity = field.index().defaultMatchSensitivity();
                     String luceneField = annotation.sensitivity(sensitivity).luceneField();
-                    return LuceneUtil.getTermFrequency(index.searcher(), luceneField,
+                    return LuceneUtil.getTermFrequency(index, luceneField,
                             sensitivity.desensitize(term),
                             filter, !loose);
                 }

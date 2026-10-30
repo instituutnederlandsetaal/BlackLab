@@ -59,17 +59,18 @@ public final class LuceneUtil {
     private LuceneUtil() {} // utility class
 
     /** Determine how often a term occurs in a field in the index */
-    public static long getTermFrequency(IndexSearcher searcher, String luceneField, String term,
+    public static long getTermFrequency(BlackLabIndex index, String luceneField, String term,
             Query docFilter, boolean accurateButSlower) {
         if (docFilter != null || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
-            return getTermFrequencyIterOverDocs(searcher, term, docFilter, luceneField);
+            return getTermFrequencyIterOverDocs(index, term, docFilter, luceneField);
         } else {
             // Just use totalTermFreq. This doesn't take deleted documents into account,
             // but that's usually okay if you're using it for a ratio with another frequency
             // that also doesn't take deletions into account.
             try {
+                IndexSearcher searcher = index.searcher();
                 if (searcher == null)
                     return 0; // TEST
                 IndexReader reader = searcher.getIndexReader();
@@ -80,13 +81,14 @@ public final class LuceneUtil {
         }
     }
 
-    private static long getTermFrequencyIterOverDocs(IndexSearcher searcher, String term, Query docFilter,
+    private static long getTermFrequencyIterOverDocs(BlackLabIndex index, String term, Query docFilter,
             String luceneField) {
+        IndexSearcher searcher = index.searcher();
         Weight filterWeight = determineFilterWeight(docFilter, searcher);
 
         BytesRef bytesRef = new BytesRef(term);
         LongAdder count = new LongAdder();
-        forEachDocument(searcher.getIndexReader(), true, true, (ParallelDocTask) lrc -> {
+        forEachDocument(index, true, true, (ParallelDocTask) lrc -> {
             try {
                 Scorer scorer = docFilter == null ? null : filterWeight.scorer(lrc);
                 DocIdSetIterator docIt = docFilter == null ? null :
@@ -158,7 +160,7 @@ public final class LuceneUtil {
                     boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
                     if (isLiveDoc) {
                         boolean processDocType;
-                        if (docId == segmentMetadaDocId) {
+                        if (onlyRegularDocs && docId == segmentMetadaDocId) {
                             // This is the metadata document, which we never want to process
                             processDocType = false;
                         } else if (onlyRegularDocs && dvDocType != null) {

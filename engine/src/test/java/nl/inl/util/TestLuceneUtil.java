@@ -67,9 +67,9 @@ public class TestLuceneUtil {
 
     private void assertTermFreq(int expected, String the, Query docFilter) {
         // fast and slow versions should return the same result if there are no deleted docs
-        long freq = LuceneUtil.getTermFrequency(searcher, mainLuceneField, the, docFilter, false);
+        long freq = LuceneUtil.getTermFrequency(index, mainLuceneField, the, docFilter, false);
         assertEquals(expected, freq);
-        long freq2 = LuceneUtil.getTermFrequency(searcher, mainLuceneField, the, docFilter, true);
+        long freq2 = LuceneUtil.getTermFrequency(index, mainLuceneField, the, docFilter, true);
         assertEquals(expected, freq2);
     }
 
@@ -217,7 +217,7 @@ public class TestLuceneUtil {
             for (boolean threadSafe: new boolean[] { false, true }) {
                 AtomicInteger n = new AtomicInteger(0);
                 DocTask docTask = getDocTask(threadSafe, maxDoc, n);
-                LuceneUtil.forEachDocument(index.reader(), onlyRegularDocs, threadSafe, docTask);
+                LuceneUtil.forEachDocument(index, onlyRegularDocs, threadSafe, docTask);
                 int numberOfDocs = index.metadata().documentCount();
                 if (!onlyRegularDocs)
                     numberOfDocs += 1; // index metadata document

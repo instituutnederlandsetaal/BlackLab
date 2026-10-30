@@ -310,12 +310,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public void forEachDocument(DocTask task) {
-        LuceneUtil.forEachDocument(reader(), true, task.isThreadSafe(), task);
+        LuceneUtil.forEachDocument(this, true, task.isThreadSafe(), task);
     }
 
     @Override
     public void forEachDocument(boolean parallel, DocTask task) {
-        LuceneUtil.forEachDocument(reader(), true, parallel, task);
+        LuceneUtil.forEachDocument(this, true, parallel, task);
     }
 
     /**
