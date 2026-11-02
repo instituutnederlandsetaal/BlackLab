@@ -61,7 +61,7 @@ public class HitGroup implements HitOrDocGroup {
             HitGroup group;
             CompleteQuery hitsInGroupQuery = grouped.getHitsInGroupQuery();
             if (hitsInGroupQuery == null && query != null && groupedBy != null) {
-                hitsInGroupQuery = groupedBy.refine(index, query, groupId).orElseThrow();
+                hitsInGroupQuery = groupedBy.refine(index, query, groupId).orElse(null);
             }
             if (storeResults || hitsInGroupQuery == null) {
                 // Store results
