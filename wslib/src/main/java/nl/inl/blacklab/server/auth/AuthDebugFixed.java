@@ -3,7 +3,6 @@ package nl.inl.blacklab.server.auth;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -22,8 +21,7 @@ public class AuthDebugFixed extends AuthMethodProvider {
 
     private PluginParam parUserId;
 
-    @Override
-    public void initialize() throws PluginException {
+    public AuthDebugFixed() {
         parUserId = addParam(PString.any("userId"));
     }
 

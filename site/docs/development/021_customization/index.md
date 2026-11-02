@@ -69,15 +69,11 @@ Some plugins may need additional parameter(s). This is in addition to their expe
 
 For example, if a `FileConverter` performs part of speech tagging, it may need to know the language of the text to be tagged. It would take one additional parameter named `language`, which could be set to e.g. `English` or `Dutch`.
 
-For security reasons, such parameters must always be declared in the plugin's `initialize` method, not only with the basic type (i.e. string, integer, etc.), but ideally with extra validation rules (string must not be too long and match a specific regular expression; integer must fall within a range; etc.). The stricter the rules, the less likely your plugin can be exploited by a malicious user.
+For security reasons, such parameters must always be declared in the plugin's constructor (or field initializers), not only with the basic type (i.e. string, integer, etc.), but ideally with extra validation rules (string must not be too long and match a specific regular expression; integer must fall within a range; etc.). Declaring them during construction makes parameter information available without calling `initialize()`. The stricter the rules, the less likely your plugin can be exploited by a malicious user.
 
 ```java
-    private PluginParam parLanguage;
-
-    public void initialize() {
-        // Declare that we take an optional parameter named "language", which must be either "English" or "Dutch"
-        parLanguage = addParam(PEnum.of("language", List.of("English", "Dutch")));
-    }
+    // Declare that we take an optional parameter named "language", which must be either "English" or "Dutch"
+    private final PluginParam parLanguage = addParam(PEnum.of("language", List.of("English", "Dutch")));
 ```
 
 then in the plugin's code (e.g. `FileConverter.perform()`), you can access the parameter value via e.g. `params.getString(parLanguage[, defaultLanguage])`:
@@ -333,11 +329,7 @@ import org.apache.lucene.index.LeafReaderContext
 // Prints the PID of each document in the index.
 return new DocTaskType() {
     
-    PluginParam parPrefix;
-    
-    void initialize() {
-        parPrefix = addParam(PString.any("prefix"));
-    }
+    PluginParam parPrefix = addParam(PString.any("prefix"));
     
     DocTask docTask(BlackLabIndex index, PluginParams params) {
         MetadataField metadataField = ((BlackLabIndexWriter) index).metadata().metadataFields().pidField()
@@ -460,4 +452,4 @@ You are also always welcome to contact us for advice, via GitHub issue or direct
     - `MyPlugin.jar` or `MyPlugin.groovy` contain the plugin code
     - `MyPlugin.yaml` (if exists) will be read and passed to the plugin as a `Map<String, Object>`.
     - `MyPlugin/` (if exists) will be passed to the plugin so it can read any files it needs from there.
-- During development, you may want to delay initialization of plugins until they are used (normally, they are initialized on startup). This can be set in `blacklab[-server].yaml` under `plugins.delayInitialization` (default: `false`).
+- During development, you may want to delay initialization of plugins until they are used (normally, they are initialized on startup). This can be set in `blacklab[-server].yaml` under `plugins.delayInitialization` (default: `false`). Listing available plugins does not initialize them. IndexTool and QueryTool always delay initialization until a plugin is used.

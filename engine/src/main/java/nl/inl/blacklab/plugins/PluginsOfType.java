@@ -1,13 +1,11 @@
 package nl.inl.blacklab.plugins;
 
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceConfigurationError;
@@ -151,24 +149,18 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
-    public Collection<T> getAll() {
+    /** List plugin metadata without initializing the plugins. */
+    public Collection<PluginMetadata> getAll() {
         PluginManager.loadAllGroovyScripts();
-        List<T> result = new ArrayList<>();
+        Collection<PluginMetadata> result = new ArrayList<>();
         Collection<PluginData<T>> pluginDatas;
         synchronized (this) {
             pluginDatas = new ArrayList<>(plugins);
         }
         for (PluginData<T> data: pluginDatas) {
             T plugin = data.getPlugin();
-            if (pluginClass.isInstance(plugin)) {
-                try {
-                    data.initializePlugin();
-                    result.add(pluginClass.cast(plugin));
-                } catch (PluginException e) {
-                    // exception already cached in plugindata, no need to throw.
-                    logger.error("Plugin {} failed to initialize: {}", plugin.getId(), e.getMessage());
-                    logger.debug(e);
-                }
+            synchronized (plugin) {
+                result.add(new PluginMetadata(plugin));
             }
         }
         return result;

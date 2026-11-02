@@ -179,6 +179,7 @@ public class QueryToolImpl {
     public static void queryToolMain(String[] args) throws ErrorOpeningIndex {
         BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+        BlackLab.config().getPlugins().setDelayInitialization(true);
         LogUtil.setupBasicLoggingConfig(Level.WARN);
 
         Output output = new Output();

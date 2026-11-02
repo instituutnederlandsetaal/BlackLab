@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -29,8 +28,7 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
         return "Strip certain characters from the start and end of the value(s)";
     }
 
-    @Override
-    public void initialize() throws PluginException {
+    public ProcessingInstructionStrip() {
         parChars = addParam(PString.matching("chars", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
     }
 

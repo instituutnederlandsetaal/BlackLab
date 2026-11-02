@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PEnum;
 import nl.inl.blacklab.plugins.param.PString;
@@ -43,8 +42,7 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
         return "Concatenate 3 separate date fields into one";
     }
 
-    @Override
-    public void initialize() throws PluginException {
+    public ProcessingInstructionConcatDate() {
         parYearField = addParam(PString.identifier("yearField", true));
         parMonthField = addParam(PString.identifier("monthField", true));
         parDayField = addParam(PString.identifier("dayField", true));

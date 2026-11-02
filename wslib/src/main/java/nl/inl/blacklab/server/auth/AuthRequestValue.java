@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.plugins.param.PEnum;
 import nl.inl.blacklab.plugins.param.PString;
@@ -37,8 +36,7 @@ public class AuthRequestValue extends AuthMethodProvider {
         PARAMETER
     }
 
-    @Override
-    public void initialize() throws PluginException {
+    public AuthRequestValue() {
         List<String> typeOptions = List.of("attribute", "header", "parameter");
         parAttributeType = addParam(PEnum.of("attributeType", typeOptions)); // deprecated, use "type"
         parType = addParam(PEnum.of("type", typeOptions));

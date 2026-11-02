@@ -39,6 +39,7 @@ public abstract class Plugin {
 
     private final PluginDescriptor descriptor = new PluginDescriptor();
 
+    /** Declare a parameter during construction, so it is available before initialization. */
     public PluginParam addParam(PluginParam spec) {
         return descriptor.addParam(spec);
     }
