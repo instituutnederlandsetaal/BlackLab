@@ -62,6 +62,7 @@
       "op": "hits",
       "patt": "\"Lindenlaan\" \"this\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

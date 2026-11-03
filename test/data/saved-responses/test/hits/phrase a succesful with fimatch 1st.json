@@ -84,6 +84,7 @@
       "op": "hits",
       "patt": "_fimatch(\"a\", [lemma=\"successful\"], 0)",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

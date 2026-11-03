@@ -385,6 +385,7 @@
       "op": "hits",
       "patt": "[lemma=\"be\" & word=\"are\"]",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

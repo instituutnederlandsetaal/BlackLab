@@ -516,6 +516,7 @@
       "op": "hits",
       "patt": "<u/> containing \"good\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

@@ -64,6 +64,7 @@
       "op": "hits",
       "patt": "rfield(\"Dit\" =w=>en _, \"en\")",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true,
       "withspans": true
     },

@@ -279,6 +279,7 @@
       "op": "hits",
       "patt": "\"a\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "viewgroup": "str:service encounter about visa application for family members",
       "waitfortotal": true
     },

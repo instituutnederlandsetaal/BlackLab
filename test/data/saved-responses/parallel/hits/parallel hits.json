@@ -167,6 +167,7 @@
       "op": "hits",
       "patt": "\"Dit\" =w=>en _",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true,
       "withspans": true
     },

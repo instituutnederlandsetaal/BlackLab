@@ -36,7 +36,7 @@ function expectHitsUnchanged(corpusName, testName, params) {
                 sort: "field:pid,hitposition", // fully defined sort
                 context: 1,
                 waitfortotal: "true",
-                //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
+                usecache: "no",
                 ...params
             })
             .set('Accept', 'application/json')

@@ -162,6 +162,7 @@
       "op": "hits",
       "patt": "_ -blue-> _",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

@@ -87,6 +87,7 @@
       "op": "hits",
       "patt": "\"the\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

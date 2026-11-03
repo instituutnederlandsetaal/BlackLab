@@ -206,6 +206,7 @@
       "op": "hits",
       "patt": "\".*a.*\" --> _",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

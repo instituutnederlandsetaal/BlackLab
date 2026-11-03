@@ -561,6 +561,7 @@
       "op": "hits",
       "patt": "\"one\" A:([]{1,2}) []{1,2}",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

@@ -149,6 +149,7 @@
       "op": "hits",
       "patt": "\"one\" A:[]",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {

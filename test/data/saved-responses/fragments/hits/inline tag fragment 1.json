@@ -60,6 +60,7 @@
       "op": "hits",
       "patt": "\"jumps\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {
