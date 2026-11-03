@@ -22,9 +22,9 @@ public class TestCollocationQuery {
     public void testProximityAndTagContext() {
         assertQuery("meet([pos=\"N\"], \"eat\", -1, 1)", ContextSize.get(0, 0, 100),
                 CollocationType.PROXIMITY, "");
-        assertQuery("meet([pos=\"N\"], \"eat\", -3, 4)", ContextSize.get(3, 4, 100),
+        assertQuery("meet([pos=\"N\"], \"eat\", -3, 4)", ContextSize.get(4, 3, 100),
                 CollocationType.PROXIMITY, "");
-        assertQuery("meet_within([pos=\"N\"], \"eat\", <s/>, -3, 4)", ContextSize.get(3, 4, 100),
+        assertQuery("meet_within([pos=\"N\"], \"eat\", <s/>, -3, 4)", ContextSize.get(4, 3, 100),
                 CollocationType.PROXIMITY, "<s/>");
         assertQuery("meet_within([pos=\"N\"], \"eat\", <s/>)", ContextSize.ZERO,
                 CollocationType.PROXIMITY, "<s/>");

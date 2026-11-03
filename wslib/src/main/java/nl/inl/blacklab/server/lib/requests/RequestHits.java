@@ -260,8 +260,8 @@ public final class RequestHits {
                 lower = -1;
                 upper = 1;
             } else {
-                lower = context.before() == 0 ? 1 : -context.before();
-                upper = context.after() == 0 ? -1 : context.after();
+                lower = context.after() == 0 ? 1 : -context.after();
+                upper = context.before() == 0 ? -1 : context.before();
             }
             String optLowerUpper = "," + lower + "," + upper;
             if (!within.isEmpty() && context.equals(ContextSize.ZERO)) {
