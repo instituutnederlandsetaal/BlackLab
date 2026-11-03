@@ -77,6 +77,11 @@ expectHitsUnchanged('test', 'view single group', {
     group: 'field:title',
     viewgroup: 'str:service encounter about visa application for family members',
 });
+expectHitsUnchanged('test', 'viewgroup can\'t refine', {
+    patt: '"a"',
+    group: 'hitposition',  // BL has to store the hits in the group, refine query not supported
+    viewgroup: 'int:29',
+});
 
 // Matching doc facets
 expectCorpusUrlUnchanged('test', 'hits', 'document facets',

@@ -1,0 +1,144 @@
+{
+  "docInfos": {
+    "PBsve430": {
+      "mayView": true,
+      "metadata": {
+        "editor": [
+          "test"
+        ],
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 334
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "lemma": [
+          "letter"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "letter"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "need"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "need"
+        ]
+      },
+      "docPid": "PBsve430",
+      "end": 30,
+      "match": {
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "start": 29
+    }
+  ],
+  "summary": {
+    "groupInfo": {
+      "identity": "int:29",
+      "identityDisplay": "29",
+      "properties": [
+        {
+          "name": "hitposition",
+          "value": "29"
+        }
+      ]
+    },
+    "params": {
+      "context": "1",
+      "group": "hitposition",
+      "indexname": "test",
+      "op": "hits",
+      "patt": "\"a\"",
+      "sort": "field:pid,hitposition",
+      "usecache": false,
+      "viewgroup": "int:29",
+      "waitfortotal": true
+    },
+    "pattern": {
+      "bcql": "\"a\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"a\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"a\"",
+            "type": "string",
+            "value": "a"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
+    }
+  }
+}
