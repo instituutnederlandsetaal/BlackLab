@@ -6,7 +6,7 @@
 #  "wordnum" instead of "id", etc.; for the more standard version, see contrib/input-formats/conll-u.blf.yaml)
 
 # For displaying in user interface (optional)
-displayName: CoNLL-U
+displayName: CoNLL-U (alternative annotation names)
 
 # For describing input format in user interface (optional)
 description: Tab-delimited (TSV) format that includes support for dependency relations
