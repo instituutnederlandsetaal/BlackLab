@@ -1,0 +1,76 @@
+# CoNLL-U format with dependency relations
+# https://universaldependencies.org/format.html
+# example data: https://github.com/UniversalDependencies/UD_Dutch-LassySmall/
+
+# (NOTE: this version uses different names than used in the CoNLL-U format, e.g. "word" instead of "form",
+#  "wordnum" instead of "id", etc.; for the more standard version, see contrib/input-formats/conll-u.blf.yaml)
+
+# For displaying in user interface (optional)
+displayName: CoNLL-U
+
+# For describing input format in user interface (optional)
+description: Tab-delimited (TSV) format that includes support for dependency relations
+
+helpUrl: https://universaldependencies.org/format.html
+
+fileType: conll-u
+
+annotatedFields:
+  contents:
+    annotations:
+
+    # First annotation is the main annotation
+    - name: word
+      displayName: Word
+      valuePath: 2
+      sensitivity: sensitive_insensitive
+
+    # multiword tokens (lines with ids like "1-2") are indexed in this annotation
+    - name: mwt
+      displayName: Multiword token
+      sensitivity: sensitive_insensitive
+
+    - name: wordnum
+      displayName: Word number
+      valuePath: 1
+      sensitivity: sensitive
+
+    - name: lemma
+      displayName: Lemma
+      valuePath: 3
+      sensitivity: sensitive_insensitive
+
+    - name: pos
+      displayName: PoS
+      valuePath: 4
+
+    - name: xpos
+      displayName: XPoS
+      valuePath: 5
+
+    - name: other
+      displayName: Other annotation(s)
+      valuePath: 10
+
+    - name: feats
+      displayName: Features
+      valuePath: 6
+      # Maybe index each feature in a subannotation...?
+      #process:
+      #  - action: split
+      #    separator: "\\|"
+      #    keep: all
+
+    # The next 3 should probably only be indexed as relations.
+    # We'll index them as token annotations for now to help with debugging.
+    - name: head
+      displayName: Head
+      valuePath: 7
+
+    - name: deprel
+      displayName: Dependency relation
+      valuePath: 8
+
+    - name: deps
+      displayName: Head-deprel pairs
+      valuePath: 9

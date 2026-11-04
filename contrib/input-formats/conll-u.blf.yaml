@@ -1,5 +1,9 @@
 # CoNLL-U format with dependency relations
+# https://universaldependencies.org/format.html
 # example data: https://github.com/UniversalDependencies/UD_Dutch-LassySmall/
+
+# (NOTE: this version sticks closer to the names used in the CoNLL-U format, e.g. "form" instead of "word",
+#  "id" instead of "wordnum", etc.; for the older, nonstandard version, see contrib/input-formats/conll-u-alt.blf.yaml)
 
 # For displaying in user interface (optional)
 displayName: CoNLL-U
@@ -16,8 +20,8 @@ annotatedFields:
     annotations:
 
     # First annotation is the main annotation
-    - name: word
-      displayName: Word
+    - name: form
+      displayName: Form
       valuePath: 2
       sensitivity: sensitive_insensitive
 
@@ -26,8 +30,8 @@ annotatedFields:
       displayName: Multiword token
       sensitivity: sensitive_insensitive
 
-    - name: wordnum
-      displayName: Word number
+    - name: id
+      displayName: ID
       valuePath: 1
       sensitivity: sensitive
 
@@ -36,16 +40,16 @@ annotatedFields:
       valuePath: 3
       sensitivity: sensitive_insensitive
 
-    - name: pos
-      displayName: PoS
+    - name: upos
+      displayName: UPoS
       valuePath: 4
 
     - name: xpos
       displayName: XPoS
       valuePath: 5
 
-    - name: other
-      displayName: Other annotation(s)
+    - name: misc
+      displayName: Any other annotation(s)
       valuePath: 10
 
     - name: feats
