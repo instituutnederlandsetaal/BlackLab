@@ -21,7 +21,8 @@ annotatedFields:
 
     # First annotation is the main annotation
     - name: form
-      displayName: Form
+      displayName: Word form
+      description: Word form or punctuation symbol
       valuePath: 2
       sensitivity: sensitive_insensitive
 
@@ -31,46 +32,48 @@ annotatedFields:
       sensitivity: sensitive_insensitive
 
     - name: id
-      displayName: ID
+      displayName: Word index
       valuePath: 1
       sensitivity: sensitive
 
     - name: lemma
       displayName: Lemma
+      description: Lemma or stem of word form
       valuePath: 3
       sensitivity: sensitive_insensitive
 
     - name: upos
       displayName: UPoS
+      description: Universal part-of-speech tag
       valuePath: 4
 
     - name: xpos
       displayName: XPoS
+      description: Optional language-specific (or treebank-specific) part-of-speech / morphological tag
       valuePath: 5
 
     - name: misc
-      displayName: Any other annotation(s)
+      displayName: Any other annotation
       valuePath: 10
 
     - name: feats
       displayName: Features
+      description: List of morphological features from the universal feature inventory or from a defined language-specific extension
       valuePath: 6
-      # Maybe index each feature in a subannotation...?
-      #process:
-      #  - action: split
-      #    separator: "\\|"
-      #    keep: all
 
     # The next 3 should probably only be indexed as relations.
     # We'll index them as token annotations for now to help with debugging.
     - name: head
       displayName: Head
+      description: Head of the current word, which is either a value of ID or zero (0)
       valuePath: 7
 
     - name: deprel
       displayName: Dependency relation
+      description: Universal dependency relation to the HEAD (root iff HEAD = 0) or a defined language-specific subtype of one
       valuePath: 8
 
     - name: deps
       displayName: Head-deprel pairs
+      description: Enhanced dependency graph in the form of head-deprel pairs
       valuePath: 9
