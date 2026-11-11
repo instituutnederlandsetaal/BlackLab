@@ -477,9 +477,10 @@ Example of plugin configuration in the main configuration file (`blacklab-server
 ```yaml
 plugins:
 
-    # Should we initialize plugins when they are first used?
-    # (plugin initialization can take a while; during development, delayed initialization is
-    # often convenient, but during production, you usually want to initialize right away)
+    # Should we prepare plugins when they are first used?
+    # (prepare() can take a while; during development, delayed preparation is
+    # often convenient, but during production, you usually want to prepare right away)
+    # Metadata is still initialized when listing plugins.
     # (default: false)
     delayInitialization: false
 

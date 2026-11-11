@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.jspecify.annotations.NonNull;
 
@@ -14,10 +13,9 @@ import nl.inl.blacklab.plugins.DocTaskType;
 import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.plugins.Plugin;
 import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.PluginMetadata;
 import nl.inl.blacklab.plugins.PluginsOfType;
-import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.plugins.param.PMultiple;
-import nl.inl.blacklab.plugins.param.PluginDescriptor;
 import nl.inl.blacklab.plugins.param.PluginParam;
 
 /**
@@ -96,39 +94,23 @@ public class ResultListPlugins {
             }
             @SuppressWarnings("unchecked")
             PluginsOfType<Plugin> manager = (PluginsOfType<Plugin>) PluginManager.type(pluginType);
-            Collection<Plugin> plugins = manager.getAll();
+            Collection<PluginMetadata> plugins = manager.getAllMetadata();
             List<PluginInfo> pluginInfos = new ArrayList<>();
-            for (Plugin plugin : plugins) {
-                if (plugin.getId() == null) {
+            for (PluginMetadata plugin : plugins) {
+                if (plugin.id() == null) {
                     // A plugin ID is normally set during registration (via its class simple name if not otherwise
                     // provided). A null ID could only occur if a plugin was registered without any ID, class name,
                     // or alternate name matching. This is defensive programming against such edge cases.
                     continue;
                 }
-                PluginDescriptor descriptor = plugin.descriptor();
-                if (plugin instanceof QueryFunction qf){
-                    // Query functions are special, they have a parameter list, not a map
-                    List<PluginParamInfo> par = qf.getParameters().stream()
-                            .map(p -> {
-                                String typeName = paramTypeName(p);
-                                List<String> opt = getMultipleTypeOptions(p);
-                                return new PluginParamInfo(p.name(), typeName, p.isRequired(), opt);
-                            })
-                            .toList();
-                    pluginInfos.add(new PluginInfo(plugin.getName(), plugin.getDescription(), par));
-                } else {
-                    // By default, plugins use named parameters (without a defined order)
-                    // We use a treemap because we will output them as a list (because QueryFunction is a list,
-                    // and we want the same structure for all plugins), and we want the response to be stable.
-                    Map<String, PluginParamInfo> paramInfos = new TreeMap<>();
-                    for (Map.Entry<String, PluginParam> entry : descriptor.getParams().entrySet()) {
-                        PluginParam param = entry.getValue();
-                        String typeName = paramTypeName(param);
-                        List<String> opt = getMultipleTypeOptions(param);
-                        paramInfos.put(param.name(), new PluginParamInfo(param.name(), typeName, param.isRequired(), opt));
-                    }
-                    pluginInfos.add(new PluginInfo(plugin.getName(), plugin.getDescription(), paramInfos));
-                }
+                List<PluginParamInfo> par = plugin.parameters().stream()
+                        .map(p -> {
+                            String typeName = paramTypeName(p);
+                            List<String> opt = getMultipleTypeOptions(p);
+                            return new PluginParamInfo(p.name(), typeName, p.isRequired(), opt);
+                        })
+                        .toList();
+                pluginInfos.add(new PluginInfo(plugin.name(), plugin.description(), par));
             }
             pluginsByType.put(pluginType.getSimpleName(), pluginInfos);
         }

@@ -1,13 +1,11 @@
 package nl.inl.blacklab.plugins;
 
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceConfigurationError;
@@ -151,21 +149,21 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
-    public Collection<T> getAll() {
+    /** Initialize and list plugin metadata without preparing plugins for use. */
+    public Collection<PluginMetadata> getAllMetadata() {
         PluginManager.loadAllGroovyScripts();
-        List<T> result = new ArrayList<>();
+        Collection<PluginMetadata> result = new ArrayList<>();
         Collection<PluginData<T>> pluginDatas;
         synchronized (this) {
             pluginDatas = new ArrayList<>(plugins);
         }
         for (PluginData<T> data: pluginDatas) {
             T plugin = data.getPlugin();
-            if (pluginClass.isInstance(plugin)) {
+            synchronized (plugin) {
                 try {
                     data.initializePlugin();
-                    result.add(pluginClass.cast(plugin));
+                    result.add(new PluginMetadata(plugin));
                 } catch (PluginException e) {
-                    // exception already cached in plugindata, no need to throw.
                     logger.error("Plugin {} failed to initialize: {}", plugin.getId(), e.getMessage());
                     logger.debug(e);
                 }
@@ -175,7 +173,7 @@ public class PluginsOfType<T extends Plugin> {
     }
 
     /**
-     * Get a plugin by id, initializing it if necessary.
+     * Get a plugin by id, initializing and preparing it if necessary.
      * In addition to their id, plugins can also be retrieved by their fully
      * qualified class name and their simple class name (if applicable, and
      * in that order, after id has been checked).
@@ -184,7 +182,7 @@ public class PluginsOfType<T extends Plugin> {
      *
      * @param id id of the plugin to get
      * @return the plugin
-     * @throws PluginException when the plugin fails to initialize
+     * @throws PluginException when the plugin fails to initialize or prepare
      */
     public @NonNull T get(String id) throws PluginException {
         return getIfExists(id)
@@ -210,26 +208,26 @@ public class PluginsOfType<T extends Plugin> {
         if (pluginData == null) {
             return Optional.empty();
         }
-        pluginData.initializePlugin();
+        pluginData.preparePlugin();
         return Optional.of(pluginClass.cast(pluginData.getPlugin()));
     }
 
     /**
-     * Used to initialize all plugins in one go.
+     * Used to initialize and prepare all plugins in one go.
      * <p>
      * Whether or not this is done depends on PluginManager config.
      */
-    void initializePlugins() {
+    void preparePlugins() {
         Collection<PluginData<T>> pluginDatas;
         synchronized (this) {
             pluginDatas = new ArrayList<>(plugins);
         }
         pluginDatas.forEach(pluginData -> {
             try {
-                pluginData.initializePlugin();
+                pluginData.preparePlugin();
             } catch (PluginException e) {
                 // exception already cached in plugindata, no need to throw.
-                logger.error("Plugin {} failed to initialize: {}", pluginData.getPlugin().getId(), e.getMessage());
+                logger.error("Plugin {} failed to initialize or prepare: {}", pluginData.getPlugin().getId(), e.getMessage());
                 logger.debug(e);
             }
         });

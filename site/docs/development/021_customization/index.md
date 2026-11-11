@@ -69,7 +69,9 @@ Some plugins may need additional parameter(s). This is in addition to their expe
 
 For example, if a `FileConverter` performs part of speech tagging, it may need to know the language of the text to be tagged. It would take one additional parameter named `language`, which could be set to e.g. `English` or `Dutch`.
 
-For security reasons, such parameters must always be declared in the plugin's `initialize` method, not only with the basic type (i.e. string, integer, etc.), but ideally with extra validation rules (string must not be too long and match a specific regular expression; integer must fall within a range; etc.). The stricter the rules, the less likely your plugin can be exploited by a malicious user.
+For security reasons, such parameters must always be declared in the plugin's `initialize()` method, not only with the basic type (i.e. string, integer, etc.), but ideally with extra validation rules (string must not be too long and match a specific regular expression; integer must fall within a range; etc.). Configuration is available during `initialize()`, so it can be used to configure parameters and their defaults. The stricter the rules, the less likely your plugin can be exploited by a malicious user.
+
+`initialize()` is also called when listing plugins. Put time-consuming preparation, such as loading a large model, in `prepare()` instead. This method is called once after `initialize()` and before the plugin is used. The parameter descriptor is frozen after `initialize()`, so parameters cannot be added in `prepare()`.
 
 ```java
     private PluginParam parLanguage;
@@ -334,7 +336,7 @@ import org.apache.lucene.index.LeafReaderContext
 return new DocTaskType() {
     
     PluginParam parPrefix;
-    
+
     void initialize() {
         parPrefix = addParam(PString.any("prefix"));
     }
@@ -460,4 +462,4 @@ You are also always welcome to contact us for advice, via GitHub issue or direct
     - `MyPlugin.jar` or `MyPlugin.groovy` contain the plugin code
     - `MyPlugin.yaml` (if exists) will be read and passed to the plugin as a `Map<String, Object>`.
     - `MyPlugin/` (if exists) will be passed to the plugin so it can read any files it needs from there.
-- During development, you may want to delay initialization of plugins until they are used (normally, they are initialized on startup). This can be set in `blacklab[-server].yaml` under `plugins.delayInitialization` (default: `false`).
+- During development, you may want to delay preparation of plugins until they are used (normally, they are prepared on startup). This can be set in `blacklab[-server].yaml` under `plugins.delayInitialization` (default: `false`). Listing available plugins calls `initialize()` for metadata, but not `prepare()`. IndexTool and QueryTool always delay preparation until a plugin is used.
