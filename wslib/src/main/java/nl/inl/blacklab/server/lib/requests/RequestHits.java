@@ -100,8 +100,8 @@ public final class RequestHits {
      * @param includeGroupContents Whether to include the contents of each group
      * @param windowSettings Settings for the window of hits to return
      * @param facetDesc      Description of the facets to calculate
-     * @param calculateCollocations Whether to calculate collocations
-     * @param sensitive      Whether collocations should be case-sensitive
+     * @param calculateCollocations Whether to calculate collocations [DEPRECATED, use /collocations endpoint instead]
+     * @param sensitive      Whether collocations should be case-sensitive [DEPRECATED]
      * @param useCache       Use the results cache or ignore it for this query?
      * @param waitForTotal   Wait for the total count to be calculated before returning results?
      * @param includeSubcorpusSize Whether to include the size of the subcorpus
