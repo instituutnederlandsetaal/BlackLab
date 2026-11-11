@@ -410,6 +410,10 @@ cache:
     denyAbortedSearchSec: 600
     
     # Maximum number of cache entries to keep.
+    # BlsCache evicts the least worthy completed entries during cleanup.
+    # Running and queued searches are not evicted to meet this limit.
+    # Aborted searches are also kept for their configured cooldown.
+    # Set to -1 for no entry limit, or 0 to disable caching (BlsCache).
     # Please note that memory use per cache entry may vary wildly,
     # so you may prefer to use targetFreeMemMegs to set a "free memory goal"
     # and/or maxJobAgeSec to set a maximum age for cache entries.
