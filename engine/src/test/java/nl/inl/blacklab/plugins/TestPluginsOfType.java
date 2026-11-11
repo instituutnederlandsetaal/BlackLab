@@ -35,8 +35,8 @@ public class TestPluginsOfType {
 
     @Test
     public void testListingDoesNotInitialize() {
-        PluginMetadata metadata = plugins.getAll().iterator().next();
-        Assert.assertEquals(1, plugins.getAll().size());
+        PluginMetadata metadata = plugins.getAllMetadata().iterator().next();
+        Assert.assertEquals(1, plugins.getAllMetadata().size());
         Assert.assertEquals("TestPlugin", metadata.id());
         Assert.assertEquals("test-plugin", metadata.name());
         Assert.assertEquals("Test description", metadata.description());
@@ -48,7 +48,7 @@ public class TestPluginsOfType {
 
     @Test
     public void testFirstUseInitializesOnce() {
-        plugins.getAll();
+        plugins.getAllMetadata();
         Assert.assertSame(plugin, plugins.get("test-alias"));
         Assert.assertSame(plugin, plugins.getIfExists("test-plugin").orElseThrow());
         Assert.assertEquals(1, plugin.configureCalls);
@@ -61,11 +61,11 @@ public class TestPluginsOfType {
     @Test
     public void testInitializationFailureIsDeferredAndCached() {
         plugin.fail = true;
-        Assert.assertEquals(1, plugins.getAll().size());
+        Assert.assertEquals(1, plugins.getAllMetadata().size());
         PluginException first = Assert.assertThrows(PluginException.class, () -> plugins.get("test-alias"));
         Assert.assertSame(first, Assert.assertThrows(PluginException.class, () -> plugins.get("test-plugin")));
         Assert.assertEquals(1, plugin.initializeCalls);
-        Assert.assertEquals(1, plugins.getAll().size());
+        Assert.assertEquals(1, plugins.getAllMetadata().size());
     }
 
     @Test

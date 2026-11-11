@@ -94,7 +94,7 @@ public class ResultListPlugins {
             }
             @SuppressWarnings("unchecked")
             PluginsOfType<Plugin> manager = (PluginsOfType<Plugin>) PluginManager.type(pluginType);
-            Collection<PluginMetadata> plugins = manager.getAll();
+            Collection<PluginMetadata> plugins = manager.getAllMetadata();
             List<PluginInfo> pluginInfos = new ArrayList<>();
             for (PluginMetadata plugin : plugins) {
                 if (plugin.id() == null) {

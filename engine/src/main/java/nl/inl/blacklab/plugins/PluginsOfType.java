@@ -150,7 +150,7 @@ public class PluginsOfType<T extends Plugin> {
     }
 
     /** List plugin metadata without initializing the plugins. */
-    public Collection<PluginMetadata> getAll() {
+    public Collection<PluginMetadata> getAllMetadata() {
         PluginManager.loadAllGroovyScripts();
         Collection<PluginMetadata> result = new ArrayList<>();
         Collection<PluginData<T>> pluginDatas;

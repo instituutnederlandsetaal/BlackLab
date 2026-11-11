@@ -26,7 +26,7 @@ class PluginData<T extends Plugin> {
     /** Has plugin been initialized? */
     private boolean initialized;
 
-    /** Exception during initialzation, if any */
+    /** Exception during initialization, if any */
     private PluginException initializationException;
 
     /** The plugin itself */
@@ -43,6 +43,7 @@ class PluginData<T extends Plugin> {
     }
 
     public PluginData(T plugin, BLConfigPlugins configs, String altId) {
+        plugin.descriptor().freeze(); // plugin parameters must all be added in constructor
         this.plugin = plugin;
         this.altId = altId;
         File configFile = findConfigFile();
@@ -71,7 +72,7 @@ class PluginData<T extends Plugin> {
 
     /**
      * Initialize the plugin, if it exists and is currently uninitialized.
-     * Previously encountered errors are rethrown. If am error is encountered, it is
+     * Previously encountered errors are rethrown. If an error is encountered, it is
      * stored in the plugin data and rethrown.
      *
      * @throws PluginException when the plugin fails to initialize, care should be
@@ -89,7 +90,6 @@ class PluginData<T extends Plugin> {
                 logger.debug("Initializing plugin " + plugin.getId());
                 plugin.configure(config, findPluginDir());
                 plugin.initialize();
-                plugin.descriptor().freeze();
                 logger.debug("Initialized plugin " + plugin.getId());
                 initialized = true;
             } catch (PluginException e) {
