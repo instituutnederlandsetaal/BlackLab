@@ -146,7 +146,7 @@ public class BlsCache implements SearchCache {
      * @param index the index
      */
     @Override
-    public void removeSearchesForIndex(BlackLabIndex index) {
+    public synchronized void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
         traceInfo("Remove searches for index: " + index.name());
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
@@ -174,7 +174,7 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public <R extends SearchResult> boolean containsKey(Search<R> source) {
+    public synchronized <R extends SearchResult> boolean containsKey(Search<R> source) {
         return searches.containsKey(source);
     }
 
@@ -416,7 +416,9 @@ public class BlsCache implements SearchCache {
                 // Finished search.
                 isSearchTooOld = checkLastAccessTime && search.timeUnusedMs() > config.getMaxJobAgeSec() * 1000L;
             }
-            if (isSearchTooOld || memoryToFreeUpMegs > 0) {
+            boolean tooManySearches = config.getMaxNumberOfJobs() > 0 &&
+                    this.searches.size() > config.getMaxNumberOfJobs();
+            if (isSearchTooOld || memoryToFreeUpMegs > 0 || tooManySearches) {
                 // Search is too old or cache is too big. Keep removing searches until that's no
                 // longer the case
                 // logger.debug("Remove from cache: " + search);
@@ -425,6 +427,8 @@ public class BlsCache implements SearchCache {
                     traceInfo("Not enough free mem (free " + freeMegs + "M < min free "
                             + config.getTargetFreeMemMegs() + "M)");
                     reason = "free up memory";
+                } else if (tooManySearches) {
+                    reason = "too many cached searches";
                 } else {
                     traceInfo("Searchjob too old (age " + (int)(search.timeUnusedMs()/1000) + "s > max age "
                             + config.getMaxJobAgeSec() + "s)");
@@ -473,7 +477,7 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public Map<String, Object> getStatus() {
+    public synchronized Map<String, Object> getStatus() {
         Map<String, Integer> counts = getCountsPerStatus();
         return Map.of(
             "targetFreeMemMegs", config.getTargetFreeMemMegs(),
@@ -495,7 +499,7 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
+    public synchronized List<Map<String, Object>> getContents(boolean includeDebugInfo) {
         return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).toList();
     }
 
