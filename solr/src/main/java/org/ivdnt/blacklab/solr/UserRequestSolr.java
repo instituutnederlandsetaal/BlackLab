@@ -2,14 +2,13 @@ package org.ivdnt.blacklab.solr;
 
 import java.security.Principal;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.search.DocSet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;

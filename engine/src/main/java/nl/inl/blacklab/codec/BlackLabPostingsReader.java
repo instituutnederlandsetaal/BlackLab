@@ -76,8 +76,8 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     /**
      * Get the BlackLabPostingsReader for the given leafreader.
      *
-     * @param lrc leafreader to get the BlackLab40PostingsReader for
-     * @return BlackLab40PostingsReader for this leafreader
+     * @param lrc leafreader to get the BlackLabPostingsReader for
+     * @return BlackLabPostingsReader for this leafreader
      */
     public static BlackLabPostingsReader forSegment(LeafReaderContext lrc) {
         // Downcast to CodecReader (caution, internal API)

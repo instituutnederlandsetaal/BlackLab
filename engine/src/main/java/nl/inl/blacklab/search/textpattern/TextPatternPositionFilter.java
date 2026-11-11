@@ -60,7 +60,7 @@ public class TextPatternPositionFilter extends TextPattern {
             return resultQuery;
         } else {
             throw new InvalidQuery("Right-hand side of position filter " + operation +
-                    " must be a query or list of queries: " + result);
+                    " must be a query or list of queries, not a " + EvalResult.describe(result));
         }
     }
 

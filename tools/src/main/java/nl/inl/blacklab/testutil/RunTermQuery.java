@@ -98,7 +98,7 @@ public class RunTermQuery {
         String luceneName = term.field();
         String word = term.text();
         try {
-            org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
+            org.apache.lucene.index.Terms terms = reader.termVectors().get(doc, luceneName);
             if (terms == null) {
                 System.out.println("Field " + luceneName + " has no Terms");
                 return;
@@ -165,10 +165,10 @@ public class RunTermQuery {
 
     private static void doQuery(Term term, IndexReader reader) throws IOException {
         Query query = new TermQuery(term);
-        query = query.rewrite(reader);
+        IndexSearcher searcher = new IndexSearcher(reader);
+        query = query.rewrite(searcher);
         System.out.println("REGULAR QUERY");
 
-        IndexSearcher searcher = new IndexSearcher(reader);
         final BitSet bits = new BitSet(reader.maxDoc());
         docsFound = false;
         searcher.search(query, new SimpleCollector() {
@@ -203,7 +203,7 @@ public class RunTermQuery {
         IndexSearcher searcher = new IndexSearcher(reader);
 
         SpanQuery spanQuery = new SpanTermQuery(term);
-        spanQuery = (SpanQuery) spanQuery.rewrite(reader);
+        spanQuery = (SpanQuery) spanQuery.rewrite(searcher);
 
         System.out.println("SPANQUERY");
 

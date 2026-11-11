@@ -9,7 +9,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -182,7 +181,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query) throws TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query) {
         throw new UnsupportedOperationException();
     }
 

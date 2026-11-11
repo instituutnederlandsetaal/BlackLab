@@ -220,7 +220,7 @@ public class TextPatternCompare extends TextPattern {
                     }
                 } else {
                     throw new InvalidQuery("Right side of comparison must evaluate to a string or int range, not: "
-                            + result2.getClass().getSimpleName());
+                            + EvalResult.describe(result2));
                 }
 
                 // Rewrite to appropriate query, i.e. anytoken, term or regex.
@@ -230,7 +230,7 @@ public class TextPatternCompare extends TextPattern {
                 query = new TextPatternFunctionCall(func.getName(), List.of(right)).toQuery(context);
             } else {
                 throw new InvalidQuery("Left side of comparison must evaluate to an annotation or function, not: "
-                        + evaluated.getClass().getSimpleName());
+                        + EvalResult.describe(evaluated));
             }
             return isNot ? new SpanQueryNot(query) : query;
         }
