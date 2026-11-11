@@ -16,7 +16,7 @@ return new FileConverter() {
         }
     }
 
-    void prepare() {
+    void initialize() {
         // Get the message from our YAML config file (or use default)
         message = cfgString("message", "Default groovy-plugin message")
         // If a message file exists in our config dir (plugins/, read the message from there instead
