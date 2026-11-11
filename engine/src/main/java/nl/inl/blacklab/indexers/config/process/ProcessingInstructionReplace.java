@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PEnum;
 import nl.inl.blacklab.plugins.param.PString;
@@ -36,7 +37,8 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
         return "Perform a regular expression replace operation";
     }
 
-    public ProcessingInstructionReplace() {
+    @Override
+    public void initialize() throws PluginException {
         parFind = addParam(PString.matching("find", StringUtil.REGEX_ANY_NON_EMPTY_VALUE, true));
         parReplace = addParam(PString.any("replace", true));
         parFlags = addParam(PString.any("flags"));

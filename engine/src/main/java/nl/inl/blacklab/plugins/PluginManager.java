@@ -97,7 +97,7 @@ public class PluginManager {
     public static final String PLUGINS_DIR_NAME = "plugins";
 
     /**
-     * Delay initialization of plugins until they are first used. Useful for
+     * Delay preparation of plugins until they are first used. Useful for
      * development
      */
     private static final String PROP_DELAY_INITIALIZATION = "delayInitialization";
@@ -234,12 +234,12 @@ public class PluginManager {
             CompletableFuture.runAsync(() -> {
                 // only now they're all located, initialize them
                 logger.trace("Config setting " + PROP_DELAY_INITIALIZATION + " is false, initializing plugins...");
-                pluginsByType.values().forEach(PluginsOfType::initializePlugins);
+                pluginsByType.values().forEach(PluginsOfType::preparePlugins);
                 logger.trace("Finished Initializing plugin system");
             });
         } else {
             logger.trace("Config setting " + PROP_DELAY_INITIALIZATION
-                    + " is true, plugins will be initialized on first use.");
+                    + " is true, plugins will be prepared on first use.");
             logger.trace("Finished Initializing plugin system");
         }
     }

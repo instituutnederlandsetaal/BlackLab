@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PStringStringMap;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -26,7 +27,8 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
         return "Map values according to a mapping table";
     }
 
-    public ProcessingInstructionMapValues() {
+    @Override
+    public void initialize() throws PluginException {
         parTable = addParam(PStringStringMap.required("table", PStringStringMap.Validator.REASONABLE_LENGTHS));
     }
 

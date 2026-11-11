@@ -16,6 +16,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.StoredFields;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.param.PBoolean;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -38,7 +39,8 @@ public class RemoveDocIfNotInList extends DocTaskType {
     private PluginParam parToAddFile;
     private PluginParam parOkayToRemoveMany;
 
-    public RemoveDocIfNotInList() {
+    @Override
+    public void initialize() throws PluginException {
         parToKeepFile = addParam(PString.matching("toKeepFile", StringUtil.REGEX_ANY_NON_EMPTY_VALUE, true));
         parToAddFile = addParam(PString.matching("toAddFile", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
         parOkayToRemoveMany = addParam(PBoolean.optional("okayToRemoveMany"));

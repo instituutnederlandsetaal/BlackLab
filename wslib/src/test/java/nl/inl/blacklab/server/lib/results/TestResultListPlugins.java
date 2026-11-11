@@ -13,13 +13,14 @@ import nl.inl.blacklab.search.BlackLab;
 public class TestResultListPlugins {
 
     @Test
-    public void testListingDoesNotInitializePlugins() {
+    public void testListingInitializesMetadataWithoutPreparingPlugins() {
         boolean delayInitialization = BlackLab.config().getPlugins().isDelayInitialization();
         BlackLab.config().getPlugins().setDelayInitialization(true);
         PluginManager.ensureInitialized();
         BlackLab.config().getPlugins().setDelayInitialization(delayInitialization);
         FileConverter converter = new FileConverter() {
-            {
+            @Override
+            public void initialize() {
                 addParam(PString.any("last"));
                 addParam(PString.any("first", true));
             }
@@ -31,12 +32,12 @@ public class TestResultListPlugins {
 
             @Override
             public String getDescription() {
-                return "Uninitialized converter";
+                return "Unprepared converter";
             }
 
             @Override
-            public void initialize() {
-                Assert.fail("Listing plugins must not initialize them");
+            public void prepare() {
+                Assert.fail("Listing plugins must not prepare them");
             }
         };
         PluginManager.type(FileConverter.class).add(converter.getId(), converter);

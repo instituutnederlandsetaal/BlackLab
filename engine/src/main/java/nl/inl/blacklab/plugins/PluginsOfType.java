@@ -149,7 +149,7 @@ public class PluginsOfType<T extends Plugin> {
         }
     }
 
-    /** List plugin metadata without initializing the plugins. */
+    /** Initialize and list plugin metadata without preparing plugins for use. */
     public Collection<PluginMetadata> getAllMetadata() {
         PluginManager.loadAllGroovyScripts();
         Collection<PluginMetadata> result = new ArrayList<>();
@@ -160,14 +160,20 @@ public class PluginsOfType<T extends Plugin> {
         for (PluginData<T> data: pluginDatas) {
             T plugin = data.getPlugin();
             synchronized (plugin) {
-                result.add(new PluginMetadata(plugin));
+                try {
+                    data.initializePlugin();
+                    result.add(new PluginMetadata(plugin));
+                } catch (PluginException e) {
+                    logger.error("Plugin {} failed to initialize: {}", plugin.getId(), e.getMessage());
+                    logger.debug(e);
+                }
             }
         }
         return result;
     }
 
     /**
-     * Get a plugin by id, initializing it if necessary.
+     * Get a plugin by id, initializing and preparing it if necessary.
      * In addition to their id, plugins can also be retrieved by their fully
      * qualified class name and their simple class name (if applicable, and
      * in that order, after id has been checked).
@@ -176,7 +182,7 @@ public class PluginsOfType<T extends Plugin> {
      *
      * @param id id of the plugin to get
      * @return the plugin
-     * @throws PluginException when the plugin fails to initialize
+     * @throws PluginException when the plugin fails to initialize or prepare
      */
     public @NonNull T get(String id) throws PluginException {
         return getIfExists(id)
@@ -202,26 +208,26 @@ public class PluginsOfType<T extends Plugin> {
         if (pluginData == null) {
             return Optional.empty();
         }
-        pluginData.initializePlugin();
+        pluginData.preparePlugin();
         return Optional.of(pluginClass.cast(pluginData.getPlugin()));
     }
 
     /**
-     * Used to initialize all plugins in one go.
+     * Used to initialize and prepare all plugins in one go.
      * <p>
      * Whether or not this is done depends on PluginManager config.
      */
-    void initializePlugins() {
+    void preparePlugins() {
         Collection<PluginData<T>> pluginDatas;
         synchronized (this) {
             pluginDatas = new ArrayList<>(plugins);
         }
         pluginDatas.forEach(pluginData -> {
             try {
-                pluginData.initializePlugin();
+                pluginData.preparePlugin();
             } catch (PluginException e) {
                 // exception already cached in plugindata, no need to throw.
-                logger.error("Plugin {} failed to initialize: {}", pluginData.getPlugin().getId(), e.getMessage());
+                logger.error("Plugin {} failed to initialize or prepare: {}", pluginData.getPlugin().getId(), e.getMessage());
                 logger.debug(e);
             }
         });

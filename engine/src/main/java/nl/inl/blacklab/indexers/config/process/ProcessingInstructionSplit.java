@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -33,7 +34,8 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
         return "Split values based on a regular expression";
     }
 
-    public ProcessingInstructionSplit() {
+    @Override
+    public void initialize() throws PluginException {
         parSeparator = addParam(PString.matching("separator", StringUtil.REGEX_ANY_NON_EMPTY_VALUE));
         parFlags = addParam(PString.any("flags"));
         parKeep = addParam(PString.matching("keep", "\\d+|both|all"));

@@ -5,7 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.plugins.param.PluginParam;
 
-/** Plugin information available without initializing the plugin. */
+/** Plugin information available after initialization, without preparing the plugin for use. */
 public record PluginMetadata(String id, String name, String description, List<PluginParam> parameters) {
 
     public PluginMetadata {

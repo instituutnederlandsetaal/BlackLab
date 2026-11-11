@@ -37,13 +37,10 @@ public class FindReplace extends FileConverter {
 
     private PluginParam parReplace;
 
-    public FindReplace() {
-        parFind = addParam(PString.any("find", true, 50));
-        parReplace = addParam(PString.any("replace", false, 100));
-    }
-
     @Override
     public void initialize() throws PluginException {
+        parFind = addParam(PString.any("find", true, 50));
+        parReplace = addParam(PString.any("replace", false, 100));
         logger.info("initialize: find={}, replace={}", parFind, parReplace);
     }
 

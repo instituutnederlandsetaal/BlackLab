@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
@@ -28,7 +29,8 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
         return "Parse a part of speech and features expression of the form \"A(b=c,d=e)\"";
     }
 
-    public ProcessingInstructionParsePos() {
+    @Override
+    public void initialize() throws PluginException {
         parField = addParam(PString.identifier("field"));
     }
 

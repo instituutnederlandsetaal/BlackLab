@@ -7,6 +7,7 @@ import java.util.Base64.Decoder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.plugins.param.PBoolean;
 import nl.inl.blacklab.plugins.param.PString;
@@ -46,7 +47,8 @@ public class AuthHttpBasic extends AuthMethodProvider {
         };
     }
 
-    public AuthHttpBasic() {
+    @Override
+    public void initialize() throws PluginException {
         // We configure these so validation succeeds, but we don't use them here.
         // HttpAuthFilter read them from the BLS config directly.
         // We should find a less nasty way to do this.
