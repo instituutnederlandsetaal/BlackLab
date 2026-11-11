@@ -102,6 +102,29 @@ public class TestBlsCache {
     }
 
     @Test
+    public void testEntryLimitPreservesAbortedSearchCooldown() {
+        synchronized (cache) {
+            config.getCache().setMaxNumberOfJobs(1);
+            BlsCacheEntry<?> running = addEntry(30, false, true);
+            BlsCacheEntry<?> finished = addEntry(20, true, true);
+            BlsCacheEntry<?> aborted = addEntry(10, true, true);
+            when(aborted.isCancelled()).thenReturn(true);
+
+            cache.updateCache();
+
+            assertEquals(2, cache.searches.size());
+            assertTrue(cache.containsKey(running.search()));
+            assertTrue(cache.containsKey(aborted.search()));
+            assertFalse(cache.containsKey(finished.search()));
+
+            when(aborted.timeSinceFinishedMs()).thenReturn(config.getCache().getDenyAbortedSearchSec() * 1000L + 1);
+            cache.updateCache();
+
+            assertFalse(cache.containsKey(aborted.search()));
+        }
+    }
+
+    @Test
     public void testExpiredEntriesStillEvictedBelowLimit() {
         synchronized (cache) {
             BlsCacheEntry<?> expired = addEntry(10, true, true);

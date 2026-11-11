@@ -416,7 +416,7 @@ public class BlsCache implements SearchCache {
                 // Finished search.
                 isSearchTooOld = checkLastAccessTime && search.timeUnusedMs() > config.getMaxJobAgeSec() * 1000L;
             }
-            boolean tooManySearches = config.getMaxNumberOfJobs() > 0 &&
+            boolean tooManySearches = !search.isCancelled() && config.getMaxNumberOfJobs() > 0 &&
                     this.searches.size() > config.getMaxNumberOfJobs();
             if (isSearchTooOld || memoryToFreeUpMegs > 0 || tooManySearches) {
                 // Search is too old or cache is too big. Keep removing searches until that's no
