@@ -14,6 +14,11 @@
 - In addition to `mainAnnotation`, it is possible to set a separate `defaultSearchAnnotation`, which is used in BCQL if no annotation is specified. It defaults to `mainAnnotation`.
 - BCQL now supports separate case and diacritics sensitivity. Use "(?c)..." for case-sensitive (but diacritics insensitive) and "(?d)..." for diacritics-sensitive (but case insensitive). ("(?s)..." means case and diacritics sensitive, and "(?i)..." both insensitive (the default).
 - It is possible to override some settings from `blacklab[-server].yaml` using e.g. `blacklab-server.override.yaml`. Mainly useful for automated (Docker) deployments where you want to have your system manager the main config file, but want the freedom to manually override some settings.
+- Allow for document fragments with their own metadata.
+- `/parse-pattern` endpoint now also supports `explain=true` to show how the query will be parsed and rewritten.
+- Mark metadatafield with `role: pid` to set persistent identifier (alternative to `corpusConfig.specialFields.pidField`).
+- Allow embedding metadata field blocks inside other metadata field blocks to shorten long, repetitive XPath expressions for a list of related fields.
+- Added a significant number of new tests.
 
 
 ### Changed
@@ -22,12 +27,13 @@
 - Upgraded to Lucene 9.
 - BLS: upgraded to Tomcat 10.
 - trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
+- Got rid of default maximums for processing/counting hits and BLS response page size. These now default to unlimited, but you can still set a maximum in the config file.
 - ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
 - `StringUtils.stripAccents()` explicitly decomposes several common ligatures (because Unicode normalization doesn't do this).
 - The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins directory, but a `.jar` file can also be used of course. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
 - `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or a scheme associated with your custom plugin, e.g. `mydb:`.
 - You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
-- I you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
+- If you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
 - By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
   the XML documents have schema declarations but others don't.
 - BlackLab no longer sanitizes field/annotation names with illegal XML characters. API v5 will never use field/annotation names as XML element names, so this is now unnecessary. Note that if you still use API v4 and have characters in your field/annotation names not allowed in XML element names, the BLS XML responses will be invalid. But this should be rare.
@@ -36,17 +42,37 @@
 - BLS: server info page now reports on available plugins (that have been marked as safe).
 - `HttpBasicAuth` now allows you to configure a username and password directly, rather than delegating that to your application or proxy server. Mainly useful for testing.
 - All of the `.blf.yaml` files that were previously baked into the BlackLab JAR/WAR were instead moved to `contrib/input-formats`. You can select the ones you want (or customize them) and place them in `$BLACKLAB_CONFIG_DIR/formats` to make them available to BlackLab.
+- BLS server info page now includes the server configuration (sanitized to remove sensitive information) and `user.clientIp`.
 - Docker images are now built using GitHub Actions.
+- `contrib/input-formats/conll-u.blf.yaml` example now uses column names from the CoNLL-U standard (`conll-u-alt.blf.yaml` still uses the old column names).
+- Less noisy logging.
+
 
 ### Fixed
 
 - actually write the `csvdescription` parameter to the CSV export response
 - bug with subcorpusSize for hit groups when grouping on a numeric field
+- incorrect document count for grouped hits
 - BLS: correctly stop the changed file monitor thread when shutting down the server
 - `usecache=no` now uses a disposable cache for the request, avoiding spawning the same search multiple times
+- various fixes to multithreaded hit publisher/subcriber system to avoid deadlocks or missing hits
+- keep projected parallel hits in their target field. Fix rfield().
+- fix relation searches missing certain valid hits
 - some implicit narrowing conversions between long and int
 - race condition when adding docs with the same pid
-- many smaller bugs
+- internal server error if input format plugin initialization fails
+- IndexTool exits with nonzero exit code on error
+- prevent unbounded Saxon `doc()` document retention during plugin-backed indexing
+- threadsafety issue because of unfrozen collator
+- added synchronization in `BlsCache`. Respect `maxNumberOfJobs` if set.
+- ensure uncaught exceptions end up in Docker logs
+- prevent deadlock when grouping during forward index initialization
+- restore retrieval of individual input formats
+- respond with proper error message for non-existent field, annotation, etc.
+- unit tests don't read config files anymore
+- Most CI tests disable caching now, so tests don't influence each other
+- fast path for grouping applied different limiting (only maxHitsToCount, not maxHitsToProcess)
+- various smaller bugs
 
 
 ### Performance
@@ -57,7 +83,10 @@
 - `SpanQueryEdge` can internalize certain neighboring queries.
 - Optimize trivial nested containing/within.
 - we don't always store hits while grouping, but instead figure out the query to get the hits in a certain group after grouping. This can save a lot of memory.
-
+- fix FI matching not being applied where it could be beneficial, and being applied where it could be detrimental.
+- speed up fetching of annotation values (e.g. listvalues=*)
+- parallelize segment term merging.
+- cache annotation and metadata field value lists
 
 ### Refactored
 
@@ -67,8 +96,9 @@ Too much to list, but most importantly:
 - BLS CSV export response code was refactored to eliminate duplicate code.
 - File processing was refactored to separate finding the files (file iteration) from how they are processed. 
 - BLS: each request has a record with the specific information they need. Before all requests shared QueryParams.
-- Modules `content-store`, `util`, `build-tools` were removed and their remaining code rolled into other modules 
-  (`common`, `engine`).
+- Reduce dependencies and simplify testing by passing around fewer high-level objects (such as `AnnotatedField` and `Annotation`) in lower level code, preferring e.g. Lucene field names instead.
+- Eliminate `TextPatternTerm/Regex` (use `TextPatternCompare`).
+- Modules `content-store`, `util`, `build-tools` were removed and their remaining code rolled into other modules (`common`, `engine`).
 
 
 ### Removed
@@ -81,6 +111,7 @@ Too much to list, but most importantly:
 - legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
 - many deprecated and unused methods.
 - INT-specific `convert-and-tag` plugin.
+- experimental Solr version, instrumentation.
 
 
 ## v4.1.1
