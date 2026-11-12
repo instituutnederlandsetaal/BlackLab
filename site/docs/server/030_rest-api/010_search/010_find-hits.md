@@ -6,9 +6,7 @@ This endpoint can also group hits (returning a list of groups), or show the cont
 
 This is generally the most-used endpoint for BlackLab Server, and includes the most features.  For a more gentle introduction, see the [overview](/server/rest-api/by-example.md).
 
-**URL**
-- `/blacklab-server/<corpus-name>/hits` (API `v4`)
-- `/blacklab-server/corpora/<corpus-name>/hits` (future API `v5`)
+**URL** : `/blacklab-server/corpora/<corpus-name>/hits`
 
 **Method** : `GET`
 
@@ -48,7 +46,7 @@ Hits can be grouped by various criteria (see below). Faceting can be performed o
 | `viewgroup`                        | Identity of one of the groups to view (`identity` values are returned with the grouping results).<br/>**NOTE:** may not return all hits in the group because there is a limit to how many are stored. Use `hitfiltercrit`/`hitfilterval` to get all hits. |
 | `hitfiltercrit` and `hitfilterval` | Filter hits by a criterium and value. See below.                                                                                                                                                                                                          |
 | `facets`                           | Document faceting criteria, comma-separated. For example: `field:author` to facet matched documents by author. Detailed explanation below.                                                                                                                |
-| `scorer`                           | (from BlackLab 5.0 / current `dev`) How to score hit groups. See [Collocations](collocations#scorers)                                                                                                                                                     |
+| `scorer`                           | (from BlackLab 5.0) How to score hit groups. See [Collocations](collocations#scorers)                                                                                                                                                     |
 
 ::: details <b>The <code>hitfiltercrit</code> / <code>hitfilterval</code> parameters explained</b>
 These parameters can be used to view all hits in a "group", and even perform another grouping on the results. For example: `after:pos:i:1` to filter hits by the `pos` value directly following the hit, case-insensitively. Detailed explanation below. Also needs `hitfilterval` (the value to keep when filtering) to work.
@@ -137,7 +135,6 @@ Some less commonly used parameters for advanced use cases.
 | `maxcount`           | Maximum number of hits to count. `-1` means "no limit". Default and maximum allowed value configurable. Even when BlackLab stops retrieving hits, it still keeps counting them. For large results sets this may take a long time.                                                                                                                                                                                                                                                                 |
 | `usecontent`         | `fi` or `orig`. `fi` (default) uses the forward index to reconstruct document content (for snippets and concordances; inline tags are lost in the process), `orig` uses the original XML from the content store (slower but more accurate).<br/>**NOTE:** using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore) |
 | `escapexmlfragment`  | when using `usecontent=orig` and XML response, should fragments be escaped as CDATA or not? Default: `false` for API `v4` and older, `true` for `v5+`.                                                                                                                                                                                                                                                                                                                                            |
-| `calc`               | specify the value `colloc` to calculate collocations (frequency lists of words near hits). Experimental feature.                                                                                                                                                                                                                                                                                                                                                                                  |
 | `omitemptycaptures`  | if true, will omit capture groups of length 0 (default `false`, configurable in blacklab-server.yaml)                                                                                                                                                                                                                                                                                                                                                                                             |
 | `withspans`          | capture a list (named `with-spans`) of all spans overlapping each hit (e.g. this might contain the relevant sentence, paragraph and chapter spans if you've indexed those)                                                                                                                                                                                                                                                                                                                        |
 | `adjusthits`         | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -183,6 +180,119 @@ The available collocation scorers (the only type of hit group scorer at the mome
 ### Content examples
 
 ::: tabs
+
+=== API v5
+
+**Aborted queries**
+
+BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.stoppedBecauseTooMany` and/or `counted.stoppedBecauseTooMany` will be `true`.
+
+If `status` is `finished` and `counted.stoppedBecauseTooMany` is `false`, counting was completed so the totals should be correct. If `processed.stoppedBecauseTooMany` is `false`, all results have been stored. If either or both are `true`, the counts may be too low and/or not all results have been stored, so you should not rely on these results.
+
+```jsonc
+// API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"
+{
+  "summary": {
+    "params": {
+      "patt": "\"waterval\"",
+      "op": "hits",
+      "indexname": "chn-intern"
+    },
+    "pattern": {
+      "json": {
+        "bcqlFragment" : "\"waterval\"",
+        "type" : "regex",
+        "value" : "waterval"
+      },
+      "bcql": "\"waterval\"",
+      "fieldName": "contents"
+    },
+    "results": {
+      "window": {
+        "firstResult": 0,
+        "requestedSize": 20,
+        "actualSize": 20,
+        "hasPrevious": false,
+        "hasNext": true
+      },
+      "stats": {
+        "processed": {
+          "status": "finished",
+          "hits": 8982,
+          "documents": 6521,
+          "timeMs": 307,
+          "stoppedBecauseTooMany": false
+        },
+        "counted": {
+          "status": "finished",
+          "hits": 8982,
+          "documents": 6521,
+          "timeMs": 307,
+          "stoppedBecauseTooMany": false
+        }
+      }
+    }
+  },
+  "hits": [
+    {
+      "docPid": "20140605154659606RS51513883861",
+      "start": 17359,
+      "end": 17360,
+      "before": {
+        "punct":[" "," "," ",". "," "],
+        "lemma":["op","ons","af","in","een"],
+        "pos":["adp","pd","adp","adp","pd"],
+        "word":["op","ons","af","In","een"]
+      },
+      "match": {
+        "punct":[" "],
+        "lemma":["waterval"],
+        "pos":["nou-c"],
+        "word":["waterval"]
+      },
+      "after": {
+        "punct":[" "," "," "," "," "],
+        "lemma":["van","woord","vertellen","ik","zij"],
+        "pos":["adp","nou-c","vrb","pd","pd"],
+        "word":["van","woorden","vertelde","ik","haar"]
+      }
+    }
+    // (...more hits...)
+  ],
+  "docInfos": {
+    "20140605154659606RS51513883861": {
+      "metadata": {
+        "pid": [
+          "20140605154659606RS51513883861"
+        ],
+        "author": [
+          "Evans, Chr."
+        ],
+        "fromInputFile": [
+          "/path/to/input/file.xml"
+        ],
+        "publisher": [
+          "CentriPress"
+        ],
+        "medium": [
+          "book"
+        ],
+        "title": [
+          "De gouden ogen van Capella."
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokens": 75586
+        }
+      ],
+      "mayView": true
+    }
+  }
+}
+```
+
 === API v4
 
 **Aborted queries**
@@ -291,114 +401,6 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 }
 ```
 
-
-=== API v5
-
-**Aborted queries**
-
-BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, the subkeys `processed.stoppedBecauseTooMany` and/or `counted.stoppedBecauseTooMany` will be true. The first means not all hits can be fetched from the result set, but counting the total number of hits continued. The second means BlackLab has given up counting hits altogether.
-
-```jsonc
-// API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"
-{
-  "summary": {
-    "params": {
-      "patt": "\"waterval\"",
-      "op": "hits",
-      "indexname": "chn-intern"
-    },
-    "pattern": {
-      "json": {
-        "bcqlFragment" : "\"waterval\"",
-        "type" : "regex",
-        "value" : "waterval"
-      },
-      "bcql": "\"waterval\"",
-      "fieldName": "contents"
-    },
-    "results": {
-      "window": {
-        "firstResult": 0,
-        "requestedSize": 20,
-        "actualSize": 20,
-        "hasPrevious": false,
-        "hasNext": true
-      },
-      "stats": {
-        "processed": {
-          "status": "finished",
-          "hits": 8982,
-          "documents": 6521,
-          "timeMs": 307
-        },
-        "counted": {
-          "status": "finished",
-          "hits": 8982,
-          "documents": 6521,
-          "timeMs": 307
-        }
-      }
-    }
-  },
-  "hits": [
-    {
-      "docPid": "20140605154659606RS51513883861",
-      "start": 17359,
-      "end": 17360,
-      "before": {
-        "punct":[" "," "," ",". "," "],
-        "lemma":["op","ons","af","in","een"],
-        "pos":["adp","pd","adp","adp","pd"],
-        "word":["op","ons","af","In","een"]
-      },
-      "match": {
-        "punct":[" "],
-        "lemma":["waterval"],
-        "pos":["nou-c"],
-        "word":["waterval"]
-      },
-      "after": {
-        "punct":[" "," "," "," "," "],
-        "lemma":["van","woord","vertellen","ik","zij"],
-        "pos":["adp","nou-c","vrb","pd","pd"],
-        "word":["van","woorden","vertelde","ik","haar"]
-      }
-    }
-    // (...more hits...)
-  ],
-  "docInfos": {
-    "20140605154659606RS51513883861": {
-      "metadata": {
-        "pid": [
-          "20140605154659606RS51513883861"
-        ],
-        "author": [
-          "Evans, Chr."
-        ],
-        "fromInputFile": [
-          "/path/to/input/file.xml"
-        ],
-        "publisher": [
-          "CentriPress"
-        ],
-        "medium": [
-          "book"
-        ],
-        "title": [
-          "De gouden ogen van Capella."
-        ]
-      },
-      "tokenCounts": [
-        {
-          "fieldName": "contents",
-          "tokens": 75586
-        }
-      ],
-      "mayView": true
-    }
-  }
-}
-```
 :::
 
 ### API version differences

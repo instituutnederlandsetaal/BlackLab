@@ -2,7 +2,7 @@
 
 Get a snippet of the document.
 
-**URL** : `/blacklab-server/<corpus-name>/docs/<pid>/snippet`
+**URL** : `/blacklab-server/corpora/<corpus-name>/docs/<pid>/snippet`
 
 **Method** : `GET`
 

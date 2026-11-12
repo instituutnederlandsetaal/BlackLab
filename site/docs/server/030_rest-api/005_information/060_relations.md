@@ -12,7 +12,7 @@ Return an overview of spans ("inline tags") and relations classes and types in t
 
 **NOTE2:** the reported frequencies don't take deleted documents into account. Therefore, if you've deleted documents, the frequencies may not be accurate.
 
-**URL** : `/blacklab-server/<corpus-name>/relations`
+**URL** : `/blacklab-server/corpora/<corpus-name>/relations`
 
 **Method** : `GET`
 

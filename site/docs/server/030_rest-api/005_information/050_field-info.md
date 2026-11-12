@@ -2,7 +2,7 @@
 
 Metadata about a field, including indexing settings, field values and more. For annotated fields, info about annotations, spans and relations.
 
-**URL** : `/blacklab-server/<corpus-name>/fields/<fieldname>`
+**URL** : `/blacklab-server/corpora/<corpus-name>/fields/<fieldname>`
 
 **Method** : `GET`
 
@@ -22,21 +22,21 @@ Terms and frequencies will be returned under the `terms` key (API `v4+`) or `val
 
 ### Content examples
 
-Response for a metadata field:
+Response for `/corpora/BaB/fields/title?custom=true` (API v5):
 
 ```json
 {
-  "indexName": "BaB",
   "fieldName": "title",
   "isAnnotatedField": false,
-  "displayName": "Title",
-  "description": "",
-  "uiType": "",
   "type": "TOKENIZED",
   "analyzer": "DEFAULT",
-  "unknownCondition": "NEVER",
-  "unknownValue": "unknown",
-  "displayValues": {
+  "custom": {
+    "displayName": "Title",
+    "uiType": "",
+    "unknownCondition": "NEVER",
+    "unknownValue": "unknown",
+    "displayValues": {
+    }
   },
   "fieldValues": {
     "To A. Soomerkamp, 7 november 1780": 1,
@@ -52,52 +52,65 @@ Response for an annotated field:
 
 ```json
 {
-  "indexName": "BaB",
   "fieldName": "contents",
   "isAnnotatedField": true,
-  "displayName": "Contents",
-  "description": "Contents of the documents.",
+  "count": {
+    "tokens": 459354,
+    "documents": 1033
+  },
+  "custom": {
+    "displayName": "Contents",
+    "displayOrder": [
+        "word_or_lemma",
+        "word",
+        "word_xml"
+        //...
+    ],
+    "description": "Contents of the documents."
+  },
   "hasContentStore": true,
-  "hasXmlTags": true,
-  "mainAnnotation": "word_or_lemma",
-  "displayOrder": [
-    "word_or_lemma",
-    "word",
-    "word_xml",
-    ...
-  ],
+  "mainAnnotation": "word_or_lemma", 
+  "defaultSearchAnnotation": "word_or_lemma",
   "annotations": {
     "word_or_lemma": {
-      "displayName": "Word or lemma",
-      "description": "",
-      "uiType": "combobox",
+      "custom": {
+          "displayName": "Word or lemma",
+          "description": "",
+          "uiType": "combobox"
+      },
       "hasForwardIndex": true,
       "sensitivity": "ONLY_INSENSITIVE",
       "offsetsAlternative": "i",
       "isInternal": false
     },
     "word": {
-      "displayName": "Word",
-      "description": "",
-      "uiType": "combobox",
+      "custom": {
+        "displayName": "Word",
+        "description": "",
+        "uiType": "combobox"
+      },
       "hasForwardIndex": true,
       "sensitivity": "SENSITIVE_AND_INSENSITIVE",
       "offsetsAlternative": "",
       "isInternal": false
     },
     "word_xml": {
-      "displayName": "",
-      "description": "",
-      "uiType": "",
+      "custom": {
+        "displayName": "",
+        "description": "",
+        "uiType": ""
+      },
       "hasForwardIndex": true,
       "sensitivity": "ONLY_INSENSITIVE",
       "offsetsAlternative": "",
       "isInternal": true
     },
     "lemma": {
-      "displayName": "Lemma",
-      "description": "",
-      "uiType": "combobox",
+      "custom": {
+        "displayName": "Lemma",
+        "description": "",
+        "uiType": "combobox"
+      },
       "hasForwardIndex": true,
       "sensitivity": "SENSITIVE_AND_INSENSITIVE",
       "offsetsAlternative": "",

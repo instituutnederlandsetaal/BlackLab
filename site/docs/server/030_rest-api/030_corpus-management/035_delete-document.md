@@ -1,10 +1,10 @@
 # Delete a document
 
-**URL** : `/blacklab-server/<corpus-name>/docs/<pid>`
+**URL** : `/blacklab-server/corpora/<corpus-name>/docs/<pid>`
 
 **Method** : `DELETE`
 
-_(will fail if you are not logged in or not authorized)_
+<!-- @include: ../../../_must_be_authorized.md -->
 
 
 ## Success Response

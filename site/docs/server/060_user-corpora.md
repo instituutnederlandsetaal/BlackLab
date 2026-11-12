@@ -30,7 +30,7 @@ See [Input formats API endpoints](/server/rest-api/input-formats/) for details.
 
 ## Share a private corpus
 
-To see what users (if any) a private corpus is currently shared with, use: `/blacklab-server/<corpus-name>/sharing`.
+To see what users (if any) a private corpus is currently shared with, use: `/blacklab-server/corpora/<corpus-name>/sharing`.
 
 To set the list of users to share a private corpus with, send a `POST` request to the same URL with the `users[]` parameter for each user to share with (that is, you should specify this parameter multiple times, once for each user). You can leave the parameter empty if you don't want to share the corpus anymore.
 

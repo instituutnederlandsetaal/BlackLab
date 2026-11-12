@@ -11,7 +11,7 @@ This assumes you have a BlackLab Server instance running and have a corpus avail
 
 ## API 4 vs. 5
 
-This page shows the newer API v5 URLs (that include `/corpora/`), which became available in BlackLab 4 and will be the default in BlackLab 5 (and current `dev` versions). If you get an error about the API version, try adding `api=5` to the URL.
+This page shows the newer API v5 URLs (that include `/corpora/`), which became available in BlackLab 4 and are the default in BlackLab 5. If you get an error about the API version, try adding `api=5` to the URL.
 
 ## JSON vs. XML
 

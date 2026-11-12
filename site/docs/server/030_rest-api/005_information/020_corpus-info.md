@@ -2,9 +2,7 @@
 
 Return the corpus metadata, including size, document format, annotated and metadata fields, status and more.
 
-**URL**
-- `/blacklab-server/<corpus-name>` (API `v4`)
-- `/blacklab-server/corpora/<corpus-name>` (future API `v5`)
+**URL** : `/blacklab-server/corpora/<corpus-name>`
 
 **Method** : `GET`
 
@@ -22,7 +20,127 @@ Return the corpus metadata, including size, document format, annotated and metad
 ### Content examples
 
 ::: tabs
-=== API `v4`
+=== API v5
+
+Response for `/blacklab-server/corpora/BaB?custom=true` (API v5):
+
+```jsonc
+// API v5: /blacklab-server/corpora/parlamint/
+{
+  "corpusName": "parlamint",
+  "custom": {
+      "displayName": "ParlaMint BE federaal",
+      "description": "Corpus van Parlementaire zittingen"
+  },
+  "status": "available",
+  "contentViewable": true,
+  "documentFormat": "parlamint-saxon",
+  "count": {
+    "tokens": 50672559,
+    "documents": 2349
+  },
+  "versionInfo": {
+    "blacklabBuildTime": "2025-03-20T12:32:20Z",
+    "blacklabVersion": "4.0.0-SNAPSHOT",
+    "blacklabScmRevision": "7efeb8d",
+    "indexFormat": "4",
+    "timeCreated": "2025-04-29 11:44:20",
+    "timeModified": "2025-04-29 11:44:20"
+  },
+  "pidField": "pid",
+  "mainAnnotatedField": "contents",
+  "annotatedFields": {
+    "contents": {
+      "fieldName": "contents",
+      "isAnnotatedField": true,
+      "count": {
+        "tokens": 50672559,
+        "documents": 2349
+      },
+      "custom": {
+        "displayName": "Contents",
+        "description": "Contents of the documents."
+      },
+      "hasContentStore": true,
+      "mainAnnotation": "word",
+      "annotations": {
+        "word": {
+          "custom": {
+            "displayName": "Word"
+          },
+          "hasForwardIndex": true,
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+          "offsetsAlternative": "s",
+          "isInternal": false
+        },
+        "lemma": {
+          "custom": {
+            "displayName": "Lemma"
+          },
+          "hasForwardIndex": true,
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
+          "offsetsAlternative": "",
+          "isInternal": false
+        },
+        "pos": {
+          "custom": {
+            "displayName": "Part of speech"
+          },
+          "hasForwardIndex": true,
+          "sensitivity": "ONLY_INSENSITIVE",
+          "offsetsAlternative": "",
+          "isInternal": false
+        }
+      }
+    }
+  },
+  "metadataFields": {
+    "pid": {
+      "fieldName": "pid",
+      "isAnnotatedField": false,
+      "type": "UNTOKENIZED",
+      "analyzer": "DEFAULT",
+      "custom": {
+        "displayName": "PID"
+      },
+      "fieldValues": {
+        "ParlaMint-BE_2014-06-19-54-plenair-ip001x.ana": 1
+        // ...
+      },
+      "valueListComplete": false
+    },
+    "datering": {
+      "fieldName": "datering",
+      "isAnnotatedField": false,
+      "type": "TOKENIZED",
+      "analyzer": "DEFAULT",
+      "custom": {
+        "displayName": "Datering"
+      },
+      "fieldValues": {
+        "2014-06-19": 1
+        // ...
+      },
+      "valueListComplete": false
+    },
+    "fromInputFile": {
+      "fieldName": "fromInputFile",
+      "isAnnotatedField": false,
+      "type": "UNTOKENIZED",
+      "analyzer": "DEFAULT",
+      "custom": {
+        "displayName": "From input file"
+      },
+      "fieldValues": {
+        "/path/to/input/file.xml": 1
+        // ...
+      },
+      "valueListComplete": false
+    }
+  }
+}
+```
+=== API v4
 
 ```jsonc
 // API v4: /blacklab-server/parlamint/
@@ -183,98 +301,6 @@ Return the corpus metadata, including size, document format, annotated and metad
 }
 ```
 
-=== API `v5`
-
-```jsonc
-// API v5: /blacklab-server/corpora/parlamint/
-{
-  "corpusName": "parlamint",
-  "status": "available",
-  "contentViewable": true,
-  "documentFormat": "parlamint-saxon",
-  "count": {
-    "tokens": 50672559,
-    "documents": 2349
-  },
-  "versionInfo": {
-    "blacklabBuildTime": "2025-03-20T12:32:20Z",
-    "blacklabVersion": "4.0.0-SNAPSHOT",
-    "blacklabScmRevision": "7efeb8d",
-    "indexFormat": "4",
-    "timeCreated": "2025-04-29 11:44:20",
-    "timeModified": "2025-04-29 11:44:20"
-  },
-  "pidField": "pid",
-  "mainAnnotatedField": "contents",
-  "annotatedFields": {
-    "contents": {
-      "fieldName": "contents",
-      "isAnnotatedField": true,
-      "count": {
-        "tokens": 50672559,
-        "documents": 2349
-      },
-      "hasContentStore": true,
-      "mainAnnotation": "word",
-      "annotations": {
-        "word": {
-          "hasForwardIndex": true,
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "offsetsAlternative": "s",
-          "isInternal": false
-        },
-        "lemma": {
-          "hasForwardIndex": true,
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": false
-        },
-        "pos": {
-          "hasForwardIndex": true,
-          "sensitivity": "ONLY_INSENSITIVE",
-          "offsetsAlternative": "",
-          "isInternal": false
-        }
-      }
-    }
-  },
-  "metadataFields": {
-    "pid": {
-      "fieldName": "pid",
-      "isAnnotatedField": false,
-      "type": "UNTOKENIZED",
-      "analyzer": "DEFAULT",
-      "fieldValues": {
-        "ParlaMint-BE_2014-06-19-54-plenair-ip001x.ana": 1
-        // ...
-      },
-      "valueListComplete": false
-    },
-    "datering": {
-      "fieldName": "datering",
-      "isAnnotatedField": false,
-      "type": "TOKENIZED",
-      "analyzer": "DEFAULT",
-      "fieldValues": {
-        "2014-06-19": 1
-        // ...
-      },
-      "valueListComplete": false
-    },
-    "fromInputFile": {
-      "fieldName": "fromInputFile",
-      "isAnnotatedField": false,
-      "type": "UNTOKENIZED",
-      "analyzer": "DEFAULT",
-      "fieldValues": {
-        "/path/to/input/file.xml": 1
-        // ...
-      },
-      "valueListComplete": false
-    }
-  }
-}
-```
 :::
 
 ### API version differences

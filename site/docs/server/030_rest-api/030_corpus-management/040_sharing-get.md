@@ -3,7 +3,7 @@ title: "Get sharing settings"
 ---
 # Get who to share corpus with
 
-**URL** : `/blacklab-server/<corpus-name>/sharing`
+**URL** : `/blacklab-server/corpora/<corpus-name>/sharing`
 
 **Method** : `GET`
 

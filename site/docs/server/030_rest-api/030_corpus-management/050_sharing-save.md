@@ -5,11 +5,11 @@ title: "Set sharing settings"
 
 Sets a new list of users to share the corpus with.
 
-**URL** : `/blacklab-server/<corpus-name>/sharing`
+**URL** : `/blacklab-server/corpora/<corpus-name>/sharing`
 
 **Method** : `POST`
 
-_(will fail if you are not logged in or not authorized)_
+<!-- @include: ../../../_must_be_authorized.md -->
 
 #### Parameters
 

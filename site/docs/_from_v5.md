@@ -1,3 +1,3 @@
-::: warning In-development feature
-Try this feature on `dev` (Docker image or branch). It will be finalized for version `5.0`.
+::: tip NOTE: This feature is available from BlackLab 5.0
+
 :::

@@ -8,7 +8,8 @@ Without a `filter` query, it will list all documents in the corpus.
 
 This resource can also group documents (returning a list of groups), or show the contents of one of the resulting groups.
 
-**URL** : `/blacklab-server/<corpus-name>/docs`
+**URL** :
+- `/blacklab-server/corpora/<corpus-name>/docs`
 
 **Method** : `GET`
 
@@ -89,7 +90,6 @@ Some less commonly used parameters for advanced use cases.
 | `maxcount`           | Maximum number of hits to count. `-1` means "no limit". Default and maximum allowed value configurable. Even when BlackLab stops retrieving hits, it still keeps counting them. For large results sets this may take a long time.                                                                                                                                                                                                                                                                 |
 | `usecontent`         | `fi` or `orig`. `fi` (default) uses the forward index to reconstruct document content (for snippets and concordances; inline tags are lost in the process), `orig` uses the original XML from the content store (slower but more accurate).<br/>**NOTE:** using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore) |
 | `escapexmlfragment`  | when using `usecontent=orig` and XML response, should fragments be escaped as CDATA or not? Default: `false` for API `v4` and older, `true` for `v5+`.                                                                                                                                                                                                                                                                                                                                            |
-| `calc`               | specify the value `colloc` to calculate collocations (frequency lists of words near hits). Experimental feature.                                                                                                                                                                                                                                                                                                                                                                                  |
 | `withspans`          | capture a list (named `with-spans`) of all spans overlapping each hit (e.g. this might contain the relevant sentence, paragraph and chapter spans if you've indexed those)                                                                                                                                                                                                                                                                                                                        |
 | `adjusthits`         | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                                 |
 
@@ -105,13 +105,119 @@ You may leave 'gaps' in the double-quoted strings in your BCQL query that can be
 
 ### Content examples
 
-TODO API `v5`
+::: tabs
 
-::: warn Aborted queries
+=== API v5
 
-BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary` object in the response will contain `"stoppedRetrievingHits": true` and/or `"stoppedCountingHits": true`. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether.
+**Aborted queries**
 
-:::
+BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.stoppedBecauseTooMany` and/or `counted.stoppedBecauseTooMany` will be `true`.
+
+If `status` is `finished` and `counted.stoppedBecauseTooMany` is `false`, counting was completed so the totals should be correct. If `processed.stoppedBecauseTooMany` is `false`, all results have been stored. If either or both are `true`, the counts may be too low and/or not all results have been stored, so you should not rely on these results.
+
+```jsonc
+{
+  "summary": {
+    "params": {
+      "filter": "afz_naam_norm:(Machiel Jochems)",
+      "waitfortotal": "true",
+      "op": "docs",
+      "indexname": "BaB",
+      "api": "5"
+    },
+    "results": {
+      "window": {
+        "firstResult": 0,
+        "requestedSize": 50,
+        "actualSize": 3,
+        "hasPrevious": false,
+        "hasNext": false
+      },
+      "stats": {
+        "processed": {
+          "status": "finished",
+          "hits": 0,
+          "documents": 3,
+          "timeMs": 0,
+          "stoppedBecauseTooMany": false
+        },
+        "counted": {
+          "status": "finished",
+          "hits": 0,
+          "documents": 3,
+          "timeMs": 0,
+          "stoppedBecauseTooMany": false
+        }
+      }
+    }
+  },
+  "docs": [
+    {
+      "docPid": "bab0641",
+      "docInfo": {
+        "metadata": {
+          "relatie_b": [
+            "unknown"
+          ],
+          "relatie_a": [
+            "daughter"
+          ],
+          "afz_naam": [
+            "annetijen ijochems"
+          ],
+          "afz_naam_norm": [
+            "Annetje Jochems"
+          ],
+          "datum_gemaakt": [
+            "2009-02-25 07:43:17"
+          ],
+          "subcorpus": [
+            "17B"
+          ],
+          "adr_geb_jaar": [
+            "unknown"
+          ],
+          "gen_schepen": [
+            "azie"
+          ],
+          "afz_soc_klimmer": [
+            "n"
+          ],
+          "corpus": [
+            "1"
+          ],
+          "datum_dag": [
+            "unknown"
+          ],
+          "witnessYear_from": [
+            "1673"
+          ],
+          "adr_soc_klimmer": [
+            "n"
+          ],
+          "pid": [
+            "bab0641"
+          ],
+          // ...
+        },
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokens": 76
+          }
+        ],
+        "mayView": true
+      }
+    }
+  ]
+}
+```
+
+=== API v4
+
+**Aborted queries**
+
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary` object in the response will contain `"stoppedRetrievingHits": true` and/or `"stoppedCountingHits": true`. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether. If this is the case, don't rely on these results.
 
 ```jsonc
 {
@@ -216,3 +322,5 @@ BlackLab will abort queries that run for too long. This can be configured, but t
   ]
 }
 ```
+
+:::

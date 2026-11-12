@@ -2,14 +2,14 @@
 
 The main endpoints for searching corpora:
 
-* [Find hits](find-hits) : `GET /blacklab-server/<corpus-name>/hits`<br>Find matches for a text pattern and optionally group them.
-* [Find documents](find-documents) : `GET /blacklab-server/<corpus-name>/docs`<br>Find documents and optionally group them.
-* [Find collocations](collocations) : `GET /blacklab-server/<corpus-name>/collocations`<br>Find collocations (words that often occur together) for a term in a field
+* [Find hits](find-hits) : `GET /blacklab-server/corpora/<corpus-name>/hits`<br>Find matches for a text pattern and optionally group them.
+* [Find documents](find-documents) : `GET /blacklab-server/corpora/<corpus-name>/docs`<br>Find documents and optionally group them.
+* [Find collocations](collocations) : `GET /blacklab-server/corpora/<corpus-name>/collocations`<br>Find collocations (words that often occur together) for a term in a field
 
 There's also a few less common search endpoints:
 
-* [Term frequencies](termfreq) : `GET /blacklab-server/<corpus-name>/termfreq`<br>Determine term frequencies for a field
-* [Autocomplete](autocomplete) : `GET /blacklab-server/<corpus-name>/autocomplete`<br>
+* [Term frequencies](termfreq) : `GET /blacklab-server/corpora/<corpus-name>/termfreq`<br>Determine term frequencies for a field
+* [Autocomplete](autocomplete) : `GET /blacklab-server/corpora/<corpus-name>/autocomplete`<br>
   Autocomplete a term in a field
-* [Parse a pattern](parse-pattern.md) : `GET /blacklab-server/<corpus-name>/parse-pattern`<br>
+* [Parse a pattern](parse-pattern.md) : `GET /blacklab-server/corpora/<corpus-name>/parse-pattern`<br>
   Parse a pattern, returning the parse tree

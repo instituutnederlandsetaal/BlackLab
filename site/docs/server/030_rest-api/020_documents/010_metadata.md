@@ -2,7 +2,7 @@
 
 Get the metadata for a document.
 
-**URL** : `/blacklab-server/<corpus-name>/docs/<pid>`
+**URL** : `/blacklab-server/corpora/<corpus-name>/docs/<pid>`
 
 **Method** : `GET`
 
@@ -159,4 +159,4 @@ Get the metadata for a document.
 ### Notes
 
 - `docInfo` returns the metadata field values in arrays because some fields can have multiple values. Most usually have only one, though.
-- Probably don't rely on the `docFields`, `metadataFieldDisplayNames` and `metadataFieldGroups` fields as they may be removed in a future API update. Instead, get this information once from the corpus information page, `/blacklab-server/<corpus-name>`.
+- Probably don't rely on the `docFields`, `metadataFieldDisplayNames` and `metadataFieldGroups` fields as they may be removed in a future API update. Instead, get this information once from the corpus information page, `/blacklab-server/corpora/<corpus-name>`.
