@@ -1491,11 +1491,12 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
-            if (isNewApi)
+            if (isNewApi) {
                 plugins(result.getPlugins());
-            ds.startEntry("config");
-            config(config, result.isDebugMode());
-            ds.endEntry();
+                ds.startEntry("config");
+                config(config, result.isDebugMode());
+                ds.endEntry();
+            }
         }
         ds.endMap();
     }
