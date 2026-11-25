@@ -316,10 +316,11 @@ public class ResponseStreamer {
                 documentFragmentMetadata(docInfo);
             }
             ds.startEntry(KEY_TOKEN_COUNTS).startList();
-            for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
+            Map<String, Integer> lengthInTokensPerField = docInfo.getLengthInTokensPerField();
+            for (AnnotatedField field: docInfo.getIndex().annotatedFields()) {
                 ds.startItem(KEY_TOKEN_COUNT_ITEM).startMap();
-                ds.entry(KEY_FIELD_NAME, entry.getKey());
-                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                ds.entry(KEY_FIELD_NAME, field.name());
+                ds.entry(KEY_TOKEN_COUNT, lengthInTokensPerField.get(field.name()));
                 ds.endMap().endItem();
             }
             ds.endList().endEntry();

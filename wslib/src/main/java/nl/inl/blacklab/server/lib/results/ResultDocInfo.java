@@ -76,6 +76,10 @@ public class ResultDocInfo {
         getDocInfo();
     }
 
+    public BlackLabIndex getIndex() {
+        return index;
+    }
+
     private void initDoc(String docPid, Document document) throws BlsException {
         if (docPid == null)
             throw new IllegalArgumentException("Must specify docPid!");
