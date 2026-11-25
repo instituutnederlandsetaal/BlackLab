@@ -43,6 +43,10 @@
 - `HttpBasicAuth` now allows you to configure a username and password directly, rather than delegating that to your application or proxy server. Mainly useful for testing.
 - All of the `.blf.yaml` files that were previously baked into the BlackLab JAR/WAR were instead moved to `contrib/input-formats`. You can select the ones you want (or customize them) and place them in `$BLACKLAB_CONFIG_DIR/formats` to make them available to BlackLab.
 - BLS server info page now includes the server configuration (sanitized to remove sensitive information) and `user.clientIp`.
+- If processing/counting hits was stopped because it exceeded the configured limit (by default there are no limits, 
+  unlike in previous versions), `summary.results.stats.{processed|counted}.status` is now set to 
+  `incomplete (too many results, aborted)` (instead of `finished`, which was misleading). The separate boolean 
+  `stoppedBecauseTooMany` was removed.
 - Docker images are now built using GitHub Actions.
 - `contrib/input-formats/conll-u.blf.yaml` example now uses column names from the CoNLL-U standard (`conll-u-alt.blf.yaml` still uses the old column names).
 - Less noisy logging.
