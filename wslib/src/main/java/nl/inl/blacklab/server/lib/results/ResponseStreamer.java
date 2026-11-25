@@ -116,7 +116,6 @@ public class ResponseStreamer {
 
     // resultsStats section
     public static final String KEY_STATS_STATUS = "status";
-    public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
     public static final String KEY_STATS_PROCESSED = "processed";
     public static final String KEY_STATS_COUNTED = "counted";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
@@ -125,6 +124,7 @@ public class ResponseStreamer {
 
     public static final String STATS_STATUS_WORKING = "working";
     public static final String STATS_STATUS_FINISHED = "finished";
+    public static final String STATS_STATUS_STOPPED_TOO_MANY = "incomplete (too many results, aborted)";
 
     /** E.g. index size, document size, field size */
     public static final String KEY_COUNT = "count";
@@ -615,11 +615,13 @@ public class ResponseStreamer {
     private void stats(String key, boolean done, long numHits, long numDocs, long timeMs, boolean limitReached) {
         ds.startEntry(key).startMap();
         {
-            ds.entry(KEY_STATS_STATUS, !done ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
+            String status = !done ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED;
+            if (limitReached)
+                status = STATS_STATUS_STOPPED_TOO_MANY;
+            ds.entry(KEY_STATS_STATUS, status);
             ds.entry(KEY_STATS_NUMBER_OF_HITS, numHits);
             ds.entry(KEY_STATS_NUMBER_OF_DOCS, numDocs);
             ds.entry(KEY_STATS_TIME_MS, timeMs);
-            ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
         }
         ds.endMap().endEntry();
     }

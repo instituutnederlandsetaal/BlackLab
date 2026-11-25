@@ -960,7 +960,6 @@
           "documents": 3,
           "hits": 17,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "largestGroupSize": 8,
@@ -969,7 +968,6 @@
           "documents": 3,
           "hits": 17,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "subcorpusSize": {

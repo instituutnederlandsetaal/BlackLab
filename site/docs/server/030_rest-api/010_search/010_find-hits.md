@@ -185,9 +185,7 @@ The available collocation scorers (the only type of hit group scorer at the mome
 
 **Aborted queries**
 
-BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.stoppedBecauseTooMany` and/or `counted.stoppedBecauseTooMany` will be `true`.
-
-If `status` is `finished` and `counted.stoppedBecauseTooMany` is `false`, counting was completed so the totals should be correct. If `processed.stoppedBecauseTooMany` is `false`, all results have been stored. If either or both are `true`, the counts may be too low and/or not all results have been stored, so you should not rely on these results.
+BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.status` and/or `counted.status` will be `incomplete (stopped because too many)`.
 
 ```jsonc
 // API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"
@@ -220,15 +218,13 @@ If `status` is `finished` and `counted.stoppedBecauseTooMany` is `false`, counti
           "status": "finished",
           "hits": 8982,
           "documents": 6521,
-          "timeMs": 307,
-          "stoppedBecauseTooMany": false
+          "timeMs": 307
         },
         "counted": {
           "status": "finished",
           "hits": 8982,
           "documents": 6521,
-          "timeMs": 307,
-          "stoppedBecauseTooMany": false
+          "timeMs": 307
         }
       }
     }
