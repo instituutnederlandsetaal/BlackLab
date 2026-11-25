@@ -111,7 +111,7 @@ You may leave 'gaps' in the double-quoted strings in your BCQL query that can be
 
 **Aborted queries**
 
-BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.status` and/or `counted.status` will be `incomplete (stopped because too many)`.
+BlackLab will abort queries that run for too long or fetch too many results. This can be configured, but the default time limit is 300 seconds (5 minutes). There is no default results limit. If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, `processed.status` and/or `counted.status` will be `incomplete (too many results, aborted)`.
 
 ```jsonc
 {
