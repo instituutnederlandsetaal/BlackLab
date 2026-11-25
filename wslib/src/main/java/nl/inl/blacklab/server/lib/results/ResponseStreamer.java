@@ -340,7 +340,7 @@ public class ResponseStreamer {
 
     private void documentFragmentMetadata(ResultDocInfo docInfo) {
         Map<String, List<ResultDocInfo.Fragment>> fragments = docInfo.getFragments();
-        if (isNewApi && !fragments.isEmpty()) {
+        if (!fragments.isEmpty()) {
             ds.startEntry("fragments").startMap();
             for (Map.Entry<String, List<ResultDocInfo.Fragment>> entry: fragments.entrySet()) {
                 ds.startDynEntry(entry.getKey()).startList();
