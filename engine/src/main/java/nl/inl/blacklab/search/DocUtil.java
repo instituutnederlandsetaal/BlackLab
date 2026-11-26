@@ -69,7 +69,7 @@ public class DocUtil {
 
             String fieldPropName = field.offsetsField();
 
-            org.apache.lucene.index.Terms terms = reader.getTermVector(docId, fieldPropName);
+            org.apache.lucene.index.Terms terms = reader.termVectors().get(docId, fieldPropName);
             if (terms == null)
                 throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + docId + " has no term vector");
             if (!terms.hasPositions())

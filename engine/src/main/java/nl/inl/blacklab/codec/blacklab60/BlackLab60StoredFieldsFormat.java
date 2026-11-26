@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab60;
 
 import java.io.IOException;
 
@@ -10,15 +10,18 @@ import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 
+import nl.inl.blacklab.codec.BlackLabStoredFieldsFormat;
+import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
+
 /**
  * Stores certain fields as a content store, enabling random access to the stored values.
  *
  * Delegates non-content-store writes and reads to the default implementation.
  */
-public class BlackLab40StoredFieldsFormat extends BlackLabStoredFieldsFormat {
+public class BlackLab60StoredFieldsFormat extends BlackLabStoredFieldsFormat {
 
     /** Name of this codec. Written to the files and checked on reading. */
-    public static final String NAME = "BlackLab40ContentStore";
+    public static final String NAME = "BlackLab60ContentStore";
 
     /** Oldest version still supported */
     public static final int VERSION_START = 1;
@@ -29,7 +32,7 @@ public class BlackLab40StoredFieldsFormat extends BlackLabStoredFieldsFormat {
     /** Standard Lucene StoredFieldsFormat we delegate to for regular (non-content-store) stored fields. */
     private final StoredFieldsFormat delegate;
 
-    public BlackLab40StoredFieldsFormat(StoredFieldsFormat delegate) {
+    public BlackLab60StoredFieldsFormat(StoredFieldsFormat delegate) {
         this.delegate = delegate;
     }
 
@@ -38,15 +41,15 @@ public class BlackLab40StoredFieldsFormat extends BlackLabStoredFieldsFormat {
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
         StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
         String delegateFormatName = delegate.getClass().getSimpleName();
-        return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos, delegateReader,
+        return new BlackLab60StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos, delegateReader,
                 delegateFormatName);
     }
 
     @Override
-    public BlackLab40StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
+    public BlackLab60StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
             throws IOException {
         StoredFieldsWriter delegateWriter = delegate.fieldsWriter(directory, segmentInfo, ioContext);
         String delegateFormatName = delegate.getClass().getSimpleName();
-        return new BlackLab40StoredFieldsWriter(directory, segmentInfo, ioContext, delegateWriter, delegateFormatName);
+        return new BlackLab60StoredFieldsWriter(directory, segmentInfo, ioContext, delegateWriter, delegateFormatName);
     }
 }

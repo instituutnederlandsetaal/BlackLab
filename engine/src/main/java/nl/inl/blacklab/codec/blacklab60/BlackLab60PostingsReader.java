@@ -1,10 +1,11 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.blacklab60;
 
 import java.io.IOException;
 
 import org.apache.lucene.index.SegmentReadState;
 
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 
 /**
  * Adds forward index reading to default FieldsProducer.
@@ -21,11 +22,11 @@ import net.jcip.annotations.ThreadSafe;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BlackLab40PostingsReader extends BlackLabPostingsReader {
+public class BlackLab60PostingsReader extends BlackLabPostingsReader {
 
-    public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
-        super(BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
-                BlackLab40PostingsFormat.VERSION_CURRENT, state, true);
+    public BlackLab60PostingsReader(SegmentReadState state) throws IOException {
+        super(BlackLab60PostingsFormat.NAME, BlackLab60PostingsFormat.VERSION_START,
+                BlackLab60PostingsFormat.VERSION_CURRENT, state, false);
     }
 
 }
