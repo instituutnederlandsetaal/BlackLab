@@ -26,8 +26,8 @@ test/run-local.sh
 git commit
 
 # Prepare release
-vi src/site/markdown/changelog.md # update changelog
-vi src/site/markdown/downloads.md # update version info if needed
+vi site/docs/development/070_changelog.md # update changelog
+vi site/docs/development/010_downloads.md # update version info if needed
 scripts/set-version.sh "$BL_RELEASE_VERSION" # set Maven project version
 
 # Create tag

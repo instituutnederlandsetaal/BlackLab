@@ -15,9 +15,9 @@ The reason for not all older corpora being usable with a newer BlackLab version 
 
 | BlackLab       | 1st release    | Java | Lucene | Solr | Supports corpora...     |
 |----------------|:---------------|------|--------|------|-------------------------|
-| future 6.x     | (planned) 2026 | 21   | 10     | 10   | created with BL 5/6     |
-| dev/future 5.x | (planned) 2026 | 17   | 9      | 9    | created with BL 4/5     |
-| 4.x            | Jul 2025       | 17   | 8      | 8    | created with BL 4       |
+| 6.x     | Dec 2026 | 21   | 10     | 10   | created with BL 5/6     |
+| 5.x | Nov 2026 | 17   | 9      | 9    | created with BL 4/5     |
+| 4.x            | Jul 2025       | 17   | 8      | 8    | created with BL 3/4     |
 | 3.x            | Jul 2022       | 11   | 8      | -    | created with BL 3       |
 | 2.x            | Jan 2020       | 8    | 5      | -    | created with BL 1.2-2.x |
 | 1.7-1.9        | Jun 2018       | 8    | 5      | -    | created with BL 1.2-2.x |
