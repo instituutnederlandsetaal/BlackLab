@@ -2,7 +2,13 @@
 
 ## Changes in dev (future v5.1.0)
 
-## v5.0.0
+## Changes in v5.0.1
+
+### Fixed
+
+- Fix for broken .tar.gz indexing (potentially skipping files are failing altogether on large archives)
+
+## Changes in v5.0.0
 
 ### New
 

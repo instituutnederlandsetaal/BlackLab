@@ -28,9 +28,9 @@ BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It 
 
 ::: tip BlackLab present and future
 
-BlackLab 5 shipped with a new [plugin](/development/customization/) system, [collocations support](/server/rest-api/search/collocations), metadata on [fragments](/guide/index-your-data/metadata#metadata-on-fragments) of documents, and many other improvements. See the [changelog](/development/changelog) for more details.
+BlackLab 5.0.1 has a new [plugin](/development/customization/) system, [collocations support](/server/rest-api/search/collocations), metadata on [fragments](/guide/index-your-data/metadata#metadata-on-fragments) of documents, and many other improvements. See the [changelog](/development/changelog) for more details.
 
-BlackLab 4 added [dependency relations](/guide/query-language/relations) and [parallel corpora](/guide/query-language/parallel).
+BlackLab 4.1.1 has [dependency relations](/guide/query-language/relations) and [parallel corpora](/guide/query-language/parallel).
 
 BlackLab 6.0.0 will release in December and use Java 21 and Lucene 10.
 
