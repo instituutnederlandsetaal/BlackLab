@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: BlackLab corpus search 4.0
+  name: BlackLab corpus search 5.0
   text: Powerful search for large, annotated text corpora
   tagline: Publish, search, and analyze your corpora with speed and flexibility
   actions:

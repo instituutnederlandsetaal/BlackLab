@@ -28,9 +28,11 @@ BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It 
 
 ::: tip BlackLab present and future
 
-BlackLab 4 shipped with major new features, including [dependency relations](https://blacklab.ivdnt.org/guide/query-language/relations.html) and [parallel corpora](https://blacklab.ivdnt.org/guide/query-language/parallel.html). See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html).
+BlackLab 5 shipped with a new [plugin](/development/customization/) system, [collocations support](/server/rest-api/search/collocations), metadata on [fragments](/guide/index-your-data/metadata#metadata-on-fragments) of documents, and many other improvements. See the [changelog](/development/changelog) for more details.
 
-Try the `dev` branch for better performance, expanded plugin support, and many other improvements that will land in BlackLab 5.
+BlackLab 4 added [dependency relations](/guide/query-language/relations) and [parallel corpora](/guide/query-language/parallel).
+
+BlackLab 6.0.0 will release in December and use Java 21 and Lucene 10.
 
 :::
 
@@ -43,13 +45,13 @@ BlackLab's features:
 - **Highlight** hits in a document and keyword-in-context (KWIC) view of hits.
 - **Fast and scalable**: supports searching corpora with billions of tokens
 - **Easy to use**, well-documented REST API
-- **Highly customizable using plugins**. Add your own data preprocessors, query functions, etc. (try on the dev branch or wait for v5)
+- **Highly customizable using plugins**. Add your own data preprocessors, query functions, etc.
 - **Mature and actively developed** since 2010
 
 Examples of search features:
 - **Token-based querying**<br>To find _dog_ or _cat_ followed within 10 tokens by one or more adjectives and a word starting with _friend_:<br>`[lemma="dog|cat"] []{1,10} [pos="ADJ"]+ "friend.*"`
 - **Search within spans**<br>To find named entities such as  _Sir Barkington the Third_:<br>`<ne/> containing "bark.*"`
-- **Find collocations**<br> (try on the dev branch or wait for v5)<br>To find nouns that occur close to _paw_ within a sentence:<br>`meet_within([pos=NOUN], [lemma="paw"], <s/>, -3, 3)`
+- **Find collocations**<br>To find nouns that occur close to _paw_ within a sentence:<br>`meet_within([pos=NOUN], [lemma="paw"], <s/>, -3, 3)`
 - **Search (dependency or other) relations**<br>To find nominal subjects for the verb _pet_<br>`[lemma="pet" & pos="VERB"] -nsubj-> [pos="NOUN"]`
 - **Search parallel corpora**, such as different languages or historical versions.<br>To find Dutch translations for _good dog_ and _bad dog_<br>`"good|bad" "dog" ==>nl _`
 - **Capture parts of matches**<br>Capture the noun after _canine_ or _feline_ as A<br>`"canine|feline" A:[pos="NOUN"] within <s/>`
