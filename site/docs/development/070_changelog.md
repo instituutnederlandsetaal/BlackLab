@@ -6,17 +6,17 @@
 
 ### New
 
-- You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
-- If you have configured a persistent identifier (pid), adding another document with the same pid will fail by default. To replace instead (i.e. upsert), pass `--ifexists replace` to `IndexTool` or configure `indexing.ifDocumentExists` in blacklab\[-server\].yaml.
+- Allow for document fragments with their own metadata.
 - New functions: `meet` and `meet_within` find collocations; `cspan` to adjust the hit to a capture group; `abs`, `in_range`, `gap`
-- New BCQL operators: `!within`, `!containing`, `!overlap`; `+` and `-` (in constraints) 
-- BLS: add `complete=full` to the `/autocomplete` endpoint to get matching original field values, not just individual tokens (assuming the field is tokenized).
 - Added hit group scorers, specifically collocation scorers, that can calculate the strength of association between two words in a collocation.
 - BLS: added `/collocations` endpoint, which is an easy way to perform collocation queries. Internally, it simply performs a specific hit grouping and uses a collocation scorer to score each resulting group.
+- You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
+- If you have configured a persistent identifier (pid), adding another document with the same pid will fail by default. To replace instead (i.e. upsert), pass `--ifexists replace` to `IndexTool` or configure `indexing.ifDocumentExists` in blacklab\[-server\].yaml.
+- New BCQL operators: `!within`, `!containing`, `!overlap`; `+` and `-` (in constraints) 
+- BLS: add `complete=full` to the `/autocomplete` endpoint to get matching original field values, not just individual tokens (assuming the field is tokenized).
 - In addition to `mainAnnotation`, it is possible to set a separate `defaultSearchAnnotation`, which is used in BCQL if no annotation is specified. It defaults to `mainAnnotation`.
 - BCQL now supports separate case and diacritics sensitivity. Use "(?c)..." for case-sensitive (but diacritics insensitive) and "(?d)..." for diacritics-sensitive (but case insensitive). ("(?s)..." means case and diacritics sensitive, and "(?i)..." both insensitive (the default).
 - It is possible to override some settings from `blacklab[-server].yaml` using e.g. `blacklab-server.override.yaml`. Mainly useful for automated (Docker) deployments where you want to have your system manager the main config file, but want the freedom to manually override some settings.
-- Allow for document fragments with their own metadata.
 - `/parse-pattern` endpoint now also supports `explain=true` to show how the query will be parsed and rewritten.
 - Mark metadatafield with `role: pid` to set persistent identifier (alternative to `corpusConfig.specialFields.pidField`).
 - Allow embedding metadata field blocks inside other metadata field blocks to shorten long, repetitive XPath expressions for a list of related fields.
@@ -28,16 +28,15 @@
 - Upgraded to Java 17 and Jakarta.
 - Upgraded to Lucene 9.
 - BLS: upgraded to Tomcat 10.
+- The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins directory, but a `.jar` file can also be used of course. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
+- You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
+- `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or a scheme associated with your custom plugin, e.g. `mydb:`.
+- If you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
 - trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
 - Got rid of default maximums for processing/counting hits and BLS response page size. These now default to unlimited, but you can still set a maximum in the config file.
 - ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
 - `StringUtils.stripAccents()` explicitly decomposes several common ligatures (because Unicode normalization doesn't do this).
-- The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins directory, but a `.jar` file can also be used of course. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
-- `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or a scheme associated with your custom plugin, e.g. `mydb:`.
-- You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
-- If you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
-- By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
-  the XML documents have schema declarations but others don't.
+- By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of the XML documents have schema declarations but others don't.
 - BlackLab no longer sanitizes field/annotation names with illegal XML characters. API v5 will never use field/annotation names as XML element names, so this is now unnecessary. Note that if you still use API v4 and have characters in your field/annotation names not allowed in XML element names, the BLS XML responses will be invalid. But this should be rare.
 - `rspan()` can also be used in constraints, taking a captured relation and returning the e.g. source or target.
 - capture operator `:` binds stronger than `!`, so e.g. `!A:(some_query)` now parses correctly.
