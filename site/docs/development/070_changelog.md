@@ -1,6 +1,11 @@
 # Change Log
 
-## Changes in dev (future v5.1.0)
+## Changes in dev (future v6.0.0)
+
+### Changed
+
+- Upgraded to Java 21.
+- Upgraded to Lucene 10.
 
 ## Changes in v5.0.1
 
