@@ -57,9 +57,10 @@ public class FileIteratorTarGzip extends FileIteratorAbstract {
         try {
             while (!done) {
                 TarArchiveEntry zipEntry = tarArchiveInputStream.getNextEntry();
-                if (zipEntry == null)
+                if (zipEntry == null) {
                     done = true;
-                else if (accept(zipEntry)) {
+                    lookahead = null;
+                } else if (accept(zipEntry)) {
                     lookahead = zipEntry;
                     break;
                 }
@@ -95,10 +96,10 @@ public class FileIteratorTarGzip extends FileIteratorAbstract {
         //  because file may be binary)
         try {
             String path = FilenameUtils.concat(archiveFile.getPath(), lookahead.getName());
-            return FileReference.fromBytes(path, IOUtils.toByteArray(zipInputStream),
+            return FileReference.fromBytes(path, IOUtils.toByteArray(tarArchiveInputStream),
                     archiveFile.getAssociatedFile());
         } catch (IOException e) {
-            throw new IllegalStateException("Error reading zip entry", e);
+            throw new IllegalStateException("Error reading tar entry", e);
         }
     }
 }
