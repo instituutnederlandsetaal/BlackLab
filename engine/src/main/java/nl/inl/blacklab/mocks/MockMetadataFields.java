@@ -22,7 +22,7 @@ public class MockMetadataFields implements MetadataFields {
 
     @Override
     public MetadataField get(String fieldName) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -32,7 +32,7 @@ public class MockMetadataFields implements MetadataFields {
 
     @Override
     public MetadataField pidField() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -57,6 +57,6 @@ public class MockMetadataFields implements MetadataFields {
 
     @Override
     public Iterator<MetadataField> iterator() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 }

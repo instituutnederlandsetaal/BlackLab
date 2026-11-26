@@ -4,6 +4,9 @@
       "docInfo": {
         "mayView": true,
         "metadata": {
+          "editor": [
+            "test2"
+          ],
           "fromInputFile": [
             "PRint602.xml"
           ],
@@ -445,7 +448,6 @@
           "documents": 1,
           "hits": 8,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "largestGroupSize": 1,
@@ -454,7 +456,6 @@
           "documents": 1,
           "hits": 8,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "subcorpusSize": {

@@ -120,12 +120,12 @@ public class MockAnnotatedField implements AnnotatedField {
 
     @Override
     public String tokenLengthField() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String offsetsField() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -12,7 +12,9 @@ Return a JSON schema for a (file) format related to BlackLab.
 
 Available schemas:
 - `input-format`: JSON schema for `.blf.yaml` files that configure an input format for data to be indexed by BlackLab.
-- `bcql`: (NOT YET AVAILABLE) JSON schema for the BCQL JSON structure returned by BlackLab, parsed from the BCQL query.
+
+Planned:
+- `bcql`: JSON schema for the BCQL JSON structure returned by BlackLab, parsed from the BCQL query.
 
 
 ## Success Response

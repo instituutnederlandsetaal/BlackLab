@@ -389,11 +389,13 @@ public class ConfigInputFormat {
             // Make sure the pid field is declared in metadata
             ConfigMetadataField f = getMetadataFieldRecursive(pidField);
             if (f == null) {
-                messages.error("pidField '" + pidField + "' is not declared in any metadata block");
-            } else {
-                // Ensure the field has role: pid and gets implied settings (type: untokenized, fragments: separate)
-                f.setRole(MetadataField.Role.PID);
+                messages.warning("pidField '" + pidField + "' is not declared in any metadata block. Assuming it is caught by forEach. Declare the field (no valuePath needed) to avoid this warning.");
+                f = new ConfigMetadataField();
+                f.setName(pidField);
+                metadata.get(0).addMetadataField(f);
             }
+            // Ensure the field has role: pid and gets implied settings (type: untokenized, fragments: separate)
+            f.setRole(MetadataField.Role.PID);
         }
 
         // Validate

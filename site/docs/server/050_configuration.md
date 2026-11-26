@@ -410,6 +410,10 @@ cache:
     denyAbortedSearchSec: 600
     
     # Maximum number of cache entries to keep.
+    # BlsCache evicts the least worthy completed entries during cleanup.
+    # Running and queued searches are not evicted to meet this limit.
+    # Aborted searches are also kept for their configured cooldown.
+    # Set to -1 for no entry limit, or 0 to disable caching (BlsCache).
     # Please note that memory use per cache entry may vary wildly,
     # so you may prefer to use targetFreeMemMegs to set a "free memory goal"
     # and/or maxJobAgeSec to set a maximum age for cache entries.
@@ -477,9 +481,10 @@ Example of plugin configuration in the main configuration file (`blacklab-server
 ```yaml
 plugins:
 
-    # Should we initialize plugins when they are first used?
-    # (plugin initialization can take a while; during development, delayed initialization is
-    # often convenient, but during production, you usually want to initialize right away)
+    # Should we prepare plugins when they are first used?
+    # (prepare() can take a while; during development, delayed preparation is
+    # often convenient, but during production, you usually want to prepare right away)
+    # Metadata is still initialized when listing plugins.
     # (default: false)
     delayInitialization: false
 

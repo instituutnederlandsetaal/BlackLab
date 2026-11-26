@@ -11,6 +11,7 @@
       "op": "hits",
       "patt": "\"Lindenlaan\" \"this\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {
@@ -61,14 +62,12 @@
           "documents": 0,
           "hits": 0,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 0,
           "hits": 0,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

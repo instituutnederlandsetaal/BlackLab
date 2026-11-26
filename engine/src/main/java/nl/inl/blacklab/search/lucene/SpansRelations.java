@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
@@ -124,12 +125,13 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
         String annotatedFieldName = context.getDefaultFieldName();
         String targetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(annotatedFieldName, version);
-        String targetField = version.isEmpty() ? sourceField : targetFieldName;
+        boolean noVersion = StringUtils.isEmpty(version);
+        String targetField = noVersion ? sourceField : targetFieldName;
 
         // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.
         // If this is the case, we'll set target field per matched relation, based on the relation class
         // (e.g. relation class al__de with source field contents__en means the target field is contents__de)
-        targetFieldMayVaryWithHit = version.isEmpty() && StringUtil.containsRegexCharacters(relClass);
+        targetFieldMayVaryWithHit = noVersion && StringUtil.containsRegexCharacters(relClass);
 
         // When capturing relations, remember that we're producing hits in a different field.
         // (used with parallel corpora)

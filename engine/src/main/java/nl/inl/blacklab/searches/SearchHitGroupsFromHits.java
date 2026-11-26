@@ -69,7 +69,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
             return HitGroupsTokenFrequencies.get(source, prop);
         } else {
             // Do we need to store the hits per group, or can we find them later using a group-specific query?
-            boolean storeHits = !mustStoreHits && prop.canRefineQuery() || source.getCombinedSpanFilterQuery() == null;
+            boolean storeHits = mustStoreHits || !prop.canRefineQuery() || source.getCombinedSpanFilterQuery() == null;
             boolean hitsInCache = context().cache().containsKey(source);
             if (storeHits || hitsInCache) {
                 // We need to store the hits, or the hits are already cached.

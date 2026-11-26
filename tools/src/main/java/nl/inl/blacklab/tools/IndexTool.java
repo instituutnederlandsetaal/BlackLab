@@ -55,6 +55,7 @@ public class IndexTool {
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+        BlackLab.config().getPlugins().setDelayInitialization(true);
         LogUtil.setupBasicLoggingConfig(Level.WARN);
 
         // Parse command line

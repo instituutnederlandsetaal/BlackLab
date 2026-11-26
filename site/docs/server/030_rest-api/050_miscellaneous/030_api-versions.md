@@ -3,36 +3,81 @@
 We're evolving the BlackLab REST API over time, using versioning.
 
 There's currently two supported versions:
-- `4.0`: API used by BlackLab 4.x. Still supported on `dev` branch and (future) BlackLab 5.x.
-- `5.0`: Stricter, cleaner API. Should be considered experimental until BlackLab 5.0 is released.
+- `4.0`: default API for BlackLab 4.x, deprecated but still supported in BlackLab 5.x.
+- `5.0`: default API for BlackLab 5.0 and up. Corpus-related endpoints are now under `/corpora/CORPUSNAME/...` instead of `/CORPUSNAME/...`. Various inconsistencies have been cleaned up.
 
-To know which API version your BLS defaults to, check the server info page (`/`). Look for the key `blacklabResponse.apiVersion`. If this doesn't exist, BLS is using API v3 or lower. If it exists and has the value `4.0` or `5.0`, BLS is using that API version.
+To find out which API version your BLS defaults to, check the server info page (`/`). Look for the key `blacklabResponse.apiVersion`. BLS is using that API version by default.
 
-To set the default API version, configure `parameters.api` in your `blacklab-server.yaml`. So if you want to keep using 
-the older API for now, set this to `4`.
+Don't worry, not every version of BlackLab will get a new API version. The intention is to keep API v5 for the next several major BlackLab versions.
 
-On any BLS request, you can also override the default version to use using the `api` parameter.
+## Staying on the older API for now
 
-Valid values for API version include:
-- Exact version, e.g. `4.0`
-- Major version, e.g. `4` (most recent "regular" release in the 4.x series, i.e. without a `-..` suffix)
-- `cur` or `current`, the current stable version (corresponding to the BlackLab version, or `5.0` for development)
-- `exp` or `experimental`, always points to the highest version available (currently `5.0`)
+If you use BlackLab v5.0 and need time to migrate your client to the new API, you can keep using the older API v4 for now. Do note that BlackLab v6.0 will *only* support API v5.
+ 
+The default API version can be set in the server configuration or on a per-request basis.
 
-New versions may be added in the future, and support for older versions will eventually be dropped (see the [API support roadmap](#api-support-roadmap) below).
+To set the default API version for the server, configure `parameters.api` in your `blacklab-server.yaml`:
 
-API version numbers roughly match the BlackLab version where they became (or will become) the default API version.
+```yaml
+parameters:
+  # default to API v4 while we plan our migration to API v5
+  api: 4
+```
+
+On any BLS request, you can also override the default version using the `api` parameter. So if you haven't changed the default as shown above but want to use API v4 for a specific request, you can use:
+
+```
+# Server info request explicitly using API v4:
+https://myserver/blacklab-server/?api=4
+
+# Corpus hits request explicitly using API v4:
+https://myserver/blacklab-server/MY_CORPUS/hits?api=4&...
+```
+
+## Migrating to the new API
+
+### API changes from 4.0 to 5.0
+
+API v5.0 was introduced in BlackLab 4.0 and is the default API starting in BlackLab 5.0.
+
+Note that the new endpoints (like `/corpora/CORPUSNAME/hits`) always "speak" API v5. So where we say "changed" or "removed" below, we usually mean that compared to the equivalent old endpoint (`/CORPUSNAME/hits`).
+
+#### Removed
+
+All these were deprecated in API v4.0, and v5.0 removes them:
+
+- Server info page removed the `indices` key. Use `corpora` instead.
+- Document info page (`/docs/DOC_PID`) and results pages no longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
+- Results pages don't include `captureGroups` anymore. Use `matchInfos` instead.
+- If you specify `subcorpussize=true` (formerly called `includetokencount`), `summary` doesn't include the `tokensInMatchingDocuments` key anymore. This information is available under the `subcorpusSize` key.
+
+#### Changed
+
+These are breaking changes compared to v4.0. Make sure you update your client accordingly.
+
+- Starting with BlackLab 5.0, old endpoints related to corpora (e.g. `/blacklab-server/MY_CORPUS/hits?...`) will fail with a descriptive error unless you explicitly specify `api=4` or configure the default API version to be 4. Prefer using the new `/blacklab-server/corpora/MY_CORPUS/hits?...` endpoints that were introduced in BlackLab 4. These endpoints can only 'speak' API v5.
+- All XML responses:
+    - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Mainly affects `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
+    - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
+- server, corpus, field info:
+    - `indexName` in corpus info has been replaced with `corpusName`. `indexName` was dropped from the field info response.
+    - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
+    - Document and token count have been grouped under a `count` key. A parallel corpus will also include a `docVersions` key that gives the total number of document versions. `annotatedFields` will also include a `count` key that gives the number of docs/tokens for that field.
+- Results pages:
+    - `summary` has been restructured to group related values together under `params`, `resultWindow` and `resultStats`. Subkeys have been renamed for clarity.
+    - `summary.params` are now returned as the correct type: string (e.g. `pattlang`), integer (e.g. `first`), boolean (e.g. `waitfortotal`) or JSON (e.g. `scorer`).
+    - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
+    - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
+    - When using `usecontent=orig`, the value of `escapexmlfragment` now defaults to `true`, so XML fragments from the document will be escaped as CDATA. Set it to `false` to include them as part of the XML structure instead (the old default).
 
 
-## API changes from 3.0 to 4.0
+### API changes from 3.0 to 4.0
 
-API v4.0 is the default API on the development branch and starting from BlackLab 4.0.
+Below are all the differences between API version 3.0 (up to BlackLab 3.x) and 4.0 (from BlackLab 4.0).
 
-Below are all the differences between API version 3.0 and 4.0.
+API v4.0 was intended to prepare for API v5.0 by adding alternative keys to several responses (e.g. `corpora` on server info page, `matchInfos` in hits response). The original keys are still present for backwards compatibility, but they are deprecated and API v5.0 removes them.
 
-To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0), you should stop using the deprecated features.
-
-### Changed
+#### Changed
 
 - Corpus info page (`/CORPUSNAME`):
     - Two keys were renamed to be more consistent: in the `versionInfo` block,
@@ -41,7 +86,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - Annotated fields:
     - `displayOrder` will no longer include internal annotations (e.g. `punct` and `_relation`, previously called `starttag`), as these are generally not meant to be displayed as search fields.
 
-### Added
+#### Added
 
 - Server info page:
   - New key added (`/`): `apiVersion` (valid values: `3.0`, `4.0`, `5.0`; assume `3.0` if missing)
@@ -65,7 +110,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - Doc info on results pages and document info page: the new `tokenCounts` array gives token counts for all annotated fields. The first annotated field is the main one, which has the same value as `lengthInTokens`.
 - When using `usecontent=orig`, you can now specify `escapexmlfragment` to control whether XML fragments are escaped as CDATA or not. This defaults to `false` for API v4 and older, but will be `true` for API v5+.
 
-### Deprecated
+#### Deprecated
 
 These features still work for now, but will be removed in the future.
 
@@ -80,63 +125,21 @@ These features still work for now, but will be removed in the future.
   - The `captureGroups` response key. Use `matchInfos` instead.
 - The old `/CORPUSNAME/...` endpoints. Use the new `/corpora/CORPUSNAME/...` endpoints (that respond with API v5 responses) instead.
 
-## API changes from 4.0 to 5.0
-
-API v5.0 will become the default in BlackLab 5.0. Right now it should be considered experimental. Use `api=exp` to test 
-that your client works with this API version.
-
-Note that the new endpoints (like `/corpora/CORPUSNAME/...`) available from BlackLab 4.0 always "speak" API v5, so 
-those won't change when going from API v4 to v5. So where we say "changed" or "removed" below, we usually mean that 
-compared to the equivalent old endpoints.
-
-### Removed
-
-All these were deprecated in API v4.0, and v5.0 removes them:
-
-- Starting with BlackLab 5.0, old endpoints related to corpora (e.g. `/blacklab-server/MY_CORPUS/hits?...`) may fail with an error unless you explicitly specify `api=4`. Prefer using the new `/blacklab-server/corpora/MY_CORPUS/hits?...` endpoints that were introduced in BlackLab 4. These endpoints can only 'speak' API v5.
-- Server info page removed `indices`. Use `corpora` instead.
-- Document info page (`/docs/DOC_PID`) and results pages no longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
-- Results pages don't include `captureGroups` anymore. Use `matchInfos` instead.
-- If you specify `subcorpussize=true` (formerly called `includetokencount`), `summary` doesn't include the `tokensInMatchingDocuments` key anymore. This information is available under the `subcorpusSize` key.
-
-### Changed
-
-These are breaking changes compared to v4.0. Make sure you update your client accordingly.
-
-- All XML responses:
-    - XML responses don't use dynamic values as element names anymore, but instead adopt a `<entry><key>...</key><value>...</value></entry>` structure. This avoids problems with and simplifies maintaining the (less-used) XML format. Mainly affects `summary/searchParams`, `docInfos`, `users[]` in `/sharing` response.
-    - Wherever the XML used attributes for map entries, e.g. `<entry key="key">value</entry>`, this was changed to `<entry><key>...</key><value>...</value></entry>` as well.
-- server, corpus, field info:
-    - `indexName` in responses has been replaced with `corpus`.
-    - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
-    - Document and token count have been grouped under a `count` key. A parallel corpus will also include a `docVersions` key that gives the total number of document versions. `annotatedFields` will also include a `count` key that gives the number of docs/tokens for that field.
-- Results pages:
-    - `summary` has been restructured to group related values together under `params`, `resultWindow` and `resultStats`. Subkeys have been renamed for clarity.
-    - `summary.params` are now returned as the correct type: string (e.g. `pattlang`), integer (e.g. `first`), boolean (e.g. `waitfortotal`) or JSON (e.g. `scorer`).
-    - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
-    - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
-    - When using `usecontent=orig`, the value of `escapexmlfragment` now defaults to `true`, so XML fragments from the document will be escaped as CDATA. Set it to `false` to include them as part of the XML structure instead (the old default).
-
 
 ## API support roadmap
 
 This is how we intend to evolve BlackLab Server and Frontend with respect to API version support:
 
-- [x] **BlackLab v4.0 alpha/beta**
-    - [ ] deprecate API v3 (responses include a "deprecation warning key")
+- [x] **BlackLab v4.x**
     - [x] add API v4 (adds endpoints, transitional; default API)
     - [x] add API v5 experimental (enforces exclusive use of new endpoints)
-- [x] **BlackLab & Frontend v4.0 release**
-- [ ] **Frontend v5.0 development**: prepare for API v5 (although these are already available in API v4 as well):
-    - [x] use `/relations` to get list of tags
-    - [ ] from server info page, use `corpora` key instead of deprecated `indices` key.
-    - [ ] use `/corpora/CORPUSNAME/...` endpoints
-    - [ ] (test by passing `api=5` to BLS)
-- [ ] **BlackLab v5.0 development**:
-    - [ ] switch default to API v5.
-    - [ ] deprecate API v4.
-    - [x] remove deprecated API v3.
-- [ ] **BlackLab & Frontend v5.0 release**:
-    - [ ] frontend only uses API v4/5 features (works with BlackLab 4/5)
-- [ ] **BlackLab & Frontend v6.0**:
-    - [ ] remove deprecated API v4
+- [x] **BlackLab Frontend v4.x**
+    - [x] works with BlackLab 4.x, uses API v5
+- [ ] **BlackLab v5.0**:
+    - [x] API v5 is the default.
+    - [x] API v4 is still supported but considered deprecated.
+    - [x] API v3 was removed.
+- [ ] **BlackLab Frontend v5.0**:
+    - [ ] works with BlackLab 4/5/6, uses API v5
+- [ ] **BlackLab v6.0**:
+    - [ ] only support API v5.

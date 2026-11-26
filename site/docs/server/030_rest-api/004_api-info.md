@@ -5,7 +5,7 @@ title: Versions; output format
 
 ## API versions
 
-Use `api=4` or `api=5` to specify the API version to use. Configure `parameters.api` in your `blacklab-server.yaml` to set the default version to use. Without either of these, the BlackLab version will determine the API version used. Support for older version(s) is a transitionary measure and will eventually be dropped.
+BlackLab 5 and up defaults to API v5. BlackLab 4 defaults to API v4. Configure `parameters.api` in your `blacklab-server.yaml` to override the default API version, or add `api=4` or `api=5` to a URL to specify the API version to use for that request. BlackLab 4.x and 5.x will support both, but BlackLab 6.x will only support API v5.
 
 Full details can be found in [API versions](miscellaneous/api-versions).
 

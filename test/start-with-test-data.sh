@@ -37,5 +37,8 @@ run_index_tool parallel create /data/index/parallel '/test-data/input/parallel/m
 run_index_tool fragments create /data/index/fragments '/test-data/input/fragments/fragments1.xml' '/test-data/input/fragments/fragments.blf.yaml'
 run_index_tool fragments add    /data/index/fragments '/test-data/input/fragments/fragments2.xml' '/test-data/input/fragments/fragments.blf.yaml'
 
+# Small corpus with relations.
+run_index_tool relations create /data/index/relations '/test-data/input/relations/relations.xml' '/test-data/input/relations/relations.blf.yaml'
+
 #cd /usr/local/tomcat && catalina.sh jpda run
 cd /usr/local/tomcat && catalina.sh run

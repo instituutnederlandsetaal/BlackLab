@@ -116,7 +116,6 @@ public class ResponseStreamer {
 
     // resultsStats section
     public static final String KEY_STATS_STATUS = "status";
-    public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
     public static final String KEY_STATS_PROCESSED = "processed";
     public static final String KEY_STATS_COUNTED = "counted";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
@@ -125,6 +124,7 @@ public class ResponseStreamer {
 
     public static final String STATS_STATUS_WORKING = "working";
     public static final String STATS_STATUS_FINISHED = "finished";
+    public static final String STATS_STATUS_STOPPED_TOO_MANY = "incomplete (too many results, aborted)";
 
     /** E.g. index size, document size, field size */
     public static final String KEY_COUNT = "count";
@@ -316,10 +316,11 @@ public class ResponseStreamer {
                 documentFragmentMetadata(docInfo);
             }
             ds.startEntry(KEY_TOKEN_COUNTS).startList();
-            for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
+            Map<String, Integer> lengthInTokensPerField = docInfo.getLengthInTokensPerField();
+            for (AnnotatedField field: docInfo.getIndex().annotatedFields()) {
                 ds.startItem(KEY_TOKEN_COUNT_ITEM).startMap();
-                ds.entry(KEY_FIELD_NAME, entry.getKey());
-                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                ds.entry(KEY_FIELD_NAME, field.name());
+                ds.entry(KEY_TOKEN_COUNT, lengthInTokensPerField.get(field.name()));
                 ds.endMap().endItem();
             }
             ds.endList().endEntry();
@@ -340,7 +341,7 @@ public class ResponseStreamer {
 
     private void documentFragmentMetadata(ResultDocInfo docInfo) {
         Map<String, List<ResultDocInfo.Fragment>> fragments = docInfo.getFragments();
-        if (isNewApi && !fragments.isEmpty()) {
+        if (!fragments.isEmpty()) {
             ds.startEntry("fragments").startMap();
             for (Map.Entry<String, List<ResultDocInfo.Fragment>> entry: fragments.entrySet()) {
                 ds.startDynEntry(entry.getKey()).startList();
@@ -615,11 +616,13 @@ public class ResponseStreamer {
     private void stats(String key, boolean done, long numHits, long numDocs, long timeMs, boolean limitReached) {
         ds.startEntry(key).startMap();
         {
-            ds.entry(KEY_STATS_STATUS, !done ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
+            String status = !done ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED;
+            if (limitReached)
+                status = STATS_STATUS_STOPPED_TOO_MANY;
+            ds.entry(KEY_STATS_STATUS, status);
             ds.entry(KEY_STATS_NUMBER_OF_HITS, numHits);
             ds.entry(KEY_STATS_NUMBER_OF_DOCS, numDocs);
             ds.entry(KEY_STATS_TIME_MS, timeMs);
-            ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
         }
         ds.endMap().endEntry();
     }
@@ -1491,11 +1494,12 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
-            if (isNewApi)
+            if (isNewApi) {
                 plugins(result.getPlugins());
-            ds.startEntry("config");
-            config(config, result.isDebugMode());
-            ds.endEntry();
+                ds.startEntry("config");
+                config(config, result.isDebugMode());
+                ds.endEntry();
+            }
         }
         ds.endMap();
     }

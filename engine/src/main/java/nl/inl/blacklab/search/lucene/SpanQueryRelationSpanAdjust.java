@@ -19,10 +19,8 @@ import org.apache.lucene.search.ScoreMode;
 public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     public static SpanGuarantees createGuarantees(SpanGuarantees clause, RelationInfo.SpanMode mode) {
-        // NOTE: we don't know the direction here, so choose the one that gives the fewest guarantees
-        //   (maybe SpanGuarantees could have a guarantee to help with this? Or maybe not worth it just for relations)
-        SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.BOTH_DIRECTIONS;
-        return SpanQueryRelations.createGuarantees(clause, direction, mode);
+        // Adjusted spans could be anything and in any order, so we can't guarantee anything about them.
+        return SpanGuarantees.NONE;
     }
 
     private final BLSpanQuery clause;

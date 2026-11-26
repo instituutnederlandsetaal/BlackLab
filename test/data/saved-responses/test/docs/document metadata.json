@@ -2,6 +2,9 @@
   "docInfo": {
     "mayView": true,
     "metadata": {
+      "editor": [
+        "test"
+      ],
       "fromInputFile": [
         "PBsve430.xml"
       ],

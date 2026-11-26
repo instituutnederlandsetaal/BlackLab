@@ -3,6 +3,9 @@
     "PBsve430": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test"
+        ],
         "fromInputFile": [
           "PBsve430.xml"
         ],
@@ -407,6 +410,7 @@
       "op": "hits",
       "patt": "\"the\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {
@@ -435,14 +439,12 @@
           "documents": 1,
           "hits": 8,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 1,
           "hits": 8,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

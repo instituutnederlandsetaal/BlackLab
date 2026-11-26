@@ -3,6 +3,9 @@
     "PRint602": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test2"
+        ],
         "fromInputFile": [
           "PRint602.xml"
         ],
@@ -513,6 +516,7 @@
       "op": "hits",
       "patt": "<u/> containing \"good\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {
@@ -556,14 +560,12 @@
           "documents": 1,
           "hits": 5,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 1,
           "hits": 5,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

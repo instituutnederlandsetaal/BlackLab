@@ -81,7 +81,7 @@ expectCorpusUrlUnchanged(corpus, 'docs', 'document snippet hitstart',
         '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
-expectCorpusUrlUnchanged(corpus, 'docs', 'document facets', '/docs/?number=0&facets=field:title');
+expectCorpusUrlUnchanged(corpus, 'docs', 'document facets', '/docs/?number=0&facets=field:title&waitfortotal=true');
 
 // Docs CSV
 expectCorpusUrlUnchanged(corpus, 'docs', 'CSV results', '/docs/', 'text/csv');

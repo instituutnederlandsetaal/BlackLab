@@ -39,6 +39,7 @@ public abstract class Plugin {
 
     private final PluginDescriptor descriptor = new PluginDescriptor();
 
+    /** Declare a parameter during initialize(), after configuration is available. */
     public PluginParam addParam(PluginParam spec) {
         return descriptor.addParam(spec);
     }
@@ -51,12 +52,23 @@ public abstract class Plugin {
     }
 
     /**
-     * Initializes the plugin.
+     * Initializes the plugin's metadata and parameters using its configuration.
      *
      * Called once after configure() has been called.
+     * Also called when listing plugins, so time-consuming work belongs in prepare().
      */
     public void initialize() throws PluginException {
         // Nothing to initialize by default
+    }
+
+    /**
+     * Prepare the plugin for use, e.g. by loading a large model.
+     *
+     * Called once after initialize(), with the descriptor frozen, before the plugin
+     * is used. If delayInitialization is true, this is deferred until first use.
+     */
+    public void prepare() throws PluginException {
+        // Nothing to prepare by default
     }
 
     /**

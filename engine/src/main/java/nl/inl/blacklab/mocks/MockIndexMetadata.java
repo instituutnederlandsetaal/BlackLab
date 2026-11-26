@@ -101,7 +101,7 @@ public class MockIndexMetadata implements IndexMetadata {
 
             @Override
             public MetadataField pidField() {
-                return null;
+                throw new UnsupportedOperationException();
             }
 
             @Override
@@ -148,37 +148,37 @@ public class MockIndexMetadata implements IndexMetadata {
 
     @Override
     public String documentFormat() {
-        return null;
+            throw new UnsupportedOperationException();
     }
 
     @Override
     public String indexFormat() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String timeCreated() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String timeModified() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String indexBlackLabBuildTime() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String indexBlackLabVersion() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public String indexBlackLabScmRevision() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

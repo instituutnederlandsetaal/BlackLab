@@ -36,7 +36,7 @@ function expectHitsUnchanged(corpusName, testName, params) {
                 sort: "field:pid,hitposition", // fully defined sort
                 context: 1,
                 waitfortotal: "true",
-                //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
+                usecache: "no",
                 ...params
             })
             .set('Accept', 'application/json')
@@ -77,10 +77,15 @@ expectHitsUnchanged('test', 'view single group', {
     group: 'field:title',
     viewgroup: 'str:service encounter about visa application for family members',
 });
+expectHitsUnchanged('test', 'viewgroup can\'t refine', {
+    patt: '"a"',
+    group: 'hitposition',  // BL has to store the hits in the group, refine query not supported
+    viewgroup: 'int:29',
+});
 
 // Matching doc facets
 expectCorpusUrlUnchanged('test', 'hits', 'document facets',
-        '/hits/?patt=%22the%22&number=0&facets=field:pid');
+        '/hits/?patt=%22the%22&number=0&facets=field:pid&waitfortotal=true');
 
 // Hits CSV
 expectCorpusUrlUnchanged('test', 'hits', 'CSV results',
@@ -112,3 +117,10 @@ expectHitsUnchanged("parallel", "parallel hits with rfield", {
     adjusthits: 'true',
     withspans: 'true',
 });
+
+expectHitsUnchanged("relations", "all relations", "_ --> _");
+expectHitsUnchanged("relations", "relations type red", "_ -red-> _");
+expectHitsUnchanged("relations", "relations type blue", "_ -blue-> _");
+expectHitsUnchanged("relations", "relations source filter", '".*a.*" --> _');
+expectHitsUnchanged("relations", "relations target filter", '_ --> ".*a.*"');
+expectHitsUnchanged("relations", "relations all filters", '".*a.*" -red|blue-> ".*a.*"');

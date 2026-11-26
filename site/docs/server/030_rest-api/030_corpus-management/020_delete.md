@@ -2,11 +2,11 @@
 
 Delete one of your private corpora.
 
-**URL** : `/blacklab-server/<corpus-name>`
+**URL** : `/blacklab-server/corpora/<corpus-name>`
 
 **Method** : `DELETE`
 
-_(will fail if you are not logged in or not authorized)_
+<!-- @include: ../../../_must_be_authorized.md -->
 
 ## Success Response
 

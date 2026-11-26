@@ -4,8 +4,8 @@ Return terms with the specified prefix that occur in a (metadata or annotated) f
 
 **URL**
 
-- Metadata field:<br>`/blacklab-server/<corpus-name>/autocomplete/<metadata-field-name>`
-- Annotation on annotated field:<br>`/blacklab-server/<corpus-name>/autocomplete/<annotated-field-name>/<annotation>`
+- Metadata field:<br>`/blacklab-server/corpora/<corpus-name>/autocomplete/<metadata-field-name>`
+- Annotation on annotated field:<br>`/blacklab-server/corpora/<corpus-name>/autocomplete/<annotated-field-name>/<annotation>`
 
 **Method** : `GET`
 

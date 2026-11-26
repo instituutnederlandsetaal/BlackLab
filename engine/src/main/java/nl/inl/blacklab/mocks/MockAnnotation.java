@@ -55,12 +55,12 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public AnnotationSensitivity offsetsSensitivity() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Collection<AnnotationSensitivity> sensitivities() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -77,7 +77,7 @@ public class MockAnnotation implements Annotation {
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
         if (sensitivity == MatchSensitivity.INSENSITIVE)
             return i;
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -117,7 +117,7 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public Annotation parentAnnotation() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override

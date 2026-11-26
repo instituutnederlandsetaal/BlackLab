@@ -10,14 +10,79 @@ import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Captures all relations within a match info span.
- *
- * Note that the match info spans we're trying to capture relations in
- * may not overlap! If they do overlap, some relations may be skipped over.
- * TODO: use SpansInBuckets to fix this.
  */
 class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
 
-    private final BLSpans relations;
+    static class RelationsCapturer {
+        private final BLSpans relations;
+
+        /** Relations already read in this document, available for reuse by overlapping captures. */
+        private final List<RelationInfo> bufferedRelations = new ArrayList<>();
+
+        RelationsCapturer(BLSpans relations) {
+            this.relations = relations;
+        }
+
+        void captureRelationsWithinSpan(int docId, int start, int end, List<RelationInfo> capturedRelations)
+                throws IOException {
+            capturedRelations.clear();
+            int relDocId = relations.docID();
+            if (relDocId < docId) {
+                bufferedRelations.clear();
+                relDocId = relations.advance(docId);
+            }
+            if (relDocId != docId)
+                return;
+
+            if (relations.startPosition() < 0)
+                relations.nextStartPosition();
+            while (relations.startPosition() < end) {
+                bufferedRelations.add(relations.getRelationInfo().copy());
+                relations.nextStartPosition();
+            }
+
+            // Unlike hits from BLSpans, named capture spans (is SpansCaptureRelationsWithinSpan.toCapture is set) need
+            // not arrive in start-position order. So the value of start may be less than the start position of the
+            // last hit this method was called with. This means we have to keep the all the relations we've buffered so
+            // far, and binary search for relations that starts at or after the start position of the current hit.
+            // TODO: if SpansCaptureRelationsWithinSpan.toCapture == null, we know the hits arrive in start-position
+            //       order, so we can remove any relations that end before the start position of the current hit from
+            //       bufferedRelations, and avoid the binary search.
+            int min = 0, max = bufferedRelations.size();
+            while (min < max) {
+                int mid = (min + max) >>> 1;
+                if (bufferedRelations.get(mid).getSpanStart() < start)
+                    min = mid + 1;
+                else
+                    max = mid;
+            }
+            // Now find all the buffered relations that overlap with the current hit, and add them to capturedRelations.
+            for (int i = min; i < bufferedRelations.size(); i++) {
+                RelationInfo relation = bufferedRelations.get(i);
+                // Capture relation if:
+                // - start is within the to-capture span, and
+                // - end is within the to-capture span
+                // (note that getSpanStart|End return the start/end of the source for cross-field relations, which is
+                //  what we want: we want to ignore target in that case because it's in a different field)
+                if (relation.getSpanStart() >= end)
+                    break; // relations are sorted by start position, so no more can overlap
+                if (relation.getSpanEnd() <= end)
+                    capturedRelations.add(relation);
+            }
+            capturedRelations.sort(RelationInfo::compareTo);
+        }
+
+        void setSpansContext(SpansContext context) {
+            relations.setSpansContext(context);
+        }
+
+        @Override
+        public String toString() {
+            return relations.toString();
+        }
+    }
+
+    private final RelationsCapturer relations;
 
     /** Name of match info spans to capture relations from
      *  (if not set, capture all relations in current clause hit) */
@@ -48,12 +113,12 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
      *
      * @param clause clause we're capturing from
      * @param relations relations to capture
-     * @param toCapture name of the match info span to capture relations from
+     * @param toCapture name of the match info span to capture relations from, or null to capture all relations in hit
      * @param captureAs name to capture the list of relations as
      */
     public SpansCaptureRelationsWithinSpan(BLSpans clause, BLSpans relations, String toCapture, String captureAs) {
         super(clause);
-        this.relations = relations;
+        this.relations = new RelationsCapturer(relations);
         this.toCapture = toCapture;
         this.captureAs = captureAs;
     }
@@ -84,36 +149,11 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         }
 
         if (start >= 0) {
-            captureRelationsWithinSpan(candidate.docID(), start, end, relations, capturedRelations);
+            relations.captureRelationsWithinSpan(candidate.docID(), start, end, capturedRelations);
             matchInfo[captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
         }
 
         return FilterSpans.AcceptStatus.YES;
-    }
-
-    public static void captureRelationsWithinSpan(int docId, int start, int end, BLSpans relations, List<RelationInfo> capturedRelations) throws IOException {
-        // Capture all relations within the toCapture span
-        capturedRelations.clear();
-        int relDocId = relations.docID();
-        if (relDocId < docId)
-            relDocId = relations.advance(docId);
-        if (relDocId == docId) {
-            if (relations.startPosition() < start)
-                relations.advanceStartPosition(start);
-            while (relations.startPosition() < end) {
-                RelationInfo relationInfo = relations.getRelationInfo();
-                // Capture relation if:
-                // - start is within the to-capture span, and
-                // - end is within the to-capture span, OR
-                //   the relation is a cross-field relation (i.e. parallel corpus)
-                //   (in that case, target is in a different field, so the to-capture span doesn't apply)
-                if (relationInfo.isCrossFieldRelation() || relations.endPosition() <= end) {
-                    capturedRelations.add(relationInfo.copy());
-                }
-                relations.nextStartPosition();
-            }
-        }
-        capturedRelations.sort(RelationInfo::compareTo);
     }
 
     @Override

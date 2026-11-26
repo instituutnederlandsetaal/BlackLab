@@ -51,7 +51,7 @@ public class SpansAndFilterFactoryUniqueRelations implements SpansAndFilterFacto
                 Set<RelationInfo> relations = new HashSet<>();
                 for (int i = 0; i < subSpans.length; i++) {
                     RelationInfo r = subSpans[i].getRelationInfo(indexInBucket[i]);
-                    if (!relations.add(r)) {
+                    if (r != null && !relations.add(r)) {
                         // This relation was already found by another clause; this is not a valid match
                         return false;
                     }

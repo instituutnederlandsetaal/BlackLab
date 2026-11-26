@@ -399,7 +399,6 @@
           "documents": 3,
           "hits": 766,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "largestGroupSize": 43,
@@ -408,7 +407,6 @@
           "documents": 3,
           "hits": 766,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "subcorpusSize": {

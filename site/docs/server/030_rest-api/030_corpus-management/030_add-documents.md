@@ -1,10 +1,10 @@
 # Add documents
 
-**URL** : `/blacklab-server/<corpus-name>/docs`
+**URL** : `/blacklab-server/corpora/<corpus-name>/docs`
 
 **Method** : `POST`
 
-_(will fail if you are not logged in or not authorized)_
+<!-- @include: ../../../_must_be_authorized.md -->
 
 #### Basic parameters
 
@@ -24,7 +24,7 @@ If a `pidField` has been configured (add `role: pid` to a metadata field), and t
 
 ::: details <b>The <code>converters</code> parameter explained</b>
 
-(available from version `5.0` and current `dev`)
+(available from version `5.0`)
 
 You can use the `converters` parameter to request extra `FileConverter` [plugins](/development/customization/) to be applied before indexing. The parameter uses a JSON structure:
 

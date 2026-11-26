@@ -8,7 +8,7 @@ If you don't specify `pattlang`, the pattern type passed in `patt` will be autod
 
 **NOTE:** this operation only supports the JSON response type. Requesting XML will result in an error.
 
-**URL** : `/blacklab-server/<corpus-name>/parse-pattern`
+**URL** : `/blacklab-server/corpora/<corpus-name>/parse-pattern`
 
 **Method** : `GET`
 

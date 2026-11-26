@@ -3,6 +3,9 @@
     "PBsve430": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test"
+        ],
         "fromInputFile": [
           "PBsve430.xml"
         ],
@@ -276,6 +279,7 @@
       "op": "hits",
       "patt": "\"a\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "viewgroup": "str:service encounter about visa application for family members",
       "waitfortotal": true
     },
@@ -305,14 +309,12 @@
           "documents": 1,
           "hits": 5,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 1,
           "hits": 5,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

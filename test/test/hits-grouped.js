@@ -54,6 +54,9 @@ expectHitsGroupedUnchanged('very grouped by word before (using context:)',
         { patt: '"very"', group: 'context:word:i:B1' });
 expectHitsGroupedUnchanged('a grouped by title',
         { patt: '"a"', group: 'field:title' });
+// not all docs have a value for editor, check that this works and the hits are returned
+expectHitsGroupedUnchanged('a grouped by editor',
+        { patt: '"a"', group: 'field:editor', 'includegroupcontents': true });
 
 // Compare hit grouping with regular (HitGroupFromHits) and fast (HitGroupsTokenFrequencies) path.
 // Results should be identical (hence the same test name)

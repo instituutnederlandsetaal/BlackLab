@@ -26,8 +26,14 @@ class PluginData<T extends Plugin> {
     /** Has plugin been initialized? */
     private boolean initialized;
 
-    /** Exception during initialzation, if any */
+    /** Exception during initialization, if any */
     private PluginException initializationException;
+
+    /** Has plugin been prepared for use? */
+    private boolean prepared;
+
+    /** Exception during preparation, if any */
+    private PluginException preparationException;
 
     /** The plugin itself */
     private final T plugin;
@@ -71,7 +77,7 @@ class PluginData<T extends Plugin> {
 
     /**
      * Initialize the plugin, if it exists and is currently uninitialized.
-     * Previously encountered errors are rethrown. If am error is encountered, it is
+     * Previously encountered errors are rethrown. If an error is encountered, it is
      * stored in the plugin data and rethrown.
      *
      * @throws PluginException when the plugin fails to initialize, care should be
@@ -98,6 +104,27 @@ class PluginData<T extends Plugin> {
             } catch (Throwable e) {
                 initializationException = new PluginException("Error during initialization.", e);
                 throw initializationException;
+            }
+        }
+    }
+
+    /** Initialize metadata and prepare the plugin for use, caching any failure. */
+    void preparePlugin() throws PluginException {
+        synchronized (plugin) {
+            initializePlugin();
+            if (preparationException != null)
+                throw preparationException;
+            if (prepared)
+                return;
+            try {
+                plugin.prepare();
+                prepared = true;
+            } catch (PluginException e) {
+                preparationException = e;
+                throw e;
+            } catch (Throwable e) {
+                preparationException = new PluginException("Error during preparation.", e);
+                throw preparationException;
             }
         }
     }

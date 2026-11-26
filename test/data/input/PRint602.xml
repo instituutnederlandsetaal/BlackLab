@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:p="http://www.univie.ac.at/voice/pos" xmlns:t="http://www.tei-c.org/ns/1.0" xml:id="PRint602">
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:id="PRint602">
   <teiHeader>
-    <fileDesc xmlns:voice="http://www.univie.ac.at/voice/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <fileDesc>
       <titleStmt>
         <title>interview about conference experience and impressions of city</title>
         <principal>Prof. Barbara Seidlhofer</principal>
-        <editor/>
+        <editor>test2</editor>
         <funder>VOICE is funded by FWF, the Austrian Science Fund (Project No. L448)</funder>
         <sponsor/>
         <respStmt>
@@ -106,7 +106,7 @@
         </recordingStmt>
       </sourceDesc>
     </fileDesc>
-    <encodingDesc xmlns:voice="http://www.univie.ac.at/voice/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <encodingDesc>
       <classDecl>
         <taxonomy>
           <category xml:id="PRint602_domain">
@@ -357,7 +357,7 @@
         </fvLib>
       </p>
     </encodingDesc>
-    <profileDesc xmlns:voice="http://www.univie.ac.at/voice/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <profileDesc>
       <textClass>
         <catRef target="#PRint602_PR #PRint602_int"/>
         <catRef target="#PR #int"/>
@@ -401,7 +401,7 @@
         </listPerson>
       </particDesc>
     </profileDesc>
-    <revisionDesc xmlns:voice="http://www.univie.ac.at/voice/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+      <revisionDesc>
       <change when="2012-12-05" who="#BS #MR #RO #SM">Update of corpus
       header for VOICE POS XML 2.0 release</change>
       <change when="2012-12-05" who="#SM #MR #RO">Update of corpus

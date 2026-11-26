@@ -2,7 +2,7 @@
 
 Retrieve the original input document, presuming it's stored in the corpus (it is by default).
 
-**URL** : `/blacklab-server/<corpus-name>/docs/<pid>/contents`
+**URL** : `/blacklab-server/corpora/<corpus-name>/docs/<pid>/contents`
 
 **Method** : `GET`
 

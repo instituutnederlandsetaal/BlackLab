@@ -3,6 +3,9 @@
     "PBsve430": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test"
+        ],
         "fromInputFile": [
           "PBsve430.xml"
         ],
@@ -43,6 +46,9 @@
     "PRint602": {
       "mayView": true,
       "metadata": {
+        "editor": [
+          "test2"
+        ],
         "fromInputFile": [
           "PRint602.xml"
         ],
@@ -1057,6 +1063,7 @@
       "op": "hits",
       "patt": "\"the\"",
       "sort": "field:pid,hitposition",
+      "usecache": false,
       "waitfortotal": true
     },
     "pattern": {
@@ -1085,14 +1092,12 @@
           "documents": 3,
           "hits": 21,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 3,
           "hits": 21,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

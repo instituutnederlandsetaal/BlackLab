@@ -35,7 +35,6 @@ import nl.inl.blacklab.indexers.config.process.ProcessingInstructionConcatDate;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIdentity;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIfEmpty;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMapValues;
-import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMultiple;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionParsePos;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionReplace;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSort;
@@ -98,7 +97,7 @@ public class PluginManager {
     public static final String PLUGINS_DIR_NAME = "plugins";
 
     /**
-     * Delay initialization of plugins until they are first used. Useful for
+     * Delay preparation of plugins until they are first used. Useful for
      * development
      */
     private static final String PROP_DELAY_INITIALIZATION = "delayInitialization";
@@ -194,7 +193,7 @@ public class PluginManager {
     }
 
     public static synchronized void addPluginType(Class<? extends Plugin> pluginType) {
-        URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
+        ClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
         pluginTypes.add(pluginType);
         pluginsByType.put(pluginType, new PluginsOfType<>(pluginType, BlackLab.config().getPlugins(), cl));
     }
@@ -219,14 +218,15 @@ public class PluginManager {
 
         // First load all plugins, so we have the full list of plugins available.
         // Note that we do not close the class loader, so the plugin can instantiate other classes!
-        URLClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
+        ClassLoader cl = getPluginsDirClassLoader(PluginManager.class.getClassLoader());
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             pluginsByType.put(pluginClass, new PluginsOfType<>(pluginClass, pluginConfig, cl));
         }
 
         QueryExtensions.registerAll(); // register e.g. rspan(), debug functions, etc.
 
-        findGroovyScripts(pluginConfig);
+        if (BlackLab.autoLoadConfig())
+            findGroovyScripts(pluginConfig);
 
         // Some plugins take a LONG time to init, if we block, we block the loading of the config
         // Which in turn blocks the whole of blacklab(-server), so don't do that
@@ -234,18 +234,20 @@ public class PluginManager {
             CompletableFuture.runAsync(() -> {
                 // only now they're all located, initialize them
                 logger.trace("Config setting " + PROP_DELAY_INITIALIZATION + " is false, initializing plugins...");
-                pluginsByType.values().forEach(PluginsOfType::initializePlugins);
+                pluginsByType.values().forEach(PluginsOfType::preparePlugins);
                 logger.trace("Finished Initializing plugin system");
             });
         } else {
             logger.trace("Config setting " + PROP_DELAY_INITIALIZATION
-                    + " is true, plugins will be initialized on first use.");
+                    + " is true, plugins will be prepared on first use.");
             logger.trace("Finished Initializing plugin system");
         }
     }
 
-    private static URLClassLoader getPluginsDirClassLoader(ClassLoader parent) {
+    private static ClassLoader getPluginsDirClassLoader(ClassLoader parent) {
         ensureInitialized();
+        if (!BlackLab.autoLoadConfig())
+            return new URLClassLoader(new URL[0], parent);
         List<URL> urlList = new ArrayList<>();
         FilenameFilter filenameFilter = (dir, name) -> name.toLowerCase().endsWith(".jar");
         File[] files = pluginsDir.listFiles(filenameFilter);

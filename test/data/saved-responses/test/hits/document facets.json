@@ -25,7 +25,8 @@
       "indexname": "test",
       "number": 0,
       "op": "hits",
-      "patt": "\"the\""
+      "patt": "\"the\"",
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"the\"",
@@ -53,14 +54,12 @@
           "documents": 3,
           "hits": 21,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         },
         "processed": {
           "documents": 3,
           "hits": 21,
           "status": "finished",
-          "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
         }
       },

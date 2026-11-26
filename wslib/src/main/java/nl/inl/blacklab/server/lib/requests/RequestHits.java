@@ -100,8 +100,8 @@ public final class RequestHits {
      * @param includeGroupContents Whether to include the contents of each group
      * @param windowSettings Settings for the window of hits to return
      * @param facetDesc      Description of the facets to calculate
-     * @param calculateCollocations Whether to calculate collocations
-     * @param sensitive      Whether collocations should be case-sensitive
+     * @param calculateCollocations Whether to calculate collocations [DEPRECATED, use /collocations endpoint instead]
+     * @param sensitive      Whether collocations should be case-sensitive [DEPRECATED]
      * @param useCache       Use the results cache or ignore it for this query?
      * @param waitForTotal   Wait for the total count to be calculated before returning results?
      * @param includeSubcorpusSize Whether to include the size of the subcorpus
@@ -260,8 +260,8 @@ public final class RequestHits {
                 lower = -1;
                 upper = 1;
             } else {
-                lower = context.before() == 0 ? 1 : -context.before();
-                upper = context.after() == 0 ? -1 : context.after();
+                lower = context.after() == 0 ? 1 : -context.after();
+                upper = context.before() == 0 ? -1 : context.before();
             }
             String optLowerUpper = "," + lower + "," + upper;
             if (!within.isEmpty() && context.equals(ContextSize.ZERO)) {

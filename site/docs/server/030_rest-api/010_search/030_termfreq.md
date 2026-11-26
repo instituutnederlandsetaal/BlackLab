@@ -2,9 +2,13 @@
 
 Returns frequencies per term, sorted by descending frequency.
 
-**NOTE:** consider using the [grouped hits](/server/rest-api/search/find-hits.md) operation instead, which can also return term frequencies (search for `patt=[]` and use e.g. `group=hit:word:s`) and e.g. allows sorting the results alphabetically (`sort=identity`) or by frequency (`sort=size`).
+<!-- @include: ../../../_deprecated_v5.md -->
 
-**URL** : `/blacklab-server/<corpus-name>/termfreq`
+Please use the [grouped hits](/server/rest-api/search/find-hits.md) operation instead, which can also return term frequencies (search for `patt=[]` and use e.g. `group=hit:word:s`) and e.g. allows sorting the results alphabetically (`sort=identity`) or by frequency (`sort=size`).
+
+The rest of this page is kept for reference for now.
+
+**URL** : `/blacklab-server/corpora/<corpus-name>/termfreq`
 
 **Method** : `GET`
 

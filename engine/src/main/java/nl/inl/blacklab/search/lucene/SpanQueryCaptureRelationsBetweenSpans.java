@@ -22,11 +22,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Captures all relations between the hits from two clauses.
  *
  * This is used to capture cross-field relations in a parallel corpus.
- *
- * FIXME: right now, subsequent spans from the source spans may not overlap!
- *   If they do overlap, some relations may be skipped over.
- *   We should cache some relations from the source span so we can be sure we return all
- *   of them, even if the source spans overlap.
  */
 public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 

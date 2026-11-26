@@ -25,7 +25,7 @@ public record MockMetadataField(String name) implements MetadataField {
 
     @Override
     public String offsetsField() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -35,12 +35,12 @@ public record MockMetadataField(String name) implements MetadataField {
 
     @Override
     public FieldType type() {
-        return null;
+        return FieldType.TOKENIZED;
     }
 
     @Override
     public String analyzerName() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
